@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Салхи · Англи хэлний апп</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap&subset=cyrillic,cyrillic-ext" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F0FF; --surface:#FFFFFF; --ink:#211B47; --ink-2:#645E8A; --line:#E2DDF6;
+  --sky:#6C5CE7; --dune:#F9A8D4; --dune-2:#FDBA9B; --dune-3:#7C6CF2;
+  --neon:#FFD23F; --neon-ink:#2B2200; --focus:#5B4BD6; --mesh:rgba(108,92,231,.14);
+  --ok:#17935A; --danger:#D6443A; --shadow:0 6px 24px rgba(76,58,180,.12);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15122B; --surface:#201C40; --ink:#F1EEFF; --ink-2:#A9A3D4; --line:#372F66;
+    --sky:#5B4BD6; --dune:#B4568F; --dune-2:#C77B5E; --dune-3:#7C6CF2;
+    --focus:#FFD23F; --mesh:rgba(255,255,255,.10); --ok:#4ADE9A; --danger:#FF8A80; --shadow:0 6px 24px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15122B; --surface:#201C40; --ink:#F1EEFF; --ink-2:#A9A3D4; --line:#372F66;
+  --sky:#5B4BD6; --dune:#B4568F; --dune-2:#C77B5E; --dune-3:#7C6CF2;
+  --focus:#FFD23F; --mesh:rgba(255,255,255,.10); --ok:#4ADE9A; --danger:#FF8A80; --shadow:0 6px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 "Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+button,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+button:disabled{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.app{max-width:560px;margin:0 auto;padding-bottom:110px}
+
+/* hero */
+.hero{position:relative;height:220px;background:linear-gradient(160deg,#5B4BD6 0%,#8B6CF0 55%,#F58FC0 120%);overflow:hidden;border-radius:0 0 36px 36px;color:#fff}
+.hero svg g[fill]{fill:#fff}
+.hero svg{position:absolute;inset:0;width:100%;height:100%}
+.hero .txt{position:absolute;left:20px;top:22px;right:20px}
+.brand{font:700 36px/1 "Unbounded",system-ui,sans-serif;letter-spacing:-.02em}
+.tag{margin-top:10px;color:rgba(255,255,255,.85);max-width:20ch;font-weight:500}
+.rotor{animation:spin 14s linear infinite}
+.rotor.r2{animation-duration:20s}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 20px;margin-top:-18px;position:relative}
+.stat{background:var(--surface);box-shadow:var(--shadow);padding:7px 14px;border-radius:999px;font-weight:700;font-size:14px}
+.stat b{background:var(--neon);color:var(--neon-ink);padding:0 7px;border-radius:999px;margin-right:6px}
+.levels{display:flex;gap:6px;padding:12px 20px 4px;overflow-x:auto}
+.lv{padding:8px 16px;border-radius:14px;border:1px solid var(--line);font-weight:600;font-size:14px;white-space:nowrap;background:var(--surface)}
+.lv[aria-pressed="true"]{background:var(--sky);color:#fff;border-color:var(--sky)}
+main{padding:14px 20px 0}
+h2{font:700 22px/1.25 "Unbounded",system-ui,sans-serif;letter-spacing:-.01em;margin-bottom:8px}
+.muted{color:var(--ink-2)}
+.small{font-size:14px}
+
+/* tabs */
+.tabs{position:fixed;left:12px;right:12px;bottom:12px;background:var(--surface);border-radius:22px;box-shadow:0 8px 30px rgba(50,35,150,.22);z-index:5;max-width:536px;margin:0 auto}
+.tabs .in{display:flex;max-width:560px;margin:0 auto}
+.tab{flex:1;padding:14px 4px 16px;font-weight:700;font-size:14px;color:var(--ink-2);position:relative}
+.tab[aria-current="page"]{color:var(--sky)}
+.tab[aria-current="page"]::before{content:"";position:absolute;bottom:7px;left:42%;right:42%;height:4px;background:var(--neon);border-radius:4px}
+
+/* buttons */
+.btn{padding:14px 18px;border-radius:18px;font-weight:700;border:1px solid var(--line);background:var(--surface);text-align:center}
+.btn.primary{background:var(--neon);color:var(--neon-ink);border-color:transparent}
+.btn.dark{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.ghost{background:none}
+.row{display:flex;gap:10px;margin-top:12px}
+.row>*{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--surface);margin-bottom:14px}
+.seg button{padding:7px 16px;border-radius:999px;font-weight:700;font-size:14px;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--sky);color:#fff}
+
+/* flashcard */
+.fc{position:relative;min-height:300px;border-radius:32px;background:linear-gradient(160deg,var(--surface),color-mix(in srgb,var(--dune-3) 22%,var(--surface)));box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 22px;overflow:hidden;width:100%;cursor:pointer;user-select:none}
+.fc .mesh{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.fc>*:not(.mesh){position:relative}
+.fc.pop{animation:pop .22s ease-out}
+@keyframes pop{from{transform:scale(.97)}to{transform:scale(1)}}
+.en{font:700 clamp(30px,9vw,44px)/1.15 "Unbounded",system-ui,sans-serif;letter-spacing:-.02em;overflow-wrap:anywhere}
+.mn{font:700 clamp(24px,7vw,32px)/1.25 "Manrope",system-ui,sans-serif}
+.ex{margin-top:16px;color:var(--ink-2);font-size:17px;max-width:32ch}
+.hint{margin-top:18px;color:var(--ink-2);font-size:14px}
+.bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--sky),var(--dune));border-radius:8px}
+
+/* options */
+.q{font-size:20px;font-weight:700;margin:6px 0 2px;line-height:1.35}
+.opt{display:block;width:100%;text-align:left;padding:14px 16px;border-radius:16px;box-shadow:var(--shadow);border:1.5px solid var(--line);background:var(--surface);font-weight:600;margin-top:10px}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--surface))}
+.opt.bad{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 14%,var(--surface))}
+.fb{margin-top:12px;font-weight:700}
+.fb.ok{color:var(--ok)}.fb.bad{color:var(--danger)}
+
+/* grammar */
+.hexb{flex:none;width:48px;height:48px;border-radius:16px;background:var(--dune-3);display:grid;place-items:center;font:700 12px "Unbounded",system-ui,sans-serif;color:#fff}
+.hexb.done{background:var(--neon);color:var(--neon-ink)}
+.lrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 0;border-bottom:1px solid var(--line)}
+.lrow .t{font-weight:700}
+.rule{margin:14px 0;padding:14px 16px;border-left:4px solid var(--sky);box-shadow:var(--shadow);background:var(--surface);font-weight:600;border-radius:0 12px 12px 0}
+.exl{list-style:none;padding:0;margin-top:8px}
+.exl li{padding:10px 0;border-bottom:1px solid var(--line)}
+.exl b{display:block}
+p+p{margin-top:10px}
+.back{color:var(--ink-2);font-weight:700;padding:4px 0;margin-bottom:8px}
+
+/* chat */
+.scn{display:block;width:100%;text-align:left;padding:16px;border-radius:18px;box-shadow:var(--shadow);border:1px solid var(--line);background:var(--surface);font-weight:700;margin-top:10px}
+.msgs{display:flex;flex-direction:column;gap:12px;padding-bottom:12px}
+.b{max-width:88%;padding:11px 14px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere}
+.b.ai{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:6px}
+.b.me{align-self:flex-end;background:var(--sky);color:#fff;border-bottom-right-radius:6px}
+.fix{align-self:flex-end;max-width:88%;border-left:3px solid var(--neon);padding:4px 0 4px 12px;font-size:14px;color:var(--ink-2);white-space:pre-wrap}
+.fix b{color:var(--ink)}
+.spk{align-self:flex-start;font-size:13px;font-weight:700;color:var(--ink-2);padding:0 4px;margin-top:-6px}
+.composer{position:sticky;bottom:80px;background:var(--bg);padding:10px 0 6px;display:flex;gap:8px;align-items:flex-end;border-top:1px solid var(--line)}
+.composer textarea{flex:1;resize:none;border:1.5px solid var(--line);background:var(--surface);border-radius:16px;padding:11px 14px;min-height:46px;max-height:120px}
+.composer .btn{padding:12px 16px}
+.rec{background:var(--danger);color:#fff;border-color:transparent}
+.note{padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);margin-top:12px;font-size:14px}
+
+/* stats */
+.big{font:700 40px/1 "Unbounded",system-ui,sans-serif;letter-spacing:-.03em}
+.srow{display:flex;justify-content:space-between;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)}
+.days{display:flex;gap:8px;align-items:flex-end;height:110px;margin-top:10px}
+.days div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:12px;color:var(--ink-2)}
+.days i{display:block;width:100%;background:var(--sky);border-radius:6px 6px 0 0;min-height:4px;margin-bottom:6px}
+.days i.z{background:var(--line)}
+
+@media (prefers-reduced-motion: reduce){.rotor{animation:none}.fc.pop{animation:none}}
+
+/* mode switch */
+.modes{position:absolute;right:16px;top:16px;z-index:2;display:flex;background:rgba(255,255,255,.22);border-radius:999px;padding:3px;backdrop-filter:blur(6px)}
+.modes button{padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#fff}
+.modes button[aria-pressed="true"]{background:#fff;color:#2B2A55}
+.hero .txt{top:60px}
+
+/* adult: calm, focused, sharper */
+:root[data-mode="adult"]{--bg:#F4F5F2;--ink:#1B2422;--ink-2:#5A6662;--line:#DCE1DC;--sky:#1F5F5B;--dune:#8FC1B5;--dune-2:#B7D8CE;--dune-3:#2F7F79;--neon:#E9C46A;--neon-ink:#241B00;--focus:#1F5F5B;--shadow:0 2px 10px rgba(20,50,48,.10)}
+:root[data-mode="adult"] .hero{background:linear-gradient(160deg,#173F3D,#1F5F5B 60%,#4E9C90 130%);border-radius:0 0 20px 20px}
+:root[data-mode="adult"] .fc{border-radius:18px}
+:root[data-mode="adult"] .btn,:root[data-mode="adult"] .opt,:root[data-mode="adult"] .scn{border-radius:12px}
+:root[data-mode="adult"] .lv,:root[data-mode="adult"] .hexb{border-radius:10px}
+:root[data-mode="adult"] .tabs{border-radius:14px}
+:root[data-mode="adult"] .brand,:root[data-mode="adult"] h2,:root[data-mode="adult"] .en,:root[data-mode="adult"] .big{font-family:"Manrope",system-ui,sans-serif;font-weight:800;letter-spacing:-.02em}
+
+/* kids: bright, chunky, bouncy */
+:root[data-mode="kid"]{--bg:#FFF9E8;--ink:#2A2350;--ink-2:#6A6390;--line:#F0E3B8;--sky:#E5484D;--dune:#FFD93D;--dune-2:#6BCB77;--dune-3:#4D96FF;--neon:#6BCB77;--neon-ink:#0B2A10;--focus:#4D96FF;--shadow:0 5px 0 rgba(30,30,80,.14)}
+:root[data-mode="kid"] body{font-size:18px}
+:root[data-mode="kid"] .hero{background:linear-gradient(170deg,#4D96FF,#7CC4FF 65%,#FFF3B0 130%);border-radius:0 0 48px 48px}
+:root[data-mode="kid"] .hero .tag{font-size:18px}
+:root[data-mode="kid"] .fc{border-radius:40px;border:4px solid var(--dune);min-height:320px}
+:root[data-mode="kid"] .en{font-size:clamp(36px,11vw,52px)}
+:root[data-mode="kid"] .btn,:root[data-mode="kid"] .opt,:root[data-mode="kid"] .scn{border-radius:24px;border-width:3px;padding-top:16px;padding-bottom:16px;font-size:18px;transition:transform .12s}
+:root[data-mode="kid"] .btn:active,:root[data-mode="kid"] .opt:active,:root[data-mode="kid"] .scn:active{transform:scale(.96)}
+:root[data-mode="kid"] .btn.primary{color:#0B2A10;box-shadow:0 5px 0 #3E9B4B}
+:root[data-mode="kid"] .lv{border-radius:20px;border-width:2px}
+:root[data-mode="kid"] .hexb{border-radius:50%;background:var(--dune);color:#3A2E00}
+:root[data-mode="kid"] .hexb.done{background:var(--dune-2)}
+:root[data-mode="kid"] .tabs{border-radius:28px;border:3px solid var(--dune)}
+:root[data-mode="kid"] .tab{font-size:16px}
+:root[data-mode="kid"] .stat b{background:var(--dune);color:#3A2E00}
+:root[data-mode="kid"] .bar{height:14px}
+:root[data-mode="kid"] .b{font-size:18px;border-radius:24px}
+@media (prefers-reduced-motion: reduce){.btn,.opt,.scn{transition:none!important}}
+
+@media (prefers-color-scheme: dark){
+:root[data-mode="adult"]:not([data-theme="light"]){--bg:#0E1716;--surface:#16231F;--ink:#E6F0EC;--ink-2:#9BB2AA;--line:#2A3D38;--sky:#2F7F79;--shadow:0 4px 16px rgba(0,0,0,.4)}
+:root[data-mode="kid"]:not([data-theme="light"]){--bg:#1A1730;--surface:#26214A;--ink:#FFF6E0;--ink-2:#BDB6E6;--line:#3D3670;--sky:#E5484D;--shadow:0 5px 0 rgba(0,0,0,.35)}
+}
+:root[data-mode="adult"][data-theme="dark"]{--bg:#0E1716;--surface:#16231F;--ink:#E6F0EC;--ink-2:#9BB2AA;--line:#2A3D38;--sky:#2F7F79;--shadow:0 4px 16px rgba(0,0,0,.4)}
+:root[data-mode="kid"][data-theme="dark"]{--bg:#1A1730;--surface:#26214A;--ink:#FFF6E0;--ink-2:#BDB6E6;--line:#3D3670;--sky:#E5484D;--shadow:0 5px 0 rgba(0,0,0,.35)}
+:root[data-mode="kid"] .levels{display:none}
+.themebtn{position:absolute;left:16px;top:16px;z-index:2;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.22);color:#fff;font-size:18px;backdrop-filter:blur(6px)}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px}
+.emo{font-size:72px;line-height:1;margin-bottom:10px}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:999px;font-weight:700;z-index:20;box-shadow:var(--shadow);animation:tin .25s ease-out;max-width:92vw;text-align:center}
+@keyframes tin{from{opacity:0;transform:translate(-50%,-10px)}}
+.star{position:fixed;bottom:30%;font-size:28px;pointer-events:none;z-index:15;animation:rise 1.2s ease-out forwards}
+@keyframes rise{to{transform:translateY(-220px) rotate(40deg);opacity:0}}
+.built,.bank{display:flex;flex-wrap:wrap;gap:8px}
+.built{min-height:58px;padding:10px;border:2px dashed var(--line);border-radius:16px;margin:10px 0;align-items:center}
+.bank{margin-bottom:6px}
+.chip{padding:9px 14px;border-radius:12px;background:var(--surface);border:1.5px solid var(--line);font-weight:700;box-shadow:var(--shadow)}
+.tin{width:100%;margin-top:10px;padding:14px 16px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:18px}
+.mini{display:inline-flex;vertical-align:middle;margin-right:6px}
+.ringw{position:relative;width:110px;height:110px;flex:none}
+.ringw svg{transform:rotate(-90deg)}
+.ringw span.c{position:absolute;inset:0;display:grid;place-items:center;font:700 18px "Unbounded",system-ui,sans-serif}
+.goalbox{display:flex;gap:18px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.trophies{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:10px}
+.tr{padding:12px 6px;border-radius:16px;background:var(--surface);box-shadow:var(--shadow);text-align:center;font-size:12px;font-weight:700}
+.tr i{display:block;font-style:normal;font-size:30px}
+.tr.lock{opacity:.4;filter:grayscale(1)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <pattern id="hex" width="28" height="48.5" patternUnits="userSpaceOnUse">
+    <path d="M0 8.08 L14 0 L28 8.08 M0 8.08 V24.25 M28 8.08 V24.25 M0 24.25 L14 32.33 L28 24.25 M14 32.33 V48.5" fill="none" stroke="var(--mesh)" stroke-width="1"/>
+  </pattern>
+</defs></svg>
+
+<div class="app">
+  <header class="hero">
+    <button class="themebtn" id="themebtn" type="button"></button>
+    <div class="modes" id="modes" role="group" aria-label="Горим"></div>
+    <svg viewBox="0 0 520 200" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">
+      <circle cx="300" cy="62" r="22" fill="var(--dune)" opacity=".75"/>
+      <path d="M0 150 C 80 120, 150 135, 230 140 S 400 120, 520 135 V200 H0Z" fill="var(--dune)" opacity=".6"/>
+      <g fill="var(--ink)" opacity=".85">
+        <path d="M418.6 64 H421.4 L422.4 150 H417.6Z"/>
+        <g class="rotor" style="transform-origin:420px 64px">
+          <path d="M418.2 64 L421.8 64 L420 28Z"/>
+          <path d="M418.2 64 L421.8 64 L420 28Z" transform="rotate(120 420 64)"/>
+          <path d="M418.2 64 L421.8 64 L420 28Z" transform="rotate(240 420 64)"/>
+          <circle cx="420" cy="64" r="3"/>
+        </g>
+        <path d="M476.9 86 H479.1 L479.8 150 H476.2Z"/>
+        <g class="rotor r2" style="transform-origin:478px 86px">
+          <path d="M476.4 86 L479.6 86 L478 60Z"/>
+          <path d="M476.4 86 L479.6 86 L478 60Z" transform="rotate(120 478 86)"/>
+          <path d="M476.4 86 L479.6 86 L478 60Z" transform="rotate(240 478 86)"/>
+          <circle cx="478" cy="86" r="2.4"/>
+        </g>
+      </g>
+      <path d="M0 170 C 90 140, 180 160, 270 160 S 420 140, 520 158 V200 H0Z" fill="var(--dune)"/>
+      <path d="M0 190 C 100 165, 200 185, 300 182 S 450 170, 520 180 V200 H0Z" fill="var(--dune-2)"/>
+    </svg>
+    <div class="txt">
+      <div class="brand">Салхи</div>
+      <p class="tag">Англи хэлний үг, дүрэм, яриаг нэг дор</p>
+    </div>
+  </header>
+  <div class="strip" id="strip"></div>
+  <div class="levels" id="levels" role="group" aria-label="Түвшин"></div>
+  <main id="main"></main>
+</div>
+<nav class="tabs" aria-label="Үндсэн цэс"><div class="in" id="tabs"></div></nav>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- data ---------- */
+var LEVELS=[["all","Бүгд"],["a1","Эхлэгч"],["b1","Дунд"],["b2","Ахисан"]];
+var LV_LABEL={a1:"A1",b1:"B1",b2:"B2"};
+var LV_NAME={a1:"Эхлэгч",b1:"Дунд",b2:"Ахисан"};
+
+var WORDS=[
+["a1","hello","сайн уу","Hello! My name is Bat."],
+["a1","thank you","баярлалаа","Thank you for your help."],
+["a1","water","ус","I drink water every day."],
+["a1","friend","найз","She is my best friend."],
+["a1","family","гэр бүл","My family lives in Ulaanbaatar."],
+["a1","house","байшин","Their house is very big."],
+["a1","book","ном","This book is interesting."],
+["a1","school","сургууль","I go to school by bus."],
+["a1","food","хоол","The food is delicious."],
+["a1","morning","өглөө","I wake up early in the morning."],
+["a1","happy","баяр хөөртэй","I am happy today."],
+["a1","big","том","It is a big city."],
+["a1","small","жижиг","We have a small kitchen."],
+["a1","eat","идэх","We eat dinner at seven."],
+["a1","go","явах","I go to work at eight."],
+["b1","borrow","зээлэх","Can I borrow your pen?"],
+["b1","decide","шийдэх","I need to decide by Friday."],
+["b1","improve","сайжруулах","I want to improve my English."],
+["b1","experience","туршлага","She has a lot of work experience."],
+["b1","opportunity","боломж","This job is a great opportunity."],
+["b1","environment","хүрээлэн буй орчин","We must protect the environment."],
+["b1","weather","цаг агаар","The weather is cold today."],
+["b1","schedule","хуваарь","My schedule is full this week."],
+["b1","comfortable","тухтай","This chair is very comfortable."],
+["b1","expensive","үнэтэй","That phone is too expensive."],
+["b1","prefer","илүүд үзэх","I prefer tea to coffee."],
+["b1","suggest","санал болгох","I suggest we leave now."],
+["b1","notice","анзаарах","Did you notice the new sign?"],
+["b1","depend","хамаарах","It depends on the weather."],
+["b1","manage","удирдах, амжуулах","She manages a small team."],
+["b2","reluctant","дурамжхан","He was reluctant to answer."],
+["b2","sustainable","тогтвортой","We need sustainable energy."],
+["b2","ambiguous","хоёрдмол утгатай","The rule is ambiguous."],
+["b2","inevitable","зайлшгүй","Change is inevitable."],
+["b2","resilient","тэсвэртэй, уян хатан","Children are often resilient."],
+["b2","overwhelmed","хэт ачаалалд орсон","I felt overwhelmed by work."],
+["b2","acknowledge","хүлээн зөвшөөрөх","He acknowledged his mistake."],
+["b2","consequence","үр дагавар","Every action has a consequence."],
+["b2","perspective","үзэл бодол, өнцөг","Try to see it from my perspective."],
+["b2","thrive","цэцэглэн хөгжих","Plants thrive in sunlight."],
+["b2","eliminate","арилгах","We aim to eliminate waste."],
+["b2","feasible","хэрэгжих боломжтой","The plan is not feasible."],
+["b2","scarce","ховор, хомс","Water is scarce in the desert."],
+["b2","adapt","дасан зохицох","Animals adapt to their habitat."],
+["b2","substantial","нэлээд их, мэдэгдэхүйц","She made a substantial effort."]
+];
+
+WORDS.push(
+["a1","dog","нохой","The dog runs fast.","🐶","animal"],["a1","cat","муур","The cat sleeps on the sofa.","🐱","animal"],
+["a1","horse","морь","I ride a horse.","🐴","animal"],["a1","cow","үнээ","The cow gives milk.","🐄","animal"],
+["a1","sheep","хонь","The sheep eat grass.","🐑","animal"],["a1","goat","ямаа","The goat is on the hill.","🐐","animal"],
+["a1","camel","тэмээ","The camel lives in the desert.","🐫","animal"],["a1","bird","шувуу","The bird can fly.","🐦","animal"],
+["a1","fish","загас","The fish swims in water.","🐟","animal"],["a1","rabbit","туулай","The rabbit likes carrots.","🐰","animal"],
+["a1","bear","баавгай","The bear is very big.","🐻","animal"],["a1","wolf","чоно","The wolf howls at night.","🐺","animal"],
+["a1","lion","арслан","The lion is the king.","🦁","animal"],["a1","elephant","заан","The elephant has a long nose.","🐘","animal"],
+["a1","monkey","сармагчин","The monkey eats a banana.","🐵","animal"],
+["a1","red","улаан","The apple is red.","🔴","color"],["a1","blue","цэнхэр","The sky is blue.","🔵","color"],
+["a1","green","ногоон","The grass is green.","🟢","color"],["a1","yellow","шар","The sun is yellow.","🟡","color"],
+["a1","black","хар","My cat is black.","⚫","color"],["a1","white","цагаан","The snow is white.","⚪","color"],
+["a1","pink","ягаан","The flower is pink.","🌸","color"],["a1","orange","улбар шар","I like orange juice.","🟠","color"],
+["a1","one","нэг","I have one book.","1️⃣","number"],["a1","two","хоёр","I have two eyes.","2️⃣","number"],
+["a1","three","гурав","Three cats are here.","3️⃣","number"],["a1","four","дөрөв","A dog has four legs.","4️⃣","number"],
+["a1","five","тав","I have five fingers.","5️⃣","number"],["a1","ten","арав","I am ten years old.","🔟","number"],
+["a1","apple","алим","I eat an apple.","🍎","food"],["a1","banana","гадил","Monkeys like bananas.","🍌","food"],
+["a1","milk","сүү","I drink milk.","🥛","food"],["a1","bread","талх","We eat bread for breakfast.","🍞","food"],
+["a1","egg","өндөг","I have an egg.","🥚","food"],["a1","cake","бялуу","This is my birthday cake.","🎂","food"],
+["a1","ice cream","зайрмаг","I love ice cream.","🍦","food"],["a1","rice","будаа","I eat rice for lunch.","🍚","food"],
+
+["b1","meeting","уулзалт, хурал","We have a meeting at ten.",null,"work"],["b1","deadline","эцсийн хугацаа","The deadline is tomorrow.",null,"work"],
+["b1","colleague","хамт ажиллагч","My colleague helped me.",null,"work"],["b1","salary","цалин","Her salary is good.",null,"work"],
+["b1","manager","менежер, удирдлага","The manager called a meeting.",null,"work"],["b1","task","даалгавар","This task is difficult.",null,"work"],
+["b1","budget","төсөв","We have a small budget.",null,"work"],["b1","client","үйлчлүүлэгч","The client is happy.",null,"work"],
+["b1","attend","оролцох","Will you attend the meeting?",null,"work"],["b1","apply","өргөдөл гаргах","I want to apply for this job.",null,"work"],
+["b1","skill","ур чадвар","Communication is an important skill.",null,"work"],
+["b2","negotiate","хэлэлцээр хийх","We negotiate the price.",null,"work"],["b2","promotion","албан тушаал дэвших","She got a promotion.",null,"work"],
+["b2","resign","огцрох, ажлаасаа гарах","He decided to resign.",null,"work"],["b2","invoice","нэхэмжлэх","Please send the invoice.",null,"work"],
+["a1","passport","гадаад паспорт","Do not forget your passport.",null,"travel"],["a1","ticket","билет","I bought a train ticket.",null,"travel"],
+["a1","airport","нисэх онгоцны буудал","The airport is far from here.",null,"travel"],
+["b1","luggage","ачаа тээш","My luggage is heavy.",null,"travel"],["b1","reservation","захиалга","I have a reservation for two.",null,"travel"],
+["b1","delay","саатал, хойшлох","The flight has a two-hour delay.",null,"travel"],["b1","departure","явах, хөдлөх","The departure is at nine.",null,"travel"],
+["b1","arrive","ирэх","We arrive on Monday.",null,"travel"],["b1","tourist","жуулчин","The tourist took many photos.",null,"travel"],
+["b1","journey","аялал, замын аялал","The journey took five hours.",null,"travel"],["b1","souvenir","дурсгалын зүйл","I bought a souvenir for my mother.",null,"travel"],
+["b1","destination","очих газар","Paris is our final destination.",null,"travel"],["b1","currency","валют","What is the local currency?",null,"travel"],
+["b2","customs","гааль","We passed through customs quickly.",null,"travel"],["b2","accommodation","байр, орон байр","Accommodation is expensive here.",null,"travel"],
+["b2","furthermore","түүнээс гадна, цаашилбал","Furthermore, it saves time.",null,"ielts"],["b2","however","гэсэн хэдий ч","However, not everyone agrees.",null,"ielts"],
+["b2","advantage","давуу тал","The main advantage is speed.",null,"ielts"],["b2","disadvantage","сул тал","One disadvantage is the cost.",null,"ielts"],
+["b2","contribute","хувь нэмэр оруулах","Everyone can contribute to the project.",null,"ielts"],["b2","emphasize","онцлон тэмдэглэх","Teachers emphasize the importance of reading.",null,"ielts"],
+["b2","approach","хандлага, арга барил","We need a new approach.",null,"ielts"],["b2","issue","асуудал","Pollution is a serious issue.",null,"ielts"],
+["b2","significant","чухал, мэдэгдэхүйц","There was a significant change.",null,"ielts"],["b2","evidence","нотолгоо","There is no evidence for this claim.",null,"ielts"],
+["b2","influence","нөлөө","Parents have a strong influence on children.",null,"ielts"],["b2","generate","бий болгох","Wind turbines generate electricity.",null,"ielts"],
+["b2","demonstrate","харуулах, батлах","The study demonstrates the problem.",null,"ielts"],["b2","consequently","иймээс, үр дүнд нь","Consequently, prices went up.",null,"ielts"],
+["b2","according to","-ийн дагуу, ...ын мэдээлснээр","According to the report, sales increased.",null,"ielts"]
+);
+
+var LESSONS=[
+{id:"be",lv:"a1",t:"To be: am, is, are",
+ intro:["Англи хэлэнд өгүүлбэр бүр үйл үгтэй байх ёстой. Монголоор «Би оюутан» гэхэд үйл үг шаардлагагүй ч англиар I am a student гэж хэлнэ.","Үгүйсгэхдээ not нэмнэ (is not = isn't). Асуухдаа үйл үгийг өгүүлэгдэхүүний өмнө гаргана."],
+ rule:"I → am · he / she / it → is · you / we / they → are",
+ ex:[["I am a student.","Би оюутан."],["She is at home.","Тэр гэртээ байна."],["They are not late.","Тэд хоцроогүй."],["Are you ready?","Чи бэлэн үү?"]],
+ q:[["She ___ my sister.",["am","is","are"],1],["We ___ at home.",["is","am","are"],2],["___ you a teacher?",["Are","Is","Am"],0]]},
+{id:"present",lv:"a1",t:"Present Simple: зуршил, үнэн зүйл",
+ intro:["Давтагддаг үйлдэл, зуршил, үнэн зүйлийг хэлэхэд Present Simple ашиглана.","he / she / it-тэй үед үйл үгийн ард -s залгана: work → works.","Үгүйсгэх, асуухдаа do / does ашиглана. does-ийн ард үйл үг үндсэн хэлбэрээрээ үлдэнэ."],
+ rule:"he / she / it + үйл үг-s · don't / doesn't + үйл үг · Do / Does + өгүүлэгдэхүүн + үйл үг?",
+ ex:[["I work every day.","Би өдөр бүр ажилладаг."],["She drinks tea in the morning.","Тэр өглөө цай уудаг."],["He doesn't like coffee.","Тэр кофе таалдаггүй."],["Do you like music?","Чи хөгжим сонирхдог уу?"]],
+ q:[["He ___ coffee every morning.",["drink","drinks","drinking"],1],["I ___ like tea.",["don't","doesn't","isn't"],0],["___ she work here?",["Do","Does","Is"],1]]},
+{id:"articles",lv:"a1",t:"a, an, the",
+ intro:["Монгол хэлэнд артикль байдаггүй ч англи хэлэнд нэр үгийн өмнө a, an, the тавьдаг.","a / an — тодорхойгүй нэг зүйл. Дуудлага нь гийгүүлэгчээр эхэлбэл a, эгшгээр эхэлбэл an (үсэг биш дуудлагаар нь ялгана).","the — ярьж буй хүмүүст тодорхой, өмнө нь дурдсан эсвэл дэлхий дээр цор ганц зүйл."],
+ rule:"a + гийгүүлэгчийн дуудлага (a book, a university) · an + эгшгийн дуудлага (an apple, an hour) · the + тодорхой зүйл",
+ ex:[["I have a dog.","Надад нохой бий."],["She eats an apple.","Тэр алим иддэг."],["The dog is very big.","Тэр нохой маш том."],["The sun is hot today.","Өнөөдөр нар халуун байна."]],
+ q:[["___ sun rises in the east.",["A","An","The"],2],["She is ___ engineer.",["a","an","the"],1],["He studies at ___ university.",["a","an","the"],0]]},
+{id:"perfect",lv:"b1",t:"Past Simple ба Present Perfect",
+ intro:["Past Simple — дууссан, тодорхой өнгөрсөн цагт болсон үйл: yesterday, in 2019, last week.","Present Perfect (have / has + V3) — туршлага эсвэл одоотой холбоотой үр дүн. Хамт хэрэглэдэг үгс: ever, never, already, yet, for, since."],
+ rule:"Past Simple: went, saw · Present Perfect: have / has + gone, been, seen",
+ ex:[["I went to Japan in 2019.","Би 2019 онд Японд очсон."],["I have been to Japan twice.","Би Японд хоёр удаа очиж үзсэн."],["She has lost her keys.","Тэр түлхүүрээ гээчихсэн (одоо ч олоогүй)."]],
+ q:[["I ___ to Japan in 2019.",["went","have been","have gone"],0],["She has ___ her keys, so she can't get in.",["lost","lose","losing"],0],["___ you ever eaten sushi?",["Did","Have","Are"],1]]},
+{id:"compare",lv:"b1",t:"Comparative ба superlative",
+ intro:["Хоёр зүйлийг харьцуулахад comparative, гурав ба түүнээс дээш зүйлээс хамгийн ихийг хэлэхэд superlative хэрэглэнэ.","Богино тэмдэг нэр: -er / -est (big → bigger → the biggest). Урт тэмдэг нэр: more / most (beautiful → more beautiful → the most beautiful).","Онцгой хэлбэр: good → better → the best, bad → worse → the worst."],
+ rule:"-er + than · more + тэмдэг нэр + than · the -est · the most + тэмдэг нэр",
+ ex:[["Mongolia is bigger than Japan.","Монгол улс Японоос том нутагтай."],["This is the most beautiful place I have seen.","Энэ бол миний харсан хамгийн үзэсгэлэнтэй газар."],["Her English is better than mine.","Түүний англи хэл минийхээс илүү сайн."]],
+ q:[["Ulaanbaatar is ___ than Darkhan.",["big","bigger","more big"],1],["This is the ___ book I have read.",["interesting","more interesting","most interesting"],2],["Her English is ___ than mine.",["better","gooder","more good"],0]]},
+{id:"cond1",lv:"b1",t:"First conditional: хэрэв ... бол",
+ intro:["Ирээдүйд бодитоор болж магадгүй нөхцөл, түүний үр дүнг хэлэхэд ашиглана.","If-ийн хэсэгт Present Simple, үр дүнгийн хэсэгт will + үйл үг хэрэглэнэ. If-ийн ард will тавьдаггүй."],
+ rule:"If + Present Simple, will + үйл үг",
+ ex:[["If it rains, we will stay at home.","Хэрэв бороо орвол бид гэртээ үлдэнэ."],["She will call you if she has time.","Тэр цаг гарвал чамд залгана."]],
+ q:[["If it rains, we ___ at home.",["stay","will stay","would stay"],1],["If you ___ hard, you will pass.",["study","will study","studied"],0],["She will call you if she ___ time.",["has","will have","had"],0]]},
+{id:"cond23",lv:"b2",t:"Second ба third conditional",
+ intro:["Second conditional — одоо эсвэл ирээдүйд биелэх магадлал багатай, төсөөллийн нөхцөл.","Third conditional — өнгөрсөнд болоогүй зүйлийн тухай таамаг, харамсал.","Second conditional-д хүн бүрт were хэрэглэдэг (If I were you...)."],
+ rule:"2nd: If + Past Simple, would + үйл үг · 3rd: If + Past Perfect, would have + V3",
+ ex:[["If I had wings, I would fly.","Хэрэв надад далавч байсан бол би нисэх байсан."],["If I had studied, I would have passed.","Хэрэв би хичээллэсэн бол шалгалтад тэнцэх байсан."]],
+ q:[["If I ___ more time, I would learn Chinese.",["have","had","would have"],1],["If she had left earlier, she ___ the train.",["would catch","would have caught","will catch"],1],["If I ___ you, I would apologize.",["am","was","were"],2]]},
+{id:"passive",lv:"b2",t:"Passive voice: үйлдлийг хүлээн авагч",
+ intro:["Үйлдэл хийгч хүн чухал биш эсвэл мэдэгдэхгүй, харин үйлдлийг хүлээн авагч нь чухал үед passive ашиглана.","Бүтэц: be + V3. Цагийг be үйл үгээр нь өөрчилнө."],
+ rule:"is / are + V3 · was / were + V3 · has / have been + V3 · can / must be + V3",
+ ex:[["The bridge was built in 1998.","Гүүрийг 1998 онд барьсан."],["English is spoken all over the world.","Англи хэлээр дэлхий даяар ярьдаг."],["The report must be finished by Friday.","Тайланг баасан гаригаас өмнө дуусгах ёстой."]],
+ q:[["The bridge ___ in 1998.",["built","was built","has built"],1],["English ___ all over the world.",["speaks","is spoken","is speaking"],1],["The report must ___ by Friday.",["finish","be finished","finished"],1]]},
+{id:"relative",lv:"b2",t:"Relative clause: who, which, whose, where",
+ intro:["Relative clause нь нэр үгийг тайлбарлаж, хоёр өгүүлбэрийг нэг болгодог.","who — хүн, which — юм, that — хоёуланд (тодорхойлох өгүүлбэрт), whose — эзэмшил, where — газар."],
+ rule:"who (хүн) · which (юм) · whose (эзэмшил) · where (газар)",
+ ex:[["The man who called you is my teacher.","Танд залгасан хүн миний багш."],["This is the city where I was born.","Энэ бол миний төрсөн хот."],["My friend, whose brother is a pilot, lives in Seoul.","Ах нь нисгэгч миний найз Сөүлд амьдардаг."]],
+ q:[["The woman ___ lives next door is a doctor.",["which","who","whose"],1],["This is the city ___ I was born.",["where","which","who"],0],["My friend, ___ brother is a pilot, lives in Seoul.",["who","whose","which"],1]]}
+];
+
+var EXTRA={
+be:{o:["We are good friends"],f:[["He ___ a doctor. (am / is / are)","is"]]},
+present:{o:["She drinks tea every morning"],f:[["My father ___ (work) in a bank.","works"]]},
+articles:{o:["I have a big dog"],f:[["I saw ___ elephant at the zoo. (a / an / the)","an"]]},
+perfect:{o:["I have never been to Paris"],f:[["She ___ (go) to London last year.","went"]]},
+compare:{o:["This book is more interesting than that one"],f:[["Winter is ___ (cold) than autumn.","colder"]]},
+cond1:{o:["If you study hard you will pass"],f:[["If she ___ (come), we will start.","comes"]]},
+cond23:{o:["If I were rich I would travel the world"],f:[["If I won the lottery, I ___ buy a house. (would / will)","would"]]},
+passive:{o:["The letter was written yesterday"],f:[["The window ___ (break) by the boy. (past)","was broken"]]},
+relative:{o:["The man who called you is my teacher"],f:[["This is the book ___ I told you about. (who / which)","which"]]}
+};
+LESSONS.forEach(function(l){var e=EXTRA[l.id];if(e){l.o=e.o;l.f=e.f;}});
+function lessonTotal(l){return l.q.length+(l.o||[]).length+(l.f||[]).length;}
+
+var SCEN=[
+["free","Чөлөөт яриа","a friendly conversation partner who chats about the learner's day, hobbies and plans"],
+["cafe","Кафед захиалга өгөх","a barista at a busy café taking the learner's order"],
+["travel","Аялал, зочид буудал","a hotel receptionist helping a traveller check in and asking about their trip"],
+["interview","Ажлын ярилцлага","a friendly interviewer running a job interview for an office position","adult"],
+["ielts","IELTS ярианы дасгал","an IELTS Speaking examiner asking Part 1 style questions about everyday topics, one at a time","adult"]
+,
+["work","Ажлын уулзалт","a colleague at a workplace chatting before and during a team meeting","adult"],
+["zoo","Амьтны хүрээлэнд","a cheerful zoo guide talking with a child about the animals they can see","kid"],
+["toys","Тоглоомын дэлгүүр","a kind shop assistant in a toy store chatting with a child about their favourite toys","kid"]
+];
+var KID_CATS=[["all","Бүгд"],["animal","🐾 Амьтан"],["color","🎨 Өнгө"],["number","🔢 Тоо"],["food","🍎 Хоол"]];
+var ADULT_CATS=[["all","Бүгд"],["work","💼 Ажил"],["travel","✈️ Аялал"],["ielts","🎓 IELTS"]];
+var KID_SET=["animal","color","number","food"];
+var LVDESC={
+a1:"CEFR A1-A2: very simple words, short sentences, mostly present tense",
+b1:"CEFR B1: everyday vocabulary and clear, medium-length sentences",
+b2:"CEFR B2: natural, richer vocabulary and common idioms"
+};
+
+/* ---------- storage ---------- */
+function sget(k,d){try{var v=localStorage.getItem("salkhi:"+k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function sset(k,v){try{localStorage.setItem("salkhi:"+k,JSON.stringify(v));}catch(e){}}
+
+var state={
+  level:sget("level","all"), tab:"words",
+  box:sget("box",{}), xp:sget("xp",0), daily:sget("daily",{}),
+  lessons:sget("lessons",{}), chatCount:sget("chat",0), mode:sget("mode","adult"),
+  apiKey:sget("apikey",""), stars:sget("stars",0), listenOk:sget("listenOk",0), goal:sget("goal",20), theme:sget("theme","auto"), cat:"all"
+};
+if(state.mode!=="kid")state.mode="adult";
+document.documentElement.setAttribute("data-mode",state.mode);
+var ui={
+  vocab:{mode:"card",cur:null,flipped:false,quiz:null,pop:false},
+  grammar:{lesson:null,stage:"read",qs:[],qi:0,score:0,picked:null,built:[]},
+  chat:{started:false,scn:null,rules:"",msgs:[],busy:false,ctl:null,error:"",draft:""},
+  listen:{cur:null,opts:[],picked:null},
+  resetArmed:false
+};
+
+/* ---------- helpers ---------- */
+function h(tag,props){
+  var el=document.createElement(tag);
+  if(props){for(var k in props){var v=props[k];
+    if(k==="class")el.className=v;
+    else if(k.indexOf("on")===0)el.addEventListener(k.slice(2),v);
+    else if(v===true)el.setAttribute(k,"");
+    else if(v!==false&&v!=null)el.setAttribute(k,v);}}
+  for(var i=2;i<arguments.length;i++){append(el,arguments[i]);}
+  return el;
+}
+function append(el,kid){
+  if(kid==null||kid===false)return;
+  if(Array.isArray(kid)){kid.forEach(function(x){append(el,x);});return;}
+  el.append(kid.nodeType?kid:document.createTextNode(String(kid)));
+}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function dkey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function speak(t){try{if(!("speechSynthesis" in window))return;speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.9;speechSynthesis.speak(u);}catch(e){}}
+function effLevel(){return state.mode==="kid"?"a1":state.level;}
+var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+function toast(t){
+  var old=document.getElementById("toast");if(old)old.remove();
+  var e=h("div",{class:"toast",id:"toast",role:"status"},t);document.body.append(e);
+  setTimeout(function(){e.remove();},2800);
+}
+function celebrate(big,force){
+  if(reduce||(state.mode!=="kid"&&!force))return;
+  var em=["⭐","🌟","✨","🎉"],n=big?22:7;
+  for(var i=0;i<n;i++){(function(i){
+    var st=h("span",{class:"star","aria-hidden":"true",style:"left:"+(8+Math.random()*84)+"%;animation-delay:"+(i*35)+"ms"},em[i%4]);
+    document.body.append(st);setTimeout(function(){st.remove();},1500+i*35);
+  })(i);}
+}
+function addStar(){state.stars++;sset("stars",state.stars);renderStrip();}
+function todayXP(){return state.daily[dkey(new Date())]||0;}
+function ringEl(pct,size,sw){
+  var r=(size-sw)/2,c=2*Math.PI*r,d=c*Math.min(1,pct),m=size/2,e=h("span",{class:"mini"});
+  e.innerHTML='<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" aria-hidden="true"><circle cx="'+m+'" cy="'+m+'" r="'+r+'" fill="none" stroke="var(--line)" stroke-width="'+sw+'"/><circle cx="'+m+'" cy="'+m+'" r="'+r+'" fill="none" stroke="var(--neon)" stroke-width="'+sw+'" stroke-linecap="round" stroke-dasharray="'+d+' '+c+'"/></svg>';
+  return e;
+}
+function addXP(n){
+  var k=dkey(new Date()),before=state.daily[k]||0;
+  state.xp+=n;state.daily[k]=before+n;
+  sset("xp",state.xp);sset("daily",state.daily);renderStrip();
+  if(before<state.goal&&before+n>=state.goal){toast("🎯 Өдрийн зорилго биелэв!");celebrate(true,true);}
+}
+function streak(){
+  var n=0,d=new Date();
+  if(!(state.daily[dkey(d)]>0))d.setDate(d.getDate()-1);
+  while(state.daily[dkey(d)]>0){n++;d.setDate(d.getDate()-1);}
+  return n;
+}
+function meshSvg(){
+  var s=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  s.setAttribute("class","mesh");s.setAttribute("aria-hidden","true");
+  s.innerHTML='<rect width="100%" height="100%" fill="url(#hex)"/>';
+  return s;
+}
+
+/* ---------- chrome ---------- */
+var elMain=document.getElementById("main");
+function renderStrip(){
+  var s=document.getElementById("strip");s.textContent="";
+  s.append(h("div",{class:"stat"},h("b",null,String(state.xp)),"XP"));
+  s.append(h("div",{class:"stat"},h("b",null,String(streak())),"өдөр дараалан"));
+  s.append(h("div",{class:"stat","aria-label":"Өдрийн зорилго "+todayXP()+" / "+state.goal+" XP"},ringEl(todayXP()/state.goal,20,4),todayXP()+"/"+state.goal));
+  if(state.mode==="kid")s.append(h("div",{class:"stat"},"⭐ "+state.stars));
+}
+function renderLevels(){
+  var el=document.getElementById("levels");el.textContent="";
+  LEVELS.forEach(function(l){
+    el.append(h("button",{class:"lv","aria-pressed":String(state.level===l[0]),onclick:function(){
+      state.level=l[0];sset("level",l[0]);
+      ui.vocab.cur=null;ui.vocab.quiz=null;ui.vocab.flipped=false;ui.grammar.lesson=null;ui.listen.cur=null;
+      renderLevels();render();
+    }},l[1]));
+  });
+}
+function renderModes(){
+  var el=document.getElementById("modes");el.textContent="";
+  [["adult","Том хүн"],["kid","Хүүхэд"]].forEach(function(m){
+    el.append(h("button",{"aria-pressed":String(state.mode===m[0]),onclick:function(){
+      state.mode=m[0];sset("mode",m[0]);document.documentElement.setAttribute("data-mode",m[0]);
+      state.cat="all";ui.vocab.cur=null;ui.vocab.quiz=null;ui.vocab.flipped=false;ui.listen.cur=null;ui.grammar.lesson=null;
+      renderModes();renderStrip();render();
+    }},m[1]));
+  });
+}
+var THEMES=["auto","light","dark"],TICON={auto:"🌓",light:"☀️",dark:"🌙"},TNAME={auto:"автомат",light:"цайвар",dark:"харанхуй"};
+function applyTheme(){
+  if(THEMES.indexOf(state.theme)<0)state.theme="auto";
+  var r=document.documentElement,b=document.getElementById("themebtn");
+  if(state.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",state.theme);
+  b.textContent=TICON[state.theme];b.setAttribute("aria-label","Загвар: "+TNAME[state.theme]);
+}
+document.getElementById("themebtn").addEventListener("click",function(){
+  state.theme=THEMES[(THEMES.indexOf(state.theme)+1)%3];sset("theme",state.theme);applyTheme();
+});
+function renderTabs(){
+  var el=document.getElementById("tabs");el.textContent="";
+  [["words","Үгс"],["grammar","Дүрэм"],["listen","Сонсох"],["chat","Ярих"],["stats","Явц"]].forEach(function(t){
+    el.append(h("button",{class:"tab","aria-current":state.tab===t[0]?"page":null,onclick:function(){
+      state.tab=t[0];renderTabs();render();window.scrollTo(0,0);
+    }},t[1]));
+  });
+}
+function render(){
+  elMain.textContent="";
+  if(state.tab==="words")elMain.append(viewWords());
+  else if(state.tab==="grammar")elMain.append(viewGrammar());
+  else if(state.tab==="listen")elMain.append(viewListen());
+  else if(state.tab==="chat")elMain.append(viewChat());
+  else elMain.append(viewStats());
+}
+
+/* ---------- vocabulary ---------- */
+function pool(){
+  var lv=effLevel(),kid=state.mode==="kid";
+  return WORDS.filter(function(w){
+    var inKid=KID_SET.indexOf(w[5])>=0;
+    if(kid?!(inKid||(!w[5]&&w[0]==="a1")):inKid)return false;
+    if(state.cat!=="all"&&w[5]!==state.cat)return false;
+    return lv==="all"||w[0]===lv;
+  });
+}
+function modeWords(){
+  var kid=state.mode==="kid";
+  return WORDS.filter(function(w){var k=KID_SET.indexOf(w[5])>=0;return kid?(k||(!w[5]&&w[0]==="a1")):!k;});
+}
+function catChips(){
+  var list=state.mode==="kid"?KID_CATS:ADULT_CATS,el=h("div",{class:"chips",role:"group","aria-label":"Ангилал"});
+  list.forEach(function(c){
+    el.append(h("button",{class:"lv","aria-pressed":String(state.cat===c[0]),onclick:function(){
+      state.cat=c[0];ui.vocab.cur=null;ui.vocab.quiz=null;ui.vocab.flipped=false;ui.listen.cur=null;render();
+    }},c[1]));
+  });
+  return el;
+}
+function emptyNote(){return h("div",{class:"note"},"Энэ шүүлтүүрт тохирох үг алга. Өөр түвшин эсвэл ангилал сонгоно уу.");}
+function pickWord(exclude){
+  var p=pool().filter(function(w){return w[1]!==exclude;});
+  if(!p.length)return pool()[0];
+  var wt=p.map(function(w){return 1/Math.pow(1+(state.box[w[1]]||0),2);});
+  var r=Math.random()*wt.reduce(function(a,b){return a+b;},0);
+  for(var i=0;i<p.length;i++){r-=wt[i];if(r<=0)return p[i];}
+  return p[p.length-1];
+}
+function grade(w,ok){
+  var b=state.box[w[1]]||0;state.box[w[1]]=ok?Math.min(b+1,4):0;sset("box",state.box);
+  addXP(ok?5:1);
+  if(ok){addStar();celebrate();}
+}
+function buildQuiz(w){
+  var src=pool().length>=4?pool():modeWords();
+  var others=shuffle(src.filter(function(x){return x[1]!==w[1]&&x[2]!==w[2];})).slice(0,3).map(function(x){return x[2];});
+  return {word:w,opts:shuffle([w[2]].concat(others)),picked:null};
+}
+function viewWords(){
+  var v=ui.vocab,p=pool(),root=h("div");
+  if(!p.length){root.append(catChips(),emptyNote());return root;}
+  if(!v.cur||p.indexOf(v.cur)<0){v.cur=pickWord();v.flipped=false;v.quiz=null;}
+  var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
+  root.append(h("div",{class:"seg",role:"group","aria-label":"Горим"},
+    h("button",{"aria-pressed":String(v.mode==="card"),onclick:function(){v.mode="card";v.flipped=false;render();}},"Карт"),
+    h("button",{"aria-pressed":String(v.mode==="quiz"),onclick:function(){v.mode="quiz";v.quiz=null;render();}},"Тест")));
+
+  root.append(catChips());
+  if(v.mode==="card"){
+    var w=v.cur;
+    var card=h("div",{class:"fc"+(v.pop?" pop":""),role:"button",tabindex:"0","aria-label":v.flipped?"Англи үг рүү буцах":"Орчуулгыг харах",onclick:flip,onkeydown:function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();flip();}}},meshSvg());
+    v.pop=false;
+    var emo=(state.mode==="kid"&&w[4])?h("div",{class:"emo","aria-hidden":"true"},w[4]):null;
+    if(!v.flipped){
+      card.append(emo,h("div",{class:"en"},w[1]),h("div",{class:"hint"},"Дарж орчуулгыг харах"));
+    }else{
+      card.append(emo,h("div",{class:"mn"},w[2]),h("div",{class:"ex"},w[3]));
+    }
+    root.append(card);
+    root.append(h("div",{class:"row"},
+      h("button",{class:"btn",onclick:function(){speak(w[1]);}},"Сонсох"),
+      h("button",{class:"btn",onclick:function(){speak(w[3]);}},"Өгүүлбэр сонсох")));
+    if(v.flipped){
+      root.append(h("div",{class:"row"},
+        h("button",{class:"btn",onclick:function(){next(false);}},"Дахин үзнэ"),
+        h("button",{class:"btn primary",onclick:function(){next(true);}},"Мэднэ")));
+    }
+  }else{
+    if(!v.quiz)v.quiz=buildQuiz(v.cur);
+    var qz=v.quiz;
+    root.append(h("p",{class:"muted small"},"Энэ үгийн орчуулга аль нь вэ?"));
+    if(state.mode==="kid"&&qz.word[4])root.append(h("div",{class:"emo"},qz.word[4]));
+    root.append(h("div",{class:"en",style:"margin:6px 0 4px"},qz.word[1]));
+    qz.opts.forEach(function(o){
+      var cls="opt";
+      if(qz.picked!=null){if(o===qz.word[2])cls+=" ok";else if(o===qz.picked)cls+=" bad";}
+      root.append(h("button",{class:cls,disabled:qz.picked!=null,onclick:function(){
+        qz.picked=o;grade(qz.word,o===qz.word[2]);render();
+      }},o));
+    });
+    if(qz.picked!=null){
+      var ok=qz.picked===qz.word[2];
+      root.append(h("div",{class:"fb "+(ok?"ok":"bad")},ok?"Зөв! +5 XP":"Буруу. Зөв хариулт: "+qz.word[2]));
+      root.append(h("p",{class:"muted",style:"margin-top:6px"},qz.word[3]));
+      root.append(h("div",{class:"row"},
+        h("button",{class:"btn",onclick:function(){speak(qz.word[1]);}},"Сонсох"),
+        h("button",{class:"btn primary",onclick:function(){v.cur=pickWord(v.cur[1]);v.quiz=null;render();}},"Дараагийн үг")));
+    }
+  }
+  root.append(h("div",{style:"margin-top:22px"},
+    h("div",{class:"muted small"},"Мэддэг үг: "+known+" / "+p.length),
+    h("div",{class:"bar"},h("i",{style:"width:"+(p.length?Math.round(known/p.length*100):0)+"%"}))));
+  return root;
+
+  function flip(){v.flipped=!v.flipped;v.pop=true;render();}
+  function next(ok){grade(v.cur,ok);v.cur=pickWord(v.cur[1]);v.flipped=false;render();}
+}
+
+/* ---------- grammar ---------- */
+function norm(s){return String(s).toLowerCase().replace(/[.,!?]/g,"").replace(/\s+/g," ").trim();}
+function buildQs(L){
+  var qs=L.q.map(function(q){return {type:"mc",q:q[0],o:shuffle(q[1]),a:q[1][q[2]]};});
+  (L.o||[]).forEach(function(t){
+    var w=t.split(" "),sh=shuffle(w),n=0;
+    while(sh.join(" ")===t&&n++<5)sh=shuffle(w);
+    qs.push({type:"order",words:sh,sentence:t});
+  });
+  (L.f||[]).forEach(function(f){qs.push({type:"type",q:f[0],a:f[1]});});
+  return qs;
+}
+function viewQuestion(root,g,L){
+  var q=g.qs[g.qi],answered=g.picked!=null,ok=false,ans=q.type==="order"?q.sentence:q.a;
+  root.append(h("p",{class:"muted small"},L.t+" · "+(g.qi+1)+" / "+g.qs.length));
+  function mark(good){if(good){g.score++;addStar();celebrate();}render();}
+  if(q.type==="order"){
+    root.append(h("div",{class:"q"},"Үгсийг зөв дарааллаар байрлуулж өгүүлбэр бүтээ"));
+    var built=h("div",{class:"built"});
+    g.built.forEach(function(i,pos){built.append(h("button",{class:"chip",disabled:answered,onclick:function(){g.built.splice(pos,1);render();}},q.words[i]));});
+    if(!g.built.length)built.append(h("span",{class:"muted small"},"Доорх үгсийг дарж өгүүлбэр бүтээ"));
+    root.append(built);
+    var bank=h("div",{class:"bank"});
+    q.words.forEach(function(w,i){if(g.built.indexOf(i)<0)bank.append(h("button",{class:"chip",disabled:answered,onclick:function(){g.built.push(i);render();}},w));});
+    root.append(bank);
+    if(!answered){root.append(h("div",{class:"row"},h("button",{class:"btn primary",disabled:g.built.length!==q.words.length,onclick:function(){
+      g.picked=g.built.map(function(i){return q.words[i];}).join(" ");mark(g.picked===q.sentence);
+    }},"Шалгах")));}
+    ok=answered&&g.picked===q.sentence;
+  }else if(q.type==="type"){
+    root.append(h("div",{class:"q"},q.q));
+    var inp=h("input",{class:"tin",type:"text",autocomplete:"off",autocapitalize:"off",spellcheck:"false","aria-label":"Хариулт",placeholder:"Хариултаа бич",disabled:answered});
+    if(answered)inp.value=g.picked;
+    var submit=function(){var v=inp.value.trim();if(!v)return;g.picked=v;mark(norm(v)===norm(q.a));};
+    inp.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();submit();}});
+    root.append(inp);
+    if(!answered){root.append(h("div",{class:"row"},h("button",{class:"btn primary",onclick:submit},"Шалгах")));setTimeout(function(){inp.focus();},0);}
+    ok=answered&&norm(g.picked)===norm(q.a);
+  }else{
+    root.append(h("div",{class:"q"},q.q));
+    q.o.forEach(function(o){
+      var cls="opt";
+      if(answered){if(o===q.a)cls+=" ok";else if(o===g.picked)cls+=" bad";}
+      root.append(h("button",{class:cls,disabled:answered,onclick:function(){g.picked=o;mark(o===q.a);}},o));
+    });
+    ok=answered&&g.picked===q.a;
+  }
+  if(answered){
+    root.append(h("div",{class:"fb "+(ok?"ok":"bad")},ok?"Зөв!":"Буруу. Зөв хариулт: "+ans));
+    root.append(h("div",{class:"row"},h("button",{class:"btn primary",onclick:function(){g.qi++;g.picked=null;g.built=[];render();}},g.qi+1<g.qs.length?"Дараагийн асуулт":"Дүн харах")));
+  }
+}
+function viewGrammar(){
+  var g=ui.grammar,root=h("div");
+  if(g.lesson){
+    var L=g.lesson;
+    root.append(h("button",{class:"back",onclick:function(){g.lesson=null;render();}},"‹ Хичээлүүд"));
+    if(g.stage==="read"){
+      root.append(h("h2",null,L.t));
+      L.intro.forEach(function(t){root.append(h("p",null,t));});
+      root.append(h("div",{class:"rule"},L.rule));
+      root.append(h("p",{class:"muted small"},"Жишээ"));
+      var ul=h("ul",{class:"exl"});
+      L.ex.forEach(function(e){ul.append(h("li",null,h("b",null,e[0]),h("span",{class:"muted"},e[1])));});
+      root.append(ul);
+      root.append(h("div",{class:"row"},
+        h("button",{class:"btn primary",onclick:function(){
+          g.stage="quiz";g.qs=buildQs(L);g.qi=0;g.score=0;g.picked=null;g.built=[];render();window.scrollTo(0,0);
+        }},"Тест өгөх")));
+    }else if(g.qi<g.qs.length){
+      viewQuestion(root,g,L);
+    }else{
+      var total=g.qs.length,best=Math.max(state.lessons[L.id]||0,g.score);
+      if(!g.saved){g.saved=true;if(g.score===total)celebrate(true,true);state.lessons[L.id]=best;sset("lessons",state.lessons);addXP(g.score*10);renderStrip();}
+      root.append(h("h2",null,g.score+" / "+total));
+      root.append(h("p",null,g.score===total?"Гайхалтай! Энэ хичээлийг сайн эзэмшлээ.":"Дүрмийг дахин уншаад тестийг давтаж үзээрэй."));
+      root.append(h("p",{class:"muted"},"+"+(g.score*10)+" XP"));
+      root.append(h("div",{class:"row"},
+        h("button",{class:"btn",onclick:function(){g.stage="read";g.saved=false;render();}},"Дүрэм унших"),
+        h("button",{class:"btn primary",onclick:function(){g.lesson=null;g.saved=false;render();}},"Жагсаалт")));
+    }
+    return root;
+  }
+  root.append(h("h2",null,"Дүрмийн хичээл"));
+  root.append(h("p",{class:"muted"},"Монгол тайлбартай богино хичээл, дараа нь 5 асуулттай тест (сонголт, өгүүлбэр бүтээх, нөхөх)."));
+  var list=LESSONS.filter(function(l){return effLevel()==="all"||l.lv===effLevel();});
+  var wrap=h("div",{style:"margin-top:8px"});
+  list.forEach(function(l){
+    var done=state.lessons[l.id]!=null;
+    wrap.append(h("button",{class:"lrow",onclick:function(){g.lesson=l;g.stage="read";g.saved=false;render();window.scrollTo(0,0);}},
+      h("span",{class:"hexb"+(done?" done":"")},LV_LABEL[l.lv]),
+      h("span",null,h("div",{class:"t"},l.t),h("div",{class:"muted small"},done?("Хамгийн сайн дүн: "+state.lessons[l.id]+" / "+lessonTotal(l)):LV_NAME[l.lv]))));
+  });
+  root.append(wrap);
+  return root;
+}
+
+/* ---------- listening ---------- */
+function newListen(p){
+  var l=ui.listen,cur=pickWord(l.cur?l.cur[1]:null);
+  l.cur=cur;var src=p.length>=4?p:modeWords();
+  l.opts=shuffle([cur].concat(shuffle(src.filter(function(x){return x!==cur&&x[2]!==cur[2];})).slice(0,3)));l.picked=null;
+  setTimeout(function(){speak(cur[1]);},300);
+}
+function viewListen(){
+  var l=ui.listen,p=pool(),root=h("div");
+  root.append(h("h2",null,"Сонсоод ол"));
+  root.append(catChips());
+  if(!p.length){root.append(emptyNote());return root;}
+  if(!l.cur||p.indexOf(l.cur)<0)newListen(p);
+  root.append(h("p",{class:"muted"},"Үгийг сонсоод зөв хувилбарыг сонго."));
+  root.append(h("button",{class:"btn primary",style:"width:100%;margin:8px 0 4px;font-size:20px",onclick:function(){speak(l.cur[1]);}},"🔊 Сонсох"));
+  l.opts.forEach(function(w){
+    var cls="opt";
+    if(l.picked!=null){if(w===l.cur)cls+=" ok";else if(w===l.picked)cls+=" bad";}
+    root.append(h("button",{class:cls,disabled:l.picked!=null,onclick:function(){
+      l.picked=w;var ok=w===l.cur;grade(l.cur,ok);
+      if(ok){state.listenOk++;sset("listenOk",state.listenOk);}
+      render();
+    }},(state.mode==="kid"&&w[4]?w[4]+"  ":"")+w[1]));
+  });
+  if(l.picked!=null){
+    var ok=l.picked===l.cur;
+    root.append(h("div",{class:"fb "+(ok?"ok":"bad")},ok?"Зөв! +5 XP":"Буруу. Зөв хариулт: "+l.cur[1]));
+    root.append(h("p",{class:"muted",style:"margin-top:6px"},l.cur[2]+" · "+l.cur[3]));
+    root.append(h("div",{class:"row"},h("button",{class:"btn primary",onclick:function(){newListen(p);render();}},"Дараагийн үг")));
+  }
+  return root;
+}
+
+/* ---------- speaking ---------- */
+var sample=null,sampleReady=false;
+var sampleP=(window.claude&&typeof window.claude.use==="function")?window.claude.use("sample").catch(function(){return null;}):Promise.resolve(null);
+sampleP.then(function(s){sample=s;sampleReady=true;if(state.tab==="chat"&&!ui.chat.started)render();});
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+
+var MODEL="claude-haiku-4-5-20251001";
+function chatAvailable(){return true;}
+var SCRIPTS={
+free:[["Hi! How are you today?","I am fine, thank you."],["What do you like to do in your free time?","I like to read books."],["What is your favorite food?","My favorite food is pizza."],["What do you do every morning?","I drink tea and go to work."],["What will you do this weekend?","I will visit my family."]],
+cafe:[["Welcome! What would you like to order?","I would like a coffee, please."],["Would you like it hot or cold?","Hot, please."],["Anything to eat with that?","Yes, a piece of cake, please."],["That will be five dollars. Is that okay?","Yes, here you are."],["Would you like to sit inside or outside?","Inside, please."]],
+travel:[["Good evening! Do you have a reservation?","Yes, my name is Bat."],["How many nights will you stay?","I will stay for three nights."],["Would you like a room with a view?","Yes, please."],["What time would you like breakfast?","At eight o'clock, please."],["Is there anything else I can help you with?","Where can I find a taxi?"]],
+interview:[["Thank you for coming. Can you tell me about yourself?","I am a student and I like teamwork."],["Why do you want this job?","I want to learn new skills."],["What is your biggest strength?","I am hardworking."],["Can you work in a team?","Yes, I enjoy working with people."],["Do you have any questions for us?","When can I start?"]],
+ielts:[["Let's talk about your hometown. Where are you from?","I am from Ulaanbaatar."],["What do you like most about your hometown?","I like the people."],["Do you work or are you a student?","I am a student."],["What do you do in your free time?","I usually play sports."],["Do you prefer to stay at home or go out?","I prefer to go out with friends."]],
+work:[["Good morning! Are you ready for the meeting?","Yes, I am ready."],["What did you do yesterday?","I finished my report."],["What is the deadline for your project?","The deadline is Friday."],["Do you need any help with it?","Yes, could you check my report?"],["Great. Shall we schedule another meeting?","Yes, next Monday is good."]],
+zoo:[["Hello! Welcome to the zoo. What is your name?","My name is Bat."],["What is your favorite animal?","I like lions."],["What color is the lion?","The lion is yellow."],["How many legs does a dog have?","A dog has four legs."],["Do you want to feed the rabbit?","Yes, I do!"]],
+toys:[["Hello! What toy do you like?","I like a car."],["What color is your toy?","It is red."],["How many toys do you have?","I have five toys."],["Do you like to play with friends?","Yes, I do."],["Which toy do you want to buy today?","I want the teddy bear."]]
+};
+var REACT=["Nice!","Great!","I see.","Good answer!","Cool!","That sounds good."];
+function offlineFix(t){
+  var m;
+  if(/^[a-z]/.test(t))return "Өгүүлбэрийг том үсгээр эхлүүл: "+t.charAt(0).toUpperCase()+t.slice(1);
+  if(/(^|\s)i(\s|'|$)/.test(t))return "Англи хэлэнд «I» үргэлж том үсгээр бичигдэнэ.";
+  if(/\bI (is|are)\b/.test(t))return "«I»-тэй үед am хэрэглэнэ: I am ...";
+  if((m=t.match(/\b(he|she|it) (are|am)\b/i)))return "«"+m[1]+"»-тэй үед is хэрэглэнэ: "+m[1]+" is ...";
+  if((m=t.match(/\b(you|we|they) (is|am)\b/i)))return "«"+m[1]+"»-тэй үед are хэрэглэнэ: "+m[1]+" are ...";
+  if(/\bI am agree\b/i.test(t))return "«I agree» гэж хэлнэ, am хэрэггүй.";
+  if((m=t.match(/\b(he|she|it) (go|eat|like|want|have|drink|work|live|play|study|need|love|read|watch)\b/i)))return "«"+m[1]+"»-тэй үед үйл үгийн ард -s залгана (goes, likes, has ...).";
+  if((m=t.match(/\ba (apple|egg|orange|hour|umbrella|elephant|animal|old|interesting)\b/i)))return "Эгшгийн дуудлагатай үгийн өмнө an хэрэглэнэ: an "+m[1];
+  if((m=t.match(/\ban (dog|cat|car|book|toy|coffee|lion|rabbit|friend|student|teacher|big|small)\b/i)))return "Гийгүүлэгчийн дуудлагатай үгийн өмнө a хэрэглэнэ: a "+m[1];
+  return "";
+}
+function offlineReply(turns){
+  var c=ui.chat,sc=SCRIPTS[c.scn]||SCRIPTS.free;
+  if(turns.length===1){c.step=0;return {text:sc[0][0]};}
+  if(c.step>=sc.length)return {text:"We finished this chat. Press the new chat button to try another situation."};
+  var t=turns[turns.length-1].content;
+  if(/[\u0400-\u04FF]/.test(t)){
+    return {text:"Let's try in English! "+sc[c.step][0]+"\n###\nАнглиар бичиж үзээрэй. Жишээ хариулт: "+sc[c.step][1]};
+  }
+  var fix=offlineFix(t),out;
+  c.step++;
+  if(c.step<sc.length)out=REACT[Math.floor(Math.random()*REACT.length)]+" "+sc[c.step][0];
+  else out="Well done! That was a good practice. Choose another situation to keep going.";
+  return {text:out+(fix?"\n###\n"+fix:"")};
+}
+function callDirect(turns,opts){
+  return fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",signal:opts.signal,
+    headers:{"content-type":"application/json","x-api-key":state.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:MODEL,max_tokens:500,stream:true,messages:turns})
+  }).then(function(res){
+    if(!res.ok){throw {code:res.status===401||res.status===403?"bad_key":res.status===429?"rate_limited":"api_error"};}
+    var reader=res.body.getReader(),dec=new TextDecoder(),buf="",text="";
+    function pump(){
+      return reader.read().then(function(r){
+        if(r.done)return {text:text};
+        buf+=dec.decode(r.value,{stream:true});
+        var lines=buf.split("\n");buf=lines.pop();
+        lines.forEach(function(l){
+          if(l.indexOf("data:")!==0)return;
+          try{var ev=JSON.parse(l.slice(5));
+            if(ev.type==="content_block_delta"&&ev.delta&&ev.delta.text){text+=ev.delta.text;opts.onText({text:text});}
+          }catch(e){}
+        });
+        return pump();
+      });
+    }
+    return pump();
+  }).catch(function(e){
+    if(e&&e.code)throw e;
+    if(e&&e.name==="AbortError")throw {code:"cancelled",text:""};
+    throw {code:"network"};
+  });
+}
+var CLAUDE_URL="https://claude.ai/artifact/VFYAp4jRRr8LxQQCXF6XKU";
+function keyBox(){
+  var box=h("div",{class:"note"});
+  box.append(h("p",{style:"margin-bottom:10px"},"Түлхүүргүйгээр бэлэн асуултын горимоор ярьж болно (энгийн алдааг монголоор засна). Бүрэн AI яриа хүсвэл доорхыг ашиглана."));
+  box.append(h("a",{class:"btn primary",href:CLAUDE_URL,target:"_blank",rel:"noopener",style:"display:block;text-decoration:none;margin-bottom:12px"},"Claude дотор нээх (түлхүүр шаардахгүй)"));
+  if(state.apiKey){
+    box.append(h("p",null,"AI яриа шууд ажиллана: Anthropic API түлхүүр хадгалагдсан."),
+      h("button",{class:"btn ghost",style:"margin-top:8px",onclick:function(){state.apiKey="";sset("apikey","");render();}},"Түлхүүр устгах"));
+  }else{
+    var inp=h("input",{class:"tin",type:"password",id:"apikey",placeholder:"sk-ant-...",autocomplete:"off","aria-label":"Anthropic API түлхүүр"});
+    box.append(h("p",null,"Эсвэл өөрийн Anthropic API түлхүүрээр энд шууд ярьж болно (console.anthropic.com). Түлхүүр зөвхөн энэ хөтөч дээр хадгалагдана, хэрэглээний төлбөрийг таны бүртгэл хариуцна."),inp,
+      h("button",{class:"btn primary",style:"margin-top:8px",onclick:function(){var v=inp.value.trim();if(!v)return;state.apiKey=v;sset("apikey",v);render();}},"Хадгалах"));
+  }
+  return box;
+}
+function errCopy(code){
+  var m={
+    not_granted:"Claude ашиглах зөвшөөрөл өгөөгүй тул AI яриа ажиллахгүй.",
+    sampling_disabled:"Энэ бүртгэлд AI яриа боломжгүй байна.",
+    rate_limited:"Хэт олон хүсэлт илгээлээ. Түр хүлээгээд дахин оролдоно уу.",
+    session_expired:"Дахин нэвтэрч орно уу.",
+    refused:"Энэ мессежид хариулах боломжгүй байна. Өөрөөр бичиж үзээрэй.",
+    empty_completion:"Хариу ирсэнгүй. Өөрөөр бичиж үзээрэй.",
+    bad_key:"API түлхүүр буруу байна. Ярих табаас түлхүүрээ устгаад дахин оруулна уу.",
+    api_error:"Anthropic серверээс алдаа ирлээ. Түр хүлээгээд дахин оролдоно уу.",
+    network:"Сүлжээний алдаа. Интернет холболтоо шалгана уу."
+  };
+  return m[code]||"Алдаа гарлаа. Дахин оролдоно уу.";
+}
+function chatTurns(){
+  var c=ui.chat,t=[{role:"user",content:c.rules+"\n\nBegin now with your short opening line for the scenario. Do not write ###."}];
+  c.msgs.forEach(function(m){if(m.streaming)return;t.push({role:m.role==="ai"?"assistant":"user",content:m.text});});
+  return t;
+}
+function startChat(id){
+  var c=ui.chat,sc=SCEN.filter(function(s){return s[0]===id;})[0];
+  var el=effLevel(),lv=el==="all"?"b1":el;
+  c.rules="You are an English speaking partner inside a language-learning app for Mongolian speakers. Play this role: "+sc[2]+". Learner level: "+LVDESC[lv]+".\n"+
+   "Rules:\n- Stay in the role. Write 1 to 3 short sentences in English at the learner's level, then ask exactly ONE follow-up question.\n"+
+   "- If the learner's latest message has a grammar, word-choice or spelling mistake, add a line containing only ### after your reply, then write in Mongolian: the corrected English sentence and a one-sentence explanation in Mongolian. If there are no mistakes, do not write ###.\n"+
+   "- If the learner writes in Mongolian, reply in simple English and, after ###, give the English version of what they wanted to say.\n"+
+   "- Never use markdown formatting, bullet points or emojis.";
+  if(state.mode==="kid")c.rules+="\n- The learner is a child. Use very simple, playful words and be warm and encouraging.";
+  c.step=0;c.scn=id;c.msgs=[];c.started=true;c.error="";c.draft="";
+  render();
+  runAI();
+}
+function runAI(){
+  var c=ui.chat;
+  c.busy=true;c.error="";
+  var turns=chatTurns();
+  var ai={role:"ai",text:"",streaming:true};
+  c.msgs.push(ai);
+  c.ctl=new AbortController();
+  sampleP.then(function(s){
+    var o={signal:c.ctl.signal,onText:function(x){apply(x.text);}};
+    if(s)return s(turns,{modelTier:"quick",cache:false,signal:o.signal,onText:o.onText});
+    if(state.apiKey)return callDirect(turns,o);
+    return offlineReply(turns);
+  }).then(function(res){
+    apply(res.text);ai.streaming=false;c.busy=false;paint();
+  }).catch(function(e){
+    var code=e&&e.code;
+    if(e&&e.text)apply(e.text);
+    ai.streaming=false;c.busy=false;
+    if(!ai.text){c.msgs.splice(c.msgs.indexOf(ai),1);
+      if(code!=="cancelled"){var lastU=c.msgs[c.msgs.length-1];if(lastU&&lastU.role==="me"){c.msgs.pop();c.draft=lastU.text;}}}
+    if(code!=="cancelled")c.error=errCopy(code);
+    paint();
+  });
+  paint();
+  function apply(text){
+    var parts=String(text).split("###");
+    ai.text=parts[0].trim();
+    var fix=parts.slice(1).join("").trim();
+    if(fix){for(var i=c.msgs.length-1;i>=0;i--){if(c.msgs[i].role==="me"){c.msgs[i].fix=fix;break;}}}
+    paint();
+  }
+}
+function sendMsg(text){
+  var c=ui.chat;text=text.trim();
+  if(!text||c.busy)return;
+  c.msgs.push({role:"me",text:text});c.draft="";
+  state.chatCount++;sset("chat",state.chatCount);addXP(3);
+  runAI();
+}
+function paint(){
+  if(state.tab!=="chat"||!ui.chat.started)return;
+  var box=document.getElementById("msgs");if(!box)return;
+  var c=ui.chat;box.textContent="";
+  c.msgs.forEach(function(m){
+    if(m.role==="me"){
+      box.append(h("div",{class:"b me"},m.text));
+      if(m.fix)box.append(h("div",{class:"fix"},h("b",null,"Засвар: "),m.fix));
+    }else{
+      box.append(h("div",{class:"b ai"},m.text||(m.streaming?"...":"")));
+      if(m.text&&!m.streaming)box.append(h("button",{class:"spk",onclick:function(){speak(m.text);}},"Сонсох"));
+    }
+  });
+  var st=document.getElementById("chatstate");
+  if(st){st.textContent=c.error||"";st.style.display=c.error?"block":"none";}
+  var send=document.getElementById("sendbtn"),stop=document.getElementById("stopbtn"),inp=document.getElementById("chatin");
+  if(send)send.disabled=c.busy;
+  if(stop)stop.style.display=c.busy?"":"none";
+  if(send)send.style.display=c.busy?"none":"";
+  if(inp)inp.disabled=false;
+  window.scrollTo(0,document.body.scrollHeight);
+}
+function viewChat(){
+  var c=ui.chat,root=h("div");
+  if(!c.started){
+    root.append(h("h2",null,"Ярианы дасгал"));
+    root.append(h("p",{class:"muted"},"Нөхцөлөө сонгоод AI-тай англиар ярилц. Алдаа гаргавал Монголоор засаж өгнө."));
+    if(sampleReady&&!sample)root.append(keyBox());
+    var el=effLevel(),lv=el==="all"?"Дунд":LV_NAME[el];
+    root.append(h("p",{class:"muted small",style:"margin-top:10px"},"Түвшин: "+lv+(el==="all"?" (дээрээс түвшнээ сонгож болно)":"")));
+    SCEN.filter(function(s){return !s[3]||s[3]===state.mode;}).forEach(function(s){
+      root.append(h("button",{class:"scn",disabled:sampleReady&&!chatAvailable(),onclick:function(){startChat(s[0]);}},s[1]));
+    });
+    return root;
+  }
+  var sc=SCEN.filter(function(s){return s[0]===c.scn;})[0];
+  root.append(h("div",{style:"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"},
+    h("div",{class:"small muted"},sc[1]+((!sample&&!state.apiKey)?" · бэлэн асуултын горим":"")),
+    h("button",{class:"btn ghost",style:"padding:6px 12px;font-size:14px",onclick:function(){
+      if(c.ctl)c.ctl.abort();c.started=false;c.msgs=[];c.busy=false;c.error="";render();
+    }},"Шинэ яриа")));
+  root.append(h("div",{class:"msgs",id:"msgs","aria-live":"polite"}));
+  root.append(h("div",{class:"note",id:"chatstate",style:"display:none"}));
+  var inp=h("textarea",{id:"chatin",rows:"1",placeholder:"Англиар бич эсвэл ярь...","aria-label":"Мессеж"});
+  inp.value=c.draft||"";
+  inp.addEventListener("input",function(){c.draft=inp.value;inp.style.height="auto";inp.style.height=Math.min(inp.scrollHeight,120)+"px";});
+  inp.addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();var t=inp.value;inp.value="";sendMsg(t);}});
+  var comp=h("div",{class:"composer"},inp);
+  if(SR){
+    var mic=h("button",{class:"btn",title:"Ярих","aria-label":"Микрофоноор ярих",onclick:function(){
+      try{
+        var r=new SR();r.lang="en-US";r.interimResults=false;
+        r.onresult=function(e){inp.value=(inp.value+" "+e.results[0][0].transcript).trim();c.draft=inp.value;};
+        r.onerror=function(){mic.disabled=true;mic.title="Микрофон ашиглах боломжгүй";mic.classList.remove("rec");};
+        r.onend=function(){mic.classList.remove("rec");};
+        mic.classList.add("rec");r.start();
+      }catch(e){mic.disabled=true;}
+    }},"Ярих");
+    comp.append(mic);
+  }
+  comp.append(h("button",{class:"btn primary",id:"sendbtn",onclick:function(){var t=inp.value;inp.value="";sendMsg(t);}},"Илгээх"));
+  comp.append(h("button",{class:"btn dark",id:"stopbtn",style:"display:none",onclick:function(){if(c.ctl)c.ctl.abort();}},"Зогсоох"));
+  root.append(comp);
+  setTimeout(paint,0);
+  return root;
+}
+
+/* ---------- stats ---------- */
+function viewStats(){
+  var root=h("div"),p=WORDS;
+  var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
+  var done=Object.keys(state.lessons).length;
+  root.append(h("h2",null,"Миний явц"));
+  var lvl=Math.floor(state.xp/100)+1,gb=h("div",{class:"goalbox"}),rw=h("div",{class:"ringw"},ringEl(todayXP()/state.goal,110,12),h("span",{class:"c"},Math.min(100,Math.round(todayXP()/state.goal*100))+"%"));
+  rw.firstChild.style.margin="0";
+  gb.append(rw,h("div",null,h("div",{style:"font-weight:700"},"Өдрийн зорилго"),h("div",{class:"muted"},todayXP()+" / "+state.goal+" XP"),
+    h("div",{class:"seg",style:"margin:8px 0 0"},[10,20,50,100].map(function(n){return h("button",{"aria-pressed":String(state.goal===n),onclick:function(){state.goal=n;sset("goal",n);renderStrip();render();}},String(n));}))));
+  root.append(gb);
+  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Түвшин"),h("span",{class:"big"},"Lv "+lvl)));
+  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Цуглуулсан од"),h("span",{class:"big"},"⭐ "+state.stars)));
+  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Нийт XP"),h("span",{class:"big"},String(state.xp))));
+  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Дараалсан өдөр"),h("span",{class:"big"},String(streak()))));
+  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Мэддэг үг"),h("span",{class:"big"},known+"/"+p.length)));
+  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Дуусгасан дүрмийн хичээл"),h("span",{class:"big"},done+"/"+LESSONS.length)));
+  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Ярианд илгээсэн мессеж"),h("span",{class:"big"},String(state.chatCount))));
+  var badges=[
+    ["🌱","Эхний алхам",state.xp>=10],["⚡","100 XP",state.xp>=100],["🔥","3 өдөр дараалан",streak()>=3],["🏆","7 өдөр дараалан",streak()>=7],
+    ["📚","10 үг мэднэ",known>=10],["🧠","30 үг мэднэ",known>=30],["🎓","Эхний хичээл",done>=1],["🌟","Бүх хичээл",done>=LESSONS.length],
+    ["💬","5 мессеж",state.chatCount>=5],["🎧","Сонсох 10 зөв",state.listenOk>=10],["🎯","Зорилго биелсэн",todayXP()>=state.goal]
+  ];
+  root.append(h("p",{class:"muted small",style:"margin-top:18px"},"Шагналууд: "+badges.filter(function(b){return b[2];}).length+" / "+badges.length));
+  var tg=h("div",{class:"trophies"});
+  badges.forEach(function(b){tg.append(h("div",{class:"tr"+(b[2]?"":" lock"),title:b[1]},h("i",null,b[0]),b[1]));});
+  root.append(tg);
+  var names=["Ням","Дав","Мяг","Лха","Пүр","Баа","Бям"],days=[],max=1,i,d;
+  for(i=6;i>=0;i--){d=new Date();d.setDate(d.getDate()-i);var x=state.daily[dkey(d)]||0;days.push([names[d.getDay()],x]);if(x>max)max=x;}
+  root.append(h("p",{class:"muted small",style:"margin-top:18px"},"Сүүлийн 7 хоногийн XP"));
+  var wrap=h("div",{class:"days"});
+  days.forEach(function(e){wrap.append(h("div",null,h("i",{class:e[1]?"":"z",style:"height:"+(e[1]?Math.max(8,Math.round(e[1]/max*80)):4)+"px",title:e[1]+" XP"}),e[0]));});
+  root.append(wrap);
+  root.append(h("div",{style:"margin-top:26px"},
+    h("button",{class:"btn ghost",onclick:function(){
+      if(!ui.resetArmed){ui.resetArmed=true;render();return;}
+      state.box={};state.xp=0;state.daily={};state.lessons={};state.chatCount=0;state.stars=0;state.listenOk=0;sset("stars",0);sset("listenOk",0);
+      ["box","xp","daily","lessons","chat"].forEach(function(k){sset(k,k==="xp"||k==="chat"?0:{});});
+      ui.resetArmed=false;ui.vocab.cur=null;renderStrip();render();
+    }},ui.resetArmed?"Бүх явцаа устгах уу? Дахин дарж баталгаажуул":"Явцыг шинэчлэх")));
+  return root;
+}
+
+applyTheme();renderModes();renderStrip();renderLevels();renderTabs();render();
+})();
+</script>
+</body>
+</html>
