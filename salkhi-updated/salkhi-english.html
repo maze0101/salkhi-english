@@ -1712,7 +1712,13 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)){try{navigator.serviceWorker.register("sw.js").catch(function(){});}catch(e){}}
+if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)){try{
+  var hadCtl=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(function(reg){
+    document.addEventListener("visibilitychange",function(){if(!document.hidden)reg.update().catch(function(){});});
+  }).catch(function(){});
+  navigator.serviceWorker.addEventListener("controllerchange",function(){if(hadCtl)toast("Шинэ хувилбар ирлээ. Аппыг дахин нээхэд шинэчлэгдэнэ.");});
+}catch(e){}}
 })();
 </script>
 </body>
