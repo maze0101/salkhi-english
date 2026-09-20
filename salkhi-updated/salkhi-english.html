@@ -198,6 +198,8 @@ p+p{margin-top:10px}
 .tr{padding:12px 6px;border-radius:16px;background:var(--surface);box-shadow:var(--shadow);text-align:center;font-size:12px;font-weight:700}
 .tr i{display:block;font-style:normal;font-size:30px}
 .tr.lock{opacity:.4;filter:grayscale(1)}
+.langs{display:flex;gap:6px;padding:12px 20px 0;overflow-x:auto}
+:root[data-lang="ja"] .levels,:root[data-lang="ko"] .levels{display:none}
 </style>
 </head>
 <body>
@@ -235,10 +237,11 @@ p+p{margin-top:10px}
     </svg>
     <div class="txt">
       <div class="brand">Салхи</div>
-      <p class="tag">Англи хэлний үг, дүрэм, яриаг нэг дор</p>
+      <p class="tag">Англи, япон, солонгос хэлний үг, дүрэм, яриаг нэг дор</p>
     </div>
   </header>
   <div class="strip" id="strip"></div>
+  <div class="langs" id="langs" role="group" aria-label="Хэл"></div>
   <div class="levels" id="levels" role="group" aria-label="Түвшин"></div>
   <main id="main"></main>
 </div>
@@ -364,6 +367,115 @@ WORDS.push(
 ["b2","affect","нөлөөлөх","Sleep affects your mood."],["b2","connect","холбох","Connect the phone to Wi-Fi."],
 ["b2","predict","таамаглах","Nobody can predict the weather exactly."]
 );
+(function(){
+  function add(lang,rows){rows.forEach(function(x){WORDS.push([x[0],x[1],x[2],x[3],x[4]||null,x[5]||null,lang,x[6],x[7]]);});}
+  add("ja",[
+    ["a1","こんにちは","сайн уу","こんにちは、げんきですか。",null,"basic","konnichiwa","Сайн уу, сайн байна уу?"],
+    ["a1","ありがとう","баярлалаа","ほんとうにありがとう。",null,"basic","arigatou","Үнэхээр баярлалаа."],
+    ["a1","すみません","уучлаарай, гуйя","すみません、トイレはどこですか。",null,"basic","sumimasen","Уучлаарай, ариун цэвэр хаана вэ?"],
+    ["a1","はい","тийм","はい、わかりました。",null,"basic","hai","Тийм, ойлголоо."],
+    ["a1","いいえ","үгүй","いいえ、ちがいます。",null,"basic","iie","Үгүй, буруу байна."],
+    ["a1","おはよう","өглөөний мэнд","おはよう、けさはさむいね。",null,"basic","ohayou","Өглөөний мэнд, өнөө өглөө хүйтэн байна."],
+    ["a1","さようなら","баяртай","さようなら、またあした。",null,"basic","sayounara","Баяртай, маргааш уулзъя."],
+    ["a1","わたし","би","わたしはがくせいです。",null,"basic","watashi","Би оюутан."],
+    ["a1","ともだち","найз","ともだちとあそびます。",null,"basic","tomodachi","Найзтайгаа тоглоно."],
+    ["a1","がっこう","сургууль","がっこうへいきます。",null,"basic","gakkou","Сургууль руу явна."],
+    ["a1","みず","ус","みずをのみます。",null,"basic","mizu","Ус уна."],
+    ["a1","ほん","ном","このほんはおもしろいです。",null,"basic","hon","Энэ ном сонирхолтой."],
+    ["a1","たべる","идэх","パンをたべます。",null,"basic","taberu","Талх иднэ."],
+    ["a1","のむ","уух","おちゃをのみます。",null,"basic","nomu","Цай уна."],
+    ["a1","すき","дуртай","ねこがすきです。",null,"basic","suki","Муурд дуртай."],
+    ["a1","えき","өртөө, буудал","えきはどこですか。",null,"travel","eki","Өртөө хаана вэ?"],
+    ["a1","トイレ","ариун цэвэр, жорлон","トイレはあそこです。",null,"travel","toire","Ариун цэвэр тэнд байна."],
+    ["a1","いくら","хэд, хэдэн төгрөг","これはいくらですか。",null,"travel","ikura","Энэ хэд вэ?"],
+    ["a1","ホテル","зочид буудал","ホテルはちかいです。",null,"travel","hoteru","Зочид буудал ойрхон."],
+    ["a1","きっぷ","билет","きっぷをください。",null,"travel","kippu","Билет өгөөч."],
+    ["a1","みぎ","баруун тал","みぎにまがります。",null,"travel","migi","Баруун тийш эргэнэ."],
+    ["a1","ひだり","зүүн тал","ひだりにあります。",null,"travel","hidari","Зүүн талд байна."],
+    ["a1","おいしい","амттай","とてもおいしいです。",null,"travel","oishii","Маш амттай."],
+    ["a1","ください","өгөөч, гуйя","みずをください。",null,"travel","kudasai","Ус өгөөч."],
+    ["a1","えいご","англи хэл","えいごをはなしますか。",null,"travel","eigo","Англиар ярьдаг уу?"],
+    ["a1","いぬ","нохой","いぬがはしります。","🐶","animal","inu","Нохой гүйж байна."],
+    ["a1","ねこ","муур","ねこがねています。","🐱","animal","neko","Муур унтаж байна."],
+    ["a1","うま","морь","うまにのります。","🐴","animal","uma","Морь унана."],
+    ["a1","さかな","загас","さかながおよぎます。","🐟","animal","sakana","Загас сэлнэ."],
+    ["a1","とり","шувуу","とりがとびます。","🐦","animal","tori","Шувуу нисдэг."],
+    ["a1","うさぎ","туулай","うさぎはにんじんがすきです。","🐰","animal","usagi","Туулай лууванд дуртай."],
+    ["a1","ぞう","заан","ぞうはおおきいです。","🐘","animal","zou","Заан том."],
+    ["a1","さる","сармагчин","さるがバナナをたべます。","🐵","animal","saru","Сармагчин гадил иднэ."],
+    ["a1","あか","улаан","あかいりんごです。","🔴","color","aka","Улаан алим."],
+    ["a1","あお","цэнхэр","そらはあおいです。","🔵","color","ao","Тэнгэр цэнхэр."],
+    ["a1","きいろ","шар","バナナはきいろです。","🟡","color","kiiro","Гадил шар."],
+    ["a1","みどり","ногоон","はっぱはみどりです。","🟢","color","midori","Навч ногоон."],
+    ["a1","しろ","цагаан","ゆきはしろいです。","⚪","color","shiro","Цас цагаан."],
+    ["a1","くろ","хар","ねこはくろいです。","⚫","color","kuro","Муур хар."],
+    ["a1","いち","нэг","いち、に、さん、よん、ご、じゅう。","1️⃣","number","ichi","Нэг, хоёр, гурав, дөрөв, тав, арав."],
+    ["a1","に","хоёр","いち、に、さん、よん、ご、じゅう。","2️⃣","number","ni","Нэг, хоёр, гурав, дөрөв, тав, арав."],
+    ["a1","さん","гурав","いち、に、さん、よん、ご、じゅう。","3️⃣","number","san","Нэг, хоёр, гурав, дөрөв, тав, арав."],
+    ["a1","よん","дөрөв","いち、に、さん、よん、ご、じゅう。","4️⃣","number","yon","Нэг, хоёр, гурав, дөрөв, тав, арав."],
+    ["a1","ご","тав","いち、に、さん、よん、ご、じゅう。","5️⃣","number","go","Нэг, хоёр, гурав, дөрөв, тав, арав."],
+    ["a1","じゅう","арав","いち、に、さん、よん、ご、じゅう。","🔟","number","juu","Нэг, хоёр, гурав, дөрөв, тав, арав."],
+    ["a1","りんご","алим","りんごをたべます。","🍎","food","ringo","Алим иднэ."],
+    ["a1","ぎゅうにゅう","сүү","ぎゅうにゅうをのみます。","🥛","food","gyuunyuu","Сүү уна."],
+    ["a1","パン","талх","あさ、パンをたべます。","🍞","food","pan","Өглөө талх иднэ."],
+    ["a1","たまご","өндөг","たまごがすきです。","🥚","food","tamago","Өндөгөнд дуртай."],
+    ["a1","ごはん","будаа, хоол","ごはんをたべます。","🍚","food","gohan","Будаа иднэ."],
+    ["a1","ケーキ","бялуу","ケーキはおいしいです。","🎂","food","keeki","Бялуу амттай."]
+  ]);
+  add("ko",[
+    ["a1","안녕하세요","сайн уу","안녕하세요, 만나서 반가워요.",null,"basic","annyeonghaseyo","Сайн уу, танилцсандаа таатай байна."],
+    ["a1","감사합니다","баярлалаа","정말 감사합니다.",null,"basic","gamsahamnida","Үнэхээр баярлалаа."],
+    ["a1","죄송합니다","уучлаарай","늦어서 죄송합니다.",null,"basic","joesonghamnida","Хоцорсонд уучлаарай."],
+    ["a1","네","тийм","네, 알겠어요.",null,"basic","ne","Тийм, ойлголоо."],
+    ["a1","아니요","үгүй","아니요, 괜찮아요.",null,"basic","aniyo","Үгүй, зүгээр."],
+    ["a1","안녕히 가세요","баяртай (явж буй хүнд)","안녕히 가세요, 또 만나요.",null,"basic","annyeonghi gaseyo","Баяртай, дахин уулзъя."],
+    ["a1","저","би (даруу хэлбэр)","저는 학생이에요.",null,"basic","jeo","Би оюутан."],
+    ["a1","친구","найз","친구와 놀아요.",null,"basic","chingu","Найзтайгаа тоглоно."],
+    ["a1","학교","сургууль","학교에 가요.",null,"basic","hakgyo","Сургууль руу явна."],
+    ["a1","물","ус","물을 마셔요.",null,"basic","mul","Ус уна."],
+    ["a1","책","ном","이 책은 재미있어요.",null,"basic","chaek","Энэ ном сонирхолтой."],
+    ["a1","먹다","идэх","밥을 먹어요.",null,"basic","meokda","Хоол иднэ."],
+    ["a1","마시다","уух","차를 마셔요.",null,"basic","masida","Цай уна."],
+    ["a1","좋아하다","дуртай байх","고양이를 좋아해요.",null,"basic","joahada","Муурд дуртай."],
+    ["a1","사랑","хайр","가족을 사랑해요.",null,"basic","sarang","Гэр бүлээ хайрлана."],
+    ["a1","역","өртөө, буудал","역이 어디예요?",null,"travel","yeok","Өртөө хаана вэ?"],
+    ["a1","화장실","ариун цэвэр, жорлон","화장실은 저기예요.",null,"travel","hwajangsil","Ариун цэвэр тэнд байна."],
+    ["a1","얼마","хэд, хэдэн төгрөг","이거 얼마예요?",null,"travel","eolma","Энэ хэд вэ?"],
+    ["a1","호텔","зочид буудал","호텔이 가까워요.",null,"travel","hotel","Зочид буудал ойрхон."],
+    ["a1","표","билет","표를 주세요.",null,"travel","pyo","Билет өгөөч."],
+    ["a1","오른쪽","баруун тал","오른쪽으로 가세요.",null,"travel","oreunjjok","Баруун тийш яваарай."],
+    ["a1","왼쪽","зүүн тал","왼쪽에 있어요.",null,"travel","oenjjok","Зүүн талд байна."],
+    ["a1","맛있다","амттай","정말 맛있어요.",null,"travel","masitda","Үнэхээр амттай."],
+    ["a1","주세요","өгөөч, гуйя","물 주세요.",null,"travel","juseyo","Ус өгөөч."],
+    ["a1","영어","англи хэл","영어 할 수 있어요?",null,"travel","yeongeo","Англиар ярьж чадах уу?"],
+    ["a1","개","нохой","개가 달려요.","🐶","animal","gae","Нохой гүйж байна."],
+    ["a1","고양이","муур","고양이가 자요.","🐱","animal","goyangi","Муур унтаж байна."],
+    ["a1","말","морь","말을 타요.","🐴","animal","mal","Морь унана."],
+    ["a1","물고기","загас","물고기가 헤엄쳐요.","🐟","animal","mulgogi","Загас сэлнэ."],
+    ["a1","새","шувуу","새가 날아요.","🐦","animal","sae","Шувуу нисдэг."],
+    ["a1","토끼","туулай","토끼는 당근을 좋아해요.","🐰","animal","tokki","Туулай лууванд дуртай."],
+    ["a1","코끼리","заан","코끼리는 커요.","🐘","animal","kokkiri","Заан том."],
+    ["a1","원숭이","сармагчин","원숭이가 바나나를 먹어요.","🐵","animal","wonsungi","Сармагчин гадил иднэ."],
+    ["a1","빨간색","улаан","빨간색 사과예요.","🔴","color","ppalgansaek","Улаан алим."],
+    ["a1","파란색","цэнхэр","하늘은 파란색이에요.","🔵","color","paransaek","Тэнгэр цэнхэр."],
+    ["a1","노란색","шар","바나나는 노란색이에요.","🟡","color","noransaek","Гадил шар."],
+    ["a1","초록색","ногоон","잎은 초록색이에요.","🟢","color","choroksaek","Навч ногоон."],
+    ["a1","하얀색","цагаан","눈은 하얀색이에요.","⚪","color","hayansaek","Цас цагаан."],
+    ["a1","검은색","хар","고양이는 검은색이에요.","⚫","color","geomeunsaek","Муур хар."],
+    ["a1","일","нэг","일, 이, 삼, 사, 오, 십.","1️⃣","number","il","Нэг, хоёр, гурав, дөрөв, тав, арав."],
+    ["a1","이","хоёр","일, 이, 삼, 사, 오, 십.","2️⃣","number","i","Нэг, хоёр, гурав, дөрөв, тав, арав."],
+    ["a1","삼","гурав","일, 이, 삼, 사, 오, 십.","3️⃣","number","sam","Нэг, хоёр, гурав, дөрөв, тав, арав."],
+    ["a1","사","дөрөв","일, 이, 삼, 사, 오, 십.","4️⃣","number","sa","Нэг, хоёр, гурав, дөрөв, тав, арав."],
+    ["a1","오","тав","일, 이, 삼, 사, 오, 십.","5️⃣","number","o","Нэг, хоёр, гурав, дөрөв, тав, арав."],
+    ["a1","십","арав","일, 이, 삼, 사, 오, 십.","🔟","number","sip","Нэг, хоёр, гурав, дөрөв, тав, арав."],
+    ["a1","사과","алим","사과를 먹어요.","🍎","food","sagwa","Алим иднэ."],
+    ["a1","우유","сүү","우유를 마셔요.","🥛","food","uyu","Сүү уна."],
+    ["a1","빵","талх","아침에 빵을 먹어요.","🍞","food","ppang","Өглөө талх иднэ."],
+    ["a1","계란","өндөг","계란을 좋아해요.","🥚","food","gyeran","Өндөгөнд дуртай."],
+    ["a1","밥","будаа, хоол","밥을 먹어요.","🍚","food","bap","Будаа иднэ."],
+    ["a1","케이크","бялуу","케이크가 맛있어요.","🎂","food","keikeu","Бялуу амттай."]
+  ]);
+})();
 var LESSONS=[
 {id:"be",lv:"a1",t:"To be: am, is, are",
  intro:["Англи хэлэнд өгүүлбэр бүр үйл үгтэй байх ёстой. Монголоор «Би оюутан» гэхэд үйл үг шаардлагагүй ч англиар I am a student гэж хэлнэ.","Үгүйсгэхдээ not нэмнэ (is not = isn't). Асуухдаа үйл үгийг өгүүлэгдэхүүний өмнө гаргана."],
@@ -438,6 +550,64 @@ LESSONS.push(
  q:[["I ___ help you with your bags. (a promise right now)",["will","am going","go"],0],["We ___ visit Paris next summer. (we planned it)",["are going to","will to","go to"],0],["They are going to ___ a party.",["have","having","has"],0]],
  o:["We are going to visit our grandparents"],f:[["Look! The bus ___ (leave). (going to)","is going to leave"]]}
 );
+LESSONS.push(
+{id:"ja-hira1",lang:"ja",lv:"a1",t:"Хирагана 1: あ い う え お · か き く け こ",
+ intro:["Япон хэл гурван бичгийн систем ашигладаг: хирагана, катакана, кандзи. Хирагана нь үндсэн авианы 46 үсэг бөгөөд эхлээд үүнийг сурна.","5 эгшиг: あ (a), い (i), う (u), え (e), お (o).","К-эгнээ: か (ka), き (ki), く (ku), け (ke), こ (ko)."],
+ rule:"あ a · い i · う u · え e · お o · か ka · き ki · く ku · け ke · こ ko",
+ ex:[["あ (a)","Монгол «а»"],["い (i)","«и»"],["う (u)","«у» (уруул дугуйрахгүй)"],["え (e)","«э»"],["お (o)","«о»"],["か (ka)","«ка»"]],
+ q:[["「か」-г яаж уншдаг вэ?",["ka","ki","ke"],0],["「い」-г яаж уншдаг вэ?",["u","i","e"],1],["「お」-г яаж уншдаг вэ?",["o","a","u"],0]]},
+{id:"ja-hira2",lang:"ja",lv:"a1",t:"Хирагана 2: さ し す せ そ · た ち つ て と · な に ぬ ね の",
+ intro:["С-эгнээ: さ (sa), し (shi), す (su), せ (se), そ (so).","Т-эгнээ: た (ta), ち (chi), つ (tsu), て (te), と (to).","Н-эгнээ: な (na), に (ni), ぬ (nu), ね (ne), の (no)."],
+ rule:"さ sa · し shi · す su · せ se · そ so · た ta · ち chi · つ tsu · て te · と to · な na · に ni · ぬ nu · ね ne · の no",
+ ex:[["し (shi)","«ши»"],["ち (chi)","«чи»"],["つ (tsu)","«цу»"],["に (ni)","«ни»"],["の (no)","«но»"]],
+ q:[["「し」-г яаж уншдаг вэ?",["shi","si","sa"],0],["「つ」-г яаж уншдаг вэ?",["tsu","to","te"],0],["「の」-г яаж уншдаг вэ?",["no","na","ne"],0]]},
+{id:"ja-desu",lang:"ja",lv:"a1",t:"です: «... бол ... юм»",
+ intro:["Япон хэлэнд өгүүлбэр үйл үг, эсвэл です-аар төгсдөг. «Би оюутан» гэхэд «わたし は がくせい です» гэнэ.","です — эелдэг хэлбэрийн «байна, юм». Үгүйсгэх нь じゃ ありません. Асуухдаа өгүүлбэрийн эцэст か залгана.","は («ва» гэж уншина) — өгүүлэгдэхүүнийг заана."],
+ rule:"А は Б です · А は Б じゃ ありません · А は Б です か",
+ ex:[["わたし は がくせい です。","Би оюутан."],["これ は ほん です。","Энэ ном."],["わたし は せんせい じゃ ありません。","Би багш биш."],["あなた は がくせい です か。","Та оюутан уу?"]],
+ q:[["わたし ___ がくせい です。",["は","を","に"],0],["これ は ほん ___。",["です","ます","か"],0],["わたし は せんせい ___ ありません。",["じゃ","です","を"],0]],
+ o:["わたし は にほんじん です"]},
+{id:"ja-particles",lang:"ja",lv:"a1",t:"Дам үг: は, を, に",
+ intro:["は — сэдэв (…нь). を — шууд объект (…-ийг): パン を たべます. に — чиглэл, цаг, оршихуй (…-руу, …-д): がっこう に いきます.","を нь «о» гэж, は нь «ва» гэж уншигдана."],
+ rule:"は сэдэв · を объект · に чиглэл, цаг, газар",
+ ex:[["パン を たべます。","Талх иднэ."],["がっこう に いきます。","Сургууль руу явна."],["みず を のみます。","Ус уна."],["わたし は ほん を よみます。","Би ном уншина."]],
+ q:[["パン ___ たべます。",["を","に","は"],0],["がっこう ___ いきます。",["を","に","です"],1],["わたし ___ ほん を よみます。",["は","を","ます"],0]],
+ o:["わたし は みず を のみます"]},
+{id:"ja-masu",lang:"ja",lv:"a1",t:"-ます хэлбэр: эелдэг үйл үг",
+ intro:["Эелдэг ярианд үйл үг -ます-аар төгсдөг: たべる → たべます (иднэ), のむ → のみます (уна), いく → いきます (явна).","Үгүйсгэх: -ません (たべません — идэхгүй). Өнгөрсөн: -ました (たべました — идсэн)."],
+ rule:"-ます (одоо, ирээдүй) · -ません (үгүйсгэх) · -ました (өнгөрсөн)",
+ ex:[["ごはん を たべます。","Хоол иднэ."],["コーヒー を のみません。","Кофе уухгүй."],["きのう えいが を みました。","Өчигдөр кино үзсэн."],["あした がっこう に いきます。","Маргааш сургууль руу явна."]],
+ q:[["ごはん を ___。 (иднэ)",["たべます","たべません","たべました"],0],["コーヒー を ___。 (уухгүй)",["のみます","のみません","のみました"],1],["きのう えいが を ___。 (үзсэн)",["みます","みません","みました"],2]],
+ o:["あした ともだち に あいます"]},
+{id:"ko-hangul1",lang:"ko",lv:"a1",t:"Хангыл 1: эгшгүүд ㅏ ㅓ ㅗ ㅜ ㅡ ㅣ",
+ intro:["Хангыл нь суралцахад амар цагаан толгой. Үсэг бүр нэг авиаг илэрхийлж, үсгүүд нийлж үе (блок) үүсгэнэ.","Үндсэн эгшгүүд: ㅏ (a), ㅓ (eo — амаа нээж «о»/«ө» шиг), ㅗ (o), ㅜ (u), ㅡ (eu — уруул дугуйрахгүй «ы»), ㅣ (i).","Эгшиг нь чимээгүй гийгүүлэгч ㅇ-тэй хамт бичигдэнэ: 아 (a), 어 (eo), 오 (o), 우 (u), 으 (eu), 이 (i)."],
+ rule:"아 a · 어 eo · 오 o · 우 u · 으 eu · 이 i",
+ ex:[["아 (a)","«а»"],["어 (eo)","«о» (ө шиг, амаа нээж)"],["오 (o)","«о»"],["우 (u)","«у»"],["으 (eu)","«ы» (уруул дугуйрахгүй)"],["이 (i)","«и»"]],
+ q:[["「우」-г яаж уншдаг вэ?",["u","o","i"],0],["「이」-г яаж уншдаг вэ?",["i","a","eu"],0],["「오」-г яаж уншдаг вэ?",["o","u","eo"],0]]},
+{id:"ko-hangul2",lang:"ko",lv:"a1",t:"Хангыл 2: гийгүүлэгчид ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ",
+ intro:["Үндсэн гийгүүлэгчид: ㄱ (g/k), ㄴ (n), ㄷ (d/t), ㄹ (r/l), ㅁ (m), ㅂ (b/p), ㅅ (s).","Гийгүүлэгч + эгшиг = үе: 가 (ga), 나 (na), 다 (da), 라 (ra), 마 (ma), 바 (ba), 사 (sa)."],
+ rule:"가 ga · 나 na · 다 da · 라 ra · 마 ma · 바 ba · 사 sa",
+ ex:[["가 (ga)","«га»"],["나 (na)","«на»"],["마 (ma)","«ма»"],["사 (sa)","«са»"]],
+ q:[["「나」-г яаж уншдаг вэ?",["na","ma","ga"],0],["「바」-г яаж уншдаг вэ?",["ba","sa","da"],0],["「사」-г яаж уншдаг вэ?",["sa","ra","na"],0]]},
+{id:"ko-be",lang:"ko",lv:"a1",t:"이에요 / 예요: «... бол ... юм»",
+ intro:["«Би оюутан» → 저는 학생이에요. Нэрийн ард -이에요 (сүүлийн үсэг гийгүүлэгч бол) эсвэл -예요 (эгшиг бол) залгана.","은 / 는 — өгүүлэгдэхүүнийг заана. Гийгүүлэгчээр төгссөн үгэнд 은, эгшгээр төгссөн үгэнд 는.","Үгүйсгэх: 이/가 아니에요."],
+ rule:"эгшиг + 예요 · гийгүүлэгч + 이에요 · 은 / 는 сэдэв",
+ ex:[["저는 학생이에요.","Би оюутан."],["이것은 책이에요.","Энэ ном."],["저는 의사가 아니에요.","Би эмч биш."],["학생이에요?","Оюутан уу?"]],
+ q:[["저___ 학생이에요.",["는","은","를"],0],["이것은 책___.",["이에요","예요","을"],0],["저는 의사가 ___.",["아니에요","이에요","예요"],0]],
+ o:["저는 한국 사람이에요"]},
+{id:"ko-particles",lang:"ko",lv:"a1",t:"Дам үг: 을/를, 에, 이/가",
+ intro:["을 / 를 — шууд объект. Гийгүүлэгчээр төгссөн үгэнд 을, эгшгээр төгссөнд 를: 밥을 먹어요, 커피를 마셔요.","에 — чиглэл, цаг, оршихуй: 학교에 가요 (сургууль руу явна).","이 / 가 — өгүүлэгдэхүүнийг заана: 고양이가 자요."],
+ rule:"гийгүүлэгч + 을 / эгшиг + 를 · 에 (чиглэл, цаг) · 이 / 가 (өгүүлэгдэхүүн)",
+ ex:[["밥을 먹어요.","Хоол иднэ."],["학교에 가요.","Сургууль руу явна."],["커피를 마셔요.","Кофе уна."],["고양이가 자요.","Муур унтаж байна."]],
+ q:[["밥___ 먹어요.",["을","를","에"],0],["커피___ 마셔요.",["를","을","이"],0],["학교___ 가요.",["에","을","가"],0]],
+ o:["저는 학교에 가요"]},
+{id:"ko-polite",lang:"ko",lv:"a1",t:"-아요 / -어요: эелдэг одоо цаг",
+ intro:["Өдөр тутмын эелдэг ярианд үйл үгийн үндэс дээр -아요 эсвэл -어요 залгана. Сүүлийн эгшиг ㅏ / ㅗ бол -아요, бусад тохиолдолд -어요.","가다 → 가요 (явна), 먹다 → 먹어요 (иднэ), 마시다 → 마셔요 (уна), 좋아하다 → 좋아해요 (дуртай).","Үгүйсгэх: 안 + үйл үг: 안 먹어요 (идэхгүй)."],
+ rule:"үндэс + 아요 / 어요 · 하다 → 해요 · 안 + үйл үг",
+ ex:[["저는 밥을 먹어요.","Би хоол иднэ."],["학교에 가요.","Сургууль руу явна."],["커피를 안 마셔요.","Кофе уухгүй."],["한국어를 공부해요.","Солонгос хэл сурна."]],
+ q:[["학교에 ___. (явна)",["가요","가어요","갑요"],0],["밥을 ___. (иднэ)",["먹아요","먹어요","먹요"],1],["커피를 ___ 마셔요. (уухгүй)",["안","은","를"],0]],
+ o:["저는 한국어를 공부해요"]}
+);
 var EXTRA={
 be:{o:["We are good friends"],f:[["He ___ a doctor. (am / is / are)","is"]]},
 present:{o:["She drinks tea every morning"],f:[["My father ___ (work) in a bank.","works"]]},
@@ -464,7 +634,7 @@ var SCEN=[
 ["toys","Тоглоомын дэлгүүр","a kind shop assistant in a toy store chatting with a child about their favourite toys","kid"]
 ];
 var KID_CATS=[["all","Бүгд"],["animal","🐾 Амьтан"],["color","🎨 Өнгө"],["number","🔢 Тоо"],["food","🍎 Хоол"],["body","🖐 Бие"],["transport","🚗 Унаа"],["saved","🔖 Хадгалсан"],["mine","➕ Миний үгс"]];
-var ADULT_CATS=[["all","Бүгд"],["work","💼 Ажил"],["travel","✈️ Аялал"],["ielts","🎓 IELTS"],["saved","🔖 Хадгалсан"],["mine","➕ Миний үгс"]];
+var ADULT_CATS=[["all","Бүгд"],["basic","💬 Энгийн яриа"],["work","💼 Ажил"],["travel","✈️ Аялал"],["ielts","🎓 IELTS"],["saved","🔖 Хадгалсан"],["mine","➕ Миний үгс"]];
 var KID_SET=["animal","color","number","food","body","transport"];
 var LVDESC={
 a1:"CEFR A1-A2: very simple words, short sentences, mostly present tense",
@@ -481,9 +651,11 @@ var state={
   box:sget("box",{}), xp:sget("xp",0), daily:sget("daily",{}),
   lessons:sget("lessons",{}), chatCount:sget("chat",0), mode:sget("mode","adult"),
   due:sget("due",{}), saved:sget("saved",[]), custom:sget("custom",[]), tasks:sget("tasks",{}),
-  apiKey:sget("apikey",""), stars:sget("stars",0), listenOk:sget("listenOk",0), goal:sget("goal",20), theme:sget("theme","auto"), cat:"all"
+  lang:sget("lang","en"), apiKey:sget("apikey",""), stars:sget("stars",0), listenOk:sget("listenOk",0), goal:sget("goal",20), theme:sget("theme","auto"), cat:"all"
 };
 if(state.mode!=="kid")state.mode="adult";
+if(["en","ja","ko"].indexOf(state.lang)<0)state.lang="en";
+document.documentElement.setAttribute("data-lang",state.lang);
 if(!Array.isArray(state.saved))state.saved=[];
 if(!state.due||typeof state.due!=="object")state.due={};
 if(!state.tasks||typeof state.tasks!=="object")state.tasks={};
@@ -516,8 +688,9 @@ function append(el,kid){
 }
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function dkey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
-function speak(t){try{if(!("speechSynthesis" in window))return;speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.9;speechSynthesis.speak(u);}catch(e){}}
-function effLevel(){return state.mode==="kid"?"a1":state.level;}
+var LANG_TTS={en:"en-US",ja:"ja-JP",ko:"ko-KR"},LANGN={en:"Англи",ja:"Япон",ko:"Солонгос"},LANG_EN={en:"English",ja:"Japanese",ko:"Korean"};
+function speak(t){try{if(!("speechSynthesis" in window))return;speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.lang=LANG_TTS[state.lang]||"en-US";u.rate=.9;speechSynthesis.speak(u);}catch(e){}}
+function effLevel(){return state.mode==="kid"?"a1":state.lang!=="en"?"all":state.level;}
 var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
 function toast(t){
   var old=document.getElementById("toast");if(old)old.remove();
@@ -587,6 +760,18 @@ function renderModes(){
     }},m[1]));
   });
 }
+function renderLangs(){
+  var el=document.getElementById("langs");el.textContent="";
+  [["en","Англи"],["ja","Япон"],["ko","Солонгос"]].forEach(function(l){
+    el.append(h("button",{class:"lv","aria-pressed":String(state.lang===l[0]),onclick:function(){
+      if(state.lang===l[0])return;
+      state.lang=l[0];sset("lang",l[0]);document.documentElement.setAttribute("data-lang",l[0]);
+      state.cat="all";ui.vocab.cur=null;ui.vocab.quiz=null;ui.vocab.flipped=false;ui.vocab.q="";ui.listen.cur=null;ui.grammar.lesson=null;
+      if(ui.chat.ctl)ui.chat.ctl.abort();ui.chat.started=false;ui.chat.msgs=[];ui.chat.busy=false;ui.chat.error="";
+      renderLangs();renderStrip();render();
+    }},l[1]));
+  });
+}
 var THEMES=["auto","light","dark"],TICON={auto:"🌓",light:"☀️",dark:"🌙"},TNAME={auto:"автомат",light:"цайвар",dark:"харанхуй"};
 function applyTheme(){
   if(THEMES.indexOf(state.theme)<0)state.theme="auto";
@@ -618,6 +803,7 @@ function render(){
 function pool(){
   var lv=effLevel(),kid=state.mode==="kid";
   return WORDS.filter(function(w){
+    if((w[6]||"en")!==state.lang)return false;
     var inKid=KID_SET.indexOf(w[5])>=0,mine=w[5]==="mine";
     if(kid?!(inKid||mine||(!w[5]&&w[0]==="a1")):inKid)return false;
     if(state.cat==="saved"){if(state.saved.indexOf(w[1])<0)return false;}
@@ -664,8 +850,8 @@ function taskPanel(){
 /* pronunciation */
 function pronounce(w,st){
   try{
-    var rec=new SR();rec.lang="en-US";rec.maxAlternatives=3;rec.interimResults=false;
-    st.className="fb";st.textContent="Сонсож байна... англиар хэлээрэй";
+    var rec=new SR();rec.lang=LANG_TTS[state.lang]||"en-US";rec.maxAlternatives=3;rec.interimResults=false;
+    st.className="fb";st.textContent="Сонсож байна... хэлээрэй";
     rec.onresult=function(e){
       var alts=[];for(var i=0;i<e.results[0].length;i++)alts.push(norm(e.results[0][i].transcript));
       var target=norm(w[1]),ok=alts.some(function(a){return a===target||a.split(" ").indexOf(target)>=0;});
@@ -685,15 +871,15 @@ function extraRow(w){
 /* custom words + list */
 function addPanel(){
   var wrap=h("div",{class:"note",style:"margin-bottom:12px"});
-  var en=h("input",{class:"tin",id:"nw-en",placeholder:"Англи үг",autocomplete:"off","aria-label":"Англи үг",style:"margin-top:0"}),
+  var en=h("input",{class:"tin",id:"nw-en",placeholder:LANGN[state.lang]+" үг",autocomplete:"off","aria-label":LANGN[state.lang]+" үг",style:"margin-top:0"}),
       mn=h("input",{class:"tin",id:"nw-mn",placeholder:"Монгол орчуулга",autocomplete:"off","aria-label":"Монгол орчуулга"}),
       ex=h("input",{class:"tin",id:"nw-ex",placeholder:"Жишээ өгүүлбэр (заавал биш)",autocomplete:"off","aria-label":"Жишээ өгүүлбэр"});
   wrap.append(h("div",{style:"font-weight:700;margin-bottom:6px"},"➕ Өөрийн үг нэмэх"),en,mn,ex,
     h("button",{class:"btn primary",style:"margin-top:10px;width:100%",onclick:function(){
       var e=en.value.trim(),m=mn.value.trim(),x=ex.value.trim();
-      if(!e||!m){toast("Англи үг болон орчуулгаа бичнэ үү");return;}
+      if(!e||!m){toast("Үг болон орчуулгаа бичнэ үү");return;}
       if(WORDS.some(function(w){return w[1].toLowerCase()===e.toLowerCase();})){toast("Энэ үг аль хэдийн байна");return;}
-      var entry=["b1",e,m,x,null,"mine"];
+      var entry=["b1",e,m,x,null,"mine",state.lang];
       state.custom.push(entry);WORDS.push(entry);sset("custom",state.custom);
       toast("Нэмэгдлээ: "+e);ui.vocab.cur=null;ui.vocab.quiz=null;render();
     }},"Нэмэх"));
@@ -702,18 +888,18 @@ function addPanel(){
 function viewList(root,p){
   var v=ui.vocab;
   root.append(addPanel());
-  var inp=h("input",{class:"tin",type:"search",id:"wsearch",placeholder:"Хайх (англи эсвэл монгол)...","aria-label":"Үг хайх",autocomplete:"off",style:"margin:0 0 10px"});
+  var inp=h("input",{class:"tin",type:"search",id:"wsearch",placeholder:"Хайх (үг, уншлага эсвэл орчуулга)...","aria-label":"Үг хайх",autocomplete:"off",style:"margin:0 0 10px"});
   inp.value=v.q||"";
   var box=h("div",{id:"wlist"});
   function draw(){
     box.textContent="";
     var q=(v.q||"").trim().toLowerCase();
-    var res=p.filter(function(w){return !q||w[1].toLowerCase().indexOf(q)>=0||w[2].toLowerCase().indexOf(q)>=0;});
+    var res=p.filter(function(w){return !q||w[1].toLowerCase().indexOf(q)>=0||w[2].toLowerCase().indexOf(q)>=0||(w[7]||"").toLowerCase().indexOf(q)>=0;});
     if(!res.length){box.append(h("p",{class:"muted"},"Олдсонгүй."));return;}
     res.slice(0,60).forEach(function(w){
       var saved=state.saved.indexOf(w[1])>=0;
       var row=h("div",{class:"lrow",style:"cursor:default"},
-        h("div",{style:"flex:1;min-width:0"},h("div",{class:"t"},(state.mode==="kid"&&w[4]?w[4]+" ":"")+w[1]),h("div",{class:"muted small"},w[2])),
+        h("div",{style:"flex:1;min-width:0"},h("div",{class:"t"},(state.mode==="kid"&&w[4]?w[4]+" ":"")+w[1]),h("div",{class:"muted small"},w[2]+(w[7]?" · "+w[7]:""))),
         h("button",{class:"btn ghost",style:"padding:8px 10px;flex:none","aria-label":"Сонсох",onclick:function(){speak(w[1]);}},"🔊"),
         h("button",{class:"btn ghost",style:"padding:8px 10px;flex:none;opacity:"+(saved?"1":".4"),"aria-label":saved?"Хадгалснаас хасах":"Хадгалах","aria-pressed":String(saved),onclick:function(){toggleSave(w);draw();}},"🔖"));
       if(w[5]==="mine")row.append(h("button",{class:"btn ghost",style:"padding:8px 10px;flex:none","aria-label":"Устгах",onclick:function(){deleteCustom(w);render();}},"🗑"));
@@ -728,7 +914,7 @@ function viewList(root,p){
 var SITE_URL="https://maze0101.github.io/salkhi-english/";
 var deferredInstall=null;
 window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferredInstall=e;});
-var STORE_KEYS=[["level","level"],["box","box"],["due","due"],["xp","xp"],["daily","daily"],["lessons","lessons"],["chat","chatCount"],["stars","stars"],["listenOk","listenOk"],["goal","goal"],["custom","custom"],["saved","saved"],["tasks","tasks"],["mode","mode"],["theme","theme"]];
+var STORE_KEYS=[["level","level"],["box","box"],["due","due"],["xp","xp"],["daily","daily"],["lessons","lessons"],["chat","chatCount"],["stars","stars"],["listenOk","listenOk"],["goal","goal"],["custom","custom"],["saved","saved"],["tasks","tasks"],["mode","mode"],["lang","lang"],["theme","theme"]];
 function isObj(x){return x&&typeof x==="object"&&!Array.isArray(x);}
 function exportData(){
   var o={app:"salkhi",v:1};
@@ -757,6 +943,7 @@ function importData(file){
         else if(key==="custom"){if(!Array.isArray(v)||v.some(function(c){return !Array.isArray(c)||c.length<6||typeof c[1]!=="string"||typeof c[2]!=="string";}))return;}
         else if(key==="level"){if(["all","a1","b1","b2"].indexOf(v)<0)return;}
         else if(key==="mode"){if(["adult","kid"].indexOf(v)<0)return;}
+        else if(key==="lang"){if(["en","ja","ko"].indexOf(v)<0)return;}
         else if(key==="theme"){if(THEMES.indexOf(v)<0)return;}
         sset(key,v);
       });
@@ -807,10 +994,10 @@ function dataPanel(){
 }
 function modeWords(){
   var kid=state.mode==="kid";
-  return WORDS.filter(function(w){var k=KID_SET.indexOf(w[5])>=0;return kid?(k||w[5]==="mine"||(!w[5]&&w[0]==="a1")):!k;});
+  return WORDS.filter(function(w){if((w[6]||"en")!==state.lang)return false;var k=KID_SET.indexOf(w[5])>=0;return kid?(k||w[5]==="mine"||(!w[5]&&w[0]==="a1")):!k;});
 }
 function catChips(){
-  var list=state.mode==="kid"?KID_CATS:ADULT_CATS,el=h("div",{class:"chips",role:"group","aria-label":"Ангилал"});
+  var list0=state.mode==="kid"?KID_CATS:ADULT_CATS,list=list0.filter(function(c){return ["all","saved","mine"].indexOf(c[0])>=0||WORDS.some(function(w){return (w[6]||"en")===state.lang&&w[5]===c[0];});}),el=h("div",{class:"chips",role:"group","aria-label":"Ангилал"});
   list.forEach(function(c){
     el.append(h("button",{class:"lv","aria-pressed":String(state.cat===c[0]),onclick:function(){
       state.cat=c[0];ui.vocab.cur=null;ui.vocab.quiz=null;ui.vocab.flipped=false;ui.listen.cur=null;render();
@@ -857,9 +1044,9 @@ function viewWords(){
     v.pop=false;
     var emo=(state.mode==="kid"&&w[4])?h("div",{class:"emo","aria-hidden":"true"},w[4]):null;
     if(!v.flipped){
-      card.append(emo,h("div",{class:"en"},w[1]),h("div",{class:"hint"},"Дарж орчуулгыг харах"));
+      append(card,[emo,h("div",{class:"en"},w[1]),w[7]?h("div",{class:"ex",style:"margin-top:6px"},w[7]):null,h("div",{class:"hint"},"Дарж орчуулгыг харах")]);
     }else{
-      card.append(emo,h("div",{class:"mn"},w[2]),h("div",{class:"ex"},w[3]));
+      append(card,[emo,h("div",{class:"mn"},w[2]),h("div",{class:"ex"},w[3]),w[8]?h("div",{class:"hint",style:"margin-top:6px"},w[8]):null]);
     }
     root.append(card);
     root.append(h("div",{class:"row"},
@@ -877,6 +1064,7 @@ function viewWords(){
     root.append(h("p",{class:"muted small"},"Энэ үгийн орчуулга аль нь вэ?"));
     if(state.mode==="kid"&&qz.word[4])root.append(h("div",{class:"emo"},qz.word[4]));
     root.append(h("div",{class:"en",style:"margin:6px 0 4px"},qz.word[1]));
+    if(qz.word[7])root.append(h("div",{class:"muted"},qz.word[7]));
     qz.opts.forEach(function(o){
       var cls="opt";
       if(qz.picked!=null){if(o===qz.word[2])cls+=" ok";else if(o===qz.picked)cls+=" bad";}
@@ -887,7 +1075,7 @@ function viewWords(){
     if(qz.picked!=null){
       var ok=qz.picked===qz.word[2];
       root.append(h("div",{class:"fb "+(ok?"ok":"bad")},ok?"Зөв! +5 XP":"Буруу. Зөв хариулт: "+qz.word[2]));
-      root.append(h("p",{class:"muted",style:"margin-top:6px"},qz.word[3]));
+      root.append(h("p",{class:"muted",style:"margin-top:6px"},qz.word[3]+(qz.word[8]?" — "+qz.word[8]:"")));
       root.append(h("div",{class:"row"},
         h("button",{class:"btn",onclick:function(){speak(qz.word[1]);}},"Сонсох"),
         h("button",{class:"btn primary",onclick:function(){v.cur=pickWord(v.cur[1]);v.quiz=null;render();}},"Дараагийн үг")));
@@ -989,7 +1177,7 @@ function viewGrammar(){
   }
   root.append(h("h2",null,"Дүрмийн хичээл"));
   root.append(h("p",{class:"muted"},"Монгол тайлбартай богино хичээл, дараа нь 5 асуулттай тест (сонголт, өгүүлбэр бүтээх, нөхөх)."));
-  var list=LESSONS.filter(function(l){return effLevel()==="all"||l.lv===effLevel();});
+  var list=LESSONS.filter(function(l){return (l.lang||"en")===state.lang&&(effLevel()==="all"||l.lv===effLevel());});
   var wrap=h("div",{style:"margin-top:8px"});
   list.forEach(function(l){
     var done=state.lessons[l.id]!=null;
@@ -1023,7 +1211,7 @@ function viewListen(){
       l.picked=w;var ok=w===l.cur;grade(l.cur,ok);
       if(ok){state.listenOk++;sset("listenOk",state.listenOk);taskInc("s");}
       render();
-    }},(state.mode==="kid"&&w[4]?w[4]+"  ":"")+w[1]));
+    }},(state.mode==="kid"&&w[4]?w[4]+"  ":"")+w[1]+(w[7]?"  ("+w[7]+")":"")));
   });
   if(l.picked!=null){
     var ok=l.picked===l.cur;
@@ -1053,6 +1241,14 @@ zoo:[["Hello! Welcome to the zoo. What is your name?","My name is Bat."],["What 
 toys:[["Hello! What toy do you like?","I like a car."],["What color is your toy?","It is red."],["How many toys do you have?","I have five toys."],["Do you like to play with friends?","Yes, I do."],["Which toy do you want to buy today?","I want the teddy bear."]]
 };
 var REACT=["Nice!","Great!","I see.","Good answer!","Cool!","That sounds good."];
+var SCRIPTS_JA={
+free:[["こんにちは！げんきですか。(Konnichiwa! Genki desu ka.)","はい、げんきです。(Hai, genki desu.)"],["おなまえは なんですか。(O-namae wa nan desu ka.)","わたしは バトです。(Watashi wa Bato desu.)"],["なにが すきですか。(Nani ga suki desu ka.)","ねこが すきです。(Neko ga suki desu.)"],["まいあさ なにを のみますか。(Maiasa nani o nomimasu ka.)","おちゃを のみます。(Ocha o nomimasu.)"],["しゅうまつ なにを しますか。(Shuumatsu nani o shimasu ka.)","ともだちと あいます。(Tomodachi to aimasu.)"]],
+cafe:[["いらっしゃいませ。ごちゅうもんは？(Irasshaimase. Gochuumon wa?)","コーヒーを おねがいします。(Koohii o onegaishimasu.)"],["ホットですか、アイスですか。(Hotto desu ka, aisu desu ka.)","ホットで おねがいします。(Hotto de onegaishimasu.)"],["ほかに なにか ありますか。(Hoka ni nanika arimasu ka.)","ケーキを ください。(Keeki o kudasai.)"],["ぜんぶで ごひゃくえんです。(Zenbu de gohyaku en desu.)","はい、どうぞ。(Hai, douzo.)"],["ここで めしあがりますか。(Koko de meshiagarimasu ka.)","はい、ここで たべます。(Hai, koko de tabemasu.)"]]
+};
+var SCRIPTS_KO={
+free:[["안녕하세요! 잘 지내요? (Annyeonghaseyo! Jal jinaeyo?)","네, 잘 지내요. (Ne, jal jinaeyo.)"],["이름이 뭐예요? (Ireumi mwoyeyo?)","저는 바트예요. (Jeoneun Bateuyeyo.)"],["뭘 좋아해요? (Mwol joahaeyo?)","고양이를 좋아해요. (Goyangireul joahaeyo.)"],["아침에 뭘 마셔요? (Achime mwol masyeoyo?)","차를 마셔요. (Chareul masyeoyo.)"],["주말에 뭘 해요? (Jumare mwol haeyo?)","친구를 만나요. (Chingureul mannayo.)"]],
+cafe:[["어서 오세요. 주문하시겠어요? (Eoseo oseyo. Jumunhasigesseoyo?)","커피 주세요. (Keopi juseyo.)"],["뜨거운 거요, 차가운 거요? (Tteugeoun geoyo, chagaun geoyo?)","뜨거운 거 주세요. (Tteugeoun geo juseyo.)"],["다른 건 필요하세요? (Dareun geon piryohaseyo?)","케이크도 주세요. (Keikeudo juseyo.)"],["전부 오천 원이에요. (Jeonbu ocheon woniyeyo.)","네, 여기 있어요. (Ne, yeogi isseoyo.)"],["여기서 드시고 가세요? (Yeogiseo deusigo gaseyo?)","네, 여기서 먹어요. (Ne, yeogiseo meogeoyo.)"]]
+};
 function offlineFix(t){
   var m;
   if(/^[a-z]/.test(t))return "Өгүүлбэрийг том үсгээр эхлүүл: "+t.charAt(0).toUpperCase()+t.slice(1);
@@ -1066,18 +1262,23 @@ function offlineFix(t){
   if((m=t.match(/\ban (dog|cat|car|book|toy|coffee|lion|rabbit|friend|student|teacher|big|small)\b/i)))return "Гийгүүлэгчийн дуудлагатай үгийн өмнө a хэрэглэнэ: a "+m[1];
   return "";
 }
+var LANGPACK={
+  en:{scripts:SCRIPTS,react:REACT,tryMsg:"Let's try in English! ",tryFix:"Англиар бичиж үзээрэй.",end:"Well done! That was a good practice. Choose another situation to keep going.",fin:"We finished this chat. Press the new chat button to try another situation."},
+  ja:{scripts:SCRIPTS_JA,react:["いいですね！","なるほど！","すごい！"],tryMsg:"にほんごで はなしましょう！ ",tryFix:"Японоор бичиж үзээрэй.",end:"よくできました！ ほかの シーンも やってみましょう。",fin:"この かいわは おわりました。あたらしい かいわを はじめましょう。"},
+  ko:{scripts:SCRIPTS_KO,react:["좋아요!","그렇군요!","대단해요!"],tryMsg:"한국어로 말해 봐요! ",tryFix:"Солонгосоор бичиж үзээрэй.",end:"잘했어요! 다른 상황도 연습해 봐요.",fin:"이 대화는 끝났어요. 새 대화를 시작해 보세요."}
+};
 function offlineReply(turns){
-  var c=ui.chat,sc=SCRIPTS[c.scn]||SCRIPTS.free;
+  var c=ui.chat,pk=LANGPACK[state.lang]||LANGPACK.en,sc=pk.scripts[c.scn]||pk.scripts.free;
   if(turns.length===1){c.step=0;return {text:sc[0][0]};}
-  if(c.step>=sc.length)return {text:"We finished this chat. Press the new chat button to try another situation."};
+  if(c.step>=sc.length)return {text:pk.fin};
   var t=turns[turns.length-1].content;
   if(/[\u0400-\u04FF]/.test(t)){
-    return {text:"Let's try in English! "+sc[c.step][0]+"\n###\nАнглиар бичиж үзээрэй. Жишээ хариулт: "+sc[c.step][1]};
+    return {text:pk.tryMsg+sc[c.step][0]+"\n###\n"+pk.tryFix+" Жишээ хариулт: "+sc[c.step][1]};
   }
-  var fix=offlineFix(t),out;
+  var fix=state.lang==="en"?offlineFix(t):"",out;
   c.step++;
-  if(c.step<sc.length)out=REACT[Math.floor(Math.random()*REACT.length)]+" "+sc[c.step][0];
-  else out="Well done! That was a good practice. Choose another situation to keep going.";
+  if(c.step<sc.length)out=pk.react[Math.floor(Math.random()*pk.react.length)]+" "+sc[c.step][0];
+  else out=pk.end;
   return {text:out+(fix?"\n###\n"+fix:"")};
 }
 function callDirect(turns,opts){
@@ -1146,10 +1347,12 @@ function chatTurns(){
 function startChat(id){
   var c=ui.chat,sc=SCEN.filter(function(s){return s[0]===id;})[0];
   var el=effLevel(),lv=el==="all"?"b1":el;
-  c.rules="You are an English speaking partner inside a language-learning app for Mongolian speakers. Play this role: "+sc[2]+". Learner level: "+LVDESC[lv]+".\n"+
-   "Rules:\n- Stay in the role. Write 1 to 3 short sentences in English at the learner's level, then ask exactly ONE follow-up question.\n"+
-   "- If the learner's latest message has a grammar, word-choice or spelling mistake, add a line containing only ### after your reply, then write in Mongolian: the corrected English sentence and a one-sentence explanation in Mongolian. If there are no mistakes, do not write ###.\n"+
-   "- If the learner writes in Mongolian, reply in simple English and, after ###, give the English version of what they wanted to say.\n"+
+  var LN=LANG_EN[state.lang];
+  c.rules="You are a "+LN+" speaking partner inside a language-learning app for Mongolian speakers. Play this role: "+sc[2]+". Learner level: "+LVDESC[lv]+".\n"+
+   "Rules:\n- Stay in the role. Write 1 to 3 short sentences in "+LN+" at the learner's level, then ask exactly ONE follow-up question.\n"+
+   (state.lang!=="en"?"- After each "+LN+" sentence add its romanized reading in parentheses. Use simple polite forms.\n":"")+
+   "- If the learner's latest message has a grammar, word-choice or spelling mistake, add a line containing only ### after your reply, then write in Mongolian: the corrected "+LN+" sentence and a one-sentence explanation in Mongolian. If there are no mistakes, do not write ###.\n"+
+   "- If the learner writes in Mongolian, reply in simple "+LN+" and, after ###, give the "+LN+" version of what they wanted to say.\n"+
    "- Never use markdown formatting, bullet points or emojis.";
   if(state.mode==="kid")c.rules+="\n- The learner is a child. Use very simple, playful words and be warm and encouraging.";
   c.step=0;c.scn=id;c.msgs=[];c.started=true;c.error="";c.draft="";
@@ -1238,7 +1441,7 @@ function viewChat(){
     }},"Шинэ яриа")));
   root.append(h("div",{class:"msgs",id:"msgs","aria-live":"polite"}));
   root.append(h("div",{class:"note",id:"chatstate",style:"display:none"}));
-  var inp=h("textarea",{id:"chatin",rows:"1",placeholder:"Англиар бич эсвэл ярь...","aria-label":"Мессеж"});
+  var inp=h("textarea",{id:"chatin",rows:"1",placeholder:"Сонгосон хэлээрээ бич эсвэл ярь...","aria-label":"Мессеж"});
   inp.value=c.draft||"";
   inp.addEventListener("input",function(){c.draft=inp.value;inp.style.height="auto";inp.style.height=Math.min(inp.scrollHeight,120)+"px";});
   inp.addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();var t=inp.value;inp.value="";sendMsg(t);}});
@@ -1246,7 +1449,7 @@ function viewChat(){
   if(SR){
     var mic=h("button",{class:"btn",title:"Ярих","aria-label":"Микрофоноор ярих",onclick:function(){
       try{
-        var r=new SR();r.lang="en-US";r.interimResults=false;
+        var r=new SR();r.lang=LANG_TTS[state.lang]||"en-US";r.interimResults=false;
         r.onresult=function(e){inp.value=(inp.value+" "+e.results[0][0].transcript).trim();c.draft=inp.value;};
         r.onerror=function(){mic.disabled=true;mic.title="Микрофон ашиглах боломжгүй";mic.classList.remove("rec");};
         r.onend=function(){mic.classList.remove("rec");};
@@ -1306,7 +1509,7 @@ function viewStats(){
   return root;
 }
 
-applyTheme();renderModes();renderStrip();renderLevels();renderTabs();render();
+applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)){try{navigator.serviceWorker.register("sw.js").catch(function(){});}catch(e){}}
 })();
 </script>
