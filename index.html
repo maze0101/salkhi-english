@@ -1534,7 +1534,7 @@ function dataPanel(){
   var r2=h("div",{class:"row",style:"flex-wrap:wrap"},
     h("button",{class:"btn",onclick:exportData},"⬇️ Явц хадгалах"),
     h("button",{class:"btn",onclick:function(){file.click();}},"⬆️ Явц сэргээх"));
-  wrap.append(r1,qrbox,r2,file,h("p",{class:"muted small",style:"margin-top:10px"},"Утсан дээр апп шиг суулгах: хөтчийн цэс → «Нүүр дэлгэцэнд нэмэх»."));
+  wrap.append(r1,qrbox,r2,file,h("p",{class:"muted small",style:"margin-top:10px"},"Утсан дээр апп шиг суулгах: хөтчийн цэс → «Нүүр дэлгэцэнд нэмэх». Хувилбар: "+BUILD));
   return wrap;
 }
 function modeWords(){
@@ -2070,6 +2070,21 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
+var BUILD="20260920-2";
+function checkUpdate(atStart){
+  if(!/^https?:$/.test(location.protocol))return;
+  fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
+    var m=t.match(/var BUILD="([^"]+)"/);
+    if(!m||m[1]===BUILD)return;
+    if(atStart){
+      var k="salkhi:reloaded:"+m[1];
+      try{if(sessionStorage.getItem(k))return;sessionStorage.setItem(k,"1");}catch(e){return;}
+      location.reload();
+    }else toast("Шинэ хувилбар бэлэн. Аппыг дахин нээнэ үү.");
+  }).catch(function(){});
+}
+checkUpdate(true);
+document.addEventListener("visibilitychange",function(){if(!document.hidden)checkUpdate(false);});
 if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)){try{
   var hadCtl=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(function(reg){
