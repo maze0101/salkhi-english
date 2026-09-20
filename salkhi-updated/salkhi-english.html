@@ -1638,6 +1638,33 @@ function viewWords(){
 }
 
 /* ---------- grammar ---------- */
+function cleanSpeak(t){
+  t=String(t).replace(/\s*\([^)]*\)/g,"").replace(/\s*（[^）]*）/g,"");
+  if(state.lang==="zh")t=t.replace(/[A-Za-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+/g,"");
+  return t.replace(/\s+/g," ").trim();
+}
+function speakSeq(list){
+  try{
+    if(!("speechSynthesis" in window))return;
+    speechSynthesis.cancel();
+    list.forEach(function(t){
+      if(!t)return;
+      var u=new SpeechSynthesisUtterance(t);u.lang=LANG_TTS[state.lang]||"en-US";u.rate=.9;speechSynthesis.speak(u);
+    });
+  }catch(e){}
+}
+function speakBtn(text,label){
+  return h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":label||"Сонсох",onclick:function(){speak(cleanSpeak(text));}},"🔊");
+}
+function fullSentence(q){
+  if(q.type==="order")return cleanSpeak(q.sentence);
+  var t=q.q;
+  if(t.indexOf("___")>=0)return cleanSpeak(t.replace("___",q.a));
+  var m=t.match(/[「«]([^」»]+)[」»]/);
+  if(m)return cleanSpeak(m[1]);
+  if(state.lang==="zh"){m=t.match(/[\u4e00-\u9fff]+/);if(m)return m[0];}
+  return "";
+}
 function norm(s){return String(s).toLowerCase().replace(/[.,!?]/g,"").replace(/\s+/g," ").trim();}
 function buildQs(L){
   var qs=L.q.map(function(q){return {type:"mc",q:q[0],o:shuffle(q[1]),a:q[1][q[2]]};});
@@ -1652,7 +1679,7 @@ function buildQs(L){
 function viewQuestion(root,g,L){
   var q=g.qs[g.qi],answered=g.picked!=null,ok=false,ans=q.type==="order"?q.sentence:q.a;
   root.append(h("p",{class:"muted small"},L.t+" · "+(g.qi+1)+" / "+g.qs.length));
-  function mark(good){if(good){g.score++;addStar();celebrate();}render();}
+  function mark(good){if(good){g.score++;addStar();celebrate();}var fs0=fullSentence(q);if(fs0)speak(fs0);render();}
   if(q.type==="order"){
     root.append(h("div",{class:"q"},"Үгсийг зөв дарааллаар байрлуулж өгүүлбэр бүтээ"));
     var built=h("div",{class:"built"});
@@ -1686,6 +1713,8 @@ function viewQuestion(root,g,L){
   }
   if(answered){
     root.append(h("div",{class:"fb "+(ok?"ok":"bad")},ok?"Зөв!":"Буруу. Зөв хариулт: "+ans));
+    var fullS=fullSentence(q);
+    if(fullS)root.append(h("div",{class:"row"},h("button",{class:"btn",onclick:function(){speak(fullS);}},"🔊 Өгүүлбэрийг сонсох")));
     root.append(h("div",{class:"row"},h("button",{class:"btn primary",onclick:function(){g.qi++;g.picked=null;g.built=[];render();}},g.qi+1<g.qs.length?"Дараагийн асуулт":"Дүн харах")));
   }
 }
@@ -1699,8 +1728,9 @@ function viewGrammar(){
       L.intro.forEach(function(t){root.append(h("p",null,t));});
       root.append(h("div",{class:"rule"},L.rule));
       root.append(h("p",{class:"muted small"},"Жишээ"));
+      root.append(h("div",{class:"row",style:"margin:0 0 6px"},h("button",{class:"btn",onclick:function(){speakSeq(L.ex.map(function(e){return cleanSpeak(e[0]);}));}},"🔊 Бүгдийг сонсох")));
       var ul=h("ul",{class:"exl"});
-      L.ex.forEach(function(e){ul.append(h("li",null,h("b",null,e[0]),h("span",{class:"muted"},e[1])));});
+      L.ex.forEach(function(e){ul.append(h("li",null,h("div",{style:"display:flex;gap:8px;align-items:center"},h("b",{style:"flex:1"},e[0]),speakBtn(e[0])),h("span",{class:"muted"},e[1])));});
       root.append(ul);
       root.append(h("div",{class:"row"},
         h("button",{class:"btn primary",onclick:function(){
@@ -2070,7 +2100,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20260920-2";
+var BUILD="20260920-3";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
