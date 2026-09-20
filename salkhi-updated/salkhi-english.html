@@ -802,7 +802,45 @@ sampleP.then(function(s){sample=s;sampleReady=true;if(state.tab==="chat"&&!ui.ch
 var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 
 var MODEL="claude-haiku-4-5-20251001";
-function chatAvailable(){return !!sample||!!state.apiKey;}
+function chatAvailable(){return true;}
+var SCRIPTS={
+free:[["Hi! How are you today?","I am fine, thank you."],["What do you like to do in your free time?","I like to read books."],["What is your favorite food?","My favorite food is pizza."],["What do you do every morning?","I drink tea and go to work."],["What will you do this weekend?","I will visit my family."]],
+cafe:[["Welcome! What would you like to order?","I would like a coffee, please."],["Would you like it hot or cold?","Hot, please."],["Anything to eat with that?","Yes, a piece of cake, please."],["That will be five dollars. Is that okay?","Yes, here you are."],["Would you like to sit inside or outside?","Inside, please."]],
+travel:[["Good evening! Do you have a reservation?","Yes, my name is Bat."],["How many nights will you stay?","I will stay for three nights."],["Would you like a room with a view?","Yes, please."],["What time would you like breakfast?","At eight o'clock, please."],["Is there anything else I can help you with?","Where can I find a taxi?"]],
+interview:[["Thank you for coming. Can you tell me about yourself?","I am a student and I like teamwork."],["Why do you want this job?","I want to learn new skills."],["What is your biggest strength?","I am hardworking."],["Can you work in a team?","Yes, I enjoy working with people."],["Do you have any questions for us?","When can I start?"]],
+ielts:[["Let's talk about your hometown. Where are you from?","I am from Ulaanbaatar."],["What do you like most about your hometown?","I like the people."],["Do you work or are you a student?","I am a student."],["What do you do in your free time?","I usually play sports."],["Do you prefer to stay at home or go out?","I prefer to go out with friends."]],
+work:[["Good morning! Are you ready for the meeting?","Yes, I am ready."],["What did you do yesterday?","I finished my report."],["What is the deadline for your project?","The deadline is Friday."],["Do you need any help with it?","Yes, could you check my report?"],["Great. Shall we schedule another meeting?","Yes, next Monday is good."]],
+zoo:[["Hello! Welcome to the zoo. What is your name?","My name is Bat."],["What is your favorite animal?","I like lions."],["What color is the lion?","The lion is yellow."],["How many legs does a dog have?","A dog has four legs."],["Do you want to feed the rabbit?","Yes, I do!"]],
+toys:[["Hello! What toy do you like?","I like a car."],["What color is your toy?","It is red."],["How many toys do you have?","I have five toys."],["Do you like to play with friends?","Yes, I do."],["Which toy do you want to buy today?","I want the teddy bear."]]
+};
+var REACT=["Nice!","Great!","I see.","Good answer!","Cool!","That sounds good."];
+function offlineFix(t){
+  var m;
+  if(/^[a-z]/.test(t))return "Өгүүлбэрийг том үсгээр эхлүүл: "+t.charAt(0).toUpperCase()+t.slice(1);
+  if(/(^|\s)i(\s|'|$)/.test(t))return "Англи хэлэнд «I» үргэлж том үсгээр бичигдэнэ.";
+  if(/\bI (is|are)\b/.test(t))return "«I»-тэй үед am хэрэглэнэ: I am ...";
+  if((m=t.match(/\b(he|she|it) (are|am)\b/i)))return "«"+m[1]+"»-тэй үед is хэрэглэнэ: "+m[1]+" is ...";
+  if((m=t.match(/\b(you|we|they) (is|am)\b/i)))return "«"+m[1]+"»-тэй үед are хэрэглэнэ: "+m[1]+" are ...";
+  if(/\bI am agree\b/i.test(t))return "«I agree» гэж хэлнэ, am хэрэггүй.";
+  if((m=t.match(/\b(he|she|it) (go|eat|like|want|have|drink|work|live|play|study|need|love|read|watch)\b/i)))return "«"+m[1]+"»-тэй үед үйл үгийн ард -s залгана (goes, likes, has ...).";
+  if((m=t.match(/\ba (apple|egg|orange|hour|umbrella|elephant|animal|old|interesting)\b/i)))return "Эгшгийн дуудлагатай үгийн өмнө an хэрэглэнэ: an "+m[1];
+  if((m=t.match(/\ban (dog|cat|car|book|toy|coffee|lion|rabbit|friend|student|teacher|big|small)\b/i)))return "Гийгүүлэгчийн дуудлагатай үгийн өмнө a хэрэглэнэ: a "+m[1];
+  return "";
+}
+function offlineReply(turns){
+  var c=ui.chat,sc=SCRIPTS[c.scn]||SCRIPTS.free;
+  if(turns.length===1){c.step=0;return {text:sc[0][0]};}
+  if(c.step>=sc.length)return {text:"We finished this chat. Press the new chat button to try another situation."};
+  var t=turns[turns.length-1].content;
+  if(/[\u0400-\u04FF]/.test(t)){
+    return {text:"Let's try in English! "+sc[c.step][0]+"\n###\nАнглиар бичиж үзээрэй. Жишээ хариулт: "+sc[c.step][1]};
+  }
+  var fix=offlineFix(t),out;
+  c.step++;
+  if(c.step<sc.length)out=REACT[Math.floor(Math.random()*REACT.length)]+" "+sc[c.step][0];
+  else out="Well done! That was a good practice. Choose another situation to keep going.";
+  return {text:out+(fix?"\n###\n"+fix:"")};
+}
 function callDirect(turns,opts){
   return fetch("https://api.anthropic.com/v1/messages",{
     method:"POST",signal:opts.signal,
@@ -835,6 +873,7 @@ function callDirect(turns,opts){
 var CLAUDE_URL="https://claude.ai/artifact/VFYAp4jRRr8LxQQCXF6XKU";
 function keyBox(){
   var box=h("div",{class:"note"});
+  box.append(h("p",{style:"margin-bottom:10px"},"Түлхүүргүйгээр бэлэн асуултын горимоор ярьж болно (энгийн алдааг монголоор засна). Бүрэн AI яриа хүсвэл доорхыг ашиглана."));
   box.append(h("a",{class:"btn primary",href:CLAUDE_URL,target:"_blank",rel:"noopener",style:"display:block;text-decoration:none;margin-bottom:12px"},"Claude дотор нээх (түлхүүр шаардахгүй)"));
   if(state.apiKey){
     box.append(h("p",null,"AI яриа шууд ажиллана: Anthropic API түлхүүр хадгалагдсан."),
@@ -874,7 +913,7 @@ function startChat(id){
    "- If the learner writes in Mongolian, reply in simple English and, after ###, give the English version of what they wanted to say.\n"+
    "- Never use markdown formatting, bullet points or emojis.";
   if(state.mode==="kid")c.rules+="\n- The learner is a child. Use very simple, playful words and be warm and encouraging.";
-  c.scn=id;c.msgs=[];c.started=true;c.error="";c.draft="";
+  c.step=0;c.scn=id;c.msgs=[];c.started=true;c.error="";c.draft="";
   render();
   runAI();
 }
@@ -889,7 +928,7 @@ function runAI(){
     var o={signal:c.ctl.signal,onText:function(x){apply(x.text);}};
     if(s)return s(turns,{modelTier:"quick",cache:false,signal:o.signal,onText:o.onText});
     if(state.apiKey)return callDirect(turns,o);
-    throw {code:"sampling_disabled"};
+    return offlineReply(turns);
   }).then(function(res){
     apply(res.text);ai.streaming=false;c.busy=false;paint();
   }).catch(function(e){
@@ -954,7 +993,7 @@ function viewChat(){
   }
   var sc=SCEN.filter(function(s){return s[0]===c.scn;})[0];
   root.append(h("div",{style:"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"},
-    h("div",{class:"small muted"},sc[1]),
+    h("div",{class:"small muted"},sc[1]+((!sample&&!state.apiKey)?" · бэлэн асуултын горим":"")),
     h("button",{class:"btn ghost",style:"padding:6px 12px;font-size:14px",onclick:function(){
       if(c.ctl)c.ctl.abort();c.started=false;c.msgs=[];c.busy=false;c.error="";render();
     }},"Шинэ яриа")));
