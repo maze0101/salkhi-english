@@ -1,0 +1,14 @@
+{
+  "name": "Салхи · Англи хэлний апп",
+  "short_name": "Салхи",
+  "description": "Англи хэлний үг, дүрэм, сонсох, ярих дасгал",
+  "lang": "mn",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F5F2",
+  "theme_color": "#1F5F5B",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Салхи · Англи хэлний апп</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#1F5F5B">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap&subset=cyrillic,cyrillic-ext" rel="stylesheet">
@@ -345,6 +348,22 @@ WORDS.push(
 ["b2","according to","-ийн дагуу, ...ын мэдээлснээр","According to the report, sales increased.",null,"ielts"]
 );
 
+WORDS.push(
+["a1","hand","гар","Wash your hands.","✋","body"],["a1","eye","нүд","I see with my eyes.","👁️","body"],
+["a1","nose","хамар","My nose is small.","👃","body"],["a1","ear","чих","I hear with my ears.","👂","body"],
+["a1","mouth","ам","Open your mouth.","👄","body"],["a1","foot","хөл","My foot hurts.","🦶","body"],
+["a1","car","машин","Dad drives a car.","🚗","transport"],["a1","bus","автобус","The bus is yellow.","🚌","transport"],
+["a1","train","галт тэрэг","The train is fast.","🚆","transport"],["a1","plane","онгоц","The plane flies high.","✈️","transport"],
+["a1","bike","унадаг дугуй","I ride my bike.","🚲","transport"],["a1","ship","хөлөг онгоц","The ship is on the sea.","🚢","transport"],
+["b1","achieve","амжилтад хүрэх, биелүүлэх","She worked hard to achieve her goal."],["b1","challenge","сорилт","Learning a language is a challenge."],
+["b1","responsible","хариуцлагатай","He is a responsible student."],["b1","convenient","тохиромжтой, ая тухтай","The bus stop is convenient."],
+["b1","recommend","зөвлөх, санал болгох","I recommend this book."],["b1","purchase","худалдан авах","You can purchase tickets online."],
+["b1","necessary","шаардлагатай","It is necessary to book early."],["b1","similar","төстэй","Our phones are similar."],
+["b1","avoid","зайлсхийх","Try to avoid fast food."],["b1","expect","хүлээх, найдах","I expect good news."],
+["b1","increase","нэмэгдэх, өсөх","Prices increase every year."],["b1","decrease","буурах","The number of cars will decrease."],
+["b2","affect","нөлөөлөх","Sleep affects your mood."],["b2","connect","холбох","Connect the phone to Wi-Fi."],
+["b2","predict","таамаглах","Nobody can predict the weather exactly."]
+);
 var LESSONS=[
 {id:"be",lv:"a1",t:"To be: am, is, are",
  intro:["Англи хэлэнд өгүүлбэр бүр үйл үгтэй байх ёстой. Монголоор «Би оюутан» гэхэд үйл үг шаардлагагүй ч англиар I am a student гэж хэлнэ.","Үгүйсгэхдээ not нэмнэ (is not = isn't). Асуухдаа үйл үгийг өгүүлэгдэхүүний өмнө гаргана."],
@@ -393,6 +412,32 @@ var LESSONS=[
  q:[["The woman ___ lives next door is a doctor.",["which","who","whose"],1],["This is the city ___ I was born.",["where","which","who"],0],["My friend, ___ brother is a pilot, lives in Seoul.",["who","whose","which"],1]]}
 ];
 
+LESSONS.push(
+{id:"pastsimple",lv:"a1",t:"Past Simple: өнгөрсөн цаг",
+ intro:["Өнгөрсөнд дууссан үйлдлийг Past Simple-ээр хэлнэ. Ихэнх үйл үгэнд -ed залгана: work → worked, play → played.","Зарим үйл үг тогтмол бус хэлбэртэй: go → went, eat → ate, see → saw, have → had.","Үгүйсгэх, асуухдаа did ашиглана. did-ийн ард үйл үг үндсэн хэлбэрээрээ үлдэнэ: I didn't go. Did you go?"],
+ rule:"үйл үг + -ed (worked) · тогтмол бус: went, ate, saw · didn't / Did + үндсэн хэлбэр",
+ ex:[["I played football yesterday.","Би өчигдөр хөл бөмбөг тоглосон."],["She went to school by bus.","Тэр сургуульдаа автобусаар явсан."],["We didn't watch TV last night.","Бид өнгөрсөн шөнө ТВ үзээгүй."],["Did you eat breakfast?","Чи өглөөний цай уусан уу?"]],
+ q:[["I ___ my homework yesterday.",["do","did","done"],1],["She ___ to the market last week.",["goes","went","go"],1],["I didn't ___ the film.",["saw","see","seen"],1]],
+ o:["He visited his grandmother yesterday"],f:[["They ___ (play) tennis last Sunday.","played"]]},
+{id:"prep",lv:"a1",t:"Угтвар үг: in, on, at",
+ intro:["Англи хэлэнд цаг ба газрыг илэрхийлэхэд in, on, at хэрэглэнэ.","at — тодорхой цаг, цэг: at 5 o'clock, at home, at school.","on — өдөр, огноо, гадаргуу: on Monday, on my birthday, on the table.","in — сар, жил, улирал, том нутаг: in May, in 2024, in winter, in Mongolia."],
+ rule:"at + цаг / тодорхой газар · on + өдөр / гадаргуу · in + сар, жил, улирал / улс, хот",
+ ex:[["The class starts at nine.","Хичээл есөн цагт эхэлнэ."],["I have a test on Friday.","Надад баасан гаригт шалгалт байна."],["She was born in 2005.","Тэр 2005 онд төрсөн."],["The book is on the table.","Ном ширээн дээр байна."]],
+ q:[["We have lunch ___ noon.",["at","on","in"],0],["My birthday is ___ July.",["at","on","in"],2],["He arrives ___ Monday.",["at","on","in"],1]],
+ o:["The meeting is on Tuesday at ten"],f:[["I live ___ Ulaanbaatar. (in / on / at)","in"]]},
+{id:"modal",lv:"b1",t:"can, must, should: боломж, үүрэг, зөвлөгөө",
+ intro:["can — чадах, боломжтой: I can swim. Үгүйсгэх нь can't (cannot).","must — заавал хийх ёстой: You must wear a helmet. Үгүйсгэвэл mustn't — хориглосон гэсэн утгатай.","should — хийвэл зүгээр, зөвлөгөө: You should sleep more.","Эдгээр модаль үйл үгийн ард үйл үг үндсэн хэлбэрээрээ орно, he / she / it-д -s залгахгүй."],
+ rule:"can / must / should + үйл үгийн үндсэн хэлбэр · үгүйсгэх: can't, mustn't, shouldn't",
+ ex:[["She can speak three languages.","Тэр гурван хэлээр ярьж чадна."],["You must stop at a red light.","Улаан гэрэлд заавал зогсох ёстой."],["You should drink more water.","Чи илүү их ус уувал зүгээр."],["He can't drive yet.","Тэр одоохондоо машин жолоодож чадахгүй."]],
+ q:[["She ___ speak English very well.",["can","cans","is can"],0],["You ___ drink more water. It is good for you.",["should","must to","are"],0],["Passengers ___ use phones during takeoff. (it is forbidden)",["mustn't","don't must","aren't"],0]],
+ o:["You should study every day"],f:[["You look tired. You ___ rest. (should / can)","should"]]},
+{id:"future",lv:"b1",t:"Future: will ба going to",
+ intro:["will — яг одоо гаргасан шийдвэр, амлалт, таамаг: I will help you.","going to — өмнө нь төлөвлөсөн зүйл, эсвэл харагдаж буй шинж тэмдэгт тулгуурласан таамаг: I am going to visit Japan next year. Look at the clouds! It is going to rain.","will-ийн ард үйл үг үндсэн хэлбэрээрээ орно. going to-д am / is / are хэрэглэнэ."],
+ rule:"will + үйл үг · am / is / are + going to + үйл үг",
+ ex:[["I will call you tomorrow.","Би маргааш чамд залгана."],["We are going to buy a new car.","Бид шинэ машин авахаар төлөвлөж байна."],["Look at the sky! It is going to rain.","Тэнгэрийг хар! Бороо орох нь."],["She won't come today.","Тэр өнөөдөр ирэхгүй."]],
+ q:[["I ___ help you with your bags. (a promise right now)",["will","am going","go"],0],["We ___ visit Paris next summer. (we planned it)",["are going to","will to","go to"],0],["They are going to ___ a party.",["have","having","has"],0]],
+ o:["We are going to visit our grandparents"],f:[["Look! The bus ___ (leave). (going to)","is going to leave"]]}
+);
 var EXTRA={
 be:{o:["We are good friends"],f:[["He ___ a doctor. (am / is / are)","is"]]},
 present:{o:["She drinks tea every morning"],f:[["My father ___ (work) in a bank.","works"]]},
@@ -418,9 +463,9 @@ var SCEN=[
 ["zoo","Амьтны хүрээлэнд","a cheerful zoo guide talking with a child about the animals they can see","kid"],
 ["toys","Тоглоомын дэлгүүр","a kind shop assistant in a toy store chatting with a child about their favourite toys","kid"]
 ];
-var KID_CATS=[["all","Бүгд"],["animal","🐾 Амьтан"],["color","🎨 Өнгө"],["number","🔢 Тоо"],["food","🍎 Хоол"]];
-var ADULT_CATS=[["all","Бүгд"],["work","💼 Ажил"],["travel","✈️ Аялал"],["ielts","🎓 IELTS"]];
-var KID_SET=["animal","color","number","food"];
+var KID_CATS=[["all","Бүгд"],["animal","🐾 Амьтан"],["color","🎨 Өнгө"],["number","🔢 Тоо"],["food","🍎 Хоол"],["body","🖐 Бие"],["transport","🚗 Унаа"],["saved","🔖 Хадгалсан"],["mine","➕ Миний үгс"]];
+var ADULT_CATS=[["all","Бүгд"],["work","💼 Ажил"],["travel","✈️ Аялал"],["ielts","🎓 IELTS"],["saved","🔖 Хадгалсан"],["mine","➕ Миний үгс"]];
+var KID_SET=["animal","color","number","food","body","transport"];
 var LVDESC={
 a1:"CEFR A1-A2: very simple words, short sentences, mostly present tense",
 b1:"CEFR B1: everyday vocabulary and clear, medium-length sentences",
@@ -435,9 +480,15 @@ var state={
   level:sget("level","all"), tab:"words",
   box:sget("box",{}), xp:sget("xp",0), daily:sget("daily",{}),
   lessons:sget("lessons",{}), chatCount:sget("chat",0), mode:sget("mode","adult"),
+  due:sget("due",{}), saved:sget("saved",[]), custom:sget("custom",[]), tasks:sget("tasks",{}),
   apiKey:sget("apikey",""), stars:sget("stars",0), listenOk:sget("listenOk",0), goal:sget("goal",20), theme:sget("theme","auto"), cat:"all"
 };
 if(state.mode!=="kid")state.mode="adult";
+if(!Array.isArray(state.saved))state.saved=[];
+if(!state.due||typeof state.due!=="object")state.due={};
+if(!state.tasks||typeof state.tasks!=="object")state.tasks={};
+state.custom=(Array.isArray(state.custom)?state.custom:[]).filter(function(c){return Array.isArray(c)&&c.length>=6&&typeof c[1]==="string"&&typeof c[2]==="string";});
+state.custom.forEach(function(c){WORDS.push(c);});
 document.documentElement.setAttribute("data-mode",state.mode);
 var ui={
   vocab:{mode:"card",cur:null,flipped:false,quiz:null,pop:false},
@@ -567,15 +618,196 @@ function render(){
 function pool(){
   var lv=effLevel(),kid=state.mode==="kid";
   return WORDS.filter(function(w){
-    var inKid=KID_SET.indexOf(w[5])>=0;
-    if(kid?!(inKid||(!w[5]&&w[0]==="a1")):inKid)return false;
-    if(state.cat!=="all"&&w[5]!==state.cat)return false;
-    return lv==="all"||w[0]===lv;
+    var inKid=KID_SET.indexOf(w[5])>=0,mine=w[5]==="mine";
+    if(kid?!(inKid||mine||(!w[5]&&w[0]==="a1")):inKid)return false;
+    if(state.cat==="saved"){if(state.saved.indexOf(w[1])<0)return false;}
+    else if(state.cat!=="all"&&w[5]!==state.cat)return false;
+    return mine||lv==="all"||w[0]===lv;
   });
+}
+var INTERVALS=[0,1,3,7,14].map(function(d){return d*86400000;});
+function isDue(w){var d=state.due[w[1]];return !d||d<=Date.now();}
+function toggleSave(w){
+  var i=state.saved.indexOf(w[1]);
+  if(i<0)state.saved.push(w[1]);else state.saved.splice(i,1);
+  sset("saved",state.saved);
+}
+function deleteCustom(w){
+  var i=state.custom.indexOf(w),j=WORDS.indexOf(w),k=state.saved.indexOf(w[1]);
+  if(i>=0)state.custom.splice(i,1);if(j>=0)WORDS.splice(j,1);if(k>=0)state.saved.splice(k,1);
+  delete state.box[w[1]];delete state.due[w[1]];
+  sset("custom",state.custom);sset("saved",state.saved);sset("box",state.box);sset("due",state.due);
+  ui.vocab.cur=null;ui.vocab.quiz=null;
+}
+/* daily tasks */
+var TASKS=[["w",5,"5 үг давт","words"],["l",1,"1 дүрмийн хичээл дуусга","grammar"],["s",3,"Сонсоод 3 үг зөв ол","listen"]];
+function taskState(){
+  var k=dkey(new Date());
+  if(state.tasks.d!==k)state.tasks={d:k,w:0,l:0,s:0,b:0};
+  return state.tasks;
+}
+function taskInc(k){
+  var t=taskState();t[k]=(t[k]||0)+1;
+  var all=TASKS.every(function(x){return t[x[0]]>=x[1];});
+  if(all&&!t.b){t.b=1;sset("tasks",t);toast("🎉 Өнөөдрийн бүх даалгавар биелэв! +20 XP");celebrate(true,true);addXP(20);}
+  else sset("tasks",t);
+}
+function taskPanel(){
+  var t=taskState(),n=TASKS.filter(function(x){return t[x[0]]>=x[1];}).length;
+  var el=h("div",{class:"note",style:"margin-bottom:14px"},h("div",{style:"font-weight:700;margin-bottom:4px"},"Өнөөдрийн даалгавар "+n+"/"+TASKS.length));
+  TASKS.forEach(function(x){
+    var d=t[x[0]]>=x[1];
+    el.append(h("button",{class:"back",style:"display:block;width:100%;text-align:left;padding:5px 0;margin:0;"+(d?"color:var(--ok)":""),onclick:function(){state.tab=x[3];renderTabs();render();window.scrollTo(0,0);}},(d?"✅ ":"⬜ ")+x[2]+" ("+Math.min(t[x[0]]||0,x[1])+"/"+x[1]+")"));
+  });
+  return el;
+}
+/* pronunciation */
+function pronounce(w,st){
+  try{
+    var rec=new SR();rec.lang="en-US";rec.maxAlternatives=3;rec.interimResults=false;
+    st.className="fb";st.textContent="Сонсож байна... англиар хэлээрэй";
+    rec.onresult=function(e){
+      var alts=[];for(var i=0;i<e.results[0].length;i++)alts.push(norm(e.results[0][i].transcript));
+      var target=norm(w[1]),ok=alts.some(function(a){return a===target||a.split(" ").indexOf(target)>=0;});
+      if(ok){st.className="fb ok";st.textContent="Зөв дуудлаа! +3 XP";addXP(3);addStar();celebrate();}
+      else{st.className="fb bad";st.textContent="Танигдсан: «"+alts[0]+"». Дахин оролдоорой.";}
+    };
+    rec.onerror=function(){st.className="fb bad";st.textContent="Микрофон ажиллахгүй байна. Зөвшөөрлөө шалгана уу.";};
+    rec.start();
+  }catch(e){st.textContent="Микрофон ажиллахгүй байна.";}
+}
+function extraRow(w){
+  var wrap=h("div"),st=h("div",{class:"fb",id:"pron","aria-live":"polite"}),row=h("div",{class:"row"});
+  if(SR)row.append(h("button",{class:"btn",onclick:function(){pronounce(w,st);}},"🎤 Хэлж үзэх"));
+  row.append(h("button",{class:"btn ghost",onclick:function(){toggleSave(w);render();}},state.saved.indexOf(w[1])>=0?"🔖 Хадгалсан":"🔖 Хадгалах"));
+  wrap.append(row,st);return wrap;
+}
+/* custom words + list */
+function addPanel(){
+  var wrap=h("div",{class:"note",style:"margin-bottom:12px"});
+  var en=h("input",{class:"tin",id:"nw-en",placeholder:"Англи үг",autocomplete:"off","aria-label":"Англи үг",style:"margin-top:0"}),
+      mn=h("input",{class:"tin",id:"nw-mn",placeholder:"Монгол орчуулга",autocomplete:"off","aria-label":"Монгол орчуулга"}),
+      ex=h("input",{class:"tin",id:"nw-ex",placeholder:"Жишээ өгүүлбэр (заавал биш)",autocomplete:"off","aria-label":"Жишээ өгүүлбэр"});
+  wrap.append(h("div",{style:"font-weight:700;margin-bottom:6px"},"➕ Өөрийн үг нэмэх"),en,mn,ex,
+    h("button",{class:"btn primary",style:"margin-top:10px;width:100%",onclick:function(){
+      var e=en.value.trim(),m=mn.value.trim(),x=ex.value.trim();
+      if(!e||!m){toast("Англи үг болон орчуулгаа бичнэ үү");return;}
+      if(WORDS.some(function(w){return w[1].toLowerCase()===e.toLowerCase();})){toast("Энэ үг аль хэдийн байна");return;}
+      var entry=["b1",e,m,x,null,"mine"];
+      state.custom.push(entry);WORDS.push(entry);sset("custom",state.custom);
+      toast("Нэмэгдлээ: "+e);ui.vocab.cur=null;ui.vocab.quiz=null;render();
+    }},"Нэмэх"));
+  return wrap;
+}
+function viewList(root,p){
+  var v=ui.vocab;
+  root.append(addPanel());
+  var inp=h("input",{class:"tin",type:"search",id:"wsearch",placeholder:"Хайх (англи эсвэл монгол)...","aria-label":"Үг хайх",autocomplete:"off",style:"margin:0 0 10px"});
+  inp.value=v.q||"";
+  var box=h("div",{id:"wlist"});
+  function draw(){
+    box.textContent="";
+    var q=(v.q||"").trim().toLowerCase();
+    var res=p.filter(function(w){return !q||w[1].toLowerCase().indexOf(q)>=0||w[2].toLowerCase().indexOf(q)>=0;});
+    if(!res.length){box.append(h("p",{class:"muted"},"Олдсонгүй."));return;}
+    res.slice(0,60).forEach(function(w){
+      var saved=state.saved.indexOf(w[1])>=0;
+      var row=h("div",{class:"lrow",style:"cursor:default"},
+        h("div",{style:"flex:1;min-width:0"},h("div",{class:"t"},(state.mode==="kid"&&w[4]?w[4]+" ":"")+w[1]),h("div",{class:"muted small"},w[2])),
+        h("button",{class:"btn ghost",style:"padding:8px 10px;flex:none","aria-label":"Сонсох",onclick:function(){speak(w[1]);}},"🔊"),
+        h("button",{class:"btn ghost",style:"padding:8px 10px;flex:none;opacity:"+(saved?"1":".4"),"aria-label":saved?"Хадгалснаас хасах":"Хадгалах","aria-pressed":String(saved),onclick:function(){toggleSave(w);draw();}},"🔖"));
+      if(w[5]==="mine")row.append(h("button",{class:"btn ghost",style:"padding:8px 10px;flex:none","aria-label":"Устгах",onclick:function(){deleteCustom(w);render();}},"🗑"));
+      box.append(row);
+    });
+    if(res.length>60)box.append(h("p",{class:"muted small"},"Эхний 60-г харууллаа. Хайлтаа нарийсгаарай."));
+  }
+  inp.addEventListener("input",function(){v.q=inp.value;draw();});
+  root.append(inp,box);draw();
+}
+/* share, export, import, install */
+var SITE_URL="https://maze0101.github.io/salkhi-english/";
+var deferredInstall=null;
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferredInstall=e;});
+var STORE_KEYS=[["level","level"],["box","box"],["due","due"],["xp","xp"],["daily","daily"],["lessons","lessons"],["chat","chatCount"],["stars","stars"],["listenOk","listenOk"],["goal","goal"],["custom","custom"],["saved","saved"],["tasks","tasks"],["mode","mode"],["theme","theme"]];
+function isObj(x){return x&&typeof x==="object"&&!Array.isArray(x);}
+function exportData(){
+  var o={app:"salkhi",v:1};
+  STORE_KEYS.forEach(function(k){o[k[0]]=state[k[1]];});
+  try{
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:"application/json"}));
+    a.download="salkhi-yavts-"+dkey(new Date())+".json";
+    document.body.append(a);a.click();a.remove();
+    toast("Явц файл болгон хадгалагдлаа");
+  }catch(e){toast("Файл хадгалж чадсангүй");}
+}
+function importData(file){
+  var fr=new FileReader();
+  fr.onload=function(){
+    try{
+      var o=JSON.parse(fr.result);
+      if(!isObj(o)||o.app!=="salkhi")throw new Error("bad");
+      if(typeof confirm==="function"&&!confirm("Одоогийн явцыг файлын явцаар солих уу?"))return;
+      var num={xp:1,chat:1,stars:1,listenOk:1,goal:1},obj={box:1,due:1,daily:1,lessons:1,tasks:1};
+      STORE_KEYS.forEach(function(k){
+        var key=k[0],v=o[key];if(v===undefined)return;
+        if(num[key]){if(typeof v!=="number"||!isFinite(v)||v<0)return;}
+        else if(obj[key]){if(!isObj(v))return;}
+        else if(key==="saved"){if(!Array.isArray(v)||v.some(function(x){return typeof x!=="string";}))return;}
+        else if(key==="custom"){if(!Array.isArray(v)||v.some(function(c){return !Array.isArray(c)||c.length<6||typeof c[1]!=="string"||typeof c[2]!=="string";}))return;}
+        else if(key==="level"){if(["all","a1","b1","b2"].indexOf(v)<0)return;}
+        else if(key==="mode"){if(["adult","kid"].indexOf(v)<0)return;}
+        else if(key==="theme"){if(THEMES.indexOf(v)<0)return;}
+        sset(key,v);
+      });
+      toast("Явц сэргээгдлээ");setTimeout(function(){location.reload();},700);
+    }catch(e){toast("Энэ файл Салхи аппын явц биш байна");}
+  };
+  fr.readAsText(file);
+}
+function loadQR(cb){
+  if(window.qrcode)return cb(true);
+  var sc=document.createElement("script");
+  sc.src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js";
+  sc.onload=function(){cb(!!window.qrcode);};sc.onerror=function(){cb(false);};
+  document.head.append(sc);
+}
+function showQR(box){
+  box.textContent="QR код ачаалж байна...";
+  loadQR(function(ok){
+    box.textContent="";
+    if(!ok){box.append(h("p",{class:"muted small"},"QR код ачаалж чадсангүй (интернет шаардлагатай). Линк: "+SITE_URL));return;}
+    var qr=window.qrcode(0,"M");qr.addData(SITE_URL);qr.make();
+    var holder=h("div",{style:"background:#fff;padding:10px;display:inline-block;border-radius:12px"});
+    holder.innerHTML=qr.createSvgTag(5,0);
+    box.append(holder,h("p",{class:"muted small"},SITE_URL));
+  });
+}
+function shareApp(){
+  var text="Салхи — англи хэлний апп. Би "+state.xp+" XP цуглуулсан! "+SITE_URL;
+  if(navigator.share){navigator.share({title:"Салхи",text:text,url:SITE_URL}).catch(function(){});return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){toast("Линк хуулагдлаа");},function(){toast(SITE_URL);});}
+  else toast(SITE_URL);
+}
+function dataPanel(){
+  var wrap=h("div",{style:"margin-top:22px"});
+  wrap.append(h("h2",{style:"font-size:18px"},"Хуваалцах ба нөөцлөх"));
+  var r1=h("div",{class:"row",style:"flex-wrap:wrap"},
+    h("button",{class:"btn",onclick:shareApp},"📤 Хуваалцах"),
+    h("button",{class:"btn",onclick:function(){showQR(qrbox);}},"QR код"));
+  if(deferredInstall)r1.append(h("button",{class:"btn primary",onclick:function(){deferredInstall.prompt();deferredInstall=null;render();}},"📲 Апп болгон суулгах"));
+  var qrbox=h("div",{style:"margin-top:10px"});
+  var file=h("input",{type:"file",accept:".json,application/json",style:"display:none",id:"impfile","aria-label":"Явцын файл сонгох"});
+  file.addEventListener("change",function(){if(file.files[0])importData(file.files[0]);});
+  var r2=h("div",{class:"row",style:"flex-wrap:wrap"},
+    h("button",{class:"btn",onclick:exportData},"⬇️ Явц хадгалах"),
+    h("button",{class:"btn",onclick:function(){file.click();}},"⬆️ Явц сэргээх"));
+  wrap.append(r1,qrbox,r2,file,h("p",{class:"muted small",style:"margin-top:10px"},"Утсан дээр апп шиг суулгах: хөтчийн цэс → «Нүүр дэлгэцэнд нэмэх»."));
+  return wrap;
 }
 function modeWords(){
   var kid=state.mode==="kid";
-  return WORDS.filter(function(w){var k=KID_SET.indexOf(w[5])>=0;return kid?(k||(!w[5]&&w[0]==="a1")):!k;});
+  return WORDS.filter(function(w){var k=KID_SET.indexOf(w[5])>=0;return kid?(k||w[5]==="mine"||(!w[5]&&w[0]==="a1")):!k;});
 }
 function catChips(){
   var list=state.mode==="kid"?KID_CATS:ADULT_CATS,el=h("div",{class:"chips",role:"group","aria-label":"Ангилал"});
@@ -590,6 +822,7 @@ function emptyNote(){return h("div",{class:"note"},"Энэ шүүлтүүрт т
 function pickWord(exclude){
   var p=pool().filter(function(w){return w[1]!==exclude;});
   if(!p.length)return pool()[0];
+  var dueNow=p.filter(isDue);if(dueNow.length)p=dueNow;
   var wt=p.map(function(w){return 1/Math.pow(1+(state.box[w[1]]||0),2);});
   var r=Math.random()*wt.reduce(function(a,b){return a+b;},0);
   for(var i=0;i<p.length;i++){r-=wt[i];if(r<=0)return p[i];}
@@ -597,6 +830,7 @@ function pickWord(exclude){
 }
 function grade(w,ok){
   var b=state.box[w[1]]||0;state.box[w[1]]=ok?Math.min(b+1,4):0;sset("box",state.box);
+  state.due[w[1]]=Date.now()+(ok?INTERVALS[state.box[w[1]]]:10*60000);sset("due",state.due);taskInc("w");
   addXP(ok?5:1);
   if(ok){addStar();celebrate();}
 }
@@ -607,12 +841,14 @@ function buildQuiz(w){
 }
 function viewWords(){
   var v=ui.vocab,p=pool(),root=h("div");
-  if(!p.length){root.append(catChips(),emptyNote());return root;}
+  if(!p.length){root.append(catChips(),emptyNote(),addPanel());return root;}
   if(!v.cur||p.indexOf(v.cur)<0){v.cur=pickWord();v.flipped=false;v.quiz=null;}
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
+  root.append(taskPanel());
   root.append(h("div",{class:"seg",role:"group","aria-label":"Горим"},
     h("button",{"aria-pressed":String(v.mode==="card"),onclick:function(){v.mode="card";v.flipped=false;render();}},"Карт"),
-    h("button",{"aria-pressed":String(v.mode==="quiz"),onclick:function(){v.mode="quiz";v.quiz=null;render();}},"Тест")));
+    h("button",{"aria-pressed":String(v.mode==="quiz"),onclick:function(){v.mode="quiz";v.quiz=null;render();}},"Тест"),
+    h("button",{"aria-pressed":String(v.mode==="list"),onclick:function(){v.mode="list";render();}},"Жагсаалт")));
 
   root.append(catChips());
   if(v.mode==="card"){
@@ -629,12 +865,13 @@ function viewWords(){
     root.append(h("div",{class:"row"},
       h("button",{class:"btn",onclick:function(){speak(w[1]);}},"Сонсох"),
       h("button",{class:"btn",onclick:function(){speak(w[3]);}},"Өгүүлбэр сонсох")));
+    root.append(extraRow(w));
     if(v.flipped){
       root.append(h("div",{class:"row"},
         h("button",{class:"btn",onclick:function(){next(false);}},"Дахин үзнэ"),
         h("button",{class:"btn primary",onclick:function(){next(true);}},"Мэднэ")));
     }
-  }else{
+  }else if(v.mode==="quiz"){
     if(!v.quiz)v.quiz=buildQuiz(v.cur);
     var qz=v.quiz;
     root.append(h("p",{class:"muted small"},"Энэ үгийн орчуулга аль нь вэ?"));
@@ -655,9 +892,11 @@ function viewWords(){
         h("button",{class:"btn",onclick:function(){speak(qz.word[1]);}},"Сонсох"),
         h("button",{class:"btn primary",onclick:function(){v.cur=pickWord(v.cur[1]);v.quiz=null;render();}},"Дараагийн үг")));
     }
+  }else{
+    viewList(root,p);
   }
   root.append(h("div",{style:"margin-top:22px"},
-    h("div",{class:"muted small"},"Мэддэг үг: "+known+" / "+p.length),
+    h("div",{class:"muted small"},"Мэддэг үг: "+known+" / "+p.length+" · давтах хугацаа болсон: "+p.filter(function(w){var d=state.due[w[1]];return d&&d<=Date.now();}).length),
     h("div",{class:"bar"},h("i",{style:"width:"+(p.length?Math.round(known/p.length*100):0)+"%"}))));
   return root;
 
@@ -738,7 +977,7 @@ function viewGrammar(){
       viewQuestion(root,g,L);
     }else{
       var total=g.qs.length,best=Math.max(state.lessons[L.id]||0,g.score);
-      if(!g.saved){g.saved=true;if(g.score===total)celebrate(true,true);state.lessons[L.id]=best;sset("lessons",state.lessons);addXP(g.score*10);renderStrip();}
+      if(!g.saved){g.saved=true;if(g.score===total)celebrate(true,true);taskInc("l");state.lessons[L.id]=best;sset("lessons",state.lessons);addXP(g.score*10);renderStrip();}
       root.append(h("h2",null,g.score+" / "+total));
       root.append(h("p",null,g.score===total?"Гайхалтай! Энэ хичээлийг сайн эзэмшлээ.":"Дүрмийг дахин уншаад тестийг давтаж үзээрэй."));
       root.append(h("p",{class:"muted"},"+"+(g.score*10)+" XP"));
@@ -782,7 +1021,7 @@ function viewListen(){
     if(l.picked!=null){if(w===l.cur)cls+=" ok";else if(w===l.picked)cls+=" bad";}
     root.append(h("button",{class:cls,disabled:l.picked!=null,onclick:function(){
       l.picked=w;var ok=w===l.cur;grade(l.cur,ok);
-      if(ok){state.listenOk++;sset("listenOk",state.listenOk);}
+      if(ok){state.listenOk++;sset("listenOk",state.listenOk);taskInc("s");}
       render();
     }},(state.mode==="kid"&&w[4]?w[4]+"  ":"")+w[1]));
   });
@@ -1056,10 +1295,11 @@ function viewStats(){
   var wrap=h("div",{class:"days"});
   days.forEach(function(e){wrap.append(h("div",null,h("i",{class:e[1]?"":"z",style:"height:"+(e[1]?Math.max(8,Math.round(e[1]/max*80)):4)+"px",title:e[1]+" XP"}),e[0]));});
   root.append(wrap);
+  root.append(dataPanel());
   root.append(h("div",{style:"margin-top:26px"},
     h("button",{class:"btn ghost",onclick:function(){
       if(!ui.resetArmed){ui.resetArmed=true;render();return;}
-      state.box={};state.xp=0;state.daily={};state.lessons={};state.chatCount=0;state.stars=0;state.listenOk=0;sset("stars",0);sset("listenOk",0);
+      state.box={};state.xp=0;state.daily={};state.lessons={};state.chatCount=0;state.due={};state.tasks={};sset("due",{});sset("tasks",{});state.stars=0;state.listenOk=0;sset("stars",0);sset("listenOk",0);
       ["box","xp","daily","lessons","chat"].forEach(function(k){sset(k,k==="xp"||k==="chat"?0:{});});
       ui.resetArmed=false;ui.vocab.cur=null;renderStrip();render();
     }},ui.resetArmed?"Бүх явцаа устгах уу? Дахин дарж баталгаажуул":"Явцыг шинэчлэх")));
@@ -1067,6 +1307,7 @@ function viewStats(){
 }
 
 applyTheme();renderModes();renderStrip();renderLevels();renderTabs();render();
+if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)){try{navigator.serviceWorker.register("sw.js").catch(function(){});}catch(e){}}
 })();
 </script>
 </body>
