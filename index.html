@@ -223,9 +223,17 @@ p+p{margin-top:10px}
 .tr i{display:block;font-style:normal;font-size:30px}
 .tr.lock{opacity:.4;filter:grayscale(1)}
 .langs{display:flex;gap:6px;padding:12px 20px 0;overflow-x:auto}
+.splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);transition:opacity .45s ease,visibility .45s}
+.splash.hide{opacity:0;visibility:hidden}
+.splash img{width:112px;height:112px;border-radius:26px;box-shadow:var(--shadow);animation:splashpop .7s ease-out both}
+.splash b{font-size:26px;letter-spacing:.5px;animation:splashpop .7s .1s ease-out both}
+@keyframes splashpop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.splash img,.splash b{animation:none}.splash{transition:none}}
 </style>
 </head>
 <body>
+<div class="splash" id="splash" aria-hidden="true"><img src="icon.svg" alt=""><b>Салхи</b></div>
+<script>setTimeout(function(){var e=document.getElementById("splash");if(e){e.classList.add("hide");setTimeout(function(){e.remove()},600)}},1100);</script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <pattern id="hex" width="28" height="48.5" patternUnits="userSpaceOnUse">
     <path d="M0 8.08 L14 0 L28 8.08 M0 8.08 V24.25 M28 8.08 V24.25 M0 24.25 L14 32.33 L28 24.25 M14 32.33 V48.5" fill="none" stroke="var(--mesh)" stroke-width="1"/>
