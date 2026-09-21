@@ -39,12 +39,12 @@
       return db.ref("users/"+uid).once("value");
     }).then(function(snap){
       prof=snap.val();
-      if(!prof){screen="name";paint();return;}
+      if(!prof){if(setScreen("name"))paint();return;}
       enter();
-    }).catch(function(e){var m=String(e&&e.message?e.message:e);info=/configuration-not-found|admin-restricted|operation-not-allowed/.test(m)?"Firebase дээр Authentication → Anonymous асаагаагүй байна. ("+m+")":"Холбогдож чадсангүй: "+m;screen="error";paint();});
+    }).catch(function(e){var m=String(e&&e.message?e.message:e);info=/configuration-not-found|admin-restricted|operation-not-allowed/.test(m)?"Firebase дээр Authentication → Anonymous асаагаагүй байна. ("+m+")":"Холбогдож чадсангүй: "+m;if(setScreen("error"))paint();});
   }
   function enter(){
-    screen="home";syncProfile();loadFriends();paint();
+    syncProfile();loadFriends();if(setScreen("home"))paint();
   }
   function me(){return env.me();}
   function syncProfile(){
@@ -286,6 +286,141 @@
     return box;
   }
 
+  /* ---------- AI найзууд (бот) ---------- */
+  var BOTS={
+    en:[
+      {id:"emma",name:"Emma",bio:"Лондонд амьдардаг оюутан. Аялал, кино, хоол хийх дуртай.",persona:"Emma, a cheerful university student from London who loves travel, films and cooking",scene:"free"},
+      {id:"jack",name:"Jack",bio:"Манчестерийн кафены тогооч. Хоол, кофены тухай ярих дуртай.",persona:"Jack, a friendly café chef from Manchester who loves talking about food and coffee",scene:"cafe"}
+    ],
+    zh:[
+      {id:"lin",name:"林 (Lín)",bio:"Бээжингийн оюутан. Хөгжим, цай, аялал сонирхдог.",persona:"Lin, a friendly student from Beijing who likes music, tea and travel",scene:"free"},
+      {id:"wei",name:"伟 (Wěi)",bio:"Шанхайн инженер. Хөл бөмбөг, технологи сонирхдог.",persona:"Wei, a friendly engineer from Shanghai who likes football and technology",scene:"free"}
+    ],
+    ru:[
+      {id:"anya",name:"Аня (Anya)",bio:"Санкт-Петербургийн оюутан. Ном, балет дуртай.",persona:"Anya, a friendly student from Saint Petersburg who loves books and ballet",scene:"free"},
+      {id:"ivan",name:"Иван (Ivan)",bio:"Казаны инженер. Хоккей, хоол хийх дуртай.",persona:"Ivan, a friendly engineer from Kazan who loves hockey and cooking",scene:"free"}
+    ],
+    de:[
+      {id:"lena",name:"Lena",bio:"Берлиний оюутан. Хөгжим, дугуй унах дуртай.",persona:"Lena, a friendly student from Berlin who loves music and cycling",scene:"free"},
+      {id:"max",name:"Max",bio:"Мюнхений багш. Явган аялал, хөл бөмбөг дуртай.",persona:"Max, a friendly teacher from Munich who loves hiking and football",scene:"free"}
+    ],
+    ja:[
+      {id:"yuki",name:"ゆき (Yuki)",bio:"Токиогийн оюутан. Аниме, хоол, аялал дуртай.",persona:"Yuki, a friendly university student from Tokyo who loves anime, food and travel",scene:"free"},
+      {id:"ken",name:"けん (Ken)",bio:"Осакагийн оффисын ажилтан. Бейсбол, рамен дуртай.",persona:"Ken, a friendly office worker from Osaka who loves baseball and ramen",scene:"free"}
+    ],
+    ko:[
+      {id:"minji",name:"민지 (Min-ji)",bio:"Сөүлийн оюутан. K-pop, кафе дуртай.",persona:"Min-ji, a friendly student from Seoul who loves K-pop and cafés",scene:"free"},
+      {id:"jun",name:"준 (Jun)",bio:"Бусаны дизайнер. Кино, явган аялал дуртай.",persona:"Jun, a friendly designer from Busan who loves movies and hiking",scene:"free"}
+    ]
+  };
+  var bc=null,botBack="home",pending=null;
+  function setScreen(n){if(screen==="botchat"){pending=n;return false;}screen=n;return true;}
+  function botList(){return BOTS[me().lang]||BOTS.en;}
+  function viewBots(){
+    var box=h("div");
+    if(me().mode==="kid"){box.append(h("p",{class:"note"},"AI найз зөвхөн том хүний горимд байна."));return box;}
+    box.append(h("div",{class:"note",style:"margin-top:0"},"🤖 Эдгээр нь жинхэнэ хүн биш, AI дүрүүд. Хэзээд хариулна, алдааг чинь монголоор засна."));
+    if(!env.aiReady())box.append(h("div",{style:"margin-top:10px"},env.keyBox()));
+    botList().forEach(function(b){
+      box.append(h("div",{class:"note",style:"display:flex;align-items:center;gap:10px;margin-top:10px"},
+        h("div",{style:"font-size:30px"},"🤖"),
+        h("div",{style:"flex:1;min-width:0"},h("div",{style:"font-weight:700"},b.name+" · AI"),h("div",{class:"muted small"},b.bio)),
+        h("button",{class:"btn primary",style:"padding:8px 14px",onclick:function(){openBot(b);}},"💬")));
+    });
+    return box;
+  }
+  function openBot(b){
+    botBack=screen==="home"?"home":screen;
+    bc={bot:b,msgs:[],busy:false,step:0,ctl:null,error:"",ai:env.aiReady()};
+    screen="botchat";paint();
+    runBot();
+  }
+  function botRules(b){return env.botRules(b.persona);}
+  function botTurns(){
+    var t=[{role:"user",content:botRules(bc.bot)+"\n\nBegin now with a short, warm greeting and one easy question. Do not write ###."}];
+    bc.msgs.forEach(function(m){if(m.streaming)return;t.push({role:m.role==="ai"?"assistant":"user",content:m.text});});
+    return t;
+  }
+  function scriptedBot(){
+    var pk=env.pack(me().lang),sc=(env.scripts(me().lang)||{})[bc.bot.scene]||(env.scripts(me().lang)||{}).free||[];
+    var last=bc.msgs.filter(function(m){return m.role==="me";}).pop();
+    if(!last){bc.step=0;return {text:sc[0]?sc[0][0]:"..."};}
+    if(bc.step>=sc.length-1)return {text:pk.end||pk.fin};
+    if(/[\u0400-\u04FF]/.test(last.text)&&me().lang!=="ru"){return {text:pk.tryMsg+sc[bc.step][0]+"\n###\n"+pk.tryFix+" Жишээ хариулт: "+sc[bc.step][1]};}
+    bc.step++;
+    return {text:pk.react[Math.floor(Math.random()*pk.react.length)]+" "+sc[bc.step][0]};
+  }
+  function runBot(){
+    if(!bc)return;
+    bc.busy=true;bc.error="";
+    var ai={role:"ai",text:"",streaming:true};
+    bc.msgs.push(ai);
+    bc.ctl=new AbortController();
+    var cur=bc;
+    function apply(text){
+      var parts=String(text).split("###");
+      ai.text=parts[0].trim();
+      var fix=parts.slice(1).join("").trim();
+      if(fix){for(var i=cur.msgs.length-1;i>=0;i--){if(cur.msgs[i].role==="me"){cur.msgs[i].fix=fix;break;}}}
+      if(bc===cur)botPaint();
+    }
+    var p=env.ai(botTurns(),{signal:cur.ctl.signal,onText:function(x){apply(x.text);}});
+    Promise.resolve(p).then(function(res){
+      if(res==null){cur.ai=false;return scriptedBot();}
+      cur.ai=true;return res;
+    }).then(function(res){
+      apply(res.text);ai.streaming=false;cur.busy=false;if(bc===cur)botPaint();
+    }).catch(function(e){
+      var code=e&&e.code;
+      if(e&&e.text)apply(e.text);
+      ai.streaming=false;cur.busy=false;
+      if(!ai.text){cur.msgs.splice(cur.msgs.indexOf(ai),1);
+        if(code!=="cancelled"){var lu=cur.msgs[cur.msgs.length-1];if(lu&&lu.role==="me"){cur.msgs.pop();cur.draft=lu.text;}}}
+      if(code!=="cancelled")cur.error=env.errCopy(code);
+      if(bc===cur)botPaint();
+    });
+    botPaint();
+  }
+  function botPaint(){
+    var box=document.getElementById("_botmsgs");if(!box||!bc)return;
+    box.textContent="";
+    bc.msgs.forEach(function(m){
+      if(m.role==="me"){
+        box.append(h("div",{class:"b me"},m.text));
+        if(m.fix)box.append(h("div",{class:"fix"},h("b",null,"Засвар: "),m.fix));
+      }else{
+        box.append(h("div",{class:"b ai"},m.text||(m.streaming?"...":"")));
+        if(m.text&&!m.streaming)box.append(h("button",{class:"spk",onclick:function(){env.speak(m.text);}},"Сонсох"));
+      }
+    });
+    var st=document.getElementById("_botstate");
+    if(st){st.textContent=bc.error||"";st.style.display=bc.error?"block":"none";}
+    var send=document.getElementById("_botsend"),stop=document.getElementById("_botstop");
+    if(send)send.style.display=bc.busy?"none":"";
+    if(stop)stop.style.display=bc.busy?"":"none";
+    window.scrollTo(0,document.body.scrollHeight);
+  }
+  function viewBotChat(){
+    var box=h("div"),b=bc.bot;
+    box.append(h("button",{class:"btn ghost",style:"padding:6px 12px",onclick:function(){if(bc&&bc.ctl)bc.ctl.abort();bc=null;var t=pending||(botBack==="botchat"?"home":botBack);pending=null;screen=t;sub="bots";paint();}},"‹ Буцах"),
+      h("h3",{style:"margin:8px 0 2px"},"🤖 "+b.name+" · AI"),
+      h("p",{class:"muted small",style:"margin:0 0 8px"},(bc.ai?"AI-тай чөлөөтэй яриарай. ":"Бэлэн асуултын горим (AI түлхүүр оруулбал чөлөөт яриа болно). ")+"Монголоор бичсэн ч болно."));
+    box.append(h("div",{id:"_botmsgs",class:"msgs",style:"display:flex;flex-direction:column;gap:8px"}),h("div",{id:"_botstate",class:"note",style:"display:none"}));
+    var inp=h("input",{class:"tin",type:"text",maxlength:"300",autocomplete:"off",placeholder:"Мессеж бич...","aria-label":"Мессеж"});
+    if(bc.draft)inp.value=bc.draft;
+    function send(){
+      var t=inp.value.trim();if(!t||bc.busy)return;
+      bc.msgs.push({role:"me",text:t});bc.draft="";inp.value="";
+      env.reward();runBot();
+    }
+    inp.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();send();}});
+    box.append(h("div",{style:"display:flex;gap:8px;margin-top:8px"},inp,
+      h("button",{class:"btn primary",id:"_botsend",style:"flex:none",onclick:send},"➤"),
+      h("button",{class:"btn",id:"_botstop",style:"flex:none;display:none",onclick:function(){if(bc&&bc.ctl)bc.ctl.abort();}},"⏹")));
+    setTimeout(botPaint,0);
+    return box;
+  }
+
   /* ---------- screens ---------- */
   function viewSetup(){
     return h("div",null,
@@ -310,18 +445,20 @@
     if(!root)return;
     detach();
     root.textContent="";
-    if(screen==="setup"){root.append(viewSetup());return;}
-    if(screen==="boot"){root.append(h("p",{class:"muted"},"Холбогдож байна..."));return;}
-    if(screen==="error"){root.append(h("p",{class:"note"},info),h("button",{class:"btn",onclick:function(){db=null;uid=null;init();}},"Дахин оролдох"));return;}
-    if(screen==="name"){root.append(viewName());return;}
+    if(screen==="setup"){root.append(viewSetup(),h("div",{style:"margin-top:16px"},h("h3",null,"🤖 AI найзууд"),viewBots()));return;}
+    if(screen==="boot"){root.append(h("p",{class:"muted"},"Холбогдож байна..."),h("div",{style:"margin-top:18px"},h("h3",null,"🤖 AI найзууд"),viewBots()));return;}
+    if(screen==="error"){root.append(h("p",{class:"note"},info),h("button",{class:"btn",onclick:function(){db=null;uid=null;init();}},"Дахин оролдох"),h("div",{style:"margin-top:16px"},h("h3",null,"🤖 AI найзууд"),viewBots()));return;}
+    if(screen==="name"){root.append(viewName(),h("div",{style:"margin-top:18px"},h("h3",null,"🤖 AI найзууд"),viewBots()));return;}
     if(screen==="chat"){root.append(viewChat());return;}
+    if(screen==="botchat"&&bc){root.append(viewBotChat());return;}
     if(screen==="quiz"){root.append(viewQuiz());return;}
     var tabs=h("div",{style:"display:flex;gap:6px;margin-bottom:12px"});
-    [["friends","👥 Найзууд"],["room","🌐 Өрөө"],["inbox","🎯 Сорилт"]].forEach(function(t){
+    [["friends","👥 Найз"],["bots","🤖 AI"],["room","🌐 Өрөө"],["inbox","🎯 Сорилт"]].forEach(function(t){
       tabs.append(h("button",{class:"chip",style:"flex:1;"+(sub===t[0]?"border-color:var(--accent,#3a7bd5);":""),"aria-current":sub===t[0]?"true":null,onclick:function(){sub=t[0];paint();}},t[1]));
     });
     root.append(tabs);
     if(sub==="friends")root.append(viewFriends());
+    else if(sub==="bots")root.append(viewBots());
     else if(sub==="room")root.append(viewRoom());
     else root.append(viewInbox());
   }
@@ -331,6 +468,7 @@
       env=e;detach();
       root=h("div",{style:"padding-bottom:20px"});
       if(screen==="chat"&&!chatWith)screen="home";
+      if(screen==="botchat"&&!bc)screen="home";
       setTimeout(init,0);
       return root;
     },

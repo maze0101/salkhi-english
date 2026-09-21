@@ -2762,7 +2762,29 @@ function viewSocial(){
     me:function(){return {xp:state.xp,streak:streak(),lang:state.lang,mode:state.mode};},
     pool:function(){return pool();},
     scenes:function(){return SCEN;},
-    scripts:function(lang){return (LANGPACK[lang]||LANGPACK.en).scripts;}
+    scripts:function(lang){return (LANGPACK[lang]||LANGPACK.en).scripts;},
+    pack:function(lang){return LANGPACK[lang]||LANGPACK.en;},
+    aiReady:function(){return !!(sample||state.apiKey);},
+    keyBox:function(){return keyBox();},
+    errCopy:function(c){return errCopy(c);},
+    speak:function(t){speak(cleanAI(t));},
+    reward:function(){state.chatCount++;sset("chat",state.chatCount);addXP(3);},
+    ai:function(turns,o){
+      return sampleP.then(function(s){
+        if(s)return s(turns,{modelTier:"quick",cache:false,signal:o.signal,onText:o.onText});
+        if(state.apiKey)return callDirect(turns,o);
+        return null;
+      });
+    },
+    botRules:function(persona){
+      var el=effLevel(),lv=el==="all"?"b1":el,LN=LANG_EN[state.lang];
+      return "You are "+persona+". You are an AI friend inside a language-learning app for Mongolian speakers; if the learner asks whether you are a person, a bot or an AI, say honestly that you are an AI friend. Chat like a friend in "+LN+". Learner level: "+LVDESC[lv]+".\n"+
+       "Rules:\n- Stay in character. Write 1 to 3 short sentences in "+LN+" at the learner's level, then ask exactly ONE follow-up question.\n"+
+       (["ja","ko","zh"].indexOf(state.lang)>=0?"- After each "+LN+" sentence add its romanized reading in parentheses (romaji, romanization or pinyin). Use simple polite forms.\n":"")+
+       "- If the learner's latest message has a grammar, word-choice or spelling mistake, add a line containing only ### after your reply, then write in Mongolian: the corrected "+LN+" sentence and a one-sentence explanation in Mongolian. If there are no mistakes, do not write ###.\n"+
+       "- If the learner writes in Mongolian, reply in simple "+LN+" and, after ###, give the "+LN+" version of what they wanted to say.\n"+
+       "- Never use markdown formatting, bullet points or emojis.";
+    }
   });
 }
 
