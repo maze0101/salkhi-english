@@ -6,6 +6,7 @@
 <title>Салхи · Англи хэлний апп</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#1F5F5B">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1773,19 +1774,50 @@ function voiceFor(lang){
   }
   return v;
 }
-function speakList(list){
+var GTTS={en:"en",ja:"ja",ko:"ko",zh:"zh-CN",ru:"ru",de:"de"},audioQ={id:0,cur:null};
+function stopVoice(){
+  audioQ.id++;
+  if(audioQ.cur){try{audioQ.cur.pause();}catch(e){}audioQ.cur=null;}
+  try{if("speechSynthesis" in window)speechSynthesis.cancel();}catch(e){}
+}
+function splitSpeech(list){
+  var parts=[];
+  list.forEach(function(t){
+    t=String(t||"").trim();if(!t)return;
+    (t.match(/[^.!?。！？]+[.!?。！？]*/g)||[t]).forEach(function(p){
+      p=p.trim();
+      while(p.length>180){var k=p.lastIndexOf(" ",180);if(k<60)k=180;parts.push(p.slice(0,k).trim());p=p.slice(k).trim();}
+      if(p)parts.push(p);
+    });
+  });
+  return parts;
+}
+function synthParts(parts){
   try{
     if(!("speechSynthesis" in window))return;
-    speechSynthesis.cancel();
-    var lang=LANG_TTS[state.lang]||"en-US",v=voiceFor(lang),parts=[];
-    list.forEach(function(t){
-      t=String(t||"").trim();if(!t)return;
-      (t.match(/[^.!?。！？]+[.!?。！？]*/g)||[t]).forEach(function(p){p=p.trim();if(p)parts.push(p);});
-    });
+    var lang=LANG_TTS[state.lang]||"en-US",v=voiceFor(lang);
     parts.forEach(function(p){
       var u=new SpeechSynthesisUtterance(p);u.lang=lang;if(v)u.voice=v;u.rate=state.lang==="en"?.95:.9;u.pitch=1;
       speechSynthesis.speak(u);
     });
+  }catch(e){}
+}
+function playParts(parts,id,i,lang){
+  if(id!==audioQ.id||i>=parts.length)return;
+  var failed=false,a=new Audio("https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl="+lang+"&q="+encodeURIComponent(parts[i]));
+  audioQ.cur=a;a.playbackRate=.92;
+  function fail(){if(failed||id!==audioQ.id)return;failed=true;audioQ.cur=null;synthParts(parts.slice(i));}
+  a.onended=function(){if(id===audioQ.id)playParts(parts,id,i+1,lang);};
+  a.onerror=fail;
+  var pr;try{pr=a.play();}catch(e){fail();return;}
+  if(pr&&pr.catch)pr.catch(fail);
+}
+function speakList(list){
+  try{
+    stopVoice();
+    var parts=splitSpeech(list);if(!parts.length)return;
+    if(navigator.onLine!==false&&typeof Audio==="function"){playParts(parts,audioQ.id,0,GTTS[state.lang]||"en");}
+    else synthParts(parts);
   }catch(e){}
 }
 function speak(t){speakList([t]);}
@@ -2756,7 +2788,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20260921-4";
+var BUILD="20260921-5";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
