@@ -2532,7 +2532,7 @@ var state={
   box:sget("box",{}), xp:sget("xp",0), daily:sget("daily",{}),
   lessons:sget("lessons",{}), chatCount:sget("chat",0), mode:sget("mode","adult"),
   due:sget("due",{}), saved:sget("saved",[]), custom:sget("custom",[]), tasks:sget("tasks",{}),
-  lang:sget("lang","en"), skin:sget("skin","default"), aiopt:sget("aiopt",{}), aimem:sget("aimem",{}), apiKey:sget("apikey",""), stars:sget("stars",0), listenOk:sget("listenOk",0), goal:sget("goal",20), theme:sget("theme","auto"), cat:"all",
+  lang:sget("lang","en"), skin:sget("skin","default"), aiopt:sget("aiopt",{}), aimem:sget("aimem",{}), openaiKey:sget("openaikey",""), apiKey:sget("apikey",""), stars:sget("stars",0), listenOk:sget("listenOk",0), goal:sget("goal",20), theme:sget("theme","auto"), cat:"all",
   rate:sget("rate",1), freeze:sget("freeze",0), frozen:sget("frozen",{}), frzMark:sget("frzMark",0), langxp:sget("langxp",{}), miss:sget("miss",[]),
   stories:sget("stories",{}), speech:sget("speech",{n:0,sum:0}), fz:sget("fz",1), exam:sget("exam",{})
 };
@@ -4080,7 +4080,21 @@ function vibeRules(){
   if(mem)r+="\nMEMORY about this learner (private notes): "+mem;
   return r;
 }
+function callOpenAI(turns){
+  return fetch("https://api.openai.com/v1/chat/completions",{
+    method:"POST",
+    headers:{"content-type":"application/json","authorization":"Bearer "+state.openaiKey},
+    body:JSON.stringify({model:"gpt-4o-mini",max_tokens:500,temperature:0.3,response_format:{type:"json_object"},messages:turns.map(function(m){return {role:m.role==="assistant"?"assistant":"user",content:m.content};})})
+  }).then(function(res){
+    if(!res.ok)throw {code:res.status===401||res.status===403?"bad_key":"api_error"};
+    return res.json();
+  }).then(function(j){
+    var t=j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;
+    return t?String(t):null;
+  });
+}
 function aiOnce(turns){
+  if(state.openaiKey)return callOpenAI(turns);
   var ctl=new AbortController(),o={signal:ctl.signal,onText:function(){}};
   return sampleP.then(function(s){
     if(s)return s(turns,{modelTier:"quick",cache:false,signal:o.signal,onText:o.onText});
@@ -4104,7 +4118,7 @@ function learnFrom(msgs){
     if(state.aimem.minor)next.minor=true;
     state.aimem=next;sset("aimem",next);
     if(next.minor&&state.aiopt.adult){state.aiopt.adult=false;sset("aiopt",state.aiopt);}
-  }).catch(function(){}).then(function(){learning=false;});
+  }).catch(function(e){if(e&&e.code==="bad_key")toast("OpenAI түлхүүр буруу байна. Суралцагч агент ажиллахгүй.");}).then(function(){learning=false;});
 }
 function aiPanel(){
   if(state.mode!=="adult")return null;
@@ -4128,11 +4142,24 @@ function aiPanel(){
     }},"🔞 18+ хошин асаах (18-аас дээш насны мэдүүлэг)"));
   }
   box.append(h("p",{class:"muted small",style:"margin:4px 0 0"},"18+ горимд ил тод бэлгийн агуулга байхгүй. Хэрэв та 18-аас доош гэдгээ хэлбэл бот шууд цэвэр хошин руу шилжинэ."));
+  box.append(h("div",{style:"font-weight:700;margin:12px 0 4px"},"🧪 Суралцагч агент (OpenAI)"));
+  if(state.openaiKey){
+    box.append(h("p",{class:"muted small",style:"margin:0 0 6px"},"✅ OpenAI түлхүүр хадгалагдсан (gpt-4o-mini). Энэ нь таны тухай санамжийг шинэчилдэг."),
+      h("button",{class:"btn ghost",type:"button",style:"padding:6px 12px;font-size:14px",onclick:function(){state.openaiKey="";sset("openaikey","");render();}},"Түлхүүр устгах"));
+  }else{
+    var oin=h("input",{class:"tin",type:"password",placeholder:"sk-proj-...",autocomplete:"off","aria-label":"OpenAI API түлхүүр",style:"font-size:16px"});
+    box.append(h("p",{class:"muted small",style:"margin:0 0 6px"},"Өөрийн OpenAI түлхүүрээ оруулбал таны тухай санамжийг тэр шинэчилнэ. Түлхүүр зөвхөн энэ төхөөрөмж дээр хадгалагдана, хэзээ ч хуулагдахгүй."),oin,
+      h("button",{class:"btn primary",type:"button",style:"margin-top:8px;padding:8px 14px",onclick:function(){
+        var v=oin.value.trim();
+        if(!/^sk-[A-Za-z0-9_\-]{20,}$/.test(v)){toast("Түлхүүрийн формат буруу байна");return;}
+        state.openaiKey=v;sset("openaikey",v);toast("Суралцагч агент бэлэн боллоо");render();
+      }},"Хадгалах"));
+  }
   var mem=memText();
   box.append(h("div",{style:"font-weight:700;margin:12px 0 4px"},"🧠 AI таны тухай санаж буй зүйл"),
     h("p",{class:"muted small",style:"margin:0 0 6px"},mem||"Одоохондоо юу ч алга. Ярих тусам суралцана (3 мессеж тутамд шинэчлэгдэнэ)."));
   if(mem)box.append(h("button",{class:"btn ghost",type:"button",style:"padding:6px 12px;font-size:14px",onclick:function(){if(!confirm("AI-ийн санаж буй бүх зүйлийг устгах уу?"))return;var mn=state.aimem.minor;state.aimem=cleanMem({minor:mn});sset("aimem",state.aimem);render();}},"Устгах"));
-  if(!canAI)box.append(h("p",{class:"muted small",style:"margin:8px 0 0"},"⚠ Хошин, суралцдаг горим AI түлхүүртэй үед ажиллана. Одоо бэлэн асуултын горим байна."));
+  if(!canAI)box.append(h("p",{class:"muted small",style:"margin:8px 0 0"},"⚠ Хошин хариулт нь Anthropic AI түлхүүртэй үед ажиллана (одоо бэлэн асуултын горим). OpenAI түлхүүр нь зөвхөн суралцагч агентад."));
   return box;
 }
 
