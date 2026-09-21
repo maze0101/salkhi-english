@@ -214,6 +214,41 @@ p+p{margin-top:10px}
 :root[data-mode="adult"][data-theme="dark"]{--bg:#0E1716;--surface:#16231F;--ink:#E6F0EC;--ink-2:#9BB2AA;--line:#2A3D38;--sky:#2F7F79;--shadow:0 4px 16px rgba(0,0,0,.4)}
 :root[data-mode="kid"][data-theme="dark"]{--bg:#1A1730;--surface:#26214A;--ink:#FFF6E0;--ink-2:#BDB6E6;--line:#3D3670;--sky:#E5484D;--shadow:0 5px 0 rgba(0,0,0,.35)}
 :root[data-mode="kid"] .levels{display:none}
+/* skins (өнгөний загварууд) */
+:root[data-skin="ocean"]{--bg:#EEF6FB;--surface:#FFFFFF;--ink:#10263A;--ink-2:#4C6A82;--line:#D3E3EF;--sky:#1E6FB8;--dune:#7CC0E8;--dune-2:#B6DDF3;--dune-3:#2A86D0;--neon:#F4D35E;--neon-ink:#2B2200;--focus:#1E6FB8;--shadow:0 4px 16px rgba(20,70,120,.14)}
+:root[data-skin="ocean"] .hero{background:linear-gradient(160deg,#0E3556,#1E6FB8 60%,#6BB6E6 130%)}
+@media (prefers-color-scheme: dark){:root[data-skin="ocean"]:not([data-theme="light"]){--bg:#0B1722;--surface:#12263A;--ink:#E4F0F9;--ink-2:#9DB8CC;--line:#22405A;--sky:#2A78C2;--shadow:0 4px 16px rgba(0,0,0,.4)}}
+:root[data-skin="ocean"][data-theme="dark"]{--bg:#0B1722;--surface:#12263A;--ink:#E4F0F9;--ink-2:#9DB8CC;--line:#22405A;--sky:#2A78C2;--shadow:0 4px 16px rgba(0,0,0,.4)}
+:root[data-skin="sunrise"]{--bg:#FFF6EE;--surface:#FFFFFF;--ink:#3A2118;--ink-2:#7A5A4C;--line:#F0D9C9;--sky:#C8481F;--dune:#F6B26B;--dune-2:#FAD7A0;--dune-3:#E07A3F;--neon:#FFD166;--neon-ink:#2B1B00;--focus:#C8481F;--shadow:0 4px 16px rgba(150,70,20,.14)}
+:root[data-skin="sunrise"] .hero{background:linear-gradient(160deg,#7A2E12,#C8481F 60%,#F6B26B 130%)}
+@media (prefers-color-scheme: dark){:root[data-skin="sunrise"]:not([data-theme="light"]){--bg:#1D120D;--surface:#2A1A13;--ink:#FBEBDD;--ink-2:#D3B29E;--line:#4A2F22;--sky:#C4471F;--shadow:0 4px 16px rgba(0,0,0,.4)}}
+:root[data-skin="sunrise"][data-theme="dark"]{--bg:#1D120D;--surface:#2A1A13;--ink:#FBEBDD;--ink-2:#D3B29E;--line:#4A2F22;--sky:#C4471F;--shadow:0 4px 16px rgba(0,0,0,.4)}
+:root[data-skin="sakura"]{--bg:#FFF1F5;--surface:#FFFFFF;--ink:#3A1524;--ink-2:#84586A;--line:#F5D3DF;--sky:#C2417A;--dune:#F4A6C0;--dune-2:#FBCFDD;--dune-3:#D96A98;--neon:#FFD98A;--neon-ink:#2B1B00;--focus:#C2417A;--shadow:0 4px 16px rgba(150,40,90,.13)}
+:root[data-skin="sakura"] .hero{background:linear-gradient(160deg,#5E1A3B,#C2417A 60%,#F4A6C0 130%)}
+@media (prefers-color-scheme: dark){:root[data-skin="sakura"]:not([data-theme="light"]){--bg:#1E0E15;--surface:#2D1621;--ink:#FCE8EF;--ink-2:#D2A5B8;--line:#4E2637;--sky:#B93A72;--shadow:0 4px 16px rgba(0,0,0,.4)}}
+:root[data-skin="sakura"][data-theme="dark"]{--bg:#1E0E15;--surface:#2D1621;--ink:#FCE8EF;--ink-2:#D2A5B8;--line:#4E2637;--sky:#B93A72;--shadow:0 4px 16px rgba(0,0,0,.4)}
+:root[data-skin="violet"]{--bg:#F3F0FF;--surface:#FFFFFF;--ink:#211B47;--ink-2:#645E8A;--line:#E2DDF6;--sky:#6C5CE7;--dune:#F9A8D4;--dune-2:#FDBA9B;--dune-3:#7C6CF2;--neon:#FFD23F;--neon-ink:#2B2200;--focus:#5B4BD6;--shadow:0 6px 24px rgba(76,58,180,.12)}
+:root[data-skin="violet"] .hero{background:linear-gradient(160deg,#2E2470,#6C5CE7 60%,#F9A8D4 130%)}
+@media (prefers-color-scheme: dark){:root[data-skin="violet"]:not([data-theme="light"]){--bg:#14112B;--surface:#1E1A3D;--ink:#ECE8FF;--ink-2:#B3ACE0;--line:#34305F;--sky:#6555E0;--shadow:0 4px 16px rgba(0,0,0,.4)}}
+:root[data-skin="violet"][data-theme="dark"]{--bg:#14112B;--surface:#1E1A3D;--ink:#ECE8FF;--ink-2:#B3ACE0;--line:#34305F;--sky:#6555E0;--shadow:0 4px 16px rgba(0,0,0,.4)}
+:root[data-skin="paper"]{--bg:#F5EFE0;--surface:#FBF7EC;--ink:#2B2416;--ink-2:#6B5F48;--line:#E2D8BE;--sky:#7A5C2E;--dune:#C9A66B;--dune-2:#E6D3A8;--dune-3:#9C7A3F;--neon:#E0B84A;--neon-ink:#2B2200;--focus:#7A5C2E;--shadow:0 3px 12px rgba(90,70,30,.12)}
+:root[data-skin="paper"] .hero{background:linear-gradient(160deg,#3E2C12,#7A5C2E 60%,#C9A66B 130%)}
+@media (prefers-color-scheme: dark){:root[data-skin="paper"]:not([data-theme="light"]){--bg:#1B160C;--surface:#272014;--ink:#F1E8D2;--ink-2:#BFB08C;--line:#403520;--sky:#8A6626;--shadow:0 4px 16px rgba(0,0,0,.4)}}
+:root[data-skin="paper"][data-theme="dark"]{--bg:#1B160C;--surface:#272014;--ink:#F1E8D2;--ink-2:#BFB08C;--line:#403520;--sky:#8A6626;--shadow:0 4px 16px rgba(0,0,0,.4)}
+:root[data-skin="contrast"]{--bg:#FFFFFF;--surface:#FFFFFF;--ink:#000000;--ink-2:#1A1A1A;--line:#000000;--sky:#0033A0;--dune:#FFD400;--dune-2:#E6E6E6;--dune-3:#0033A0;--neon:#FFD400;--neon-ink:#000000;--focus:#0033A0;--shadow:0 0 0 2px #000}
+:root[data-skin="contrast"] .hero{background:linear-gradient(160deg,#000000,#0033A0 100%)}
+@media (prefers-color-scheme: dark){:root[data-skin="contrast"]:not([data-theme="light"]){--bg:#000000;--surface:#0A0A0A;--ink:#FFFFFF;--ink-2:#F0F0F0;--line:#FFFFFF;--sky:#2563EB;--shadow:0 0 0 2px #fff}}
+:root[data-skin="contrast"][data-theme="dark"]{--bg:#000000;--surface:#0A0A0A;--ink:#FFFFFF;--ink-2:#F0F0F0;--line:#FFFFFF;--sky:#2563EB;--shadow:0 0 0 2px #fff}
+.themebtn.skinbtn{left:auto;top:auto;right:16px;bottom:16px}
+.skinsheet{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.skinpanel{background:var(--surface);color:var(--ink);width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:18px 16px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.3);max-height:85vh;overflow:auto}
+.skinpanel h3{margin:0 0 4px;font-size:20px}
+.skingrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.skinopt{display:flex;flex-direction:column;gap:8px;text-align:left;padding:12px;border-radius:14px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font-weight:700;font-size:16px}
+.skinopt[aria-pressed="true"]{border-color:var(--sky);box-shadow:0 0 0 2px var(--sky)}
+.skinopt .sw{display:flex;gap:6px}
+.skinopt .sw i{width:26px;height:26px;border-radius:50%;border:1px solid rgba(0,0,0,.15);display:inline-block}
+
 :root[data-senior] body{font-size:19px}
 :root[data-senior] .btn,:root[data-senior] .opt,:root[data-senior] .scn{padding-top:17px;padding-bottom:17px;font-size:18px;min-height:56px}
 :root[data-senior] .tab{font-size:15px;padding-top:17px;padding-bottom:19px}
@@ -266,6 +301,7 @@ p+p{margin-top:10px}
   <header class="hero">
     <button class="themebtn" id="themebtn" type="button"></button>
     <div class="modes" id="modes" role="group" aria-label="Горим"></div>
+    <button class="themebtn skinbtn" id="skinbtn" type="button" aria-label="Дизайн сонгох" title="Дизайн сонгох">🎨</button>
     <svg viewBox="0 0 520 200" preserveAspectRatio="xMaxYMax slice" aria-hidden="true">
       <g id="stars" opacity="0"><circle cx="40" cy="30" r="1.2"/><circle cx="95" cy="70" r="1"/><circle cx="150" cy="22" r="1.4"/><circle cx="205" cy="52" r="1"/><circle cx="250" cy="18" r="1.2"/><circle cx="330" cy="30" r="1"/><circle cx="360" cy="78" r="1.3"/><circle cx="395" cy="20" r="1"/><circle cx="450" cy="40" r="1.4"/><circle cx="500" cy="26" r="1"/><circle cx="60" cy="100" r="1"/><circle cx="470" cy="90" r="1.1"/><circle cx="185" cy="92" r="1"/><circle cx="310" cy="96" r="1.2"/></g>
       <circle id="sunglow" cx="300" cy="62" r="40" fill="#FFE9A8" opacity="0"/>
@@ -2495,7 +2531,7 @@ var state={
   box:sget("box",{}), xp:sget("xp",0), daily:sget("daily",{}),
   lessons:sget("lessons",{}), chatCount:sget("chat",0), mode:sget("mode","adult"),
   due:sget("due",{}), saved:sget("saved",[]), custom:sget("custom",[]), tasks:sget("tasks",{}),
-  lang:sget("lang","en"), apiKey:sget("apikey",""), stars:sget("stars",0), listenOk:sget("listenOk",0), goal:sget("goal",20), theme:sget("theme","auto"), cat:"all",
+  lang:sget("lang","en"), skin:sget("skin","default"), apiKey:sget("apikey",""), stars:sget("stars",0), listenOk:sget("listenOk",0), goal:sget("goal",20), theme:sget("theme","auto"), cat:"all",
   rate:sget("rate",1), freeze:sget("freeze",0), frozen:sget("frozen",{}), frzMark:sget("frzMark",0), langxp:sget("langxp",{}), miss:sget("miss",[]),
   stories:sget("stories",{}), speech:sget("speech",{n:0,sum:0}), fz:sget("fz",1), exam:sget("exam",{})
 };
@@ -2753,6 +2789,39 @@ function applyTheme(){
   if(state.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",state.theme);
   b.textContent=TICON[state.theme];b.setAttribute("aria-label","Загвар: "+TNAME[state.theme]);
 }
+
+var SKINS=[["default","Анхны",["#1F5F5B","#8FC1B5","#E9C46A"]]].concat([["ocean","Далай",["#1E6FB8","#7CC0E8","#F4D35E"]],["sunrise","Нар мандах",["#C8481F","#F6B26B","#FFD166"]],["sakura","Сакура",["#C2417A","#F4A6C0","#FFD98A"]],["violet","Нил ягаан",["#6C5CE7","#F9A8D4","#FFD23F"]],["paper","Цаас",["#7A5C2E","#C9A66B","#E0B84A"]],["contrast","Тод ялгарал",["#000000","#0033A0","#FFD400"]]]);
+var SKIN_SKY={default:"#1F5F5B",ocean:"#1E6FB8",sunrise:"#C8481F",sakura:"#C2417A",violet:"#6C5CE7",paper:"#7A5C2E",contrast:"#0033A0"};
+function applySkin(){
+  if(!SKIN_SKY[state.skin])state.skin="default";
+  var r=document.documentElement;
+  if(state.skin==="default")r.removeAttribute("data-skin");else r.setAttribute("data-skin",state.skin);
+  var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",SKIN_SKY[state.skin]);
+}
+function openSkins(){
+  var old=document.getElementById("skinsheet");if(old){old.remove();return;}
+  var prevFocus=document.activeElement;
+  function close(){var s=document.getElementById("skinsheet");if(s)s.remove();document.removeEventListener("keydown",onKey);if(prevFocus&&prevFocus.focus)prevFocus.focus();}
+  function onKey(e){if(e.key==="Escape")close();}
+  var grid=h("div",{class:"skingrid"});
+  SKINS.forEach(function(s){
+    grid.append(h("button",{class:"skinopt",type:"button","aria-pressed":String(state.skin===s[0]),onclick:function(){
+      state.skin=s[0];sset("skin",s[0]);applySkin();
+      Array.prototype.forEach.call(grid.children,function(b){b.setAttribute("aria-pressed","false");});
+      this.setAttribute("aria-pressed","true");
+    }},h("span",null,s[1]),h("span",{class:"sw"},s[2].map(function(c){return h("i",{style:"background:"+c});}))));
+  });
+  var panel=h("div",{class:"skinpanel",role:"dialog","aria-modal":"true","aria-label":"Дизайн сонгох"},
+    h("h3",null,"🎨 Дизайн сонгох"),
+    h("p",{class:"muted small",style:"margin:0"},"Өнгөний загварыг сонго. Цайвар/харанхуйг 🌓 товчоор солино."),
+    grid,
+    h("button",{class:"btn primary",type:"button",style:"width:100%;margin-top:14px",onclick:close},"Болсон"));
+  var sheet=h("div",{class:"skinsheet",id:"skinsheet",onclick:function(e){if(e.target===sheet)close();}},panel);
+  document.body.append(sheet);document.addEventListener("keydown",onKey);
+  var first=grid.querySelector('[aria-pressed="true"]');if(first)first.focus();
+}
+document.getElementById("skinbtn").addEventListener("click",openSkins);
+applySkin();
 var rateBtn=h("button",{class:"themebtn",id:"ratebtn",type:"button"});
 document.getElementById("themebtn").after(rateBtn);
 function paintRate(){rateBtn.textContent=state.rate<1?"🐢 Удаан":"🐇 Хэвийн";rateBtn.setAttribute("aria-label","Дууны хурд: "+(state.rate<1?"удаан":"хэвийн")+". Солихын тулд дарна уу");}
@@ -2975,7 +3044,7 @@ function viewList(root,p){
 var SITE_URL="https://maze0101.github.io/salkhi-english/";
 var deferredInstall=null;
 window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();deferredInstall=e;});
-var STORE_KEYS=[["level","level"],["box","box"],["due","due"],["xp","xp"],["daily","daily"],["lessons","lessons"],["chat","chatCount"],["stars","stars"],["listenOk","listenOk"],["goal","goal"],["custom","custom"],["saved","saved"],["tasks","tasks"],["mode","mode"],["lang","lang"],["theme","theme"],["rate","rate"],["freeze","freeze"],["frozen","frozen"],["frzMark","frzMark"],["langxp","langxp"],["miss","miss"],["stories","stories"],["speech","speech"],["fz","fz"],["exam","exam"]];
+var STORE_KEYS=[["level","level"],["box","box"],["due","due"],["xp","xp"],["daily","daily"],["lessons","lessons"],["chat","chatCount"],["stars","stars"],["listenOk","listenOk"],["goal","goal"],["custom","custom"],["saved","saved"],["tasks","tasks"],["mode","mode"],["lang","lang"],["theme","theme"],["rate","rate"],["freeze","freeze"],["frozen","frozen"],["frzMark","frzMark"],["langxp","langxp"],["miss","miss"],["stories","stories"],["speech","speech"],["fz","fz"],["exam","exam"],["skin","skin"]];
 function isObj(x){return x&&typeof x==="object"&&!Array.isArray(x);}
 function exportData(){
   var o={app:"salkhi",v:1};
@@ -3004,7 +3073,8 @@ function importData(file){
         else if(key==="saved"){if(!Array.isArray(v)||v.some(function(x){return typeof x!=="string";}))return;}
         else if(key==="custom"){if(!Array.isArray(v)||v.some(function(c){return !Array.isArray(c)||c.length<6||typeof c[1]!=="string"||typeof c[2]!=="string";}))return;}
         else if(key==="level"){if(["all","a1","b1","b2"].indexOf(v)<0)return;}
-        else if(key==="mode"){if(["adult","kid"].indexOf(v)<0)return;}
+        else if(key==="mode"){if(["adult","senior","kid"].indexOf(v)<0)return;}
+        else if(key==="skin"){if(!SKIN_SKY[v])return;}
         else if(key==="lang"){if(["en","ja","ko","zh","ru","de"].indexOf(v)<0)return;}
         else if(key==="theme"){if(THEMES.indexOf(v)<0)return;}
         sset(key,v);
