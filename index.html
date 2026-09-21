@@ -71,6 +71,13 @@ h2{font:700 22px/1.25 "Unbounded",system-ui,sans-serif;letter-spacing:-.01em;mar
 .btn.primary{background:var(--neon);color:var(--neon-ink);border-color:transparent}
 .btn.dark{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .btn.ghost{background:none}
+.ag{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;margin:8px 0 14px}
+.ag button{padding:10px 2px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);font-size:24px;font-weight:700;line-height:1.1;box-shadow:var(--shadow)}
+.ag button small{display:block;font-size:11px;font-weight:600;color:var(--ink-2);margin-top:3px}
+.ag button[aria-pressed="true"]{border-color:var(--sky);background:var(--neon);color:var(--neon-ink)}
+.ag button[aria-pressed="true"] small{color:var(--neon-ink)}
+.abig{text-align:center;padding:16px}.abig .g{font-size:64px;font-weight:700;line-height:1.1}
+.tab{font-size:13px}
 .row{display:flex;gap:10px;margin-top:12px}
 .row>*{flex:1}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--surface);margin-bottom:14px}
@@ -1212,6 +1219,7 @@ var ui={
   grammar:{lesson:null,stage:"read",qs:[],qi:0,score:0,picked:null,built:[]},
   chat:{started:false,scn:null,rules:"",msgs:[],busy:false,ctl:null,error:"",draft:""},
   listen:{cur:null,opts:[],picked:null},
+  alpha:{cur:null},
   resetArmed:false
 };
 
@@ -1300,7 +1308,7 @@ function renderModes(){
   [["adult","Том хүн"],["kid","Хүүхэд"]].forEach(function(m){
     el.append(h("button",{"aria-pressed":String(state.mode===m[0]),onclick:function(){
       state.mode=m[0];sset("mode",m[0]);document.documentElement.setAttribute("data-mode",m[0]);
-      state.cat="all";ui.vocab.cur=null;ui.vocab.quiz=null;ui.vocab.flipped=false;ui.listen.cur=null;ui.grammar.lesson=null;
+      state.cat="all";ui.vocab.cur=null;ui.vocab.quiz=null;ui.vocab.flipped=false;ui.listen.cur=null;ui.alpha.cur=null;ui.grammar.lesson=null;
       renderModes();renderStrip();render();
     }},m[1]));
   });
@@ -1329,7 +1337,7 @@ document.getElementById("themebtn").addEventListener("click",function(){
 });
 function renderTabs(){
   var el=document.getElementById("tabs");el.textContent="";
-  [["words","Үгс"],["grammar","Дүрэм"],["listen","Сонсох"],["chat","Ярих"],["stats","Явц"]].forEach(function(t){
+  [["words","Үгс"],["alpha","Үсэг"],["grammar","Дүрэм"],["listen","Сонсох"],["chat","Ярих"],["stats","Явц"]].forEach(function(t){
     el.append(h("button",{class:"tab","aria-current":state.tab===t[0]?"page":null,onclick:function(){
       state.tab=t[0];renderTabs();render();window.scrollTo(0,0);
     }},t[1]));
@@ -1338,6 +1346,7 @@ function renderTabs(){
 function render(){
   elMain.textContent="";
   if(state.tab==="words")elMain.append(viewWords());
+  else if(state.tab==="alpha")elMain.append(viewAlpha());
   else if(state.tab==="grammar")elMain.append(viewGrammar());
   else if(state.tab==="listen")elMain.append(viewListen());
   else if(state.tab==="chat")elMain.append(viewChat());
@@ -1535,6 +1544,56 @@ function dataPanel(){
     h("button",{class:"btn",onclick:exportData},"⬇️ Явц хадгалах"),
     h("button",{class:"btn",onclick:function(){file.click();}},"⬆️ Явц сэргээх"));
   wrap.append(r1,qrbox,r2,file,h("p",{class:"muted small",style:"margin-top:10px"},"Утсан дээр апп шиг суулгах: хөтчийн цэс → «Нүүр дэлгэцэнд нэмэх». Хувилбар: "+BUILD));
+  return wrap;
+}
+
+/* ---------- reminders ---------- */
+var swReg=null;
+state.notif=sget("notif",{on:false,t:"19:00",last:""});
+function notifOK(){return "Notification" in window&&Notification.permission==="granted";}
+function notifBody(){
+  var s=streak();
+  return todayXP()===0&&s>0?"🔥 "+s+" өдрийн дараалалаа алдахгүй байя! Өнөөдөр нэг богино дасгал хийгээрэй.":"Өнөөдөр "+LANGN[state.lang]+" хэл сурах цаг боллоо. Хэдхэн минут дасгалцгаая 🌬️";
+}
+function showNotif(body){
+  var opt={body:body,icon:"icon.svg",badge:"icon.svg",tag:"salkhi-daily"};
+  try{
+    if(swReg&&swReg.showNotification)return swReg.showNotification("Салхи",opt);
+    new Notification("Салхи",opt);
+  }catch(e){}
+}
+function syncNotifMeta(){
+  try{if("caches" in window)caches.open("salkhi-meta").then(function(c){return c.put("notif",new Response(JSON.stringify(state.notif)));}).catch(function(){});}catch(e){}
+}
+function saveNotif(){sset("notif",state.notif);syncNotifMeta();}
+function checkNotif(){
+  var n=state.notif;if(!n.on||!notifOK())return;
+  var now=new Date(),p=n.t.split(":"),due=new Date();due.setHours(+p[0]||19,+p[1]||0,0,0);
+  if(now<due||n.last===dkey(now)||todayXP()>=state.goal)return;
+  n.last=dkey(now);saveNotif();showNotif(notifBody());
+}
+function enableNotif(cb){
+  if(!("Notification" in window)){toast("Энэ хөтөч мэдэгдэл дэмжихгүй байна");return;}
+  Notification.requestPermission().then(function(r){
+    if(r!=="granted"){state.notif.on=false;saveNotif();toast("Мэдэгдэл зөвшөөрөгдсөнгүй. Хөтчийн тохиргооноос нээнэ үү.");}
+    else{
+      state.notif.on=true;saveNotif();showNotif("Сануулга идэвхжлээ ✅ Өдөр бүр "+state.notif.t+" цагт сануулна.");
+      if(swReg&&swReg.periodicSync){try{swReg.periodicSync.register("salkhi-remind",{minInterval:12*3600*1000}).catch(function(){});}catch(e){}}
+    }
+    cb();
+  });
+}
+function notifPanel(){
+  var n=state.notif,wrap=h("div",{style:"margin-top:22px"});
+  wrap.append(h("h2",{style:"font-size:18px"},"Өдөр бүрийн сануулга"));
+  var denied="Notification" in window&&Notification.permission==="denied";
+  var on=n.on&&notifOK();
+  wrap.append(h("div",{class:"row",style:"flex-wrap:wrap;align-items:center"},
+    h("button",{class:"btn"+(on?" primary":""),"aria-pressed":String(on),onclick:function(){
+      if(on){n.on=false;saveNotif();render();}else enableNotif(render);
+    }},on?"🔔 Идэвхтэй":"🔕 Сануулга асаах"),
+    h("input",{type:"time",value:n.t,"aria-label":"Сануулах цаг",style:"flex:none;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit",onchange:function(){if(this.value){n.t=this.value;n.last="";saveNotif();toast("Сануулах цаг: "+n.t);}}})));
+  wrap.append(h("p",{class:"muted small",style:"margin-top:10px"},denied?"Мэдэгдэл хөтчид хаалттай байна. Хөтчийн сайтын тохиргооноос зөвшөөрнө үү.":"Тогтоосон цагт өдрийн зорилго биелээгүй бол сануулна. Апп нээлттэй эсвэл суулгасан үед хамгийн найдвартай ажиллана."));
   return wrap;
 }
 function modeWords(){
@@ -1794,6 +1853,55 @@ function viewListen(){
     root.append(h("p",{class:"muted",style:"margin-top:6px"},l.cur[2]+" · "+l.cur[3]));
     root.append(h("div",{class:"row"},h("button",{class:"btn primary",onclick:function(){newListen(p);render();}},"Дараагийн үг")));
   }
+  return root;
+}
+
+
+/* ---------- alphabet ---------- */
+function abuild(str,fn){return str.split(" ").map(function(x){return fn(x.split("|"));});}
+var HIRA="あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん",
+ROMA="a i u e o ka ki ku ke ko sa shi su se so ta chi tsu te to na ni nu ne no ha hi fu he ho ma mi mu me mo ya yu yo ra ri ru re ro wa wo n".split(" ");
+function kata(c){return String.fromCharCode(c.charCodeAt(0)+96);}
+function wordLetter(a){var t=a[0]==="Ъ"?"твёрдый знак":a[0]==="Ь"?"мягкий знак":a[0];return [a[0]+a[0].toLowerCase(),t,a[2].replace(/_/g," "),a[1]];}
+function plain(a){return [a[0],a[1],a[2],""];}
+var ALPHA={
+en:[["Латин үсэг (A–Z)",abuild("A|Apple|алим B|Ball|бөмбөг C|Cat|муур D|Dog|нохой E|Egg|өндөг F|Fish|загас G|Girl|охин H|Hat|малгай I|Ice|мөс J|Juice|шүүс K|Key|түлхүүр L|Lion|арслан M|Moon|сар N|Nose|хамар O|Orange|жүрж P|Pen|үзэг Q|Queen|хатан R|Rain|бороо S|Sun|нар T|Tree|мод U|Umbrella|шүхэр V|Van|фургон W|Water|ус X|Box|хайрцаг Y|Yes|тийм Z|Zoo|хүрээлэн",wordLetter)]],
+ja:[["Хирагана",HIRA.split("").map(function(c,i){return [c,c,ROMA[i],""];})],["Катакана",HIRA.split("").map(function(c,i){return [kata(c),kata(c),ROMA[i],""];})]],
+ko:[["Гийгүүлэгч",abuild("ㄱ|가|g/k ㄴ|나|n ㄷ|다|d/t ㄹ|라|r/l ㅁ|마|m ㅂ|바|b/p ㅅ|사|s ㅇ|아|ng ㅈ|자|j ㅊ|차|ch ㅋ|카|k ㅌ|타|t ㅍ|파|p ㅎ|하|h",plain)],
+["Эгшиг",abuild("ㅏ|아|a ㅑ|야|ya ㅓ|어|eo ㅕ|여|yeo ㅗ|오|o ㅛ|요|yo ㅜ|우|u ㅠ|유|yu ㅡ|으|eu ㅣ|이|i",plain)]],
+zh:[["Пиньиний эхлэл (声母)",abuild("b|波|bō p|坡|pō m|摸|mō f|佛|fó d|得|dé t|特|tè n|讷|nè l|勒|lè g|哥|gē k|科|kē h|喝|hē j|基|jī q|七|qī x|西|xī zh|知|zhī ch|吃|chī sh|诗|shī r|日|rì z|资|zī c|雌|cí s|思|sī",function(a){return [a[0],a[1],a[2],""];})],
+["Пиньиний төгсгөл (韵母)",abuild("a|啊|a o|哦|o e|鹅|e i|衣|yi u|乌|wu ü|迂|yu ai|爱|ài ei|诶|ei ao|奥|ào ou|欧|ōu an|安|ān en|恩|ēn ang|昂|áng eng|鞥|ēng ong|轰|hōng",function(a){return [a[0],a[1],a[2],""];})]],
+ru:[["Кирилл үсэг (33)",abuild("А|Арбуз|тарвас Б|Банан|гадил В|Вода|ус Г|Гора|уул Д|Дом|байшин Е|Ель|гацуур Ё|Ёж|зараа Ж|Жук|цох З|Заяц|туулай И|Игра|тоглоом Й|Йогурт|тараг К|Кот|муур Л|Лиса|үнэг М|Мама|ээж Н|Нос|хамар О|Окно|цонх П|Папа|аав Р|Рыба|загас С|Солнце|нар Т|Трава|өвс У|Утка|нугас Ф|Флаг|туг Х|Хлеб|талх Ц|Цветок|цэцэг Ч|Чай|цай Ш|Шапка|малгай Щ|Щётка|сойз Ъ||хатуу_тэмдэг Ы|Сыр|бяслаг Ь||зөөлөн_тэмдэг Э|Этаж|давхар Ю|Юбка|банзал Я|Яблоко|алим",wordLetter)]],
+de:[["Герман цагаан толгой",abuild("A|Apfel|алим B|Buch|ном C|Computer|компьютер D|Dach|дээвэр E|Esel|илжиг F|Fisch|загас G|Garten|цэцэрлэг H|Haus|байшин I|Igel|зараа J|Jacke|хүрэм K|Katze|муур L|Lampe|чийдэн M|Mond|сар N|Nase|хамар O|Ohr|чих P|Pferd|морь Q|Quelle|булаг R|Regen|бороо S|Sonne|нар T|Tisch|ширээ U|Uhr|цаг V|Vogel|шувуу W|Wasser|ус X|Xylophon|ксилофон Y|Yoga|йог Z|Zug|галт_тэрэг Ä|Äpfel|алимнууд Ö|Öl|тос Ü|Übung|дасгал ß|Straße|гудамж",wordLetter)]]
+};
+function viewAlpha(){
+  var root=h("div"),secs=ALPHA[state.lang]||[],a=ui.alpha;
+  root.append(h("h2",null,"Үсэг · "+LANGN[state.lang]));
+  root.append(h("p",{class:"muted"},"Үсэг дээр дарж дуудлагыг нь сонс."));
+  var all=[];secs.forEach(function(sec){sec[1].forEach(function(it){all.push(it);});});
+  root.append(h("button",{class:"btn primary",style:"width:100%;margin:6px 0 4px",onclick:function(){
+    speakSeq(all.map(function(it){return it[1];}));toast("🔊 Бүх үсгийг уншиж байна…");
+  }},"🔊 Бүгдийг сонсох"));
+  var big=h("div",{class:"note abig"});
+  function showBig(it){
+    big.textContent="";
+    big.append(h("div",{class:"g"},it[0]),h("div",{class:"muted"},it[2]+(it[3]?" · "+it[3]:"")),
+      h("button",{class:"btn ghost",style:"margin-top:8px",onclick:function(){speakSeq([it[1],it[3]]);}},"🔊 Дахин сонсох"));
+  }
+  if(a.cur)showBig(a.cur);else big.append(h("div",{class:"muted"},"Үсэг сонгоно уу"));
+  root.append(big);
+  secs.forEach(function(sec){
+    root.append(h("h3",{style:"margin:16px 0 0;font-size:16px"},sec[0]));
+    var g=h("div",{class:"ag"});
+    sec[1].forEach(function(it){
+      g.append(h("button",{"aria-pressed":String(a.cur===it),"aria-label":it[0]+" "+it[2],onclick:function(){
+        a.cur=it;speakSeq([it[1],it[3]]);
+        Array.prototype.forEach.call(root.querySelectorAll(".ag button"),function(b){b.setAttribute("aria-pressed","false");});
+        this.setAttribute("aria-pressed","true");showBig(it);
+      }},it[0],h("small",null,it[2])));
+    });
+    root.append(g);
+  });
   return root;
 }
 
@@ -2088,6 +2196,7 @@ function viewStats(){
   var wrap=h("div",{class:"days"});
   days.forEach(function(e){wrap.append(h("div",null,h("i",{class:e[1]?"":"z",style:"height:"+(e[1]?Math.max(8,Math.round(e[1]/max*80)):4)+"px",title:e[1]+" XP"}),e[0]));});
   root.append(wrap);
+  root.append(notifPanel());
   root.append(dataPanel());
   root.append(h("div",{style:"margin-top:26px"},
     h("button",{class:"btn ghost",onclick:function(){
@@ -2100,7 +2209,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20260920-3";
+var BUILD="20260921-1";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
@@ -2114,10 +2223,12 @@ function checkUpdate(atStart){
   }).catch(function(){});
 }
 checkUpdate(true);
-document.addEventListener("visibilitychange",function(){if(!document.hidden)checkUpdate(false);});
+checkNotif();setInterval(checkNotif,30000);syncNotifMeta();
+document.addEventListener("visibilitychange",function(){if(!document.hidden){checkUpdate(false);checkNotif();}});
 if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)){try{
   var hadCtl=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(function(reg){
+    swReg=reg;
     document.addEventListener("visibilitychange",function(){if(!document.hidden)reg.update().catch(function(){});});
   }).catch(function(){});
   navigator.serviceWorker.addEventListener("controllerchange",function(){if(hadCtl)toast("Шинэ хувилбар ирлээ. Аппыг дахин нээхэд шинэчлэгдэнэ.");});
