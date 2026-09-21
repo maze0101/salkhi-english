@@ -282,6 +282,12 @@ p+p{margin-top:10px}
 <nav class="tabs" aria-label="Үндсэн цэс"><div class="in" id="tabs"></div></nav>
 
 <script src="lessons-more.js"></script>
+<script src="words-en.js"></script>
+<script src="words-zh.js"></script>
+<script src="words-ru.js"></script>
+<script src="words-de.js"></script>
+<script src="words-ja.js"></script>
+<script src="words-ko.js"></script>
 <script>
 (function(){
 "use strict";
@@ -2388,6 +2394,19 @@ var SCEN=[
 ["zoo","Амьтны хүрээлэнд","a cheerful zoo guide talking with a child about the animals they can see","kid"],
 ["toys","Тоглоомын дэлгүүр","a kind shop assistant in a toy store chatting with a child about their favourite toys","kid"]
 ];
+/* compact vocabulary packs: level|word|meaning|example|example meaning|reading|category */
+(function(){
+  var pk=window.WORDS_MORE||{},seen={};
+  WORDS.forEach(function(w){seen[w[1]]=1;});
+  Object.keys(pk).forEach(function(lang){
+    String(pk[lang]).split("\n").forEach(function(line){
+      var x=line.trim().split("|");
+      if(x.length<4||!x[1]||seen[x[1]])return;
+      seen[x[1]]=1;
+      WORDS.push([x[0],x[1],x[2],x[3],null,x[6]||null,lang,x[5]||null,x[4]||null]);
+    });
+  });
+})();
 var KID_CATS=[["all","Бүгд"],["animal","🐾 Амьтан"],["color","🎨 Өнгө"],["number","🔢 Тоо"],["food","🍎 Хоол"],["body","🖐 Бие"],["transport","🚗 Унаа"],["family","👪 Гэр бүл"],["nature","🌳 Байгаль"],["saved","🔖 Хадгалсан"],["mine","➕ Миний үгс"]];
 var ADULT_CATS=[["all","Бүгд"],["basic","💬 Энгийн яриа"],["work","💼 Ажил"],["travel","✈️ Аялал"],["ielts","🎓 IELTS"],["verbs","🏃 Үйл үг"],["adjectives","🎭 Тэмдэг нэр"],["time","🕒 Цаг хугацаа"],["places","🏙 Газар"],["advanced","🎓 Ахисан"],["saved","🔖 Хадгалсан"],["mine","➕ Миний үгс"]];
 var KID_SET=["animal","color","number","food","body","transport","family","nature"];
