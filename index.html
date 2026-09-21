@@ -344,6 +344,7 @@ p+p{margin-top:10px}
 <script src="dialogs-senior.js"></script>
 <script src="synonyms.js"></script>
 <script src="hanzi.js"></script>
+<script src="ai-config.js"></script>
 <script src="firebase-config.js"></script>
 <script src="social.js"></script>
 <script src="placement-more-en.js"></script>
@@ -2876,7 +2877,7 @@ function viewSocial(){
     sceneOk:function(s){return sceneOk(s);},
     scripts:function(lang){return (LANGPACK[lang]||LANGPACK.en).scripts;},
     pack:function(lang){return LANGPACK[lang]||LANGPACK.en;},
-    aiReady:function(){return !!(sample||state.apiKey);},
+    aiReady:function(){return !!(sample||state.apiKey||freeAI());},
     keyBox:function(){return keyBox();},
     errCopy:function(c){return errCopy(c);},
     speak:function(t){speak(cleanAI(t));},
@@ -2887,6 +2888,7 @@ function viewSocial(){
       return sampleP.then(function(s){
         if(s)return s(turns,{modelTier:"quick",cache:false,signal:o.signal,onText:o.onText});
         if(state.apiKey)return callDirect(turns,o);
+        if(freeAI())return callFree(turns,o).catch(function(e){if(e&&e.code==="cancelled")throw e;freeFail();return null;});
         return null;
       });
     },
@@ -4257,7 +4259,7 @@ function learnFrom(msgs){
 }
 function aiPanel(){
   if(state.mode!=="adult")return null;
-  var box=h("div",{class:"note",style:"margin-top:12px"}),canAI=!!(sample||state.apiKey);
+  var box=h("div",{class:"note",style:"margin-top:12px"}),canAI=!!(sample||state.apiKey||freeAI());
   box.append(h("div",{style:"font-weight:700;margin-bottom:8px"},"🎭 Найз шиг ярианы горим"));
   function tog(label,on,disabled,fn){
     return h("button",{class:"chip",type:"button",disabled:!!disabled,"aria-pressed":String(!!on),style:"display:block;width:100%;text-align:left;margin:6px 0;"+(on?"border-color:var(--sky);":""),onclick:fn},(on?"✅ ":"⬜ ")+label);
@@ -4295,8 +4297,46 @@ function aiPanel(){
     h("p",{class:"muted small",style:"margin:0 0 6px"},mem||"Одоохондоо юу ч алга. Ярих тусам суралцана."),
     h("p",{class:"muted small",style:"margin:0 0 6px"},"🖥 Түлхүүргүйгээр ч төхөөрөмж дээр суралцана: хошин хэв маяг, дуртай зүйл, нэр, slang-ыг мессеж бүрээс таньж хадгална. Юу ч гадагш явахгүй."));
   if(mem)box.append(h("button",{class:"btn ghost",type:"button",style:"padding:6px 12px;font-size:14px",onclick:function(){if(!confirm("AI-ийн санаж буй бүх зүйлийг устгах уу?"))return;var mn=state.aimem.minor;state.aimem=cleanMem({minor:mn});sset("aimem",state.aimem);render();}},"Устгах"));
+  if(state.aiopt.adult&&!(sample||state.apiKey))box.append(h("p",{class:"muted small",style:"margin:8px 0 0"},"🔞 18+ хошин зөвхөн өөрийн Anthropic түлхүүртэй үед ажиллана (үнэгүй AI-д хэрэглэхгүй)."));
   if(!canAI)box.append(h("p",{class:"muted small",style:"margin:8px 0 0"},"⚠ Хошин хариулт нь Anthropic AI түлхүүртэй үед ажиллана (одоо бэлэн асуултын горим). OpenAI түлхүүр нь зөвхөн суралцагч агентад."));
   return box;
+}
+
+/* ---------- free AI (Cloudflare Workers AI through our own Worker) ---------- */
+var freeCool=0;
+function freeAvail(){var c=window.SALKHI_AI;return !!(c&&c.url);}
+/* free AI is never used for kids, and never for the 18+ opt-in (only a stronger, safer model may do that) */
+function freeAI(){return freeAvail()&&state.mode!=="kid"&&!adultOK()&&Date.now()>freeCool&&navigator.onLine!==false;}
+function freeFail(){freeCool=Date.now()+90000;}
+function callFree(turns,opts){
+  return fetch(window.SALKHI_AI.url,{method:"POST",signal:opts.signal,headers:{"content-type":"application/json"},body:JSON.stringify({messages:turns})}).then(function(res){
+    if(!res.ok)throw {code:"free_"+res.status};
+    var reader=res.body.getReader(),dec=new TextDecoder(),buf="",text="";
+    function pump(){
+      return reader.read().then(function(r){
+        if(r.done){if(!text.trim())throw {code:"free_empty"};return {text:text};}
+        buf+=dec.decode(r.value,{stream:true});
+        var lines=buf.split("\n");buf=lines.pop();
+        lines.forEach(function(l){
+          if(l.indexOf("data:")!==0)return;
+          try{var ev=JSON.parse(l.slice(5));
+            if(ev.type==="content_block_delta"&&ev.delta&&ev.delta.text){text+=ev.delta.text;opts.onText({text:text});}
+          }catch(e){}
+        });
+        return pump();
+      });
+    }
+    return pump();
+  }).catch(function(e){
+    if(e&&e.name==="AbortError")throw {code:"cancelled",text:""};
+    throw (e&&e.code)?e:{code:"free_network"};
+  });
+}
+function viaLabel(){
+  var c=ui.chat;
+  if(c.via==="free")return " · ✨ үнэгүй AI";
+  if(c.via==="script"||(!sample&&!state.apiKey&&!freeAI()))return " · бэлэн асуултын горим";
+  return "";
 }
 
 function callDirect(turns,opts,noTools){
@@ -4336,7 +4376,7 @@ function callDirect(turns,opts,noTools){
 var CLAUDE_URL="https://claude.ai/artifact/VFYAp4jRRr8LxQQCXF6XKU";
 function keyBox(){
   var box=h("div",{class:"note"});
-  box.append(h("p",{style:"margin-bottom:10px"},"Түлхүүргүйгээр бэлэн асуултын горимоор ярьж болно (энгийн алдааг монголоор засна). Бүрэн AI яриа хүсвэл доорхыг ашиглана."));
+  box.append(h("p",{style:"margin-bottom:10px"},(freeAvail()?"Өөрийн Anthropic түлхүүр оруулбал илүү сайн чанартай AI ажиллана (заавал биш).":"Түлхүүргүйгээр бэлэн асуултын горимоор ярьж болно (энгийн алдааг монголоор засна). Бүрэн AI яриа хүсвэл доорхыг ашиглана.")));
   box.append(h("a",{class:"btn primary",href:CLAUDE_URL,target:"_blank",rel:"noopener",style:"display:block;text-decoration:none;margin-bottom:12px"},"Claude дотор нээх (түлхүүр шаардахгүй)"));
   if(state.apiKey){
     box.append(h("p",null,"AI яриа шууд ажиллана: Anthropic API түлхүүр хадгалагдсан."),
@@ -4392,8 +4432,16 @@ function runAI(){
   c.ctl=new AbortController();
   sampleP.then(function(s){
     var o={signal:c.ctl.signal,onText:function(x){apply(x.text);}};
-    if(s)return s(turns,{modelTier:"quick",cache:false,signal:o.signal,onText:o.onText});
-    if(state.apiKey)return callDirect(turns,o);
+    if(s){c.via="sample";return s(turns,{modelTier:"quick",cache:false,signal:o.signal,onText:o.onText});}
+    if(state.apiKey){c.via="key";return callDirect(turns,o);}
+    if(freeAI()){
+      c.via="free";
+      return callFree(turns,o).catch(function(e){
+        if(e&&e.code==="cancelled")throw e;
+        freeFail();c.via="script";ai.text="";return offlineReply(turns);
+      });
+    }
+    c.via="script";
     return offlineReply(turns);
   }).then(function(res){
     apply(res.text);if(res.mn&&!ai.mn)ai.mn=res.mn;ai.streaming=false;c.busy=false;paint();learnFrom(c.msgs);
@@ -4437,6 +4485,8 @@ function paint(){
       if(m.text&&!m.streaming)box.append(h("button",{class:"spk",onclick:function(){speak(cleanAI(m.text));}},"Сонсох"));
     }
   });
+  var hd=document.getElementById("chathdr");
+  if(hd){var sc0=SCEN.filter(function(s){return s[0]===c.scn;})[0];if(sc0)hd.textContent=sc0[1]+viaLabel();}
   var st=document.getElementById("chatstate");
   if(st){st.textContent=c.error||"";st.style.display=c.error?"block":"none";}
   var send=document.getElementById("sendbtn"),stop=document.getElementById("stopbtn"),inp=document.getElementById("chatin");
@@ -4451,7 +4501,10 @@ function viewChat(){
   if(!c.started){
     root.append(h("h2",null,"Ярианы дасгал"));
     root.append(h("p",{class:"muted"},"Нөхцөлөө сонгоод AI-тай англиар ярилц. Алдаа гаргавал Монголоор засаж өгнө."));
-    if(sampleReady&&!sample)root.append(keyBox());
+    if(sampleReady&&!sample){
+      if(freeAvail()&&state.mode!=="kid")root.append(h("p",{class:"note",style:"margin-top:0"},"✨ Үнэгүй AI яриа идэвхтэй. Ярианууд Cloudflare-ийн серверээр дамжина. Илүү сайн чанар хүсвэл өөрийн Anthropic түлхүүрээ доор оруулж болно (заавал биш)."));
+      root.append(keyBox());
+    }
     var apn=aiPanel();if(apn)root.append(apn);
     var el=effLevel(),lv=el==="all"?"Дунд":LV_NAME[el];
     root.append(h("p",{class:"muted small",style:"margin-top:10px"},"Түвшин: "+lv+(el==="all"?" (дээрээс түвшнээ сонгож болно)":"")));
@@ -4462,7 +4515,7 @@ function viewChat(){
   }
   var sc=SCEN.filter(function(s){return s[0]===c.scn;})[0];
   root.append(h("div",{style:"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"},
-    h("div",{class:"small muted"},sc[1]+((!sample&&!state.apiKey)?" · бэлэн асуултын горим":"")),
+    h("div",{class:"small muted",id:"chathdr"},sc[1]+viaLabel()),
     h("button",{class:"btn ghost",style:"padding:6px 12px;font-size:14px",onclick:function(){
       if(c.ctl)c.ctl.abort();c.started=false;c.msgs=[];c.busy=false;c.error="";render();
     }},"Шинэ яриа")));
