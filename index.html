@@ -3144,6 +3144,10 @@ function viewListenWords(){
   if(!l.cur||p.indexOf(l.cur)<0)newListen(p);
   root.append(h("p",{class:"muted"},"Үгийг сонсоод зөв хувилбарыг сонго."));
   root.append(h("button",{class:"btn primary",style:"width:100%;margin:8px 0 4px;font-size:20px",onclick:function(){speak(l.cur[1]);}},"🔊 Сонсох"));
+  if(l.picked==null){
+    if(l.tr===l.cur)root.append(h("p",{class:"muted",style:"margin:4px 0 8px"},"🇲🇳 "+l.cur[2]));
+    else root.append(h("button",{class:"btn ghost",style:"width:100%;margin:0 0 6px",onclick:function(){l.tr=l.cur;render();}},"🇲🇳 Монгол орчуулга харах"));
+  }
   l.opts.forEach(function(w){
     var cls="opt";
     if(l.picked!=null){if(w===l.cur)cls+=" ok";else if(w===l.picked)cls+=" bad";}
@@ -3151,7 +3155,7 @@ function viewListenWords(){
       l.picked=w;var ok=w===l.cur;grade(l.cur,ok);
       if(ok){state.listenOk++;sset("listenOk",state.listenOk);taskInc("s");}
       render();
-    }},(state.mode==="kid"&&w[4]?w[4]+"  ":"")+w[1]+(w[7]?"  ("+w[7]+")":"")));
+    }},(state.mode==="kid"&&w[4]?w[4]+"  ":"")+w[1]+(w[7]?"  ("+w[7]+")":"")+(l.picked!=null?"  — "+w[2]:"")));
   });
   if(l.picked!=null){
     var ok=l.picked===l.cur;
@@ -3283,7 +3287,7 @@ function newDlg(){
   var cur=arr[Math.floor(Math.random()*arr.length)],others=[];
   arr.forEach(function(x){if(x[1]!==cur[1]&&others.indexOf(x[1])<0)others.push(x[1]);});
   keys.forEach(function(k){if(others.length<2)sc[k].forEach(function(x){if(x[1]!==cur[1]&&others.indexOf(x[1])<0&&others.length<2)others.push(x[1]);});});
-  d.key=key;d.cur=cur;d.opts=shuffle([cur[1]].concat(shuffle(others).slice(0,2)));d.picked=null;
+  d.key=key;d.cur=cur;d.tr=false;d.opts=shuffle([cur[1]].concat(shuffle(others).slice(0,2)));d.picked=null;
   setTimeout(function(){speak(cleanSpeak(cur[0]));},300);
 }
 function viewDialog(){
@@ -3291,6 +3295,8 @@ function viewDialog(){
   if(!d.cur)newDlg();
   root.append(h("p",{class:"muted"},"Асуултыг сонсоод зөв хариултыг сонго."));
   root.append(h("button",{class:"btn primary",style:"width:100%;margin:8px 0 4px;font-size:20px",onclick:function(){speak(cleanSpeak(d.cur[0]));}},"🔊 Сонсох"));
+  var mn=mnDlg(d.key,(LANGPACK[state.lang]||LANGPACK.en).scripts[d.key].indexOf(d.cur));
+  if(mn&&d.picked==null)root.append(h("p",{class:"muted",style:"margin:4px 0 8px"},"🇲🇳 "+mn[0]));
   d.opts.forEach(function(o){
     var cls="opt";
     if(d.picked!=null){if(o===d.cur[1])cls+=" ok";else if(o===d.picked)cls+=" bad";}
@@ -3304,6 +3310,7 @@ function viewDialog(){
     var ok=d.picked===d.cur[1];
     root.append(h("div",{class:"fb "+(ok?"ok":"bad")},ok?"Зөв! +5 XP":"Буруу. Зөв хариулт: "+d.cur[1]));
     root.append(h("p",{class:"muted",style:"margin-top:6px"},d.cur[0]));
+    if(mn)root.append(h("p",{class:"muted",style:"margin-top:4px"},"🇲🇳 "+mn[0]+" → "+mn[1]));
     root.append(h("div",{class:"row"},
       h("button",{class:"btn",onclick:function(){var sc=(LANGPACK[state.lang]||LANGPACK.en).scripts[d.key],lines=[];sc.forEach(function(x){lines.push(cleanSpeak(x[0]),cleanSpeak(x[1]));});speakSeq(lines);}},"🔊 Бүтэн яриа"),
       h("button",{class:"btn primary",onclick:function(){newDlg();render();}},"Дараагийнх")));
@@ -3372,6 +3379,26 @@ var SCRIPTS_DE={
 free:[["Hallo! Wie geht's?","Gut, danke."],["Wie heißt du?","Ich heiße Bat."],["Was magst du?","Ich mag Katzen."],["Was trinkst du morgens?","Ich trinke Tee."],["Was machst du am Wochenende?","Ich treffe einen Freund."]],
 cafe:[["Willkommen! Was möchten Sie bestellen?","Einen Kaffee, bitte."],["Heiß oder kalt?","Heiß, bitte."],["Noch etwas dazu?","Ein Stück Kuchen, bitte."],["Das macht fünf Euro.","Hier, bitte."],["Hier essen oder zum Mitnehmen?","Hier, bitte."]]
 };
+var MN_EN={
+free:[["Сайн уу! Өнөөдөр яаж байна?","Сайн, баярлалаа."],["Чөлөөт цагаараа юу хийх дуртай вэ?","Ном унших дуртай."],["Дуртай хоол чинь юу вэ?","Дуртай хоол минь пицца."],["Өглөө болгон юу хийдэг вэ?","Цай уугаад ажилдаа явдаг."],["Энэ амралтын өдрүүдэд юу хийх вэ?","Гэр бүлээрээ уулзана."]],
+cafe:[["Тавтай морилно уу! Юу захиалах вэ?","Кофе авъя."],["Халуун уу, хүйтэн үү?","Халуун байг."],["Хамт юм идэх үү?","Тийм, нэг ширхэг бялуу."],["Таван доллар болно. Зүгээр үү?","Тийм, ингээд аваарай."],["Дотор суух уу, гадаа суух уу?","Дотор байг."]],
+travel:[["Оройн мэнд! Захиалга өгсөн үү?","Тийм, миний нэр Бат."],["Хэдэн шөнө байх вэ?","Гурван шөнө байна."],["Үзэмжтэй өрөө авах уу?","Тийм, авъя."],["Өглөөний хоолыг хэдэн цагт өгөх вэ?","Найман цагт өгөөрэй."],["Өөр туслах зүйл байна уу?","Таксиг хаанаас олох вэ?"]],
+interview:[["Ирсэнд баярлалаа. Өөрийгөө танилцуулна уу?","Би оюутан, багаар ажиллах дуртай."],["Та яагаад энэ ажлыг хүсэж байна вэ?","Шинэ ур чадвар сурахыг хүсэж байна."],["Таны хамгийн давуу тал юу вэ?","Би хөдөлмөрч."],["Багаар ажиллаж чадах уу?","Тийм, хүмүүстэй ажиллах надад таалагддаг."],["Бидэнд асуух зүйл байна уу?","Хэзээнээс эхлэх вэ?"]],
+ielts:[["Төрсөн нутгийнхаа тухай ярья. Та хаанаас ирсэн бэ?","Би Улаанбаатараас ирсэн."],["Төрсөн нутгийн чинь юу хамгийн таалагддаг вэ?","Хүмүүс нь таалагддаг."],["Та ажил хийдэг үү, оюутан уу?","Би оюутан."],["Чөлөөт цагаараа юу хийдэг вэ?","Ихэвчлэн спортоор хичээллэдэг."],["Гэртээ байх уу, гадуур гарах уу?","Найзуудтайгаа гадуур гарахыг илүүд үздэг."]],
+work:[["Өглөөний мэнд! Хуралд бэлэн үү?","Тийм, бэлэн."],["Өчигдөр юу хийсэн бэ?","Тайлангаа дуусгасан."],["Төслийн эцсийн хугацаа хэзээ вэ?","Эцсийн хугацаа Баасан гараг."],["Танд туслах хэрэгтэй юу?","Тийм, тайланг маань шалгаж өгөхгүй юу?"],["Гайхалтай. Дахин уулзалт товлох уу?","Тийм, ирэх Даваа сайн."]],
+zoo:[["Сайн уу! Амьтны хүрээлэнд тавтай морил. Чиний нэр хэн бэ?","Миний нэр Бат."],["Дуртай амьтан чинь юу вэ?","Би арсланд дуртай."],["Арслан ямар өнгөтэй вэ?","Арслан шар өнгөтэй."],["Нохой хэдэн хөлтэй вэ?","Нохой дөрвөн хөлтэй."],["Туулайд хоол өгмөөр байна уу?","Тийм, өгмөөр байна!"]],
+toys:[["Сайн уу! Ямар тоглоомонд дуртай вэ?","Би машинд дуртай."],["Тоглоом чинь ямар өнгөтэй вэ?","Улаан өнгөтэй."],["Хэдэн тоглоомтой вэ?","Тавтай."],["Найзуудтайгаа тоглох дуртай юу?","Тийм, дуртай."],["Өнөөдөр ямар тоглоом авмаар байна?","Хонгор баавгай авмаар байна."]]
+};
+var MN_OTHER={
+free:[["Сайн уу! Сайн байна уу?","Сайн, баярлалаа."],["Чиний нэр хэн бэ?","Миний нэр Бат."],["Юунд дуртай вэ?","Мууранд дуртай."],["Өглөө юу уудаг вэ?","Цай уудаг."],["Амралтын өдөр юу хийдэг вэ?","Найзтайгаа уулздаг."]],
+cafe:[["Тавтай морилно уу! Юу захиалах вэ?","Кофе өгөөч."],["Халуун уу, хүйтэн үү?","Халуун өгөөч."],["Өөр юм хэрэгтэй юу?","Бялуу ч өгөөч."],["Нийт {P} болно.","Аваарай."],["Энд идэх үү, авч явах уу?","Энд идье."]]
+};
+var MN_PRICE={ja:"500 иен",ko:"5000 вон",zh:"20 юань",ru:"200 рубль",de:"5 евро"};
+function mnDlg(key,idx){
+  var t=state.lang==="en"?MN_EN:MN_OTHER,a=t[key]&&t[key][idx];
+  if(!a)return null;
+  return a.map(function(s){return s.replace("{P}",MN_PRICE[state.lang]||"");});
+}
 var LANGPACK={
   en:{scripts:SCRIPTS,react:REACT,tryMsg:"Let's try in English! ",tryFix:"Англиар бичиж үзээрэй.",end:"Well done! That was a good practice. Choose another situation to keep going.",fin:"We finished this chat. Press the new chat button to try another situation."},
   ja:{scripts:SCRIPTS_JA,react:["いいですね！","なるほど！","すごい！"],tryMsg:"にほんごで はなしましょう！ ",tryFix:"Японоор бичиж үзээрэй.",end:"よくできました！ ほかの シーンも やってみましょう。",fin:"この かいわは おわりました。あたらしい かいわを はじめましょう。"},
