@@ -1,6 +1,6 @@
 /* Салхи: offline shell. Network first (bypassing the HTTP cache) so updates arrive at once; cache is the offline fallback. */
-var V = "salkhi-v7";
-var SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
+var V = "salkhi-v8";
+var SHELL = ["./", "./index.html", "./lessons-more.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(V).then(function (c) { return c.addAll(SHELL.map(function (u) { return new Request(u, { cache: "reload" }); })); }));
