@@ -283,6 +283,12 @@ p+p{margin-top:10px}
 
 <script src="lessons-more.js"></script>
 <script src="dialogs-more.js"></script>
+<script src="placement-more-en.js"></script>
+<script src="placement-more-zh.js"></script>
+<script src="placement-more-ru.js"></script>
+<script src="placement-more-de.js"></script>
+<script src="placement-more-ja.js"></script>
+<script src="placement-more-ko.js"></script>
 <script src="words-en.js"></script>
 <script src="words-zh.js"></script>
 <script src="words-ru.js"></script>
@@ -307,24 +313,6 @@ p+p{margin-top:10px}
 <script src="words4-de.js"></script>
 <script src="words4-ja.js"></script>
 <script src="words4-ko.js"></script>
-<script src="words5-en.js"></script>
-<script src="words5-zh.js"></script>
-<script src="words5-ru.js"></script>
-<script src="words5-de.js"></script>
-<script src="words5-ja.js"></script>
-<script src="words5-ko.js"></script>
-<script src="words6-en.js"></script>
-<script src="words6-zh.js"></script>
-<script src="words6-ru.js"></script>
-<script src="words6-de.js"></script>
-<script src="words6-ja.js"></script>
-<script src="words6-ko.js"></script>
-<script src="words7-en.js"></script>
-<script src="words7-zh.js"></script>
-<script src="words7-ru.js"></script>
-<script src="words7-de.js"></script>
-<script src="words7-ja.js"></script>
-<script src="words7-ko.js"></script>
 <script>
 (function(){
 "use strict";
@@ -3289,6 +3277,7 @@ ru:[
 ["adv","Он сказал, ___ придёт завтра.",["что","чтобы","если"],0,"Тэр маргааш ирнэ гэж хэлсэн."],
 ["adv","Книга ___ моим братом.",["написана","написал","писала"],0,"Номыг миний ах бичсэн."]]
 };
+Object.keys(window.PLACE_MORE||{}).forEach(function(l){PLACE_BANK[l]=(PLACE_BANK[l]||[]).concat(window.PLACE_MORE[l]);});
 function startPlacement(){
   var bank=PLACE_BANK[state.lang]||[];
   function pickQ(lv,n){
