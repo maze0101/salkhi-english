@@ -296,6 +296,8 @@ p+p{margin-top:10px}
 
 <script src="lessons-more.js"></script>
 <script src="dialogs-more.js"></script>
+<script src="firebase-config.js"></script>
+<script src="social.js"></script>
 <script src="placement-more-en.js"></script>
 <script src="placement-more-zh.js"></script>
 <script src="placement-more-ru.js"></script>
@@ -2733,20 +2735,35 @@ document.getElementById("themebtn").addEventListener("click",function(){
 });
 function renderTabs(){
   var el=document.getElementById("tabs");el.textContent="";
-  [["words","Үгс"],["alpha","Үсэг"],["grammar","Дүрэм"],["listen","Сонсох"],["chat","Ярих"],["stats","Явц"]].forEach(function(t){
+  [["words","Үгс"],["alpha","Үсэг"],["grammar","Дүрэм"],["listen","Сонсох"],["chat","Ярих"]].concat(state.mode==="kid"?[]:[["social","Найз"]]).concat([["stats","Явц"]]).forEach(function(t){
     el.append(h("button",{class:"tab","aria-current":state.tab===t[0]?"page":null,onclick:function(){
       state.tab=t[0];renderTabs();render();window.scrollTo(0,0);
     }},t[1]));
   });
 }
 function render(){
+  if(state.tab==="social"&&state.mode==="kid")state.tab="words";
+  if(window.Social&&state.tab!=="social")window.Social.detach();
   elMain.textContent="";elMain.style.zoom=state.fz===1?"":String(state.fz);
   if(state.tab==="words")elMain.append(viewWords());
   else if(state.tab==="alpha")elMain.append(viewAlpha());
   else if(state.tab==="grammar")elMain.append(viewGrammar());
   else if(state.tab==="listen")elMain.append(viewListen());
   else if(state.tab==="chat")elMain.append(viewChat());
+  else if(state.tab==="social"&&state.mode!=="kid"&&window.Social)elMain.append(viewSocial());
   else elMain.append(viewStats());
+}
+
+
+/* ---------- social (friends, partner chat, open room, challenges) ---------- */
+function viewSocial(){
+  return window.Social.view({
+    h:h,toast:toast,
+    me:function(){return {xp:state.xp,streak:streak(),lang:state.lang,mode:state.mode};},
+    pool:function(){return pool();},
+    scenes:function(){return SCEN;},
+    scripts:function(lang){return (LANGPACK[lang]||LANGPACK.en).scripts;}
+  });
 }
 
 /* ---------- vocabulary ---------- */

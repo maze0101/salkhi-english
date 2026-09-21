@@ -1,0 +1,66 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['name','code']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('code').isString() && newData.child('code').val().length === 6"
+      }
+    },
+    "codes": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && newData.val() === auth.uid"
+      }
+    },
+    "friends": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "chats": {
+      "$cid": {
+        ".read": "auth != null && $cid.contains(auth.uid)",
+        "$mid": {
+          ".write": "auth != null && $cid.contains(auth.uid) && !data.exists() && newData.child('uid').val() === auth.uid",
+          ".validate": "newData.hasChildren(['uid','text','ts']) && newData.child('text').isString() && newData.child('text').val().length <= 300"
+        }
+      }
+    },
+    "rooms": {
+      "$lang": {
+        ".read": "auth != null",
+        "$mid": {
+          ".write": "auth != null && !data.exists() && newData.child('uid').val() === auth.uid",
+          ".validate": "newData.hasChildren(['uid','name','text','ts']) && newData.child('text').isString() && newData.child('text').val().length <= 200 && newData.child('name').isString() && newData.child('name').val().length <= 20"
+        }
+      }
+    },
+    "challenges": {
+      "$to": {
+        ".read": "auth != null && auth.uid === $to",
+        "$id": {
+          ".write": "auth != null && !data.exists() && newData.child('from').val() === auth.uid",
+          ".validate": "newData.hasChildren(['from','fromName','words','ts'])"
+        }
+      }
+    },
+    "results": {
+      "$to": {
+        ".read": "auth != null && auth.uid === $to",
+        "$id": {
+          ".write": "auth != null && !data.exists() && newData.child('by').val() === auth.uid"
+        }
+      }
+    },
+    "reports": {
+      "$id": {
+        ".read": false,
+        ".write": "auth != null && !data.exists()"
+      }
+    }
+  }
+}
