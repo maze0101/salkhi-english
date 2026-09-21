@@ -192,7 +192,7 @@
     var sel=h("select",{class:"tin","aria-label":"Сэдэв",style:"font-size:15px"});
     sel.append(h("option",{value:""},"🎯 Ярианы сэдэв сонгох..."));
     var scripts=env.scripts(me().lang)||{};
-    env.scenes().forEach(function(s){if(scripts[s[0]]&&(!s[3]||s[3]===me().mode))sel.append(h("option",{value:s[0]},s[1]));});
+    env.scenes().forEach(function(s){if(scripts[s[0]]&&env.sceneOk(s))sel.append(h("option",{value:s[0]},s[1]));});
     var hints=h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin:8px 0"});
     sel.addEventListener("change",function(){
       hints.textContent="";
@@ -207,7 +207,7 @@
   function viewRoom(){
     var lang=me().lang;
     var box=h("div");
-    if(me().mode==="kid"){box.append(h("p",{class:"note"},"Нээлттэй өрөө зөвхөн том хүний горимд байна."));return box;}
+    if(me().mode==="kid"||me().mode==="senior"){box.append(h("p",{class:"note"},"Нээлттэй өрөө зөвхөн «Том хүн» горимд байна."));return box;}
     var ref=db.ref("rooms/"+lang);
     box.append(h("div",{class:"note",style:"margin-top:0"},"🌐 Нээлттэй өрөө ("+lang.toUpperCase()+"). Хүндэтгэлтэй бай. Утас, хаяг, хувийн мэдээлэл бүү бич. Зохисгүй зурвас дээр дарж мэдэгдэх эсвэл тухайн хүнийг хаана уу."));
     box.append(chatUI(ref,{max:200,showName:true,reportPath:"rooms/"+lang}));
@@ -335,7 +335,7 @@
     screen="botchat";paint();
     runBot();
   }
-  function botRules(b){return env.botRules(b.persona);}
+  function botRules(b){return env.botRules(b.persona)+(me().mode==="senior"?"\n- The learner is an older adult. Speak clearly and simply, be patient, warm and respectful, avoid slang.":"");}
   function botTurns(){
     var t=[{role:"user",content:botRules(bc.bot)+"\n\nBegin now with a short, warm greeting and one easy question. Do not write ###."}];
     bc.msgs.forEach(function(m){if(m.streaming)return;t.push({role:m.role==="ai"?"assistant":"user",content:m.text});});
@@ -454,7 +454,7 @@
     if(screen==="botchat"&&bc){root.append(viewBotChat());return;}
     if(screen==="quiz"){root.append(viewQuiz());return;}
     var tabs=h("div",{style:"display:flex;gap:6px;margin-bottom:12px"});
-    [["friends","👥 Найз"],["bots","🤖 AI"],["room","🌐 Өрөө"],["inbox","🎯 Сорилт"]].forEach(function(t){
+    [["friends","👥 Найз"],["bots","🤖 AI"],["room","🌐 Өрөө"],["inbox","🎯 Сорилт"]].filter(function(t){return !(t[0]==="room"&&me().mode==="senior");}).forEach(function(t){
       tabs.append(h("button",{class:"chip",style:"flex:1;"+(sub===t[0]?"border-color:var(--accent,#3a7bd5);":""),"aria-current":sub===t[0]?"true":null,onclick:function(){sub=t[0];paint();}},t[1]));
     });
     root.append(tabs);
