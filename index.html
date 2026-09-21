@@ -296,6 +296,7 @@ p+p{margin-top:10px}
 
 <script src="lessons-more.js"></script>
 <script src="dialogs-more.js"></script>
+<script src="hanzi.js"></script>
 <script src="firebase-config.js"></script>
 <script src="social.js"></script>
 <script src="placement-more-en.js"></script>
@@ -3613,11 +3614,22 @@ function showHanzi(box,text){
 }
 function viewAlpha(){
   var a=ui.alpha,root=h("div"),secs=ALPHA[state.lang]||[];
-  root.append(h("h2",null,(a.sec==="phr"?"Хэллэг":"Үсэг")+" · "+LANGN[state.lang]));
-  root.append(h("div",{class:"seg"},
-    h("button",{"aria-pressed":String(a.sec!=="phr"),onclick:function(){a.sec="abc";render();}},"Үсэг"),
-    h("button",{"aria-pressed":String(a.sec==="phr"),onclick:function(){a.sec="phr";render();}},"Хэллэг")));
+  var cjk=["zh","ja","ko"].indexOf(state.lang)>=0&&!!window.HanziCompare;
+  if(a.sec==="hz"&&!cjk)a.sec="abc";
+  root.append(h("h2",null,(a.sec==="phr"?"Хэллэг":a.sec==="hz"?"Ханз":"Үсэг")+" · "+LANGN[state.lang]));
+  var seg=h("div",{class:"seg"},
+    h("button",{"aria-pressed":String(a.sec!=="phr"&&a.sec!=="hz"),onclick:function(){a.sec="abc";render();}},"Үсэг"),
+    h("button",{"aria-pressed":String(a.sec==="phr"),onclick:function(){a.sec="phr";render();}},"Хэллэг"));
+  if(cjk)seg.append(h("button",{"aria-pressed":String(a.sec==="hz"),onclick:function(){a.sec="hz";render();}},"Ханз"));
+  root.append(seg);
   if(a.sec==="phr"){root.append(viewPhrases());return root;}
+  if(a.sec==="hz"){
+    root.append(window.HanziCompare.view({h:h,rerender:render,speakAs:function(lang,glyph,read){
+      var t=lang==="ko"?String(read).split(" ")[0]:glyph,old=state.lang;
+      state.lang=lang;try{speak(t);}finally{state.lang=old;}
+    }}));
+    return root;
+  }
   root.append(h("p",{class:"muted"},"Үсэг дээр дарж дуудлагыг нь сонс, дараа нь өөрөө бичиж, хэлж үз."));
   var all=[];secs.forEach(function(sec){sec[1].forEach(function(it){all.push(it);});});
   root.append(h("button",{class:"btn primary",style:"width:100%;margin:6px 0 4px",onclick:function(){
