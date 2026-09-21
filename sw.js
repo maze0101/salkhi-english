@@ -1,6 +1,6 @@
 /* Салхи: offline shell. Network first (bypassing the HTTP cache) so updates arrive at once; cache is the offline fallback. */
-var V = "salkhi-v17";
-var SHELL = ["./", "./index.html", "./lessons-more.js", "./dialogs-more.js", "./words-en.js", "./words-zh.js", "./words-ru.js", "./words-de.js", "./words-ja.js", "./words-ko.js", "./words2-en.js", "./words2-zh.js", "./words2-ru.js", "./words2-de.js", "./words2-ja.js", "./words2-ko.js", "./words3-en.js", "./words3-zh.js", "./words3-ru.js", "./words3-de.js", "./words3-ja.js", "./words3-ko.js", "./manifest.webmanifest", "./icon.svg"];
+var V = "salkhi-v18";
+var SHELL = ["./", "./index.html", "./lessons-more.js", "./dialogs-more.js", "./words-en.js", "./words-zh.js", "./words-ru.js", "./words-de.js", "./words-ja.js", "./words-ko.js", "./words2-en.js", "./words2-zh.js", "./words2-ru.js", "./words2-de.js", "./words2-ja.js", "./words2-ko.js", "./words3-en.js", "./words3-zh.js", "./words3-ru.js", "./words3-de.js", "./words3-ja.js", "./words3-ko.js", "./words4-en.js", "./words4-zh.js", "./words4-ru.js", "./words4-de.js", "./words4-ja.js", "./words4-ko.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(V).then(function (c) { return c.addAll(SHELL.map(function (u) { return new Request(u, { cache: "reload" }); })); }));
