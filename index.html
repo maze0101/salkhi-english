@@ -2891,6 +2891,8 @@ function viewSocial(){
       });
     },
     learn:function(msgs){learnFrom(msgs);},
+    learnLocal:function(t){learnLocal(t);},
+    touch:function(t,n){return touch(t,n);},
     botRules:function(persona){
       var el=effLevel(),lv=el==="all"?"b1":el,LN=LANG_EN[state.lang];
       return "You are "+persona+". You are an AI friend inside a language-learning app for Mongolian speakers; if the learner asks whether you are a person, a bot or an AI, say honestly that you are an AI friend. Chat like a friend in "+LN+". Learner level: "+LVDESC[lv]+".\n"+
@@ -4039,10 +4041,11 @@ function offlineReply(turns){
     return {text:pk.tryMsg+sc[c.step][0]+"\n###\n"+pk.tryFix+" Жишээ хариулт: "+sc[c.step][1],mn:mnLine(key,c.step)};
   }
   var fix=state.lang==="en"?offlineFix(t):"",out;
+  var tc=touch(t,turns.filter(function(x){return x.role==="user";}).length-1);
   c.step++;
-  if(c.step<sc.length)out=pk.react[Math.floor(Math.random()*pk.react.length)]+" "+sc[c.step][0];
+  if(c.step<sc.length)out=(tc.react||pk.react[Math.floor(Math.random()*pk.react.length)])+" "+sc[c.step][0]+(tc.extra?" "+tc.extra:"");
   else out=pk.end;
-  return {text:out+(fix?"\n###\n"+fix:""),mn:c.step<sc.length?mnLine(key,c.step):""};
+  return {text:out+(fix?"\n###\n"+fix:""),mn:c.step<sc.length?((tc.reactMn?tc.reactMn+" ":"")+mnLine(key,c.step)+(tc.extraMn?" "+tc.extraMn:"")):""};
 }
 
 /* ---------- AI personality, memory and age-gated humor ---------- */
@@ -4054,13 +4057,21 @@ function cleanList(a,n,len){
 }
 function cleanMem(m){
   if(!m||typeof m!=="object"||Array.isArray(m))m={};
-  return {name:cleanStr(m.name,30),interests:cleanList(m.interests,10,40),humor:cleanStr(m.humor,120),slang:cleanList(m.slang,10,30),facts:cleanList(m.facts,10,80),mistakes:cleanList(m.mistakes,8,60),minor:m.minor===true};
+  var st=(m.stats&&typeof m.stats==="object"&&!Array.isArray(m.stats))?m.stats:{};
+  function ni(x){x=parseInt(x,10);return isFinite(x)&&x>0?Math.min(x,1000000):0;}
+  var tp={};
+  if(st.topics&&typeof st.topics==="object")Object.keys(st.topics).slice(0,40).forEach(function(k){if(/^[A-Za-z-]{2,14}$/.test(k)){var v=ni(st.topics[k]);if(v)tp[k]=v;}});
+  return {name:cleanStr(m.name,30),interests:cleanList(m.interests,10,40),humor:cleanStr(m.humor,120),slang:cleanList(m.slang,10,30),facts:cleanList(m.facts,10,80),mistakes:cleanList(m.mistakes,8,60),minor:m.minor===true,
+    stats:{n:ni(st.n),laugh:ni(st.laugh),sarc:ni(st.sarc),joke:ni(st.joke),emoji:ni(st.emoji),caps:ni(st.caps),topics:tp,auto:cleanStr(st.auto,100)}};
 }
 function memText(){
   var m=state.aimem,p=[];
   if(m.name)p.push("name/nickname: "+m.name);
-  if(m.interests.length)p.push("interests: "+m.interests.join(", "));
-  if(m.humor)p.push("sense of humor: "+m.humor);
+  var ints=m.interests.slice();
+  topTopics().forEach(function(k){if(ints.indexOf(k)<0)ints.push(k);});
+  if(ints.length)p.push("interests: "+ints.join(", "));
+  var hum=m.humor||(m.stats&&m.stats.auto)||"";
+  if(hum)p.push("sense of humor: "+hum);
   if(m.slang.length)p.push("slang they use: "+m.slang.join(", "));
   if(m.facts.length)p.push("things they shared: "+m.facts.join("; "));
   if(m.mistakes.length)p.push("recurring language mistakes: "+m.mistakes.join("; "));
@@ -4080,6 +4091,129 @@ function vibeRules(){
   if(mem)r+="\nMEMORY about this learner (private notes): "+mem;
   return r;
 }
+/* ---------- on-device learner (no API key, rule based) ---------- */
+var TOPIC_DEF=[
+ ["gaming",{en:"gaming|video game|fortnite|minecraft|roblox|playstation|xbox|gamer",mn:"тоглоом|гейм|геймер",ja:"ゲーム",ko:"게임",zh:"游戏",ru:"игры|игра|геймер",de:"Gaming|zocken|spiele"}],
+ ["football",{en:"football|soccer|messi|ronaldo|fifa",mn:"хөл бөмбөг|хөлбөмбөг",ja:"サッカー",ko:"축구",zh:"足球",ru:"футбол",de:"Fußball"}],
+ ["basketball",{en:"basketball|nba",mn:"сагсан бөмбөг",ja:"バスケ|バスケットボール",ko:"농구",zh:"篮球",ru:"баскетбол",de:"Basketball"}],
+ ["music",{en:"music|song|songs|singing|guitar|rap|band",mn:"хөгжим|дуу|дуулах",ja:"音楽|歌",ko:"음악|노래",zh:"音乐|唱歌|歌",ru:"музыка|музыку|песни",de:"Musik|Lieder"}],
+ ["K-pop",{en:"k-pop|kpop|bts|blackpink",mn:"к-поп|кпоп",ja:"Kポップ",ko:"케이팝",zh:"韩流",ru:"к-поп",de:"K-Pop"}],
+ ["movies",{en:"movie|movies|film|films|netflix|cinema",mn:"кино|кинонууд",ja:"映画",ko:"영화",zh:"电影",ru:"кино|фильмы|фильм",de:"Filme|Film|Kino"}],
+ ["anime",{en:"anime|manga",mn:"аниме",ja:"アニメ",ko:"애니",zh:"动漫|动画",ru:"аниме",de:"Anime"}],
+ ["cooking",{en:"cooking|pizza|burger|sushi|food",mn:"хоол хийх|хоол",ja:"料理|寿司",ko:"요리|음식",zh:"做饭|美食",ru:"готовка|готовить|еда",de:"Kochen|Essen"}],
+ ["coffee",{en:"coffee|latte",mn:"кофе",ja:"コーヒー",ko:"커피",zh:"咖啡",ru:"кофе",de:"Kaffee"}],
+ ["travel",{en:"travel|traveling|trip|vacation",mn:"аялал",ja:"旅行",ko:"여행",zh:"旅行|旅游",ru:"путешествия|путешествовать",de:"Reisen|Urlaub"}],
+ ["reading",{en:"reading|books|novels",mn:"ном унших|ном",ja:"読書|本",ko:"독서|책",zh:"读书|看书",ru:"чтение|читать|книги",de:"Lesen|Bücher"}],
+ ["fitness",{en:"gym|workout|fitness|running|jogging",mn:"фитнесс|гүйлт|дасгал",ja:"ジム|筋トレ|ランニング",ko:"헬스|운동",zh:"健身|跑步|运动",ru:"спорт|тренировки|бег",de:"Fitness|Sport|Laufen"}],
+ ["dancing",{en:"dancing|dance",mn:"бүжиг",ja:"ダンス",ko:"춤|댄스",zh:"跳舞",ru:"танцы|танцевать",de:"Tanzen"}],
+ ["art",{en:"drawing|painting|art",mn:"зураг зурах|зураг",ja:"絵|イラスト",ko:"그림",zh:"画画|绘画",ru:"рисование|рисовать",de:"Zeichnen|Malen"}],
+ ["tech",{en:"coding|programming|computer|tech",mn:"програмчлал|компьютер",ja:"プログラミング|パソコン",ko:"코딩|프로그래밍",zh:"编程|电脑",ru:"программирование|компьютер",de:"Programmieren|Computer"}],
+ ["pets",{en:"cat|cats|dog|dogs|pet|pets",mn:"муур|нохой",ja:"猫|犬",ko:"고양이|강아지",zh:"猫|狗",ru:"кошки|кошка|собаки|собака",de:"Katze|Hund|Haustier"}],
+ ["TikTok",{en:"tiktok|instagram|meme|memes|youtube",mn:"тикток|инстаграм|мем",ja:"ティックトック",ko:"틱톡",zh:"抖音",ru:"тикток",de:"TikTok"}]
+];
+var SLANG_EN=["no cap","bruh","fr","ngl","lowkey","highkey","bet","sus","mid","cringe","vibe","vibes","slay","rizz","gg","idk","tbh","omg","lit","salty","based","stan","yeet","fam","bro","dude"];
+var REACT={
+ en:{laugh:["Haha, good one! 😄","Ha! You got me. 😂"],sarc:["Oh sure, totally. 😏","Wow, really? 😏"]},
+ zh:{laugh:["哈哈，太好笑了！😄"],sarc:["哦，当然啦。😏"]},
+ ja:{laugh:["あはは、おもしろいですね！😄"],sarc:["へえ、そうなんですか。😏"]},
+ ko:{laugh:["ㅋㅋ 재밌네요! 😄"],sarc:["아, 그래요? 😏"]},
+ ru:{laugh:["Ха-ха, отлично сказано! 😄"],sarc:["Ну да, конечно. 😏"]},
+ de:{laugh:["Haha, guter Witz! 😄"],sarc:["Ja klar, sicher. 😏"]}
+};
+var REACT_MN={laugh:"Ха-ха, сайн хошин! 😄",sarc:"Өө тэгэлгүй яахав. 😏"};
+var CALLBACK={
+ en:"By the way, {X} sounds fun. Tell me more!",zh:"对了，{X}很有意思。多说说吧！",ja:"ところで、{X}はおもしろいですね。もっと教えてください。",
+ ko:"그런데 {X} 재미있죠? 더 얘기해 줘요.",ru:"Кстати, {X} — это здорово. Расскажи ещё!",de:"Übrigens, {X} klingt toll. Erzähl mehr!"
+};
+var CALLBACK_MN="Дашрамд, {X} сонирхолтой юм. Илүү ярьж өгөөч!";
+var RX_CJK=/[぀-ヿ㐀-鿿가-힯]/;
+var RX_LETTER=/[\p{L}\p{N}]/u;
+function hasWord(low,w){
+  var i=low.indexOf(w);
+  if(i<0)return false;
+  if(RX_CJK.test(w))return true;
+  while(i>=0){
+    var a=i>0?low.charAt(i-1):"",b=low.charAt(i+w.length);
+    if(!(a&&RX_LETTER.test(a))&&!(b&&RX_LETTER.test(b)))return true;
+    i=low.indexOf(w,i+1);
+  }
+  return false;
+}
+function humorKind(text){
+  var t=String(text||"");
+  if(/(?:^|[^\p{L}])(?:lol|lmao|lmfao|rofl|ha(?:ha)+|he(?:he)+|jk|just kidding)(?:$|[^\p{L}])|😂|🤣|😆|😹|ㅋㅋ+|ㅎㅎ|哈哈|あはは|ははは|хаха|хэхэ|笑|www/iu.test(t))return "laugh";
+  if(/(?:^|[^\p{L}])(?:yeah right|oh sure|as if|oh great|how nice|thanks a lot|obviously|totally)(?:$|[^\p{L}])|🙄|😏|\/s\s*$/iu.test(t))return "sarc";
+  return null;
+}
+function topTopics(){
+  var tp=(state.aimem.stats&&state.aimem.stats.topics)||{};
+  return Object.keys(tp).sort(function(a,b){return tp[b]-tp[a];}).slice(0,5);
+}
+function autoHumor(s){
+  if(!s||s.n<3)return "";
+  var p=[];
+  if(s.laugh/s.n>=0.25)p.push("laughs a lot");
+  if(s.sarc/s.n>=0.1)p.push("sarcastic");
+  if(s.joke>=2)p.push("likes joking around");
+  if(s.emoji/s.n>=0.3)p.push("uses lots of emojis");
+  if(s.caps/s.n>=0.2)p.push("expressive and excited");
+  return p.length?p.join(", "):"fairly calm, straightforward tone";
+}
+function learnLocal(text){
+  if(state.mode!=="adult"||!state.aiopt.vibe)return;
+  var t=String(text||"").slice(0,400),low=t.toLowerCase(),m=state.aimem;
+  if(!t.trim())return;
+  var s=m.stats;
+  s.n++;
+  var hk=humorKind(t);
+  if(hk==="laugh")s.laugh++;else if(hk==="sarc")s.sarc++;
+  if(/(?:^|[^\p{L}])(?:jk|just kidding|kidding|joking)(?:$|[^\p{L}])/iu.test(t))s.joke++;
+  var em=t.match(/\p{Extended_Pictographic}/gu);if(em&&em.length)s.emoji++;
+  if(/(?:^|[^A-Za-z])[A-Z]{4,}(?:$|[^A-Za-z])/.test(t))s.caps++;
+  // topics
+  TOPIC_DEF.forEach(function(d){
+    var found=false;
+    Object.keys(d[1]).forEach(function(l){if(found)return;d[1][l].split("|").forEach(function(w){if(!found&&hasWord(low,w.toLowerCase()))found=true;});});
+    if(found)s.topics[d[0]]=Math.min(9999,(s.topics[d[0]]||0)+1);
+  });
+  // slang (English)
+  SLANG_EN.forEach(function(w){if(hasWord(low,w)&&m.slang.indexOf(w)<0&&m.slang.length<10)m.slang.push(w);});
+  // name
+  if(!m.name){
+    var nm=t.match(/(?:my name is|call me|name's)\s+([A-Za-z][A-Za-z'-]{1,19})/i)||t.match(/(?:миний нэр|намайг)\s+([\p{L}]{2,20})/iu);
+    if(nm)m.name=cleanStr(nm[1],20);
+  }
+  // language mistakes (English helper)
+  if(state.lang==="en"&&typeof offlineFix==="function"){
+    var fx=offlineFix(t);
+    if(fx){var ms=cleanStr(fx,60);if(ms&&m.mistakes.indexOf(ms)<0){m.mistakes.push(ms);if(m.mistakes.length>8)m.mistakes.shift();}}
+  }
+  // age: only ever used to be MORE careful
+  var age=null,a1=t.match(/(?:^|[^\p{L}])(?:i am|i'm|im|i m)\s*(\d{1,2})(?![\d%]|\s*(?:min|hour|hr|am|pm|kg|cm|km|percent|times))/iu),a2=t.match(/(\d{1,2})\s*(?:years? old|yrs? old|y\.?o\.?(?:$|\s))/i),a3=t.match(/(?:би|надад)\s*(\d{1,2})\s*нас/iu);
+  if(a1)age=parseInt(a1[1],10);else if(a2)age=parseInt(a2[1],10);else if(a3)age=parseInt(a3[1],10);
+  var grade=t.match(/(?:^|[^\p{L}])(?:grade|year)\s*(\d{1,2})(?!\d)/iu),gmn=t.match(/(\d{1,2})\s*-?\s*р\s*анги/iu);
+  var minor=(age!==null&&age>=5&&age<18)||/(?:^|[^\p{L}])(?:high school|middle school|elementary school|primary school)(?:$|[^\p{L}])/i.test(t)||(grade&&/grade/i.test(grade[0])&&+grade[1]>=1&&+grade[1]<=12)||(gmn&&+gmn[1]>=1&&+gmn[1]<=12);
+  if(minor&&!m.minor){m.minor=true;state.aiopt.adult=false;sset("aiopt",state.aiopt);}
+  s.auto=autoHumor(s);
+  state.aimem=cleanMem(m);
+  sset("aimem",state.aimem);
+}
+function touch(text,userCount){
+  var out={};
+  if(state.mode!=="adult"||!state.aiopt.vibe)return out;
+  var L=state.lang,R=REACT[L]||REACT.en,k=humorKind(text);
+  if(k){out.react=R[k][Math.floor(Math.random()*R[k].length)];out.reactMn=REACT_MN[k];}
+  var tops=topTopics();
+  if(tops.length&&userCount>0&&userCount%4===0){
+    var key=tops[Math.floor(Math.random()*Math.min(tops.length,3))],def=TOPIC_DEF.filter(function(d){return d[0]===key;})[0];
+    if(def){
+      var lab=(def[1][L]||def[1].en).split("|")[0],labMn=def[1].mn.split("|")[0];
+      out.extra=(CALLBACK[L]||CALLBACK.en).replace("{X}",lab);out.extraMn=CALLBACK_MN.replace("{X}",labMn);
+    }
+  }
+  return out;
+}
+
 function callOpenAI(turns){
   return fetch("https://api.openai.com/v1/chat/completions",{
     method:"POST",
@@ -4116,6 +4250,7 @@ function learnFrom(msgs){
     var obj=JSON.parse(mt[0]);
     var next=cleanMem(obj);
     if(state.aimem.minor)next.minor=true;
+    next.stats=state.aimem.stats;
     state.aimem=next;sset("aimem",next);
     if(next.minor&&state.aiopt.adult){state.aiopt.adult=false;sset("aiopt",state.aiopt);}
   }).catch(function(e){if(e&&e.code==="bad_key")toast("OpenAI түлхүүр буруу байна. Суралцагч агент ажиллахгүй.");}).then(function(){learning=false;});
@@ -4157,7 +4292,8 @@ function aiPanel(){
   }
   var mem=memText();
   box.append(h("div",{style:"font-weight:700;margin:12px 0 4px"},"🧠 AI таны тухай санаж буй зүйл"),
-    h("p",{class:"muted small",style:"margin:0 0 6px"},mem||"Одоохондоо юу ч алга. Ярих тусам суралцана (3 мессеж тутамд шинэчлэгдэнэ)."));
+    h("p",{class:"muted small",style:"margin:0 0 6px"},mem||"Одоохондоо юу ч алга. Ярих тусам суралцана."),
+    h("p",{class:"muted small",style:"margin:0 0 6px"},"🖥 Түлхүүргүйгээр ч төхөөрөмж дээр суралцана: хошин хэв маяг, дуртай зүйл, нэр, slang-ыг мессеж бүрээс таньж хадгална. Юу ч гадагш явахгүй."));
   if(mem)box.append(h("button",{class:"btn ghost",type:"button",style:"padding:6px 12px;font-size:14px",onclick:function(){if(!confirm("AI-ийн санаж буй бүх зүйлийг устгах уу?"))return;var mn=state.aimem.minor;state.aimem=cleanMem({minor:mn});sset("aimem",state.aimem);render();}},"Устгах"));
   if(!canAI)box.append(h("p",{class:"muted small",style:"margin:8px 0 0"},"⚠ Хошин хариулт нь Anthropic AI түлхүүртэй үед ажиллана (одоо бэлэн асуултын горим). OpenAI түлхүүр нь зөвхөн суралцагч агентад."));
   return box;
@@ -4283,6 +4419,7 @@ function sendMsg(text){
   var c=ui.chat;text=text.trim();
   if(!text||c.busy)return;
   c.msgs.push({role:"me",text:text});c.draft="";
+  learnLocal(text);
   state.chatCount++;sset("chat",state.chatCount);addXP(3);
   runAI();
 }

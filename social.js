@@ -347,8 +347,9 @@
     if(!last){bc.step=0;return {text:sc[0]?sc[0][0]:"...",mn:env.mn(bc.bot.scene,0)};}
     if(bc.step>=sc.length-1)return {text:pk.end||pk.fin};
     if(/[\u0400-\u04FF]/.test(last.text)&&me().lang!=="ru"){return {text:pk.tryMsg+sc[bc.step][0]+"\n###\n"+pk.tryFix+" Жишээ хариулт: "+sc[bc.step][1],mn:env.mn(bc.bot.scene,bc.step)};}
+    var uc=bc.msgs.filter(function(m){return m.role==="me";}).length,tc=env.touch(last.text,uc);
     bc.step++;
-    return {text:pk.react[Math.floor(Math.random()*pk.react.length)]+" "+sc[bc.step][0],mn:env.mn(bc.bot.scene,bc.step)};
+    return {text:(tc.react||pk.react[Math.floor(Math.random()*pk.react.length)])+" "+sc[bc.step][0]+(tc.extra?" "+tc.extra:""),mn:(tc.reactMn?tc.reactMn+" ":"")+env.mn(bc.bot.scene,bc.step)+(tc.extraMn?" "+tc.extraMn:"")};
   }
   function runBot(){
     if(!bc)return;
@@ -412,7 +413,7 @@
     function send(){
       var t=inp.value.trim();if(!t||bc.busy)return;
       bc.msgs.push({role:"me",text:t});bc.draft="";inp.value="";
-      env.reward();runBot();
+      env.learnLocal(t);env.reward();runBot();
     }
     inp.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();send();}});
     box.append(h("div",{style:"display:flex;gap:8px;margin-top:8px"},inp,
