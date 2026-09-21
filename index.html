@@ -2768,6 +2768,8 @@ function viewSocial(){
     keyBox:function(){return keyBox();},
     errCopy:function(c){return errCopy(c);},
     speak:function(t){speak(cleanAI(t));},
+    mn:function(scene,idx){var k=(LANGPACK[state.lang]||LANGPACK.en).scripts[scene]?scene:"free";return mnLine(k,idx);},
+    parse:function(t){return parseAI(t);},
     reward:function(){state.chatCount++;sset("chat",state.chatCount);addXP(3);},
     ai:function(turns,o){
       return sampleP.then(function(s){
@@ -2783,7 +2785,7 @@ function viewSocial(){
        (["ja","ko","zh"].indexOf(state.lang)>=0?"- After each "+LN+" sentence add its romanized reading in parentheses (romaji, romanization or pinyin). Use simple polite forms.\n":"")+
        "- If the learner's latest message has a grammar, word-choice or spelling mistake, add a line containing only ### after your reply, then write in Mongolian: the corrected "+LN+" sentence and a one-sentence explanation in Mongolian. If there are no mistakes, do not write ###.\n"+
        "- If the learner writes in Mongolian, reply in simple "+LN+" and, after ###, give the "+LN+" version of what they wanted to say.\n"+
-       "- Never use markdown formatting, bullet points or emojis.";
+       "- Never use markdown formatting, bullet points or emojis.\n- After your reply (and BEFORE any ### correction) add a line containing only @@@ and then a natural Mongolian translation of your reply, written in Cyrillic Mongolian. Format: reply, then @@@, then the Mongolian translation, then (only if needed) ### and the correction.";
     }
   });
 }
@@ -3824,6 +3826,14 @@ free:[["Сайн уу! Сайн байна уу?","Сайн, баярлалаа.
 cafe:[["Тавтай морилно уу! Юу захиалах вэ?","Кофе өгөөч."],["Халуун уу, хүйтэн үү?","Халуун өгөөч."],["Өөр юм хэрэгтэй юу?","Бялуу ч өгөөч."],["Нийт {P} болно.","Аваарай."],["Энд идэх үү, авч явах уу?","Энд идье."]]
 };
 var MN_PRICE={ja:"500 иен",ko:"5000 вон",zh:"20 юань",ru:"200 рубль",de:"5 евро"};
+function mnLine(key,idx){var m=mnDlg(key,idx);return m?m[0]:"";}
+function parseAI(text){
+  var t=String(text),fix="",mn="",i=t.indexOf("###");
+  if(i>=0){fix=t.slice(i+3).trim();t=t.slice(0,i);}
+  var j=t.indexOf("@@@");
+  if(j>=0){mn=t.slice(j+3).trim();t=t.slice(0,j);}
+  return {reply:t.trim(),mn:mn,fix:fix};
+}
 function mnDlg(key,idx){
   var t=state.lang==="en"?MN_EN:MN_OTHER,a=t[key]&&t[key][idx];
   if(!a)return null;
@@ -3848,17 +3858,18 @@ var LANGPACK={
 })();
 function offlineReply(turns){
   var c=ui.chat,pk=LANGPACK[state.lang]||LANGPACK.en,sc=pk.scripts[c.scn]||pk.scripts.free;
-  if(turns.length===1){c.step=0;return {text:sc[0][0]};}
+  var key=pk.scripts[c.scn]?c.scn:"free";
+  if(turns.length===1){c.step=0;return {text:sc[0][0],mn:mnLine(key,0)};}
   if(c.step>=sc.length)return {text:pk.fin};
   var t=turns[turns.length-1].content;
   if(/[\u0400-\u04FF]/.test(t)){
-    return {text:pk.tryMsg+sc[c.step][0]+"\n###\n"+pk.tryFix+" Жишээ хариулт: "+sc[c.step][1]};
+    return {text:pk.tryMsg+sc[c.step][0]+"\n###\n"+pk.tryFix+" Жишээ хариулт: "+sc[c.step][1],mn:mnLine(key,c.step)};
   }
   var fix=state.lang==="en"?offlineFix(t):"",out;
   c.step++;
   if(c.step<sc.length)out=pk.react[Math.floor(Math.random()*pk.react.length)]+" "+sc[c.step][0];
   else out=pk.end;
-  return {text:out+(fix?"\n###\n"+fix:"")};
+  return {text:out+(fix?"\n###\n"+fix:""),mn:c.step<sc.length?mnLine(key,c.step):""};
 }
 function callDirect(turns,opts){
   return fetch("https://api.anthropic.com/v1/messages",{
@@ -3932,7 +3943,7 @@ function startChat(id){
    (["ja","ko","zh"].indexOf(state.lang)>=0?"- After each "+LN+" sentence add its romanized reading in parentheses (romaji, romanization or pinyin). Use simple polite forms.\n":"")+
    "- If the learner's latest message has a grammar, word-choice or spelling mistake, add a line containing only ### after your reply, then write in Mongolian: the corrected "+LN+" sentence and a one-sentence explanation in Mongolian. If there are no mistakes, do not write ###.\n"+
    "- If the learner writes in Mongolian, reply in simple "+LN+" and, after ###, give the "+LN+" version of what they wanted to say.\n"+
-   "- Never use markdown formatting, bullet points or emojis.";
+   "- Never use markdown formatting, bullet points or emojis.\n- After your reply (and BEFORE any ### correction) add a line containing only @@@ and then a natural Mongolian translation of your reply, written in Cyrillic Mongolian. Format: reply, then @@@, then the Mongolian translation, then (only if needed) ### and the correction.";
   if(state.mode==="kid")c.rules+="\n- The learner is a child. Use very simple, playful words and be warm and encouraging.";
   c.step=0;c.scn=id;c.msgs=[];c.started=true;c.error="";c.draft="";
   render();
@@ -3951,7 +3962,7 @@ function runAI(){
     if(state.apiKey)return callDirect(turns,o);
     return offlineReply(turns);
   }).then(function(res){
-    apply(res.text);ai.streaming=false;c.busy=false;paint();
+    apply(res.text);if(res.mn&&!ai.mn)ai.mn=res.mn;ai.streaming=false;c.busy=false;paint();
   }).catch(function(e){
     var code=e&&e.code;
     if(e&&e.text)apply(e.text);
@@ -3963,9 +3974,9 @@ function runAI(){
   });
   paint();
   function apply(text){
-    var parts=String(text).split("###");
-    ai.text=parts[0].trim();
-    var fix=parts.slice(1).join("").trim();
+    var p=parseAI(text);
+    ai.text=p.reply;if(p.mn)ai.mn=p.mn;
+    var fix=p.fix;
     if(fix){for(var i=c.msgs.length-1;i>=0;i--){if(c.msgs[i].role==="me"){c.msgs[i].fix=fix;break;}}}
     paint();
   }
@@ -3987,6 +3998,7 @@ function paint(){
       if(m.fix)box.append(h("div",{class:"fix"},h("b",null,"Засвар: "),m.fix));
     }else{
       box.append(h("div",{class:"b ai"},m.text||(m.streaming?"...":"")));
+      if(m.mn)box.append(h("div",{class:"muted small",style:"margin:2px 4px 4px"},"🇲🇳 "+m.mn));
       if(m.text&&!m.streaming)box.append(h("button",{class:"spk",onclick:function(){speak(cleanAI(m.text));}},"Сонсох"));
     }
   });

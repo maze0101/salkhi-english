@@ -344,11 +344,11 @@
   function scriptedBot(){
     var pk=env.pack(me().lang),sc=(env.scripts(me().lang)||{})[bc.bot.scene]||(env.scripts(me().lang)||{}).free||[];
     var last=bc.msgs.filter(function(m){return m.role==="me";}).pop();
-    if(!last){bc.step=0;return {text:sc[0]?sc[0][0]:"..."};}
+    if(!last){bc.step=0;return {text:sc[0]?sc[0][0]:"...",mn:env.mn(bc.bot.scene,0)};}
     if(bc.step>=sc.length-1)return {text:pk.end||pk.fin};
-    if(/[\u0400-\u04FF]/.test(last.text)&&me().lang!=="ru"){return {text:pk.tryMsg+sc[bc.step][0]+"\n###\n"+pk.tryFix+" Жишээ хариулт: "+sc[bc.step][1]};}
+    if(/[\u0400-\u04FF]/.test(last.text)&&me().lang!=="ru"){return {text:pk.tryMsg+sc[bc.step][0]+"\n###\n"+pk.tryFix+" Жишээ хариулт: "+sc[bc.step][1],mn:env.mn(bc.bot.scene,bc.step)};}
     bc.step++;
-    return {text:pk.react[Math.floor(Math.random()*pk.react.length)]+" "+sc[bc.step][0]};
+    return {text:pk.react[Math.floor(Math.random()*pk.react.length)]+" "+sc[bc.step][0],mn:env.mn(bc.bot.scene,bc.step)};
   }
   function runBot(){
     if(!bc)return;
@@ -358,9 +358,9 @@
     bc.ctl=new AbortController();
     var cur=bc;
     function apply(text){
-      var parts=String(text).split("###");
-      ai.text=parts[0].trim();
-      var fix=parts.slice(1).join("").trim();
+      var pr=env.parse(text);
+      ai.text=pr.reply;if(pr.mn)ai.mn=pr.mn;
+      var fix=pr.fix;
       if(fix){for(var i=cur.msgs.length-1;i>=0;i--){if(cur.msgs[i].role==="me"){cur.msgs[i].fix=fix;break;}}}
       if(bc===cur)botPaint();
     }
@@ -369,7 +369,7 @@
       if(res==null){cur.ai=false;return scriptedBot();}
       cur.ai=true;return res;
     }).then(function(res){
-      apply(res.text);ai.streaming=false;cur.busy=false;if(bc===cur)botPaint();
+      apply(res.text);if(res.mn&&!ai.mn)ai.mn=res.mn;ai.streaming=false;cur.busy=false;if(bc===cur)botPaint();
     }).catch(function(e){
       var code=e&&e.code;
       if(e&&e.text)apply(e.text);
@@ -390,6 +390,7 @@
         if(m.fix)box.append(h("div",{class:"fix"},h("b",null,"Засвар: "),m.fix));
       }else{
         box.append(h("div",{class:"b ai"},m.text||(m.streaming?"...":"")));
+        if(m.mn)box.append(h("div",{class:"muted small",style:"margin:2px 4px 4px"},"🇲🇳 "+m.mn));
         if(m.text&&!m.streaming)box.append(h("button",{class:"spk",onclick:function(){env.speak(m.text);}},"Сонсох"));
       }
     });
