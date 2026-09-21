@@ -313,6 +313,24 @@ p+p{margin-top:10px}
 <script src="words4-de.js"></script>
 <script src="words4-ja.js"></script>
 <script src="words4-ko.js"></script>
+<script src="words5-en.js"></script>
+<script src="words5-zh.js"></script>
+<script src="words5-ru.js"></script>
+<script src="words5-de.js"></script>
+<script src="words5-ja.js"></script>
+<script src="words5-ko.js"></script>
+<script src="words6-en.js"></script>
+<script src="words6-zh.js"></script>
+<script src="words6-ru.js"></script>
+<script src="words6-de.js"></script>
+<script src="words6-ja.js"></script>
+<script src="words6-ko.js"></script>
+<script src="words7-en.js"></script>
+<script src="words7-zh.js"></script>
+<script src="words7-ru.js"></script>
+<script src="words7-de.js"></script>
+<script src="words7-ja.js"></script>
+<script src="words7-ko.js"></script>
 <script>
 (function(){
 "use strict";
@@ -3759,6 +3777,14 @@ function mnDlg(key,idx){
   if(!a)return null;
   return a.map(function(s){return s.replace("{P}",MN_PRICE[state.lang]||"");});
 }
+var LANGPACK={
+  en:{scripts:SCRIPTS,react:REACT,tryMsg:"Let's try in English! ",tryFix:"Англиар бичиж үзээрэй.",end:"Well done! That was a good practice. Choose another situation to keep going.",fin:"We finished this chat. Press the new chat button to try another situation."},
+  ja:{scripts:SCRIPTS_JA,react:["いいですね！","なるほど！","すごい！"],tryMsg:"にほんごで はなしましょう！ ",tryFix:"Японоор бичиж үзээрэй.",end:"よくできました！ ほかの シーンも やってみましょう。",fin:"この かいわは おわりました。あたらしい かいわを はじめましょう。"},
+  ko:{scripts:SCRIPTS_KO,react:["좋아요!","그렇군요!","대단해요!"],tryMsg:"한국어로 말해 봐요! ",tryFix:"Солонгосоор бичиж үзээрэй.",end:"잘했어요! 다른 상황도 연습해 봐요.",fin:"이 대화는 끝났어요. 새 대화를 시작해 보세요."},
+  zh:{scripts:SCRIPTS_ZH,react:["好的！","不错！","真棒！"],tryMsg:"我们说中文吧！ ",tryFix:"Хятадаар бичиж үзээрэй.",end:"做得好！选择另一个场景继续练习吧。",fin:"这次对话结束了。请开始新的对话。"},
+  ru:{scripts:SCRIPTS_RU,react:["Хорошо!","Отлично!","Понятно."],tryMsg:"Давайте говорить по-русски! ",tryFix:"Оросоор бичиж үзээрэй.",end:"Молодец! Выберите другую ситуацию.",fin:"Разговор окончен. Начните новый."},
+  de:{scripts:SCRIPTS_DE,react:["Gut!","Super!","Ich verstehe."],tryMsg:"Sprechen wir Deutsch! ",tryFix:"Герман хэлээр бичиж үзээрэй.",end:"Gut gemacht! Wähle eine andere Situation.",fin:"Das Gespräch ist zu Ende. Starte ein neues."}
+};
 (function(){
   var D=window.DLG_MORE;if(!D)return;
   D.scenes.forEach(function(s){if(!SCEN.some(function(x){return x[0]===s[0];}))SCEN.push(s);});
@@ -3768,14 +3794,6 @@ function mnDlg(key,idx){
   });
   Object.keys(D.mn).forEach(function(k){MN_EN[k]=D.mn[k];MN_OTHER[k]=D.mn[k];});
 })();
-var LANGPACK={
-  en:{scripts:SCRIPTS,react:REACT,tryMsg:"Let's try in English! ",tryFix:"Англиар бичиж үзээрэй.",end:"Well done! That was a good practice. Choose another situation to keep going.",fin:"We finished this chat. Press the new chat button to try another situation."},
-  ja:{scripts:SCRIPTS_JA,react:["いいですね！","なるほど！","すごい！"],tryMsg:"にほんごで はなしましょう！ ",tryFix:"Японоор бичиж үзээрэй.",end:"よくできました！ ほかの シーンも やってみましょう。",fin:"この かいわは おわりました。あたらしい かいわを はじめましょう。"},
-  ko:{scripts:SCRIPTS_KO,react:["좋아요!","그렇군요!","대단해요!"],tryMsg:"한국어로 말해 봐요! ",tryFix:"Солонгосоор бичиж үзээрэй.",end:"잘했어요! 다른 상황도 연습해 봐요.",fin:"이 대화는 끝났어요. 새 대화를 시작해 보세요."},
-  zh:{scripts:SCRIPTS_ZH,react:["好的！","不错！","真棒！"],tryMsg:"我们说中文吧！ ",tryFix:"Хятадаар бичиж үзээрэй.",end:"做得好！选择另一个场景继续练习吧。",fin:"这次对话结束了。请开始新的对话。"},
-  ru:{scripts:SCRIPTS_RU,react:["Хорошо!","Отлично!","Понятно."],tryMsg:"Давайте говорить по-русски! ",tryFix:"Оросоор бичиж үзээрэй.",end:"Молодец! Выберите другую ситуацию.",fin:"Разговор окончен. Начните новый."},
-  de:{scripts:SCRIPTS_DE,react:["Gut!","Super!","Ich verstehe."],tryMsg:"Sprechen wir Deutsch! ",tryFix:"Герман хэлээр бичиж үзээрэй.",end:"Gut gemacht! Wähle eine andere Situation.",fin:"Das Gespräch ist zu Ende. Starte ein neues."}
-};
 function offlineReply(turns){
   var c=ui.chat,pk=LANGPACK[state.lang]||LANGPACK.en,sc=pk.scripts[c.scn]||pk.scripts.free;
   if(turns.length===1){c.step=0;return {text:sc[0][0]};}
