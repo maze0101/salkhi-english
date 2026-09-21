@@ -369,7 +369,7 @@
       if(res==null){cur.ai=false;return scriptedBot();}
       cur.ai=true;return res;
     }).then(function(res){
-      apply(res.text);if(res.mn&&!ai.mn)ai.mn=res.mn;ai.streaming=false;cur.busy=false;if(bc===cur)botPaint();
+      apply(res.text);if(res.mn&&!ai.mn)ai.mn=res.mn;ai.streaming=false;cur.busy=false;if(bc===cur)botPaint();env.learn(cur.msgs);
     }).catch(function(e){
       var code=e&&e.code;
       if(e&&e.text)apply(e.text);

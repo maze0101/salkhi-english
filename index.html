@@ -2532,7 +2532,7 @@ var state={
   box:sget("box",{}), xp:sget("xp",0), daily:sget("daily",{}),
   lessons:sget("lessons",{}), chatCount:sget("chat",0), mode:sget("mode","adult"),
   due:sget("due",{}), saved:sget("saved",[]), custom:sget("custom",[]), tasks:sget("tasks",{}),
-  lang:sget("lang","en"), skin:sget("skin","default"), apiKey:sget("apikey",""), stars:sget("stars",0), listenOk:sget("listenOk",0), goal:sget("goal",20), theme:sget("theme","auto"), cat:"all",
+  lang:sget("lang","en"), skin:sget("skin","default"), aiopt:sget("aiopt",{}), aimem:sget("aimem",{}), apiKey:sget("apikey",""), stars:sget("stars",0), listenOk:sget("listenOk",0), goal:sget("goal",20), theme:sget("theme","auto"), cat:"all",
   rate:sget("rate",1), freeze:sget("freeze",0), frozen:sget("frozen",{}), frzMark:sget("frzMark",0), langxp:sget("langxp",{}), miss:sget("miss",[]),
   stories:sget("stories",{}), speech:sget("speech",{n:0,sum:0}), fz:sget("fz",1), exam:sget("exam",{})
 };
@@ -2549,6 +2549,10 @@ state.miss=(Array.isArray(state.miss)?state.miss:[]).filter(function(r){return r
 if(!state.due||typeof state.due!=="object")state.due={};
 if(!isObjS(state.stories))state.stories={};
 if(!isObjS(state.exam))state.exam={};
+if(!isObjS(state.aiopt))state.aiopt={};
+state.aiopt={vibe:state.aiopt.vibe!==false,web:!!state.aiopt.web,adult:!!state.aiopt.adult};
+state.aimem=cleanMem(state.aimem);
+if(state.aimem.minor)state.aiopt.adult=false;
 if(!isObjS(state.speech)||typeof state.speech.n!=="number"||typeof state.speech.sum!=="number")state.speech={n:0,sum:0};
 if([1,1.15,1.3].indexOf(state.fz)<0)state.fz=1;
 if(!state.tasks||typeof state.tasks!=="object")state.tasks={};
@@ -2886,6 +2890,7 @@ function viewSocial(){
         return null;
       });
     },
+    learn:function(msgs){learnFrom(msgs);},
     botRules:function(persona){
       var el=effLevel(),lv=el==="all"?"b1":el,LN=LANG_EN[state.lang];
       return "You are "+persona+". You are an AI friend inside a language-learning app for Mongolian speakers; if the learner asks whether you are a person, a bot or an AI, say honestly that you are an AI friend. Chat like a friend in "+LN+". Learner level: "+LVDESC[lv]+".\n"+
@@ -2893,7 +2898,7 @@ function viewSocial(){
        (["ja","ko","zh"].indexOf(state.lang)>=0?"- After each "+LN+" sentence add its romanized reading in parentheses (romaji, romanization or pinyin). Use simple polite forms.\n":"")+
        "- If the learner's latest message has a grammar, word-choice or spelling mistake, add a line containing only ### after your reply, then write in Mongolian: the corrected "+LN+" sentence and a one-sentence explanation in Mongolian. If there are no mistakes, do not write ###.\n"+
        "- If the learner writes in Mongolian, reply in simple "+LN+" and, after ###, give the "+LN+" version of what they wanted to say.\n"+
-       "- Never use markdown formatting, bullet points or emojis.\n- After your reply (and BEFORE any ### correction) add a line containing only @@@ and then a natural Mongolian translation of your reply, written in Cyrillic Mongolian. Format: reply, then @@@, then the Mongolian translation, then (only if needed) ### and the correction.";
+       "- Never use markdown formatting, bullet points or emojis.\n- After your reply (and BEFORE any ### correction) add a line containing only @@@ and then a natural Mongolian translation of your reply, written in Cyrillic Mongolian. Format: reply, then @@@, then the Mongolian translation, then (only if needed) ### and the correction."+vibeRules();
     }
   });
 }
@@ -4039,13 +4044,110 @@ function offlineReply(turns){
   else out=pk.end;
   return {text:out+(fix?"\n###\n"+fix:""),mn:c.step<sc.length?mnLine(key,c.step):""};
 }
-function callDirect(turns,opts){
+
+/* ---------- AI personality, memory and age-gated humor ---------- */
+function cleanStr(x,n){return typeof x==="string"?x.replace(/[\u0000-\u001f]/g," ").trim().slice(0,n):"";}
+function cleanList(a,n,len){
+  if(!Array.isArray(a))return [];
+  var out=[];a.forEach(function(x){var s=cleanStr(x,len);if(s&&out.indexOf(s)<0&&out.length<n)out.push(s);});
+  return out;
+}
+function cleanMem(m){
+  if(!m||typeof m!=="object"||Array.isArray(m))m={};
+  return {name:cleanStr(m.name,30),interests:cleanList(m.interests,10,40),humor:cleanStr(m.humor,120),slang:cleanList(m.slang,10,30),facts:cleanList(m.facts,10,80),mistakes:cleanList(m.mistakes,8,60),minor:m.minor===true};
+}
+function memText(){
+  var m=state.aimem,p=[];
+  if(m.name)p.push("name/nickname: "+m.name);
+  if(m.interests.length)p.push("interests: "+m.interests.join(", "));
+  if(m.humor)p.push("sense of humor: "+m.humor);
+  if(m.slang.length)p.push("slang they use: "+m.slang.join(", "));
+  if(m.facts.length)p.push("things they shared: "+m.facts.join("; "));
+  if(m.mistakes.length)p.push("recurring language mistakes: "+m.mistakes.join("; "));
+  return p.join(". ");
+}
+function adultOK(){return state.mode==="adult"&&state.aiopt.adult&&!state.aimem.minor;}
+function vibeRules(){
+  if(state.mode!=="adult"||!state.aiopt.vibe)return "";
+  var LN=LANG_EN[state.lang];
+  var r="\n- PERSONALITY: Talk like a real, witty friend of a young person, not a customer-service robot. Mirror the learner's tone: if they joke, joke back in "+LN+" and then keep the conversation going; if they are sarcastic, answer with playful sarcasm (never cruel or insulting); if they use slang, emojis or memes, you may answer with light, natural slang while keeping the language simple. React to what they actually said before asking your follow-up. Never make fun of their language mistakes. If they seem sad, stressed or upset, drop the jokes and be kind.";
+  r+="\n- HUMOR SAFETY: "+(adultOK()?
+    "The learner has self-declared they are 18 or older. You may use edgier adult humor (innuendo, dark humor, mild swearing) and light, playful flirting or teasing when the learner is being silly or flirty. Never write explicit sexual content, never demean anyone, never pressure the learner, and stop at once if they seem uncomfortable or say they are under 18."
+    :"Keep all humor clean and family-friendly. Do not flirt and do not make sexual jokes, even if asked. If the learner says they are under 18, keep everything extra clean.");
+  r+="\n- LEARNING: You always learn from the learner. Use the MEMORY notes to personalize replies and to call back earlier jokes and interests. If they use a slang word, meme or topic you do not know, playfully ask them to explain it and remember it.";
+  if(state.aiopt.web)r+=" You may also use web search (at most once or twice) when they mention a current trend, song, game, meme or news you are unsure about, then talk about it naturally in "+LN+" without quoting sources.";
+  var mem=memText();
+  if(mem)r+="\nMEMORY about this learner (private notes): "+mem;
+  return r;
+}
+function aiOnce(turns){
+  var ctl=new AbortController(),o={signal:ctl.signal,onText:function(){}};
+  return sampleP.then(function(s){
+    if(s)return s(turns,{modelTier:"quick",cache:false,signal:o.signal,onText:o.onText});
+    if(state.apiKey)return callDirect(turns,o,true);
+    return null;
+  }).then(function(r){return r?String(r.text||""):null;});
+}
+var learning=false;
+function learnFrom(msgs){
+  if(learning||state.mode!=="adult"||!state.aiopt.vibe)return;
+  var users=msgs.filter(function(m){return m.role==="me";}).length;
+  if(users<1||users%3!==0)return;
+  var tail=msgs.filter(function(m){return !m.streaming&&m.text;}).slice(-8).map(function(m){return (m.role==="me"?"USER: ":"BOT: ")+m.text;}).join("\n");
+  var prompt="You maintain private notes about a language learner so a chat bot can be more personal. Current notes (JSON): "+JSON.stringify(state.aimem)+"\n\nRecent chat:\n"+tail+"\n\nUpdate the notes. Return ONLY one JSON object with keys: name (first name or nickname, or empty), interests (array of short strings), humor (one short sentence about their sense of humor and tone, e.g. sarcastic, silly, dry, wholesome), slang (array of slang words or phrases THEY use), facts (array of harmless facts they shared, such as favorite music, food, games, hobbies), mistakes (array of recurring language mistakes), minor (true ONLY if they clearly said they are under 18, otherwise false). Do NOT store addresses, phone numbers, emails, full names, school names, health details or anything sexual. Keep every list to at most 8 short items. Merge with the current notes: keep useful old items, drop wrong ones.";
+  learning=true;
+  aiOnce([{role:"user",content:prompt}]).then(function(txt){
+    if(!txt)return;
+    var mt=txt.match(/\{[\s\S]*\}/);if(!mt)return;
+    var obj=JSON.parse(mt[0]);
+    var next=cleanMem(obj);
+    if(state.aimem.minor)next.minor=true;
+    state.aimem=next;sset("aimem",next);
+    if(next.minor&&state.aiopt.adult){state.aiopt.adult=false;sset("aiopt",state.aiopt);}
+  }).catch(function(){}).then(function(){learning=false;});
+}
+function aiPanel(){
+  if(state.mode!=="adult")return null;
+  var box=h("div",{class:"note",style:"margin-top:12px"}),canAI=!!(sample||state.apiKey);
+  box.append(h("div",{style:"font-weight:700;margin-bottom:8px"},"🎭 Найз шиг ярианы горим"));
+  function tog(label,on,disabled,fn){
+    return h("button",{class:"chip",type:"button",disabled:!!disabled,"aria-pressed":String(!!on),style:"display:block;width:100%;text-align:left;margin:6px 0;"+(on?"border-color:var(--sky);":""),onclick:fn},(on?"✅ ":"⬜ ")+label);
+  }
+  box.append(tog("Найз шиг: хошин, ёгт, сурсан зүйлээ санадаг",state.aiopt.vibe,false,function(){state.aiopt.vibe=!state.aiopt.vibe;sset("aiopt",state.aiopt);render();}));
+  box.append(tog("Интернэтээс суралцах (шинэ мем, дуу, мэдээ) · өөрийн API түлхүүр хэрэгтэй",state.aiopt.web,!state.apiKey,function(){state.aiopt.web=!state.aiopt.web;sset("aiopt",state.aiopt);render();}));
+  if(state.aiopt.adult){
+    box.append(tog("🔞 18+ хошин, тоглоомоор сэтгэл татах яриа (идэвхтэй)",true,false,function(){state.aiopt.adult=false;sset("aiopt",state.aiopt);render();}));
+  }else{
+    box.append(h("button",{class:"chip",type:"button",style:"display:block;width:100%;text-align:left;margin:6px 0",onclick:function(){
+      if(state.aimem.minor){toast("AI таныг 18-аас доош гэж ойлгосон тул 18+ горим хаалттай");return;}
+      var y=parseInt(prompt("Төрсөн оноо (жишээ нь 2001). Энэ нь баталгаажуулалт биш, зөвхөн таны мэдүүлэг."),10),cy=new Date().getFullYear();
+      if(!y||y<1900||y>cy){toast("Он буруу байна");return;}
+      if(cy-y>=18){state.aiopt.adult=true;sset("aiopt",state.aiopt);toast("18+ хошин идэвхжлээ");}
+      else{state.aimem.minor=true;sset("aimem",state.aimem);state.aiopt.adult=false;sset("aiopt",state.aiopt);toast("Цэвэр, найрсаг хошинтой байна");}
+      render();
+    }},"🔞 18+ хошин асаах (18-аас дээш насны мэдүүлэг)"));
+  }
+  box.append(h("p",{class:"muted small",style:"margin:4px 0 0"},"18+ горимд ил тод бэлгийн агуулга байхгүй. Хэрэв та 18-аас доош гэдгээ хэлбэл бот шууд цэвэр хошин руу шилжинэ."));
+  var mem=memText();
+  box.append(h("div",{style:"font-weight:700;margin:12px 0 4px"},"🧠 AI таны тухай санаж буй зүйл"),
+    h("p",{class:"muted small",style:"margin:0 0 6px"},mem||"Одоохондоо юу ч алга. Ярих тусам суралцана (3 мессеж тутамд шинэчлэгдэнэ)."));
+  if(mem)box.append(h("button",{class:"btn ghost",type:"button",style:"padding:6px 12px;font-size:14px",onclick:function(){if(!confirm("AI-ийн санаж буй бүх зүйлийг устгах уу?"))return;var mn=state.aimem.minor;state.aimem=cleanMem({minor:mn});sset("aimem",state.aimem);render();}},"Устгах"));
+  if(!canAI)box.append(h("p",{class:"muted small",style:"margin:8px 0 0"},"⚠ Хошин, суралцдаг горим AI түлхүүртэй үед ажиллана. Одоо бэлэн асуултын горим байна."));
+  return box;
+}
+
+function callDirect(turns,opts,noTools){
+  var web=!noTools&&state.mode==="adult"&&state.aiopt.web,reqBody={model:MODEL,max_tokens:web?900:500,stream:true,messages:turns};
+  if(web)reqBody.tools=[{type:"web_search_20250305",name:"web_search",max_uses:2}];
   return fetch("https://api.anthropic.com/v1/messages",{
     method:"POST",signal:opts.signal,
     headers:{"content-type":"application/json","x-api-key":state.apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-    body:JSON.stringify({model:MODEL,max_tokens:500,stream:true,messages:turns})
+    body:JSON.stringify(reqBody)
   }).then(function(res){
-    if(!res.ok){throw {code:res.status===401||res.status===403?"bad_key":res.status===429?"rate_limited":"api_error"};}
+    if(!res.ok){
+      if(web&&res.status!==401&&res.status!==429){state.aiopt.web=false;sset("aiopt",state.aiopt);toast("Веб хайлт таны түлхүүрт боломжгүй тул унтарлаа");return callDirect(turns,opts,true);}
+      throw {code:res.status===401||res.status===403?"bad_key":res.status===429?"rate_limited":"api_error"};
+    }
     var reader=res.body.getReader(),dec=new TextDecoder(),buf="",text="";
     function pump(){
       return reader.read().then(function(r){
@@ -4098,7 +4200,7 @@ function errCopy(code){
   return m[code]||"Алдаа гарлаа. Дахин оролдоно уу.";
 }
 function chatTurns(){
-  var c=ui.chat,t=[{role:"user",content:c.rules+"\n\nBegin now with your short opening line for the scenario. Do not write ###."}];
+  var c=ui.chat,t=[{role:"user",content:c.rules+vibeRules()+"\n\nBegin now with your short opening line for the scenario. Do not write ###."}];
   c.msgs.forEach(function(m){if(m.streaming)return;t.push({role:m.role==="ai"?"assistant":"user",content:m.text});});
   return t;
 }
@@ -4131,7 +4233,7 @@ function runAI(){
     if(state.apiKey)return callDirect(turns,o);
     return offlineReply(turns);
   }).then(function(res){
-    apply(res.text);if(res.mn&&!ai.mn)ai.mn=res.mn;ai.streaming=false;c.busy=false;paint();
+    apply(res.text);if(res.mn&&!ai.mn)ai.mn=res.mn;ai.streaming=false;c.busy=false;paint();learnFrom(c.msgs);
   }).catch(function(e){
     var code=e&&e.code;
     if(e&&e.text)apply(e.text);
@@ -4186,6 +4288,7 @@ function viewChat(){
     root.append(h("h2",null,"Ярианы дасгал"));
     root.append(h("p",{class:"muted"},"Нөхцөлөө сонгоод AI-тай англиар ярилц. Алдаа гаргавал Монголоор засаж өгнө."));
     if(sampleReady&&!sample)root.append(keyBox());
+    var apn=aiPanel();if(apn)root.append(apn);
     var el=effLevel(),lv=el==="all"?"Дунд":LV_NAME[el];
     root.append(h("p",{class:"muted small",style:"margin-top:10px"},"Түвшин: "+lv+(el==="all"?" (дээрээс түвшнээ сонгож болно)":"")));
     SCEN.filter(sceneOk).forEach(function(s){
@@ -4333,6 +4436,7 @@ function viewStats(){
       state.miss=[];state.langxp={};state.freeze=0;state.frozen={};state.frzMark=0;sset("miss",[]);sset("langxp",{});sset("freeze",0);sset("frozen",{});sset("frzMark",0);
       state.box={};state.xp=0;state.daily={};state.lessons={};state.chatCount=0;state.due={};state.tasks={};sset("due",{});sset("tasks",{});state.stars=0;state.listenOk=0;sset("stars",0);sset("listenOk",0);
       ["box","xp","daily","lessons","chat"].forEach(function(k){sset(k,k==="xp"||k==="chat"?0:{});});
+      state.aimem=cleanMem({});sset("aimem",state.aimem);
       ui.resetArmed=false;ui.vocab.cur=null;renderStrip();render();
     }},ui.resetArmed?"Бүх явцаа устгах уу? Дахин дарж баталгаажуул":"Явцыг шинэчлэх")));
   return root;
