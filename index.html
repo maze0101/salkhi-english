@@ -342,6 +342,7 @@ p+p{margin-top:10px}
 <script src="lessons-more.js"></script>
 <script src="dialogs-more.js"></script>
 <script src="dialogs-senior.js"></script>
+<script src="synonyms.js"></script>
 <script src="hanzi.js"></script>
 <script src="firebase-config.js"></script>
 <script src="social.js"></script>
@@ -2571,7 +2572,7 @@ var ui={
   vocab:{mode:"card",cur:null,flipped:false,quiz:null,pop:false},
   grammar:{q:"",f:"all",lesson:null,stage:"read",qs:[],qi:0,score:0,picked:null,built:[],custom:null,log:[]},
   chat:{started:false,scn:null,rules:"",msgs:[],busy:false,ctl:null,error:"",draft:""},
-  listen:{cur:null,opts:[],picked:null,mode:"word",dlg:{cur:null,opts:[],picked:null,key:null},story:{cur:null,key:"",stage:"read",qi:0,score:0,picked:null,opts:null,tr:{},all:false,saved:false}},
+  listen:{cur:null,opts:[],picked:null,mode:"word",syn:{cur:null,opts:[],picked:null},dlg:{cur:null,opts:[],picked:null,key:null},story:{cur:null,key:"",stage:"read",qi:0,score:0,picked:null,opts:null,tr:{},all:false,saved:false}},
   alpha:{cur:null,sec:"abc"},
   resetArmed:false
 };
@@ -3811,6 +3812,52 @@ function viewDialog(){
   }
   return root;
 }
+
+/* ---------- listening: same meaning (synonyms) ---------- */
+function synList(){return (window.SYN||{})[state.lang]||[];}
+function synLabel(g,k){var r=g[3+k];return {w:g[k],r:r||""};}
+function newSyn(){
+  var s=ui.listen.syn,list=synList();
+  if(list.length<3){s.cur=null;return;}
+  var i=Math.floor(Math.random()*list.length),g=list[i],heard=Math.random()<.5?0:1,ans=1-heard;
+  var opts=[{w:g[ans],r:g[3+ans]||"",ok:true}],used={};used[i]=1;
+  while(opts.length<3){
+    var j=Math.floor(Math.random()*list.length);
+    if(used[j])continue;used[j]=1;
+    var k=Math.random()<.5?0:1,o=list[j];
+    opts.push({w:o[k],r:o[3+k]||"",ok:false});
+  }
+  s.cur={g:g,heard:heard,ans:ans};s.opts=shuffle(opts);s.picked=null;
+  setTimeout(function(){speak(cleanSpeak(g[heard]));},300);
+}
+function viewSyn(){
+  var s=ui.listen.syn,root=h("div"),list=synList();
+  if(list.length<3){root.append(h("div",{class:"note"},"Энэ хэлэнд ижил утгатай үгс удахгүй нэмэгдэнэ."));return root;}
+  if(!s.cur)newSyn();
+  var g=s.cur.g,heardW=g[s.cur.heard],ansW=g[s.cur.ans];
+  root.append(h("p",{class:"muted"},"Үгийг сонсоод, түүнтэй ижил утгатай үгийг сонго."));
+  root.append(h("button",{class:"btn primary",style:"width:100%;margin:8px 0 4px;font-size:20px",onclick:function(){speak(cleanSpeak(heardW));}},"🔊 Сонсох"));
+  if(s.picked==null)root.append(h("p",{class:"muted",style:"text-align:center;margin:6px 0 10px;font-size:22px"},"🎧 ？"));
+  s.opts.forEach(function(o){
+    var cls="opt";
+    if(s.picked!=null){if(o.ok)cls+=" ok";else if(o===s.picked)cls+=" bad";}
+    root.append(h("button",{class:cls,disabled:s.picked!=null,onclick:function(){
+      s.picked=o;
+      if(o.ok){state.listenOk++;sset("listenOk",state.listenOk);taskInc("s");addXP(5);addStar();celebrate();}else addXP(1);
+      render();
+    }},o.w,o.r?h("small",{style:"display:block;font-weight:400;opacity:.8"},o.r):null));
+  });
+  if(s.picked!=null){
+    var ok=!!s.picked.ok,hl=synLabel(g,s.cur.heard),al=synLabel(g,s.cur.ans);
+    root.append(h("div",{class:"fb "+(ok?"ok":"bad")},ok?"Зөв! +5 XP":wrongPre()+ansW));
+    root.append(h("p",{style:"margin-top:8px;font-size:18px"},"Сонссон үг: ",h("b",null,hl.w+(hl.r?" ("+hl.r+")":"")),"  ≈  ",h("b",null,al.w+(al.r?" ("+al.r+")":""))));
+    root.append(h("p",{class:"muted",style:"margin-top:4px"},"🇲🇳 "+g[2]));
+    root.append(h("div",{class:"row"},
+      h("button",{class:"btn",onclick:function(){speakSeq([cleanSpeak(heardW),cleanSpeak(ansW)]);}},"🔊 Хоёуланг сонсох"),
+      h("button",{class:"btn primary",onclick:function(){newSyn();render();}},"Дараагийнх")));
+  }
+  return root;
+}
 function viewStory(){
   var s=ui.listen.story,root=h("div"),list=(window.STORIES||{})[state.lang]||[];
   if(!list.length){root.append(h("div",{class:"note"},"Энэ хэлний уншлага удахгүй нэмэгдэнэ."));return root;}
@@ -3874,8 +3921,9 @@ function viewListen(){
   root.append(h("div",{class:"seg"},
     h("button",{"aria-pressed":String(l.mode==="word"),onclick:function(){l.mode="word";render();}},"Үг"),
     h("button",{"aria-pressed":String(l.mode==="dlg"),onclick:function(){l.mode="dlg";render();}},"Яриа"),
+    h("button",{"aria-pressed":String(l.mode==="syn"),onclick:function(){l.mode="syn";render();}},"≈ Ижил утга"),
     h("button",{"aria-pressed":String(l.mode==="story"),onclick:function(){l.mode="story";render();}},"📖 Түүх")));
-  root.append(l.mode==="dlg"?viewDialog():l.mode==="story"?viewStory():viewListenWords());
+  root.append(l.mode==="dlg"?viewDialog():l.mode==="story"?viewStory():l.mode==="syn"?viewSyn():viewListenWords());
   return root;
 }
 
