@@ -4,6 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Салхи · Англи хэлний апп</title>
+<script>
+/* Алдаа гарвал дэлгэц дээр харуулна (цагаан дэлгэцээс сэргийлнэ) */
+window.addEventListener("error",function(e){
+  try{
+    var box=document.getElementById("_errbox");
+    if(!box){box=document.createElement("div");box.id="_errbox";box.style.cssText="position:fixed;left:0;right:0;top:0;z-index:99999;background:#b00020;color:#fff;font:13px/1.4 sans-serif;padding:10px 12px;white-space:pre-wrap;word-break:break-all";
+      (document.body||document.documentElement).appendChild(box);}
+    var f=(e.filename||"").split("/").pop();
+    box.textContent+=(e.message||"Алдаа")+(f?" ["+f+":"+(e.lineno||0)+"]":"")+"\n";
+  }catch(x){}
+});
+</script>
+
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="referrer" content="no-referrer">
