@@ -1,5 +1,5 @@
 /* Салхи: offline shell. Network first (bypassing the HTTP cache) so updates arrive at once; cache is the offline fallback. */
-var V = "salkhi-v3";
+var V = "salkhi-v4";
 var SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", function (e) {
@@ -35,9 +35,12 @@ self.addEventListener("fetch", function (e) {
 
 self.addEventListener("notificationclick", function (e) {
   e.notification.close();
+  var url = (e.notification.data && e.notification.data.url) || "./";
   e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
-    for (var i = 0; i < list.length; i++) { if ("focus" in list[i]) return list[i].focus(); }
-    return self.clients.openWindow("./");
+    for (var i = 0; i < list.length; i++) {
+      if ("focus" in list[i]) { list[i].postMessage({ type: "daily" }); return list[i].focus(); }
+    }
+    return self.clients.openWindow(url);
   }));
 });
 
@@ -53,7 +56,7 @@ self.addEventListener("periodicsync", function (e) {
       if (now < due || n.sw === key) return;
       n.sw = key;
       return c.put("notif", new Response(JSON.stringify(n))).then(function () {
-        return self.registration.showNotification("Салхи", { body: "Өнөөдрийн дасгалаа хийх цаг боллоо 🌬️", icon: "icon.svg", tag: "salkhi-daily" });
+        return self.registration.showNotification("Салхи", { body: "Өнөөдрийн дасгалаа хийх цаг боллоо 🌬️", icon: "icon.svg", tag: "salkhi-daily", data: { url: "./#daily" } });
       });
     });
   }));
