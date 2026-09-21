@@ -282,6 +282,7 @@ p+p{margin-top:10px}
 <nav class="tabs" aria-label="Үндсэн цэс"><div class="in" id="tabs"></div></nav>
 
 <script src="lessons-more.js"></script>
+<script src="dialogs-more.js"></script>
 <script src="words-en.js"></script>
 <script src="words-zh.js"></script>
 <script src="words-ru.js"></script>
@@ -3733,6 +3734,15 @@ function mnDlg(key,idx){
   if(!a)return null;
   return a.map(function(s){return s.replace("{P}",MN_PRICE[state.lang]||"");});
 }
+(function(){
+  var D=window.DLG_MORE;if(!D)return;
+  D.scenes.forEach(function(s){if(!SCEN.some(function(x){return x[0]===s[0];}))SCEN.push(s);});
+  Object.keys(D.lines).forEach(function(l){
+    var pk=LANGPACK[l];if(!pk)return;
+    Object.keys(D.lines[l]).forEach(function(k){pk.scripts[k]=D.lines[l][k];});
+  });
+  Object.keys(D.mn).forEach(function(k){MN_EN[k]=D.mn[k];MN_OTHER[k]=D.mn[k];});
+})();
 var LANGPACK={
   en:{scripts:SCRIPTS,react:REACT,tryMsg:"Let's try in English! ",tryFix:"Англиар бичиж үзээрэй.",end:"Well done! That was a good practice. Choose another situation to keep going.",fin:"We finished this chat. Press the new chat button to try another situation."},
   ja:{scripts:SCRIPTS_JA,react:["いいですね！","なるほど！","すごい！"],tryMsg:"にほんごで はなしましょう！ ",tryFix:"Японоор бичиж үзээрэй.",end:"よくできました！ ほかの シーンも やってみましょう。",fin:"この かいわは おわりました。あたらしい かいわを はじめましょう。"},
