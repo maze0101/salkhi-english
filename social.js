@@ -41,7 +41,7 @@
       prof=snap.val();
       if(!prof){screen="name";paint();return;}
       enter();
-    }).catch(function(e){info="Холбогдож чадсангүй: "+(e&&e.message?e.message:e);screen="error";paint();});
+    }).catch(function(e){var m=String(e&&e.message?e.message:e);info=/configuration-not-found|admin-restricted|operation-not-allowed/.test(m)?"Firebase дээр Authentication → Anonymous асаагаагүй байна. ("+m+")":"Холбогдож чадсангүй: "+m;screen="error";paint();});
   }
   function enter(){
     screen="home";syncProfile();loadFriends();paint();

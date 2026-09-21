@@ -1,10 +1,8 @@
-/* Firebase тохиргоо. Хоосон (null) байвал "Найз" хэсэг тохиргоо хийх заавар харуулна.
-   Жишээ:
-   window.SALKHI_FB = {
-     apiKey: "AIza...",
-     authDomain: "salkhi-xxxxx.firebaseapp.com",
-     databaseURL: "https://salkhi-xxxxx-default-rtdb.firebaseio.com",
-     projectId: "salkhi-xxxxx"
-   };
-*/
-window.SALKHI_FB = null;
+/* Firebase тохиргоо (олон нийтийн, нууц биш). Төсөл: salkhi-english-6922
+   Хоосон (null) болговол "Найз" хэсэг тохиргооны заавар харуулна. */
+window.SALKHI_FB = {
+  apiKey: "AIzaSyDWn7v1QLzQXBpKeW54Ry_mmhxg230b-Fk",
+  authDomain: "salkhi-english-6922.firebaseapp.com",
+  databaseURL: "https://salkhi-english-6922-default-rtdb.firebaseio.com",
+  projectId: "salkhi-english-6922"
+};
