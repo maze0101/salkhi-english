@@ -1,7 +1,7 @@
 /* Салхи: үнэгүй AI яриа. Cloudflare Workers AI (түлхүүр шаардахгүй) дээр ажиллана.
    Апп → энэ Worker → Workers AI. Хамгаалалт: зөвхөн манай сайтаас, IP тус бүрд хурдны хязгаар, урт хязгаартай. */
 const ALLOWED_ORIGINS=["https://maze0101.github.io"];
-const MODEL="@cf/meta/llama-3.1-8b-instruct";
+const DEFAULT_MODEL="@cf/mistralai/mistral-small-3.1-24b-instruct";
 const MAX_MESSAGES=12;
 const MAX_CHARS_PER_MESSAGE=8000;
 const MAX_TOTAL_CHARS=24000;
@@ -31,7 +31,9 @@ export function convertStream(source){
     const payload=line.slice(5).trim();
     if(!payload||payload==="[DONE]")return;
     let ev;try{ev=JSON.parse(payload);}catch(e){return;}
-    const t=ev&&typeof ev.response==="string"?ev.response:"";
+    let t="";
+    if(ev&&typeof ev.response==="string")t=ev.response;
+    else if(ev&&ev.choices&&ev.choices[0]&&ev.choices[0].delta&&typeof ev.choices[0].delta.content==="string")t=ev.choices[0].delta.content;
     if(t)controller.enqueue(enc.encode("data: "+JSON.stringify({type:"content_block_delta",delta:{text:t}})+"\n"));
   }
   return source.pipeThrough(new TransformStream({
@@ -83,8 +85,9 @@ export default {
 
     let stream;
     try{
-      stream=await env.AI.run(MODEL,{messages:[{role:"system",content:SAFETY}].concat(msgs),stream:true,max_tokens:MAX_TOKENS,temperature:0.8});
+      stream=await env.AI.run(env.MODEL||DEFAULT_MODEL,{messages:[{role:"system",content:SAFETY}].concat(msgs),stream:true,max_tokens:MAX_TOKENS,temperature:0.8});
     }catch(e){
+      console.error("AI.run failed:",e&&e.message?e.message:String(e));
       return json({error:"ai_unavailable"},503,cors);
     }
     return new Response(convertStream(stream),{status:200,headers:Object.assign({"content-type":"text/event-stream","cache-control":"no-store"},cors)});

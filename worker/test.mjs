@@ -37,11 +37,14 @@ const out=await readAll(r);
 ck("happy path 200 event-stream with CORS",r.status===200&&/text\/event-stream/.test(r.headers.get("content-type"))&&r.headers.get("access-control-allow-origin")===ORIGIN);
 const lines=out.split("\n").filter(l=>l.startsWith("data:")).map(l=>JSON.parse(l.slice(5)));
 ck("converted to content_block_delta (handles chunks split mid-line, skips empty/[DONE])",lines.length===2&&lines.every(l=>l.type==="content_block_delta")&&lines.map(l=>l.delta.text).join("")==="Hello!",out);
-ck("model is Llama 3.1 8B, streaming, capped tokens",lastRun.model==="@cf/meta/llama-3.1-8b-instruct"&&lastRun.input.stream===true&&lastRun.input.max_tokens===450);
+ck("model defaults to Mistral Small 3.1 24B, streaming, capped tokens",lastRun.model==="@cf/mistralai/mistral-small-3.1-24b-instruct"&&lastRun.input.stream===true&&lastRun.input.max_tokens===450);
 ck("hard safety system prompt always prepended",lastRun.input.messages[0].role==="system"&&/Never write sexual or explicit content/.test(lastRun.input.messages[0].content)&&lastRun.input.messages.length===4);
 // AI failure (quota exhausted etc.)
 r=await worker.fetch(req("POST","/chat",{headers:{Origin:ORIGIN},body:goodBody}),okEnv({AI:{run:async()=>{throw new Error("quota");}}}));
 ck("AI failure -> 503 (app falls back to scripted)",r.status===503);
+// OpenAI-style chunks (newer Workers AI models) are understood too
+const conv2=await new Response(convertStream(mkStream(['data: {"choices":[{"delta":{"content":"Hi"}}]}\n','data: {"choices":[{"delta":{"content":" there"}}]}\n']))).text();
+ck("handles OpenAI-style delta.content chunks",/"text":"Hi"/.test(conv2)&&/"text":" there"/.test(conv2),conv2);
 // stream converter direct
 const conv=await new Response(convertStream(mkStream(['data: {"response":"A"}\ndata: {"response":"B"}','\n']))).text();
 ck("stream flush handles trailing line without newline",/"text":"A"/.test(conv)&&/"text":"B"/.test(conv));
