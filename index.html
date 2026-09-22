@@ -4576,7 +4576,14 @@ function toggleTransRec(btn){
   transRec.onerror=function(e){
     if(e.error==="no-speech"||e.error==="aborted")return;
     stopTransRec();
-    toast(e.error==="not-allowed"?"Микрофоны зөвшөөрөл хэрэгтэй.":"Дуу таних алдаа гарлаа.");
+    var msg={
+      "not-allowed":"Микрофоны зөвшөөрөл хэрэгтэй. Хөтөчийнхөө тохиргооноос микрофоныг зөвшөөрнө үү.",
+      "service-not-allowed":"Микрофоны зөвшөөрөл хэрэгтэй. Хөтөчийнхөө тохиргооноос микрофоныг зөвшөөрнө үү.",
+      "language-not-supported":"Энэ төхөөрөмж монгол хэлээр дуу таних боломжгүй байна. Доор бичиж орчуулж болно.",
+      "audio-capture":"Микрофон олдсонгүй. Төхөөрөмжийн микрофоноо шалгана уу.",
+      "network":"Сүлжээний алдаа гарлаа. Интернэт холболтоо шалгана уу."
+    }[e.error]||"Дуу таних үед алдаа гарлаа ("+e.error+"). Доор бичиж орчуулж болно.";
+    toast(msg);
   };
   transRec.onend=function(){
     if(transListening&&!transPaused){try{transRec.start();}catch(e){stopTransRec();}}
