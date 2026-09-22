@@ -4464,10 +4464,6 @@ function viewChat(){
   if(!c.started){
     root.append(h("h2",null,"Ярианы дасгал"));
     root.append(h("p",{class:"muted"},"Нөхцөлөө сонгоод AI-тай англиар ярилц. Алдаа гаргавал Монголоор засаж өгнө."));
-    if(sampleReady&&!sample){
-      if(freeAvail()&&state.mode!=="kid")root.append(h("p",{class:"note",style:"margin-top:0"},"✨ Үнэгүй AI яриа идэвхтэй. Ярианууд Cloudflare-ийн серверээр дамжина. Илүү сайн чанар хүсвэл өөрийн Anthropic түлхүүрээ доор оруулж болно (заавал биш)."));
-      root.append(keyBox());
-    }
     root.append(h("button",{class:"scn",onclick:function(){c.section="translate";render();}},"🎙️ Монгол → "+LANGN[state.lang]+" орчуулагч"));
     var el=effLevel(),lv=el==="all"?"Дунд":LV_NAME[el];
     root.append(h("p",{class:"muted small",style:"margin-top:10px"},"Түвшин: "+lv+(el==="all"?" (дээрээс түвшнээ сонгож болно)":"")));
