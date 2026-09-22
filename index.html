@@ -4275,6 +4275,8 @@ var freeCool=0;
 function freeAvail(){var c=window.SALKHI_AI;return !!(c&&c.url);}
 /* free AI is never used for kids, and never for the 18+ opt-in (only a stronger, safer model may do that) */
 function freeAI(){return freeAvail()&&state.mode!=="kid"&&!adultOK()&&Date.now()>freeCool&&navigator.onLine!==false;}
+/* Орчуулга нь хошин/18+ агуулгатай холбоогүй, үргэлж аюулгүй тул хүүхэд/18+ горимын хязгаарлалтгүйгээр үнэгүй AI ашиглаж болно */
+function freeOK(){return freeAvail()&&Date.now()>freeCool&&navigator.onLine!==false;}
 function freeFail(){freeCool=Date.now()+90000;}
 function callFree(turns,opts){
   return fetch(window.SALKHI_AI.url,{method:"POST",signal:opts.signal,headers:{"content-type":"application/json"},body:JSON.stringify({messages:turns})}).then(function(res){
@@ -4536,7 +4538,7 @@ function translateMN(text){
       var ctl=new AbortController();
       return callDirect([{role:"user",content:prompt}],{signal:ctl.signal,onText:function(){}},true);
     }
-    if(freeAI()){
+    if(freeOK()){
       var ctl2=new AbortController();
       return callFree([{role:"user",content:prompt}],{signal:ctl2.signal,onText:function(){}}).catch(function(e){
         if(e&&e.code==="cancelled")throw e;
@@ -4616,7 +4618,7 @@ function viewTranslate(){
     h("h2",{style:"margin:0"},"Орчуулагч"),
     h("button",{class:"btn ghost",style:"padding:6px 12px;font-size:14px",onclick:function(){stopTransRec();ui.chat.section="practice";render();}},"Буцах")));
   root.append(h("p",{class:"muted"},"Микрофон дараад монголоор ярь, эсвэл доор бичиж орчуул. Англи орчуулга дуугарна."));
-  if(sampleReady&&!sample&&!state.apiKey&&!freeAI())root.append(keyBox());
+  if(sampleReady&&!sample&&!state.apiKey&&!freeOK())root.append(keyBox());
   root.append(h("div",{class:"msgs",id:"trmsgs","aria-live":"polite"}));
   root.append(h("div",{class:"small muted",id:"trlive",style:"font-style:italic;min-height:20px"}));
   var inp=h("input",{class:"tin",id:"trin",type:"text",style:"flex:1;margin-top:0",placeholder:"Монголоор бичээд орчуул",autocomplete:"off","aria-label":"Орчуулах текст"});
