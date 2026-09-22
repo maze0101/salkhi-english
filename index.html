@@ -2576,7 +2576,8 @@ function seniorCats(){
 var ui={
   vocab:{mode:"card",cur:null,flipped:false,quiz:null,pop:false},
   grammar:{q:"",f:"all",lesson:null,stage:"read",qs:[],qi:0,score:0,picked:null,built:[],custom:null,log:[]},
-  chat:{started:false,scn:null,rules:"",msgs:[],busy:false,ctl:null,error:"",draft:""},
+  chat:{section:"practice",started:false,scn:null,rules:"",msgs:[],busy:false,ctl:null,error:"",draft:""},
+  translate:{live:"",pairs:[]},
   listen:{cur:null,opts:[],picked:null,mode:"word",syn:{cur:null,opts:[],picked:null},dlg:{cur:null,opts:[],picked:null,key:null},story:{cur:null,key:"",stage:"read",qi:0,score:0,picked:null,opts:null,tr:{},all:false,saved:false}},
   alpha:{cur:null,sec:"abc"},
   resetArmed:false
@@ -2648,35 +2649,46 @@ function splitSpeech(list){
   });
   return parts;
 }
-function synthParts(parts){
+function synthParts(parts,fullLang,onDone){
   try{
-    if(!("speechSynthesis" in window))return;
-    var lang=LANG_TTS[state.lang]||"en-US",v=voiceFor(lang);
-    parts.forEach(function(p){
-      var u=new SpeechSynthesisUtterance(p);u.lang=lang;if(v)u.voice=v;u.rate=state.rate*(state.lang==="en"?.95:.9);u.pitch=1;
+    if(!("speechSynthesis" in window)){if(onDone)onDone();return;}
+    var v=voiceFor(fullLang);
+    parts.forEach(function(p,i){
+      var u=new SpeechSynthesisUtterance(p);u.lang=fullLang;if(v)u.voice=v;u.rate=state.rate*(fullLang.slice(0,2)==="en"?.95:.9);u.pitch=1;
+      if(onDone&&i===parts.length-1){u.onend=onDone;u.onerror=onDone;}
       speechSynthesis.speak(u);
     });
-  }catch(e){}
+  }catch(e){if(onDone)onDone();}
 }
-function playParts(parts,id,i,lang){
-  if(id!==audioQ.id||i>=parts.length)return;
-  var failed=false,a=new Audio("https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl="+lang+"&q="+encodeURIComponent(parts[i]));
+function playParts(parts,id,i,gttsLang,fullLang,onDone){
+  if(id!==audioQ.id||i>=parts.length){if(onDone)onDone();return;}
+  var failed=false,a=new Audio("https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl="+gttsLang+"&q="+encodeURIComponent(parts[i]));
   audioQ.cur=a;a.playbackRate=state.rate;
-  function fail(){if(failed||id!==audioQ.id)return;failed=true;audioQ.cur=null;synthParts(parts.slice(i));}
-  a.onended=function(){if(id===audioQ.id)playParts(parts,id,i+1,lang);};
+  function fail(){if(failed||id!==audioQ.id)return;failed=true;audioQ.cur=null;synthParts(parts.slice(i),fullLang,onDone);}
+  a.onended=function(){if(id===audioQ.id)playParts(parts,id,i+1,gttsLang,fullLang,onDone);};
   a.onerror=fail;
   var pr;try{pr=a.play();}catch(e){fail();return;}
   if(pr&&pr.catch)pr.catch(fail);
 }
-function speakList(list){
+function speakList(list,onDone){
   try{
     stopVoice();
-    var parts=splitSpeech(list);if(!parts.length)return;
-    if(navigator.onLine!==false&&typeof Audio==="function"){playParts(parts,audioQ.id,0,GTTS[state.lang]||"en");}
-    else synthParts(parts);
-  }catch(e){}
+    var parts=splitSpeech(list);if(!parts.length){if(onDone)onDone();return;}
+    var fullLang=LANG_TTS[state.lang]||"en-US",gttsLang=GTTS[state.lang]||"en";
+    if(navigator.onLine!==false&&typeof Audio==="function"){playParts(parts,audioQ.id,0,gttsLang,fullLang,onDone);}
+    else synthParts(parts,fullLang,onDone);
+  }catch(e){if(onDone)onDone();}
 }
-function speak(t){speakList([t]);}
+function speak(t,onDone){speakList([t],onDone);}
+/* Орчуулагч: гаралт үргэлж англи хэл тул сурч буй хэлнээс үл хамааран англи хоолойгоор дуудна */
+function speakEnglish(t,onDone){
+  try{
+    stopVoice();
+    var parts=splitSpeech([t]);if(!parts.length){if(onDone)onDone();return;}
+    if(navigator.onLine!==false&&typeof Audio==="function")playParts(parts,audioQ.id,0,"en","en-US",onDone);
+    else synthParts(parts,"en-US",onDone);
+  }catch(e){if(onDone)onDone();}
+}
 /* AI replies: drop markdown, emoji, romanization and Mongolian hints so the voice reads only the target language */
 function cleanAI(t){
   t=String(t).split("###")[0];
@@ -2848,6 +2860,7 @@ function renderTabs(){
   var el=document.getElementById("tabs");el.textContent="";
   tabList().forEach(function(t){
     el.append(h("button",{class:"tab","aria-current":state.tab===t[0]?"page":null,onclick:function(){
+      if(state.tab==="chat"&&t[0]!=="chat")stopTransRec();
       state.tab=t[0];renderTabs();render();window.scrollTo(0,0);
     }},t[1]));
   });
@@ -4257,51 +4270,6 @@ function learnFrom(msgs){
     if(next.minor&&state.aiopt.adult){state.aiopt.adult=false;sset("aiopt",state.aiopt);}
   }).catch(function(e){if(e&&e.code==="bad_key")toast("OpenAI түлхүүр буруу байна. Суралцагч агент ажиллахгүй.");}).then(function(){learning=false;});
 }
-function aiPanel(){
-  if(state.mode!=="adult")return null;
-  var box=h("div",{class:"note",style:"margin-top:12px"}),canAI=!!(sample||state.apiKey||freeAI());
-  box.append(h("div",{style:"font-weight:700;margin-bottom:8px"},"🎭 Найз шиг ярианы горим"));
-  function tog(label,on,disabled,fn){
-    return h("button",{class:"chip",type:"button",disabled:!!disabled,"aria-pressed":String(!!on),style:"display:block;width:100%;text-align:left;margin:6px 0;"+(on?"border-color:var(--sky);":""),onclick:fn},(on?"✅ ":"⬜ ")+label);
-  }
-  box.append(tog("Найз шиг: хошин, ёгт, сурсан зүйлээ санадаг",state.aiopt.vibe,false,function(){state.aiopt.vibe=!state.aiopt.vibe;sset("aiopt",state.aiopt);render();}));
-  box.append(tog("Интернэтээс суралцах (шинэ мем, дуу, мэдээ) · өөрийн API түлхүүр хэрэгтэй",state.aiopt.web,!state.apiKey,function(){state.aiopt.web=!state.aiopt.web;sset("aiopt",state.aiopt);render();}));
-  if(state.aiopt.adult){
-    box.append(tog("🔞 18+ хошин, тоглоомоор сэтгэл татах яриа (идэвхтэй)",true,false,function(){state.aiopt.adult=false;sset("aiopt",state.aiopt);render();}));
-  }else{
-    box.append(h("button",{class:"chip",type:"button",style:"display:block;width:100%;text-align:left;margin:6px 0",onclick:function(){
-      if(state.aimem.minor){toast("AI таныг 18-аас доош гэж ойлгосон тул 18+ горим хаалттай");return;}
-      var y=parseInt(prompt("Төрсөн оноо (жишээ нь 2001). Энэ нь баталгаажуулалт биш, зөвхөн таны мэдүүлэг."),10),cy=new Date().getFullYear();
-      if(!y||y<1900||y>cy){toast("Он буруу байна");return;}
-      if(cy-y>=18){state.aiopt.adult=true;sset("aiopt",state.aiopt);toast("18+ хошин идэвхжлээ");}
-      else{state.aimem.minor=true;sset("aimem",state.aimem);state.aiopt.adult=false;sset("aiopt",state.aiopt);toast("Цэвэр, найрсаг хошинтой байна");}
-      render();
-    }},"🔞 18+ хошин асаах (18-аас дээш насны мэдүүлэг)"));
-  }
-  box.append(h("p",{class:"muted small",style:"margin:4px 0 0"},"18+ горимд ил тод бэлгийн агуулга байхгүй. Хэрэв та 18-аас доош гэдгээ хэлбэл бот шууд цэвэр хошин руу шилжинэ."));
-  box.append(h("div",{style:"font-weight:700;margin:12px 0 4px"},"🧪 Суралцагч агент (OpenAI)"));
-  if(state.openaiKey){
-    box.append(h("p",{class:"muted small",style:"margin:0 0 6px"},"✅ OpenAI түлхүүр хадгалагдсан (gpt-4o-mini). Энэ нь таны тухай санамжийг шинэчилдэг."),
-      h("button",{class:"btn ghost",type:"button",style:"padding:6px 12px;font-size:14px",onclick:function(){state.openaiKey="";sset("openaikey","");render();}},"Түлхүүр устгах"));
-  }else{
-    var oin=h("input",{class:"tin",type:"password",placeholder:"sk-proj-...",autocomplete:"off","aria-label":"OpenAI API түлхүүр",style:"font-size:16px"});
-    box.append(h("p",{class:"muted small",style:"margin:0 0 6px"},"Өөрийн OpenAI түлхүүрээ оруулбал таны тухай санамжийг тэр шинэчилнэ. Түлхүүр зөвхөн энэ төхөөрөмж дээр хадгалагдана, хэзээ ч хуулагдахгүй."),oin,
-      h("button",{class:"btn primary",type:"button",style:"margin-top:8px;padding:8px 14px",onclick:function(){
-        var v=oin.value.trim();
-        if(!/^sk-[A-Za-z0-9_\-]{20,}$/.test(v)){toast("Түлхүүрийн формат буруу байна");return;}
-        state.openaiKey=v;sset("openaikey",v);toast("Суралцагч агент бэлэн боллоо");render();
-      }},"Хадгалах"));
-  }
-  var mem=memText();
-  box.append(h("div",{style:"font-weight:700;margin:12px 0 4px"},"🧠 AI таны тухай санаж буй зүйл"),
-    h("p",{class:"muted small",style:"margin:0 0 6px"},mem||"Одоохондоо юу ч алга. Ярих тусам суралцана."),
-    h("p",{class:"muted small",style:"margin:0 0 6px"},"🖥 Түлхүүргүйгээр ч төхөөрөмж дээр суралцана: хошин хэв маяг, дуртай зүйл, нэр, slang-ыг мессеж бүрээс таньж хадгална. Юу ч гадагш явахгүй."));
-  if(mem)box.append(h("button",{class:"btn ghost",type:"button",style:"padding:6px 12px;font-size:14px",onclick:function(){if(!confirm("AI-ийн санаж буй бүх зүйлийг устгах уу?"))return;var mn=state.aimem.minor;state.aimem=cleanMem({minor:mn});sset("aimem",state.aimem);render();}},"Устгах"));
-  if(state.aiopt.adult&&!(sample||state.apiKey))box.append(h("p",{class:"muted small",style:"margin:8px 0 0"},"🔞 18+ хошин зөвхөн өөрийн Anthropic түлхүүртэй үед ажиллана (үнэгүй AI-д хэрэглэхгүй)."));
-  if(!canAI)box.append(h("p",{class:"muted small",style:"margin:8px 0 0"},"⚠ Хошин хариулт нь Anthropic AI түлхүүртэй үед ажиллана (одоо бэлэн асуултын горим). OpenAI түлхүүр нь зөвхөн суралцагч агентад."));
-  return box;
-}
-
 /* ---------- free AI (Cloudflare Workers AI through our own Worker) ---------- */
 var freeCool=0;
 function freeAvail(){var c=window.SALKHI_AI;return !!(c&&c.url);}
@@ -4498,6 +4466,7 @@ function paint(){
 }
 function viewChat(){
   var c=ui.chat,root=h("div");
+  if(c.section==="translate")return viewTranslate();
   if(!c.started){
     root.append(h("h2",null,"Ярианы дасгал"));
     root.append(h("p",{class:"muted"},"Нөхцөлөө сонгоод AI-тай англиар ярилц. Алдаа гаргавал Монголоор засаж өгнө."));
@@ -4505,7 +4474,7 @@ function viewChat(){
       if(freeAvail()&&state.mode!=="kid")root.append(h("p",{class:"note",style:"margin-top:0"},"✨ Үнэгүй AI яриа идэвхтэй. Ярианууд Cloudflare-ийн серверээр дамжина. Илүү сайн чанар хүсвэл өөрийн Anthropic түлхүүрээ доор оруулж болно (заавал биш)."));
       root.append(keyBox());
     }
-    var apn=aiPanel();if(apn)root.append(apn);
+    root.append(h("button",{class:"scn",onclick:function(){c.section="translate";render();}},"🎙️ Монгол → Англи орчуулагч"));
     var el=effLevel(),lv=el==="all"?"Дунд":LV_NAME[el];
     root.append(h("p",{class:"muted small",style:"margin-top:10px"},"Түвшин: "+lv+(el==="all"?" (дээрээс түвшнээ сонгож болно)":"")));
     SCEN.filter(sceneOk).forEach(function(s){
@@ -4542,6 +4511,124 @@ function viewChat(){
   comp.append(h("button",{class:"btn dark",id:"stopbtn",style:"display:none",onclick:function(){if(c.ctl)c.ctl.abort();}},"Зогсоох"));
   root.append(comp);
   setTimeout(paint,0);
+  return root;
+}
+
+/* ---------- translate (Ярих > Монгол-Англи орчуулагч) ---------- */
+var transRec=null,transListening=false,transPaused=false;
+function translateMN(text){
+  text=(text||"").trim();
+  if(!text)return;
+  var pair={mn:text,en:"",pending:true,err:false};
+  ui.translate.pairs.push(pair);
+  paintTranslate();
+  function finish(out,err){
+    pair.pending=false;pair.err=!!err;pair.en=out||(err?"Орчуулж чадсангүй.":"—");
+    paintTranslate();
+    if(!err&&pair.en){pauseTransRec();speakEnglish(pair.en,function(){resumeTransRec();});}
+  }
+  var prompt="Translate the following spoken Mongolian into natural, fluent English. "+
+    "If it is already English, return it unchanged. "+
+    "Output ONLY the English translation, with no quotes, notes or explanations.\n\n"+text;
+  sampleP.then(function(s){
+    if(s)return s(prompt,{modelTier:"quick",cache:false}).then(function(r){return {text:(r&&r.text?r.text:"").trim()};});
+    if(state.apiKey){
+      var ctl=new AbortController();
+      return callDirect([{role:"user",content:prompt}],{signal:ctl.signal,onText:function(){}},true);
+    }
+    if(freeAI()){
+      var ctl2=new AbortController();
+      return callFree([{role:"user",content:prompt}],{signal:ctl2.signal,onText:function(){}}).catch(function(e){
+        if(e&&e.code==="cancelled")throw e;
+        freeFail();throw {code:"no_ai"};
+      });
+    }
+    return Promise.reject({code:"no_ai"});
+  }).then(function(res){
+    finish((res&&res.text||"").trim(),false);
+  }).catch(function(e){
+    var code=e&&e.code;
+    finish(code==="no_ai"?"Орчуулгад AI хэрэгтэй. Дээрх зааврыг дагаж Claude нээх эсвэл түлхүүрээ оруулна уу.":errCopy(code),true);
+  });
+}
+function pauseTransRec(){
+  if(transListening&&!transPaused&&transRec){transPaused=true;try{transRec.stop();}catch(e){}}
+}
+function resumeTransRec(){
+  if(transPaused){
+    transPaused=false;
+    if(transListening)setTimeout(function(){if(transListening&&!transPaused){try{transRec.start();}catch(e){}}},250);
+  }
+}
+function stopTransRec(){
+  transListening=false;transPaused=false;
+  try{transRec&&transRec.stop();}catch(e){}
+  ui.translate.live="";
+  var btn=document.getElementById("trmic");
+  if(btn){btn.classList.remove("rec");btn.textContent="🎙️ Ярих";}
+}
+function toggleTransRec(btn){
+  if(transListening){stopTransRec();return;}
+  if(!SR)return;
+  transRec=new SR();
+  transRec.lang="mn-MN";transRec.continuous=true;transRec.interimResults=true;
+  transRec.onresult=function(e){
+    var interim="";
+    for(var i=e.resultIndex;i<e.results.length;i++){
+      var r=e.results[i];
+      if(r.isFinal)translateMN(r[0].transcript);
+      else interim+=r[0].transcript;
+    }
+    ui.translate.live=interim;paintTranslate();
+  };
+  transRec.onerror=function(e){
+    if(e.error==="no-speech"||e.error==="aborted")return;
+    stopTransRec();
+    toast(e.error==="not-allowed"?"Микрофоны зөвшөөрөл хэрэгтэй.":"Дуу таних алдаа гарлаа.");
+  };
+  transRec.onend=function(){
+    if(transListening&&!transPaused){try{transRec.start();}catch(e){stopTransRec();}}
+  };
+  try{
+    transRec.start();transListening=true;
+    btn.classList.add("rec");btn.textContent="⏹️ Зогсоох";
+  }catch(e){transListening=false;}
+}
+function paintTranslate(){
+  if(!(state.tab==="chat"&&ui.chat.section==="translate"))return;
+  var box=document.getElementById("trmsgs");if(!box)return;
+  box.textContent="";
+  ui.translate.pairs.forEach(function(p){
+    var wrap=h("div",{class:"b me"});
+    wrap.append(h("div",{class:"small",style:"opacity:.85"},p.mn));
+    wrap.append(h("div",{style:"font-weight:700;margin-top:2px"},p.pending?"Орчуулж байна…":p.en));
+    box.append(wrap);
+    if(!p.pending&&!p.err)box.append(h("button",{class:"spk",onclick:function(){speakEnglish(p.en);}},"Сонсох"));
+  });
+  var live=document.getElementById("trlive");
+  if(live)live.textContent=ui.translate.live||"";
+  box.scrollTop=box.scrollHeight;
+  window.scrollTo(0,document.body.scrollHeight);
+}
+function viewTranslate(){
+  var root=h("div");
+  root.append(h("div",{style:"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"},
+    h("h2",{style:"margin:0"},"Орчуулагч"),
+    h("button",{class:"btn ghost",style:"padding:6px 12px;font-size:14px",onclick:function(){stopTransRec();ui.chat.section="practice";render();}},"Буцах")));
+  root.append(h("p",{class:"muted"},"Микрофон дараад монголоор ярь, эсвэл доор бичиж орчуул. Англи орчуулга дуугарна."));
+  if(sampleReady&&!sample&&!state.apiKey&&!freeAI())root.append(keyBox());
+  root.append(h("div",{class:"msgs",id:"trmsgs","aria-live":"polite"}));
+  root.append(h("div",{class:"small muted",id:"trlive",style:"font-style:italic;min-height:20px"}));
+  var inp=h("input",{class:"tin",id:"trin",type:"text",style:"flex:1;margin-top:0",placeholder:"Монголоор бичээд орчуул",autocomplete:"off","aria-label":"Орчуулах текст"});
+  inp.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();var t=inp.value;inp.value="";translateMN(t);}});
+  var comp=h("div",{class:"composer"},inp);
+  if(SR){
+    var mic=h("button",{class:"btn",id:"trmic",title:"Ярих","aria-label":"Микрофоноор орчуулах",onclick:function(){toggleTransRec(mic);}},"🎙️ Ярих");
+    comp.append(mic);
+  }
+  comp.append(h("button",{class:"btn primary",onclick:function(){var t=inp.value;inp.value="";translateMN(t);}},"Орчуул"));
+  root.append(comp);
+  setTimeout(paintTranslate,0);
   return root;
 }
 
