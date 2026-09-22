@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Англи орчуулагч</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #F2F5F3;
+  --surface: #FFFFFF;
+  --ink: #12243A;
+  --muted: #5D6E80;
+  --line: #D9E1E0;
+  --accent: #2453D6;
+  --accent-ink: #FFFFFF;
+  --rec: #D9412B;
+  --font: "Onest", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1620; --surface: #172230; --ink: #E7EEF6; --muted: #93A3B5;
+    --line: #26364A; --accent: #7397FF; --accent-ink: #0E1620; --rec: #F0654F;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1620; --surface: #172230; --ink: #E7EEF6; --muted: #93A3B5;
+  --line: #26364A; --accent: #7397FF; --accent-ink: #0E1620; --rec: #F0654F;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 14px 18px 10px;
+}
+header h1 { font-size: 19px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.toggle {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--muted); cursor: pointer; user-select: none;
+}
+.toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.toggle .track {
+  width: 36px; height: 21px; border-radius: 999px; background: var(--line);
+  position: relative; transition: background .15s;
+}
+.toggle .track::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 15px; height: 15px;
+  border-radius: 50%; background: var(--surface); transition: transform .15s;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.08);
+}
+.toggle input:checked + .track { background: var(--accent); }
+.toggle input:checked + .track::after { transform: translateX(15px); }
+.toggle input:focus-visible + .track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.voicebar { padding: 0 18px 8px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.voicebar select {
+  flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px;
+}
+.voicebar select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#list {
+  flex: 1; overflow-y: auto; padding: 6px 18px 16px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.empty {
+  margin: auto 0; text-align: left; color: var(--muted);
+  font-size: 16px; line-height: 1.55; max-width: 30ch;
+}
+.empty strong { color: var(--ink); font-size: 24px; display: block; margin-bottom: 8px; line-height: 1.25; letter-spacing: -0.01em; }
+.pair { border-left: 3px solid var(--accent); padding: 2px 0 2px 14px; }
+.pair .mn { font-size: 14px; color: var(--muted); line-height: 1.45; margin: 0 0 6px; overflow-wrap: anywhere; }
+.pair .en { font-size: 21px; font-weight: 600; line-height: 1.35; margin: 0; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.pair .en.pending { color: var(--muted); font-weight: 400; font-size: 16px; }
+.pair .en.err { color: var(--rec); font-size: 15px; font-weight: 500; }
+.acts { display: flex; gap: 8px; margin-top: 8px; }
+.acts button {
+  font: inherit; font-size: 13px; color: var(--muted); background: transparent;
+  border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; cursor: pointer;
+}
+.acts button:hover { color: var(--ink); border-color: var(--muted); }
+.acts button:focus-visible, .mic:focus-visible, #send:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+#live {
+  min-height: 22px; padding: 0 18px 6px; font-size: 15px; color: var(--muted);
+  font-style: italic; overflow-wrap: anywhere;
+}
+#notice {
+  margin: 0 18px 8px; padding: 10px 12px; border-radius: 10px; font-size: 13px; line-height: 1.45;
+  background: var(--surface); border: 1px solid var(--line); color: var(--muted); display: none;
+}
+#notice.show { display: block; }
+
+.dock {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 18px 16px; border-top: 1px solid var(--line); background: var(--bg);
+}
+.field {
+  flex: 1; display: flex; align-items: center; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 999px; padding: 0 6px 0 16px; min-width: 0;
+}
+.field:focus-within { border-color: var(--accent); }
+.field input {
+  flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink);
+  font: inherit; font-size: 16px; padding: 13px 0; outline: none;
+}
+.field input::placeholder { color: var(--muted); }
+#send {
+  border: 0; background: transparent; color: var(--accent); font: inherit; font-weight: 600;
+  font-size: 14px; padding: 8px 12px; cursor: pointer; border-radius: 999px;
+}
+.mic {
+  flex: none; width: 64px; height: 64px; border-radius: 50%; border: 0; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink);
+  display: grid; place-items: center; position: relative; transition: background .15s;
+}
+.mic svg { width: 28px; height: 28px; }
+.mic.on { background: var(--rec); color: #fff; }
+.mic.on::before {
+  content: ""; position: absolute; inset: -6px; border-radius: 50%;
+  border: 2px solid var(--rec); opacity: .5; animation: ring 1.3s ease-out infinite;
+}
+@keyframes ring { from { transform: scale(.9); opacity: .6; } to { transform: scale(1.25); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .mic.on::before { animation: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Англи орчуулагч</h1>
+  <label class="toggle">
+    <input type="checkbox" id="autospeak" checked>
+    <span class="track"></span>
+    <span>Дуугаар унших</span>
+  </label>
+</header>
+
+<div class="voicebar">
+  <label for="voice">Дуу</label>
+  <select id="voice"></select>
+</div>
+
+<div id="list" aria-live="polite">
+  <div class="empty" id="empty">
+    <strong>Микрофоныг дараад монголоор ярь.</strong>
+    Хэлсэн өгүүлбэр бүр англи хэл рүү орчуулагдана.
+  </div>
+</div>
+
+<div id="live"></div>
+<div id="notice" role="status"></div>
+
+<div class="dock">
+  <div class="field">
+    <input id="typed" type="text" placeholder="Эсвэл энд бичээд орчуул" autocomplete="off" enterkeyhint="send">
+    <button id="send" type="button">Орчуул</button>
+  </div>
+  <button class="mic" id="mic" type="button" aria-label="Ярьж эхлэх">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+      <path d="M5 11a7 7 0 0 0 14 0"></path>
+      <path d="M12 18v3"></path>
+    </svg>
+  </button>
+</div>
+
+<script>
+(function () {
+  var listEl = document.getElementById('list');
+  var emptyEl = document.getElementById('empty');
+  var liveEl = document.getElementById('live');
+  var noticeEl = document.getElementById('notice');
+  var micEl = document.getElementById('mic');
+  var typedEl = document.getElementById('typed');
+  var sendEl = document.getElementById('send');
+  var autoSpeakEl = document.getElementById('autospeak');
+
+  var sample = null;
+  if (window.claude && typeof window.claude.use === 'function') {
+    window.claude.use('sample').then(function (s) { sample = s; }).catch(function () { sample = null; });
+  }
+
+  function notice(msg) {
+    if (!msg) { noticeEl.classList.remove('show'); noticeEl.textContent = ''; return; }
+    noticeEl.textContent = msg;
+    noticeEl.classList.add('show');
+  }
+
+  var voiceEl = document.getElementById('voice');
+  var voices = [];
+  var chosenVoice = null;
+
+  function scoreVoice(v) {
+    var n = v.name || '', sc = 0;
+    if (!/^en/i.test(v.lang || '')) return -1000;
+    if (/natural|neural|premium|enhanced|siri/i.test(n)) sc += 60;
+    if (/google/i.test(n)) sc += 35;
+    if (/^(samantha|ava|allison|zoe|evan|nathan|serena|daniel|karen|moira|susan|tom)\b/i.test(n)) sc += 25;
+    if (/en[-_]US/i.test(v.lang)) sc += 10;
+    if (/compact|novelty|bad news|bells|boing|whisper|zarvox|trinoids|organ|cellos|good news|jester|hysterical|bubbles|albert|fred|junior|kathy|ralph|superstar/i.test(n)) sc -= 80;
+    return sc;
+  }
+
+  function loadVoices() {
+    try {
+      if (!('speechSynthesis' in window)) return;
+      var all = window.speechSynthesis.getVoices() || [];
+      voices = all.filter(function (v) { return /^en/i.test(v.lang || ''); });
+      voices.sort(function (a, b) { return scoreVoice(b) - scoreVoice(a); });
+      var saved = null;
+      try { saved = localStorage.getItem('voiceName'); } catch (e) {}
+      voiceEl.textContent = '';
+      voices.forEach(function (v, i) {
+        var o = document.createElement('option');
+        o.value = v.name;
+        o.textContent = v.name + ' (' + v.lang + ')' + (i === 0 ? ' — санал болгох' : '');
+        voiceEl.appendChild(o);
+      });
+      var pick = voices.filter(function (v) { return v.name === saved; })[0] || voices[0] || null;
+      chosenVoice = pick;
+      if (pick) voiceEl.value = pick.name;
+    } catch (e) {}
+  }
+  if ('speechSynthesis' in window) {
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+  voiceEl.addEventListener('change', function () {
+    chosenVoice = voices.filter(function (v) { return v.name === voiceEl.value; })[0] || null;
+    try { localStorage.setItem('voiceName', voiceEl.value); } catch (e) {}
+    speak('Hello, this is how I sound.');
+  });
+
+  var pendingSpeech = 0;
+  function speak(text) {
+    try {
+      if (!('speechSynthesis' in window) || !text) return;
+      pauseRec();
+      pendingSpeech++;
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = (chosenVoice && chosenVoice.lang) || 'en-US';
+      if (chosenVoice) u.voice = chosenVoice;
+      u.rate = 0.97;
+      u.pitch = 1;
+      var done = function () {
+        pendingSpeech = Math.max(0, pendingSpeech - 1);
+        if (pendingSpeech === 0) resumeRec();
+      };
+      u.onend = done;
+      u.onerror = done;
+      window.speechSynthesis.speak(u);
+    } catch (e) { pendingSpeech = 0; resumeRec(); }
+  }
+
+  function unlockSpeech() {
+    try {
+      if (!('speechSynthesis' in window)) return;
+      var u = new SpeechSynthesisUtterance(' ');
+      u.volume = 0;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  function addPair(mnText) {
+    if (emptyEl && emptyEl.parentNode) emptyEl.parentNode.removeChild(emptyEl);
+    var wrap = document.createElement('div');
+    wrap.className = 'pair';
+    var mn = document.createElement('p');
+    mn.className = 'mn';
+    mn.textContent = mnText;
+    var en = document.createElement('p');
+    en.className = 'en pending';
+    en.textContent = 'Орчуулж байна…';
+    var acts = document.createElement('div');
+    acts.className = 'acts';
+    acts.style.display = 'none';
+    var bSpeak = document.createElement('button');
+    bSpeak.type = 'button';
+    bSpeak.textContent = 'Сонсох';
+    var bCopy = document.createElement('button');
+    bCopy.type = 'button';
+    bCopy.textContent = 'Хуулах';
+    acts.appendChild(bSpeak);
+    acts.appendChild(bCopy);
+    wrap.appendChild(mn);
+    wrap.appendChild(en);
+    wrap.appendChild(acts);
+    listEl.appendChild(wrap);
+    listEl.scrollTop = listEl.scrollHeight;
+    bSpeak.addEventListener('click', function () { speak(en.textContent); });
+    bCopy.addEventListener('click', function () {
+      try {
+        navigator.clipboard.writeText(en.textContent).then(function () {
+          bCopy.textContent = 'Хуулсан';
+          setTimeout(function () { bCopy.textContent = 'Хуулах'; }, 1200);
+        });
+      } catch (e) {}
+    });
+    return { en: en, acts: acts };
+  }
+
+  function translate(mnText) {
+    mnText = (mnText || '').trim();
+    if (!mnText) return;
+    var ui = addPair(mnText);
+    if (!sample) {
+      ui.en.className = 'en err';
+      ui.en.textContent = 'Орчуулах боломжгүй байна. Энэ хуудсыг Claude-ийн апп дотор нээнэ үү.';
+      return;
+    }
+    var prompt =
+      'Translate the following spoken Mongolian into natural, fluent English. ' +
+      'If it is already English, return it unchanged. ' +
+      'Output ONLY the English translation, with no quotes, notes or explanations.\n\n' + mnText;
+    sample(prompt, {
+      modelTier: 'quick',
+      cache: false,
+      onText: function (r) {
+        if (r && r.text) {
+          ui.en.className = 'en';
+          ui.en.textContent = r.text;
+          listEl.scrollTop = listEl.scrollHeight;
+        }
+      }
+    }).then(function (res) {
+      var out = (res && res.text ? res.text : '').trim();
+      ui.en.className = 'en';
+      ui.en.textContent = out || '—';
+      ui.acts.style.display = 'flex';
+      if (autoSpeakEl.checked) speak(out);
+      listEl.scrollTop = listEl.scrollHeight;
+    }).catch(function (err) {
+      ui.en.className = 'en err';
+      var code = err && err.code;
+      if (code === 'not_granted') ui.en.textContent = 'Орчуулгад зөвшөөрөл өгөөгүй байна. Дахин оролдоод зөвшөөрнө үү.';
+      else if (code === 'rate_limited') ui.en.textContent = 'Хэт олон хүсэлт болсон. Хэдэн секундийн дараа дахин оролдоно уу.';
+      else ui.en.textContent = 'Орчуулж чадсангүй. Дахин оролдоно уу.';
+    });
+  }
+
+  // Speech recognition
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = null, listening = false, fatal = false, paused = false;
+
+  function setMic(on) {
+    listening = on;
+    micEl.classList.toggle('on', on);
+    micEl.setAttribute('aria-label', on ? 'Зогсоох' : 'Ярьж эхлэх');
+    if (!on) liveEl.textContent = '';
+  }
+
+  function startRec() {
+    if (!SR) {
+      notice('Таны хөтөч дуу таних боломжгүй байна. Chrome эсвэл Safari ашиглаж, доорх талбарт бичиж орчуулж болно.');
+      return;
+    }
+    notice('');
+    fatal = false;
+    rec = new SR();
+    rec.lang = 'mn-MN';
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = function (e) {
+      var interim = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var r = e.results[i];
+        if (r.isFinal) translate(r[0].transcript);
+        else interim += r[0].transcript;
+      }
+      liveEl.textContent = interim;
+    };
+    rec.onerror = function (e) {
+      if (e.error === 'no-speech' || e.error === 'aborted') return;
+      fatal = true;
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        notice('Микрофоны зөвшөөрөл хэрэгтэй. Хөтөчийнхөө тохиргооноос микрофоныг зөвшөөрнө үү.');
+      } else if (e.error === 'language-not-supported') {
+        notice('Энэ төхөөрөмж монгол хэлээр дуу таних боломжгүй байна. Доорх талбарт бичиж орчуулж болно.');
+      } else if (e.error === 'network') {
+        notice('Сүлжээний алдаа гарлаа. Интернэт холболтоо шалгана уу.');
+      } else {
+        notice('Дуу таних үед алдаа гарлаа (' + e.error + ').');
+      }
+    };
+    rec.onend = function () {
+      if (listening && !fatal) {
+        if (paused) return;
+        try { rec.start(); } catch (err) { setMic(false); }
+      } else {
+        setMic(false);
+      }
+    };
+    try {
+      rec.start();
+      setMic(true);
+    } catch (err) {
+      setMic(false);
+    }
+  }
+
+  function pauseRec() {
+    if (listening && !paused && rec) {
+      paused = true;
+      liveEl.textContent = '';
+      try { rec.stop(); } catch (e) {}
+    }
+  }
+
+  function resumeRec() {
+    if (paused) {
+      paused = false;
+      if (listening && !fatal) {
+        setTimeout(function () {
+          if (listening && !paused) { try { rec.start(); } catch (e) {} }
+        }, 250);
+      }
+    }
+  }
+
+  function stopRec() {
+    listening = false;
+    paused = false;
+    try { rec && rec.stop(); } catch (e) {}
+    setMic(false);
+  }
+
+  micEl.addEventListener('click', function () {
+    if (listening) stopRec(); else { unlockSpeech(); startRec(); }
+  });
+
+  function sendTyped() {
+    var v = typedEl.value;
+    if (!v.trim()) return;
+    typedEl.value = '';
+    translate(v);
+  }
+  sendEl.addEventListener('click', sendTyped);
+  typedEl.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); sendTyped(); }
+  });
+})();
+</script>
+</body>
+</html>
