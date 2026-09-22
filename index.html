@@ -2680,15 +2680,6 @@ function speakList(list,onDone){
   }catch(e){if(onDone)onDone();}
 }
 function speak(t,onDone){speakList([t],onDone);}
-/* Орчуулагч: гаралт үргэлж англи хэл тул сурч буй хэлнээс үл хамааран англи хоолойгоор дуудна */
-function speakEnglish(t,onDone){
-  try{
-    stopVoice();
-    var parts=splitSpeech([t]);if(!parts.length){if(onDone)onDone();return;}
-    if(navigator.onLine!==false&&typeof Audio==="function")playParts(parts,audioQ.id,0,"en","en-US",onDone);
-    else synthParts(parts,"en-US",onDone);
-  }catch(e){if(onDone)onDone();}
-}
 /* AI replies: drop markdown, emoji, romanization and Mongolian hints so the voice reads only the target language */
 function cleanAI(t){
   t=String(t).split("###")[0];
@@ -2796,6 +2787,7 @@ function renderLangs(){
       state.lang=l[0];sset("lang",l[0]);document.documentElement.setAttribute("data-lang",l[0]);
       state.cat="all";ui.vocab.cur=null;ui.vocab.quiz=null;ui.vocab.flipped=false;ui.vocab.q="";ui.listen.cur=null;ui.listen.story.cur=null;ui.grammar.lesson=null;
       if(ui.chat.ctl)ui.chat.ctl.abort();ui.chat.started=false;ui.chat.msgs=[];ui.chat.busy=false;ui.chat.error="";
+      stopTransRec();ui.translate.pairs=[];ui.translate.live="";
       renderLangs();renderStrip();render();
     }},l[1]));
   });
@@ -4476,7 +4468,7 @@ function viewChat(){
       if(freeAvail()&&state.mode!=="kid")root.append(h("p",{class:"note",style:"margin-top:0"},"✨ Үнэгүй AI яриа идэвхтэй. Ярианууд Cloudflare-ийн серверээр дамжина. Илүү сайн чанар хүсвэл өөрийн Anthropic түлхүүрээ доор оруулж болно (заавал биш)."));
       root.append(keyBox());
     }
-    root.append(h("button",{class:"scn",onclick:function(){c.section="translate";render();}},"🎙️ Монгол → Англи орчуулагч"));
+    root.append(h("button",{class:"scn",onclick:function(){c.section="translate";render();}},"🎙️ Монгол → "+LANGN[state.lang]+" орчуулагч"));
     var el=effLevel(),lv=el==="all"?"Дунд":LV_NAME[el];
     root.append(h("p",{class:"muted small",style:"margin-top:10px"},"Түвшин: "+lv+(el==="all"?" (дээрээс түвшнээ сонгож болно)":"")));
     SCEN.filter(sceneOk).forEach(function(s){
@@ -4516,7 +4508,7 @@ function viewChat(){
   return root;
 }
 
-/* ---------- translate (Ярих > Монгол-Англи орчуулагч) ---------- */
+/* ---------- translate (Ярих > Монгол-хэлний орчуулагч) ---------- */
 var transRec=null,transListening=false,transPaused=false;
 function translateMN(text){
   text=(text||"").trim();
@@ -4527,11 +4519,13 @@ function translateMN(text){
   function finish(out,err){
     pair.pending=false;pair.err=!!err;pair.en=out||(err?"Орчуулж чадсангүй.":"—");
     paintTranslate();
-    if(!err&&pair.en){pauseTransRec();speakEnglish(pair.en,function(){resumeTransRec();});}
+    if(!err&&pair.en){pauseTransRec();speak(pair.en,function(){resumeTransRec();});}
   }
-  var prompt="Translate the following spoken Mongolian into natural, fluent English. "+
-    "If it is already English, return it unchanged. "+
-    "Output ONLY the English translation, with no quotes, notes or explanations.\n\n"+text;
+  var LN=LANG_EN[state.lang]||"English",romanize=["ja","ko","zh"].indexOf(state.lang)>=0;
+  var prompt="Translate the following spoken Mongolian into natural, fluent "+LN+". "+
+    "If it is already "+LN+", return it unchanged. "+
+    (romanize?"After the "+LN+" translation, add its romanized reading in parentheses (romaji, romanization or pinyin). ":"")+
+    "Output ONLY the "+LN+" translation"+(romanize?" (with romanization)":"")+", with no quotes, notes or explanations.\n\n"+text;
   sampleP.then(function(s){
     if(s)return s(prompt,{modelTier:"quick",cache:false}).then(function(r){return {text:(r&&r.text?r.text:"").trim()};});
     if(state.apiKey){
@@ -4605,7 +4599,7 @@ function paintTranslate(){
     wrap.append(h("div",{class:"small",style:"opacity:.85"},p.mn));
     wrap.append(h("div",{style:"font-weight:700;margin-top:2px"},p.pending?"Орчуулж байна…":p.en));
     box.append(wrap);
-    if(!p.pending&&!p.err)box.append(h("button",{class:"spk",onclick:function(){speakEnglish(p.en);}},"Сонсох"));
+    if(!p.pending&&!p.err)box.append(h("button",{class:"spk",onclick:function(){speak(p.en);}},"Сонсох"));
   });
   var live=document.getElementById("trlive");
   if(live)live.textContent=ui.translate.live||"";
@@ -4613,11 +4607,11 @@ function paintTranslate(){
   window.scrollTo(0,document.body.scrollHeight);
 }
 function viewTranslate(){
-  var root=h("div");
+  var root=h("div"),LN=LANGN[state.lang];
   root.append(h("div",{style:"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"},
-    h("h2",{style:"margin:0"},"Орчуулагч"),
+    h("h2",{style:"margin:0"},"Орчуулагч: Монгол → "+LN),
     h("button",{class:"btn ghost",style:"padding:6px 12px;font-size:14px",onclick:function(){stopTransRec();ui.chat.section="practice";render();}},"Буцах")));
-  root.append(h("p",{class:"muted"},"Микрофон дараад монголоор ярь, эсвэл доор бичиж орчуул. Англи орчуулга дуугарна."));
+  root.append(h("p",{class:"muted"},"Микрофон дараад монголоор ярь, эсвэл доор бичиж орчуул. "+LN+" орчуулга дуугарна."));
   if(sampleReady&&!sample&&!state.apiKey&&!freeOK())root.append(keyBox());
   root.append(h("div",{class:"msgs",id:"trmsgs","aria-live":"polite"}));
   root.append(h("div",{class:"small muted",id:"trlive",style:"font-style:italic;min-height:20px"}));
