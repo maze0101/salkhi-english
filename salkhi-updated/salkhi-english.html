@@ -2301,7 +2301,7 @@ var ui={
   vocab:{mode:"card",cur:null,flipped:false,quiz:null,pop:false},
   grammar:{lesson:null,stage:"read",qs:[],qi:0,score:0,picked:null,built:[],custom:null,log:[]},
   chat:{section:"practice",started:false,scn:null,rules:"",msgs:[],busy:false,ctl:null,error:"",draft:""},
-  translate:{live:"",pairs:[]},
+  translate:{live:"",pairs:[],micErr:""},
   listen:{cur:null,opts:[],picked:null,mode:"word",dlg:{cur:null,opts:[],picked:null,key:null}},
   alpha:{cur:null,sec:"abc"},
   resetArmed:false
@@ -3625,6 +3625,16 @@ function stopTransRec(){
   var btn=document.getElementById("trmic");
   if(btn){btn.classList.remove("rec");btn.textContent="🎙️ Ярих";}
 }
+/* Хөтөч/OS-ийн зөвшөөрлийн тохиргоог JS-ээр шууд нээх боломжгүй (аюулгүй байдлын хязгаарлалт) тул
+   төхөөрөмжид тохирсон, алхам алхмаар зааврыг харуулна */
+function micSettingsHint(){
+  var ua=navigator.userAgent||"";
+  var isIOS=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  var isAndroid=/Android/.test(ua);
+  if(isIOS)return "📱 Микрофон хаалттай байна. Засах: Safari-г нээгээд манай сайтыг нээ (энэ апп биш) → хаягийн мөрний зүүн талд байгаа \"aA\" дээр дар → \"Website Settings\" (Сайтын тохиргоо) → Microphone-г \"Allow\" болго → апп руу буцаж ир.";
+  if(isAndroid)return "📱 Микрофон хаалттай байна. Засах: Chrome-оор манай сайтыг нээгээд хаягийн мөрний зүүн талд байгаа цоож/мэдээллийн icon дээр дар → Зөвшөөрөл (Permissions) → Микрофон → Зөвшөөр (Allow) гэж сонго.";
+  return "💻 Микрофон хаалттай байна. Засах: хаягийн мөрний зүүн талд байгаа цоож icon дээр дар → Сайтын тохиргоо (Site settings) → Микрофон → Зөвшөөр гэж сонго, дараа нь хуудсыг сэргээ.";
+}
 function beginTransRec(btn){
   transRec=new SR();
   transRec.lang="mn-MN";transRec.continuous=true;transRec.interimResults=true;
@@ -3640,9 +3650,10 @@ function beginTransRec(btn){
   transRec.onerror=function(e){
     if(e.error==="no-speech"||e.error==="aborted")return;
     stopTransRec();
+    if(e.error==="not-allowed"||e.error==="service-not-allowed"){
+      ui.translate.micErr=micSettingsHint();toast("Микрофоны зөвшөөрөл хэрэгтэй.");paintTranslate();return;
+    }
     var msg={
-      "not-allowed":"Микрофоны зөвшөөрөл хэрэгтэй. Хөтөчийнхөө тохиргооноос микрофоныг зөвшөөрнө үү.",
-      "service-not-allowed":"Микрофоны зөвшөөрөл хэрэгтэй. Хөтөчийнхөө тохиргооноос микрофоныг зөвшөөрнө үү.",
       "language-not-supported":"Энэ төхөөрөмж монгол хэлээр дуу таних боломжгүй байна. Доор бичиж орчуулж болно.",
       "audio-capture":"Микрофон олдсонгүй. Төхөөрөмжийн микрофоноо шалгана уу.",
       "network":"Сүлжээний алдаа гарлаа. Интернэт холболтоо шалгана уу."
@@ -3654,6 +3665,7 @@ function beginTransRec(btn){
   };
   try{
     transRec.start();transListening=true;
+    ui.translate.micErr="";paintTranslate();
     btn.classList.add("rec");btn.textContent="⏹️ Зогсоох";
   }catch(e){transListening=false;}
 }
@@ -3666,7 +3678,7 @@ function toggleTransRec(btn){
       try{stream.getTracks().forEach(function(t){t.stop();});}catch(e){}
       beginTransRec(btn);
     }).catch(function(){
-      toast("Микрофоны зөвшөөрөл хэрэгтэй. Хөтөчийнхөө тохиргооноос микрофоныг зөвшөөрнө үү.");
+      ui.translate.micErr=micSettingsHint();toast("Микрофоны зөвшөөрөл хэрэгтэй.");paintTranslate();
     });
   }else beginTransRec(btn);
 }
@@ -3683,6 +3695,8 @@ function paintTranslate(){
   });
   var live=document.getElementById("trlive");
   if(live)live.textContent=ui.translate.live||"";
+  var mh=document.getElementById("trmichelp");
+  if(mh){mh.textContent=ui.translate.micErr||"";mh.style.display=ui.translate.micErr?"block":"none";}
   box.scrollTop=box.scrollHeight;
   window.scrollTo(0,document.body.scrollHeight);
 }
@@ -3692,6 +3706,7 @@ function viewTranslate(){
     h("h2",{style:"margin:0"},"Орчуулагч: Монгол → "+LN),
     h("button",{class:"btn ghost",style:"padding:6px 12px;font-size:14px",onclick:function(){stopTransRec();ui.chat.section="practice";render();}},"Буцах")));
   root.append(h("p",{class:"muted"},"Микрофон дараад монголоор ярь, эсвэл доор бичиж орчуул. "+LN+" орчуулга дуугарна."));
+  root.append(h("div",{class:"note",id:"trmichelp",style:"display:none"}));
   if(sampleReady&&!sample&&!state.apiKey)root.append(keyBox());
   root.append(h("div",{class:"msgs",id:"trmsgs","aria-live":"polite"}));
   root.append(h("div",{class:"small muted",id:"trlive",style:"font-style:italic;min-height:20px"}));
