@@ -2692,10 +2692,10 @@ function cleanAI(t){
 }
 function effLevel(){return state.mode==="kid"?"a1":state.level;}
 var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
-function toast(t){
+function toast(t,ms){
   var old=document.getElementById("toast");if(old)old.remove();
   var e=h("div",{class:"toast",id:"toast",role:"status"},t);document.body.append(e);
-  setTimeout(function(){e.remove();},2800);
+  setTimeout(function(){e.remove();},ms||2800);
 }
 function celebrate(big,force){
   if(reduce||(state.mode!=="kid"&&!force))return;
@@ -2993,18 +2993,23 @@ function noteSpeech(sc){
   sset("speech",state.speech);
 }
 function checkSpeech(target,st,xp){
-  try{
-    var rec=new SR();rec.lang=LANG_TTS[state.lang]||"en-US";rec.maxAlternatives=5;rec.interimResults=false;
-    st.className="fb";st.textContent="Сонсож байна... хэлээрэй";
-    rec.onresult=function(e){
-      var alts=[];for(var i=0;i<e.results[0].length;i++)alts.push(e.results[0][i].transcript);
-      var sc=speechScore(alts,target);noteSpeech(sc);
-      if(speechOk(alts,target)){st.className="fb ok";st.textContent="Зөв дуудлаа! Оноо "+sc+"% · +"+xp+" XP";addXP(xp);addStar();celebrate();}
-      else{st.className="fb bad";st.textContent="Танигдсан: «"+alts[0]+"». Оноо "+sc+"%. Дахин оролдоорой.";}
-    };
-    rec.onerror=function(){st.className="fb bad";st.textContent="Микрофон ажиллахгүй байна. Зөвшөөрлөө шалгана уу.";};
-    rec.start();
-  }catch(e){st.textContent="Микрофон ажиллахгүй байна.";}
+  st.className="fb";st.textContent="Микрофон асааж байна...";
+  askMic(function(){
+    try{
+      var rec=new SR();rec.lang=LANG_TTS[state.lang]||"en-US";rec.maxAlternatives=5;rec.interimResults=false;
+      st.className="fb";st.textContent="Сонсож байна... хэлээрэй";
+      rec.onresult=function(e){
+        var alts=[];for(var i=0;i<e.results[0].length;i++)alts.push(e.results[0][i].transcript);
+        var sc=speechScore(alts,target);noteSpeech(sc);
+        if(speechOk(alts,target)){st.className="fb ok";st.textContent="Зөв дуудлаа! Оноо "+sc+"% · +"+xp+" XP";addXP(xp);addStar();celebrate();}
+        else{st.className="fb bad";st.textContent="Танигдсан: «"+alts[0]+"». Оноо "+sc+"%. Дахин оролдоорой.";}
+      };
+      rec.onerror=function(){st.className="fb bad";st.textContent="Микрофон ажиллахгүй байна. Зөвшөөрлөө шалгана уу.";};
+      rec.start();
+    }catch(e){st.textContent="Микрофон ажиллахгүй байна.";}
+  },function(){
+    st.className="fb bad";st.textContent=micSettingsHint();
+  });
 }
 function pronounce(w,st){checkSpeech(w[1],st,3);}
 function extraRow(w){
@@ -4487,13 +4492,15 @@ function viewChat(){
   var comp=h("div",{class:"composer"},inp);
   if(SR){
     var mic=h("button",{class:"btn",title:"Ярих","aria-label":"Микрофоноор ярих",onclick:function(){
-      try{
-        var r=new SR();r.lang=LANG_TTS[state.lang]||"en-US";r.interimResults=false;
-        r.onresult=function(e){inp.value=(inp.value+" "+e.results[0][0].transcript).trim();c.draft=inp.value;};
-        r.onerror=function(){mic.disabled=true;mic.title="Микрофон ашиглах боломжгүй";mic.classList.remove("rec");};
-        r.onend=function(){mic.classList.remove("rec");};
-        mic.classList.add("rec");r.start();
-      }catch(e){mic.disabled=true;}
+      askMic(function(){
+        try{
+          var r=new SR();r.lang=LANG_TTS[state.lang]||"en-US";r.interimResults=false;
+          r.onresult=function(e){inp.value=(inp.value+" "+e.results[0][0].transcript).trim();c.draft=inp.value;};
+          r.onerror=function(){mic.classList.remove("rec");};
+          r.onend=function(){mic.classList.remove("rec");};
+          mic.classList.add("rec");r.start();
+        }catch(e){}
+      },function(){toast(micSettingsHint(),6000);});
     }},"Ярих");
     comp.append(mic);
   }
@@ -4559,6 +4566,16 @@ function stopTransRec(){
   var btn=document.getElementById("trmic");
   if(btn){btn.classList.remove("rec");btn.textContent="🎙️ Ярих";}
 }
+/* Микрофоны зөвшөөрлийг SpeechRecognition.start()-аас өмнө getUserMedia-аар асууна: зарим PWA/webview-д
+   SpeechRecognition өөрөө зөвшөөрлийн цонхыг найдвартай гаргадаггүй тул хамгийн эрсдэлгүй зам */
+function askMic(onOK,onFail){
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+      try{stream.getTracks().forEach(function(t){t.stop();});}catch(e){}
+      onOK();
+    }).catch(function(){onFail();});
+  }else onOK();
+}
 /* Хөтөч/OS-ийн зөвшөөрлийн тохиргоог JS-ээр шууд нээх боломжгүй (аюулгүй байдлын хязгаарлалт) тул
    төхөөрөмжид тохирсон, алхам алхмаар зааврыг харуулна */
 function micSettingsHint(){
@@ -4606,15 +4623,9 @@ function beginTransRec(btn){
 function toggleTransRec(btn){
   if(transListening){stopTransRec();return;}
   if(!SR)return;
-  /* SpeechRecognition-ийн зөвшөөрлийн цонх зарим PWA/webview орчинд найдваргүй тул эхлээд getUserMedia-аар шууд асууна */
-  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
-    navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-      try{stream.getTracks().forEach(function(t){t.stop();});}catch(e){}
-      beginTransRec(btn);
-    }).catch(function(){
-      ui.translate.micErr=micSettingsHint();toast("Микрофоны зөвшөөрөл хэрэгтэй.");paintTranslate();
-    });
-  }else beginTransRec(btn);
+  askMic(function(){beginTransRec(btn);},function(){
+    ui.translate.micErr=micSettingsHint();toast("Микрофоны зөвшөөрөл хэрэгтэй.");paintTranslate();
+  });
 }
 function paintTranslate(){
   if(!(state.tab==="chat"&&ui.chat.section==="translate"))return;
