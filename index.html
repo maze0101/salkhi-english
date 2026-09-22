@@ -4559,9 +4559,7 @@ function stopTransRec(){
   var btn=document.getElementById("trmic");
   if(btn){btn.classList.remove("rec");btn.textContent="🎙️ Ярих";}
 }
-function toggleTransRec(btn){
-  if(transListening){stopTransRec();return;}
-  if(!SR)return;
+function beginTransRec(btn){
   transRec=new SR();
   transRec.lang="mn-MN";transRec.continuous=true;transRec.interimResults=true;
   transRec.onresult=function(e){
@@ -4592,6 +4590,19 @@ function toggleTransRec(btn){
     transRec.start();transListening=true;
     btn.classList.add("rec");btn.textContent="⏹️ Зогсоох";
   }catch(e){transListening=false;}
+}
+function toggleTransRec(btn){
+  if(transListening){stopTransRec();return;}
+  if(!SR)return;
+  /* SpeechRecognition-ийн зөвшөөрлийн цонх зарим PWA/webview орчинд найдваргүй тул эхлээд getUserMedia-аар шууд асууна */
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+      try{stream.getTracks().forEach(function(t){t.stop();});}catch(e){}
+      beginTransRec(btn);
+    }).catch(function(){
+      toast("Микрофоны зөвшөөрөл хэрэгтэй. Хөтөчийнхөө тохиргооноос микрофоныг зөвшөөрнө үү.");
+    });
+  }else beginTransRec(btn);
 }
 function paintTranslate(){
   if(!(state.tab==="chat"&&ui.chat.section==="translate"))return;
