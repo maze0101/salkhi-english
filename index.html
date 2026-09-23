@@ -286,6 +286,16 @@ p+p{margin-top:10px}
 .splash b{font-size:26px;letter-spacing:.5px;animation:splashpop .7s .1s ease-out both}
 @keyframes splashpop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.splash img,.splash b{animation:none}.splash{transition:none}}
+.gamecard{display:flex;align-items:center;gap:14px;width:100%;margin:14px 0;padding:14px 16px;border-radius:18px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);text-align:left}
+.gamecard i{font-style:normal;font-size:30px;line-height:1;width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:#251808;color:#f5ecd8;flex:none}
+.gamecard b{display:block;font-size:16px}
+.gamecard span{display:block;font-size:13px;color:var(--ink-2)}
+.gamecard::after{content:"›";margin-left:auto;font-size:26px;color:var(--ink-2)}
+.gameview{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:#170f08}
+.gameview .bar{flex:none;min-height:56px;display:flex;align-items:center;gap:10px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:#1f150a;border-bottom:1px solid #46311c;color:#d9c9a3}
+.gameview .bar button{min-height:40px;padding:8px 14px;border-radius:12px;border:1px solid #46311c;background:#251808;color:#d9c9a3;font-weight:700}
+.gameview .bar span{font-weight:700;font-size:14px;margin-left:auto;color:#c9a24a;letter-spacing:.04em}
+.gameview iframe{flex:1;width:100%;border:0;background:#170f08}
 </style>
 </head>
 <body>
@@ -4728,6 +4738,28 @@ function shareCard(){
     });
   }catch(e){toast("Карт үүсгэж чадсангүй");}
 }
+/* ---------- games: the Gobi chess/draughts app, shown full screen ---------- */
+var GAMES_URL="https://maze0101.github.io/gobi-chess/gobi-chess.html";
+function openGames(){
+  if(document.querySelector(".gameview"))return;
+  var prevOverflow=document.body.style.overflow;
+  function close(){view.remove();document.body.style.overflow=prevOverflow;document.removeEventListener("keydown",onKey);}
+  function onKey(e){if(e.key==="Escape")close();}
+  var view=h("div",{class:"gameview",role:"dialog","aria-modal":"true","aria-label":"Шатар, даам"},
+    h("div",{class:"bar"},
+      h("button",{type:"button",onclick:close},"← Салхи руу буцах"),
+      h("span",null,"ШАТАР · ДААМ")),
+    h("iframe",{src:GAMES_URL,title:"Шатар, даам",allow:"clipboard-write"}));
+  document.body.style.overflow="hidden";
+  document.body.append(view);
+  document.addEventListener("keydown",onKey);
+  view.querySelector("button").focus();
+}
+function gameCard(){
+  return h("button",{class:"gamecard",type:"button",onclick:openGames},
+    h("i",{"aria-hidden":"true"},"♞"),
+    h("div",null,h("b",null,"Шатар · Даам"),h("span",null,"Хичээлийн завсар амраарай — найз, ботын эсрэг тоглоно")));
+}
 function viewStats(){
   var root=h("div"),p=WORDS;
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
@@ -4738,6 +4770,7 @@ function viewStats(){
   gb.append(rw,h("div",null,h("div",{style:"font-weight:700"},"Өдрийн зорилго"),h("div",{class:"muted"},todayXP()+" / "+state.goal+" XP"),
     h("div",{class:"seg",style:"margin:8px 0 0"},[10,20,50,100].map(function(n){return h("button",{"aria-pressed":String(state.goal===n),onclick:function(){state.goal=n;sset("goal",n);renderStrip();render();}},String(n));}))));
   root.append(gb);
+  root.append(gameCard());
   root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Түвшин"),h("span",{class:"big"},"Lv "+lvl)));
   root.append(h("div",{style:"height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin:2px 0 4px",role:"progressbar","aria-valuemin":"0","aria-valuemax":"100","aria-valuenow":String(state.xp%100)},h("i",{style:"display:block;height:100%;width:"+(state.xp%100)+"%;background:var(--neon)"})));
   root.append(h("p",{class:"muted small",style:"margin:0 0 6px"},"Lv "+(lvl+1)+" хүртэл "+(100-state.xp%100)+" XP"));
