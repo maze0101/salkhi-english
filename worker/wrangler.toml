@@ -13,3 +13,12 @@ namespace_id = "1001"
   [ratelimits.simple]
   limit = 20
   period = 60
+
+# /tts: нэг яриа 10+ өгүүлбэртэй байж болох тул чатынхаас сул хязгаар
+[[ratelimits]]
+name = "TTS_LIMITER"
+namespace_id = "1002"
+
+  [ratelimits.simple]
+  limit = 120
+  period = 60

@@ -2680,12 +2680,23 @@ function synthParts(parts,fullLang,onDone,lr){
     });
   }catch(e){if(onDone)onDone();}
 }
-function playParts(parts,id,i,gttsLang,fullLang,onDone,lr){
+/* Дууны эх үүсвэр: 1) Microsoft Edge neural (манай Worker-ээр) 2) Google 3) утасны өөрийн дуу. Edge унавал 10 минут алгасна. */
+var TTS_URL=window.SALKHI_AI&&window.SALKHI_AI.url?String(window.SALKHI_AI.url).replace(/\/chat\/?$/,"/tts"):null,edgeDownAt=0;
+function edgeOK(){return !!TTS_URL&&Date.now()-edgeDownAt>600000;}
+function playParts(parts,id,i,gttsLang,fullLang,onDone,lr,lang,useEdge){
   if(id!==audioQ.id||i>=parts.length){if(onDone)onDone();return;}
-  var failed=false,a=new Audio("https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl="+gttsLang+"&q="+encodeURIComponent(parts[i]));
-  audioQ.cur=a;a.playbackRate=state.rate*(lr||1);
-  function fail(){if(failed||id!==audioQ.id)return;failed=true;audioQ.cur=null;synthParts(parts.slice(i),fullLang,onDone,lr);}
-  a.onended=function(){if(id===audioQ.id)playParts(parts,id,i+1,gttsLang,fullLang,onDone,lr);};
+  if(useEdge===undefined)useEdge=edgeOK();
+  var sp=state.rate*(lr||1),src=useEdge
+    ?TTS_URL+"?l="+lang+"&r="+Math.round((sp-1)*100)+"&t="+encodeURIComponent(parts[i])
+    :"https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl="+gttsLang+"&q="+encodeURIComponent(parts[i]);
+  var failed=false,a=new Audio(src);
+  audioQ.cur=a;a.playbackRate=useEdge?1:sp;
+  function fail(){
+    if(failed||id!==audioQ.id)return;failed=true;audioQ.cur=null;
+    if(useEdge){edgeDownAt=Date.now();playParts(parts,id,i,gttsLang,fullLang,onDone,lr,lang,false);return;}
+    synthParts(parts.slice(i),fullLang,onDone,lr);
+  }
+  a.onended=function(){if(id===audioQ.id)playParts(parts,id,i+1,gttsLang,fullLang,onDone,lr,lang);};
   a.onerror=fail;
   var pr;try{pr=a.play();}catch(e){fail();return;}
   if(pr&&pr.catch)pr.catch(fail);
@@ -2708,10 +2719,10 @@ function speakList(list,onDone){
   try{
     stopVoice();
     var parts=splitSpeech(list);if(!parts.length){if(onDone)onDone();return;}
-    var fullLang=LANG_TTS[state.lang]||"en-US",gttsLang=GTTS[state.lang]||"en",id=audioQ.id,rate=langRate();
+    var lang=LANG_TTS[state.lang]?state.lang:"en",fullLang=LANG_TTS[lang],gttsLang=GTTS[lang],id=audioQ.id,rate=langRate();
     warmAudio(function(){
       if(id!==audioQ.id)return;
-      if(navigator.onLine!==false&&typeof Audio==="function"){playParts(parts,id,0,gttsLang,fullLang,onDone,rate);}
+      if(navigator.onLine!==false&&typeof Audio==="function"){playParts(parts,id,0,gttsLang,fullLang,onDone,rate,lang);}
       else synthParts(parts,fullLang,onDone,rate);
     });
   }catch(e){if(onDone)onDone();}
