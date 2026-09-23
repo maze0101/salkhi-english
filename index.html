@@ -2648,11 +2648,19 @@ function stopVoice(){
   if(audioQ.cur){try{audioQ.cur.pause();}catch(e){}audioQ.cur=null;}
   try{if("speechSynthesis" in window)speechSynthesis.cancel();}catch(e){}
 }
+/* Хичээлийн япон/хятад өгүүлбэр үг бүрийн хооронд зайтай ("これ は ほん です"). Зайтай үед дуу は-г "ha" гэж уншиж, үг бүрийн дараа зогсдог тул зайг авна. */
+var CJK_GAP=/([　-ヿ㐀-鿿＀-￯])[ 　]+(?=[　-ヿ㐀-鿿＀-￯])/g;
+function speechText(t){
+  t=String(t||"").trim();
+  if(state.lang==="ja"||state.lang==="zh")t=t.replace(CJK_GAP,"$1");
+  return t;
+}
 function splitSpeech(list){
   var parts=[];
   list.forEach(function(t){
-    t=String(t||"").trim();if(!t)return;
-    (t.match(/[^.!?。！？]+[.!?。！？]*/g)||[t]).forEach(function(p){
+    t=speechText(t);if(!t)return;
+    /* зөвхөн өгүүлбэрийн төгсгөлд хуваана: "3.5", "10.30" зэрэг тоог таслахгүй */
+    t.replace(/([.!?]+)(?=\s|$)|([。！？]+)/g,"$1$2\n").split("\n").forEach(function(p){
       p=p.trim();
       while(p.length>180){var k=p.lastIndexOf(" ",180);if(k<60)k=180;parts.push(p.slice(0,k).trim());p=p.slice(k).trim();}
       if(p)parts.push(p);
@@ -2693,7 +2701,7 @@ function speakList(list,onDone){
 function speak(t,onDone){speakList([t],onDone);}
 /* AI replies: drop markdown, emoji, romanization and Mongolian hints so the voice reads only the target language */
 function cleanAI(t){
-  t=String(t).split("###")[0];
+  t=String(t).split("###")[0].split("@@@")[0];
   t=t.replace(/\*\*|__|`|^#+\s*|^\s*[-*]\s+/gm,"").replace(/\[([^\]]*)\]\([^)]*\)/g,"$1");
   t=t.replace(/\s*\([^)]*\)/g,"").replace(/\s*（[^）]*）/g,"");
   t=t.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,"");
@@ -4535,7 +4543,7 @@ function translateMN(text){
   function finish(out,err){
     pair.pending=false;pair.err=!!err;pair.en=out||(err?"Орчуулж чадсангүй.":"—");
     paintTranslate();
-    if(!err&&pair.en){pauseTransRec();speak(pair.en,function(){resumeTransRec();});}
+    if(!err&&pair.en){pauseTransRec();speak(cleanAI(pair.en),function(){resumeTransRec();});}
   }
   var LN=LANG_EN[state.lang]||"English",romanize=["ja","ko","zh"].indexOf(state.lang)>=0;
   var prompt="Translate the following spoken Mongolian into natural, fluent "+LN+". "+
@@ -4649,7 +4657,7 @@ function paintTranslate(){
     wrap.append(h("div",{class:"small",style:"opacity:.85"},p.mn));
     wrap.append(h("div",{style:"font-weight:700;margin-top:2px"},p.pending?"Орчуулж байна…":p.en));
     box.append(wrap);
-    if(!p.pending&&!p.err)box.append(h("button",{class:"spk",onclick:function(){speak(p.en);}},"Сонсох"));
+    if(!p.pending&&!p.err)box.append(h("button",{class:"spk",onclick:function(){speak(cleanAI(p.en));}},"Сонсох"));
   });
   var live=document.getElementById("trlive");
   if(live)live.textContent=ui.translate.live||"";
