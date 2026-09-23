@@ -2651,7 +2651,8 @@ function stopVoice(){
 /* Хичээлийн япон/хятад өгүүлбэр үг бүрийн хооронд зайтай ("これ は ほん です"). Зайтай үед дуу は-г "ha" гэж уншиж, үг бүрийн дараа зогсдог тул зайг авна. */
 var CJK_GAP=/([　-ヿ㐀-鿿＀-￯])[ 　]+(?=[　-ヿ㐀-鿿＀-￯])/g;
 function speechText(t){
-  t=String(t||"").trim();
+  /* "눈 (snow)", "groß (Person)" зэрэг хаалтан дахь тайлбарыг уншихгүй */
+  t=String(t||"").replace(/\s*\([^)]*\)/g,"").replace(/\s*（[^）]*）/g,"").trim();
   if(state.lang==="ja"||state.lang==="zh")t=t.replace(CJK_GAP,"$1");
   return t;
 }
@@ -3354,7 +3355,7 @@ function cleanSpeak(t){
   t=String(t).replace(/\s*\([^)]*\)/g,"").replace(/\s*（[^）]*）/g,"");
   if(state.lang==="zh")t=t.replace(/[A-Za-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+/g,"");
   if(state.lang!=="ru")t=t.replace(/[\u0400-\u04FF]+/g,"");
-  t=t.replace(/[→·]/g,",");
+  t=t.replace(/\s*(?:[→·/]|\.{3}|…)/g,",");
   return t.replace(/\s+/g," ").replace(/(,\s*)+/g,", ").replace(/^[,\s]+|[,\s]+$/g,"");
 }
 function speakSeq(list){speakList(list);}
@@ -3363,8 +3364,15 @@ function speakBtn(text,label){
 }
 function fullSentence(q){
   if(q.type==="order")return cleanSpeak(q.sentence);
-  var t=q.q;
-  if(t.indexOf("___")>=0)return cleanSpeak(t.replace("___",q.a));
+  /* "Ээж: ___" гэх мэт монгол шошгыг авна (орос дуу монгол үгийг уншихгүй) */
+  var t=q.q.replace(/^[^_:：]*[Ѐ-ӿ][^_:：]*[:：]\s*/,"");
+  if(t.indexOf("___")>=0){
+    t=t.replace(/_{3,}(\s*_{3,})+/g,"___");
+    var gaps=t.split("___").length-1,parts=String(q.a).split(/\s*\/\s*|\s+/);
+    if(gaps>1&&parts.length===gaps){var n=0;t=t.replace(/_{3,}/g,function(){return parts[n++];});}
+    else t=t.replace(/_{3,}/,q.a).replace(/_{3,}/g,"");
+    return cleanSpeak(t);
+  }
   var m=t.match(/[「«]([^」»]+)[」»]/);
   if(m)return cleanSpeak(m[1]);
   if(state.lang==="zh"){m=t.match(/[\u4e00-\u9fff]+/);if(m)return m[0];}
