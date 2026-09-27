@@ -6,6 +6,13 @@ const MAX_MESSAGES=12;
 const MAX_CHARS_PER_MESSAGE=8000;
 const MAX_TOTAL_CHARS=24000;
 const MAX_TOKENS=450;
+const MAX_CHECK_TOKENS=900;
+/* 2026-09 харьцуулалт: temperature 0.2 үед mistral англи/япон/солонгос/орос засварыг хамгийн зөв, хурдан хийсэн; llama70 япон дээр давталтад орсон */
+const CHECK_MODELS={
+  mistral:"@cf/mistralai/mistral-small-3.1-24b-instruct",
+  llama70:"@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+};
+const DEFAULT_CHECK="mistral";
 
 const SAFETY=[
   "You are a friendly language-practice partner inside a learning app.",
@@ -175,9 +182,12 @@ export default {
     const msgs=sanitizeMessages(body&&body.messages);
     if(!msgs)return json({error:"bad_messages"},400,cors);
 
+    /* task:"check" — бичвэр засах: илүү тогтвортой (бага temperature), илүү урт хариу, илүү хүчтэй загвар */
+    const check=body&&body.task==="check";
+    const model=check?(CHECK_MODELS[body.model]||env.CHECK_MODEL||CHECK_MODELS[DEFAULT_CHECK]):(env.MODEL||DEFAULT_MODEL);
     let stream;
     try{
-      stream=await env.AI.run(env.MODEL||DEFAULT_MODEL,{messages:[{role:"system",content:SAFETY}].concat(msgs),stream:true,max_tokens:MAX_TOKENS,temperature:0.8});
+      stream=await env.AI.run(model,{messages:[{role:"system",content:SAFETY}].concat(msgs),stream:true,max_tokens:check?MAX_CHECK_TOKENS:MAX_TOKENS,temperature:check?0.2:0.8});
     }catch(e){
       console.error("AI.run failed:",e&&e.message?e.message:String(e));
       return json({error:"ai_unavailable"},503,cors);

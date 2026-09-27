@@ -4637,7 +4637,7 @@ function freeAI(){return freeAvail()&&state.mode!=="kid"&&!adultOK()&&Date.now()
 function freeOK(){return freeAvail()&&Date.now()>freeCool&&navigator.onLine!==false;}
 function freeFail(){freeCool=Date.now()+90000;}
 function callFree(turns,opts){
-  return fetch(window.SALKHI_AI.url,{method:"POST",signal:opts.signal,headers:{"content-type":"application/json"},body:JSON.stringify({messages:turns})}).then(function(res){
+  return fetch(window.SALKHI_AI.url,{method:"POST",signal:opts.signal,headers:{"content-type":"application/json"},body:JSON.stringify(opts.task?{messages:turns,task:opts.task}:{messages:turns})}).then(function(res){
     if(!res.ok)throw {code:"free_"+res.status};
     var reader=res.body.getReader(),dec=new TextDecoder(),buf="",text="";
     function pump(){
@@ -5135,14 +5135,16 @@ var GAMES=[
 ];
 function viewPlay(){
   var P=ui.play,root=h("div");
-  if(state.mode==="kid")P.sec="games";
+  if(state.mode==="kid"&&P.sec==="exam")P.sec="games";
   if(P.game)return viewGame(root);
   if(P.ex)return viewMock(root);
   root.append(h("h2",null,"Сорил"));
-  if(state.mode!=="kid")root.append(h("div",{class:"seg"},
+  root.append(h("div",{class:"seg"},
     h("button",{"aria-pressed":String(P.sec==="games"),onclick:function(){P.sec="games";render();}},"🎮 Тоглоом"),
-    h("button",{"aria-pressed":String(P.sec==="exam"),onclick:function(){P.sec="exam";render();}},"📝 Шалгалтын бэлтгэл")));
+    h("button",{"aria-pressed":String(P.sec==="write"),onclick:function(){P.sec="write";render();}},"✍️ Бичих"),
+    state.mode!=="kid"?h("button",{"aria-pressed":String(P.sec==="exam"),onclick:function(){P.sec="exam";render();}},"📝 Шалгалт"):null));
   if(P.sec==="exam")return viewExamHome(root);
+  if(P.sec==="write")return viewWrite(root);
   root.append(h("p",{class:"muted"},LANGN[state.lang]+" үгсээр тоглоно. Түвшнээ дээд хэсгээс сонгоорой."));
   GAMES.forEach(function(g){
     if(g[0]==="hang"&&!ALPH[state.lang])return;
@@ -5313,6 +5315,170 @@ zh:{n:"HSK 1–6",parts:["听力 — сонсох","阅读 — унших","书�
 ru:{n:"ТРКИ / TORFL",parts:["Лексика. Грамматика — үг, дүрэм","Чтение — унших","Аудирование — сонсох","Письмо — бичих","Говорение — ярих"],tips:["Тийн ялгалын (падежи) хүснэгтийг сайн давт — хамгийн их оноо алддаг хэсэг.","Үйл үгийн төгс/төгс бус хэлбэрийг (делать/сделать) хослуулж цээжил.","Ярианд өдөр тутмын нөхцөл байдал (дэлгүүр, эмнэлэг) их гардаг.","Бичихэд захидал, мэдэгдлийн хэв маягийг сурах."]},
 de:{n:"Goethe-Zertifikat A1–C2",parts:["Lesen — унших","Hören — сонсох","Schreiben — бичих (захидал, маягт, эссэ)","Sprechen — хамтрагчтай ярих"],tips:["Нэр үгийг артикльтай нь (der/die/das) цээжил.","Үйл үгийг өгүүлбэрийн хоёрдугаар байранд тавихаа бүү март.","Schreiben-д мэндчилгээ, төгсгөл (Liebe..., Viele Grüße) заавал бич.","Sprechen-д асуулт асууж, хамтрагчтайгаа харилц — энэ нь оноонд ордог."]}
 };
+/* ---------- writing practice: AI checks a short text and explains mistakes in Mongolian ---------- */
+var WTOPICS={
+a1:[["Өөрийгөө танилцуул","Нэр, нас, хаана амьдардаг, юунд дуртайгаа бич."],["Миний гэр бүл","Гэр бүлийн гишүүд, тэд юу хийдгийг бич."],["Миний өдөр","Өглөөнөөс орой хүртэл юу хийдгээ бич."],["Дуртай хоол","Ямар хоолонд дуртай, яагаад гэдгээ бич."],["Миний хот","Хаана амьдардаг, тэнд юу байдгийг бич."]],
+b1:[["Өнгөрсөн амралт","Өнгөрсөн амралтын өдрөө юу хийснээ бич (өнгөрсөн цаг)."],["Найздаа урилга","Найзаа төрсөн өдөртөө урьсан захидал бич."],["Дуртай кино, ном","Юуны тухай, яагаад таалагдсаныг бич."],["Ирээдүйн төлөвлөгөө","5 жилийн дараа юу хийхээр төлөвлөж байгаагаа бич."],["Аялал","Очиж үзмээр байгаа газар, яагаад гэдгээ бич."]],
+b2:[["Технологи","Ухаалаг утас хүүхдэд ашиг тустай юу, хортой юу? Санал бодлоо үндэслэлтэй бич."],["Гомдлын захидал","Захиалсан бараа эвдэрхий ирсэн тухай дэлгүүрт албан захидал бич."],["Хот ба хөдөө","Хотод эсвэл хөдөө амьдрахын давуу, сул талыг харьцуул."],["Онлайн сургалт","Онлайн сургалт танхимынхаас илүү үү? Эссэ бич."],["Байгаль орчин","Агаарын бохирдлыг бууруулах 2–3 арга санал болго."]]
+};
+var WLIM={a1:[15,80],b1:[40,150],b2:[70,200]};
+function wCount(t){
+  t=String(t).trim();if(!t)return 0;
+  if(state.lang==="ja"||state.lang==="zh")return Math.round(t.replace(/[\s、。！？!?,.]/g,"").length/2);
+  return t.split(/\s+/).length;
+}
+function writeAI(turns,o){
+  return sampleP.then(function(s){
+    if(s)return s(turns,{modelTier:"quick",cache:false,signal:o.signal,onText:o.onText});
+    if(state.apiKey)return callDirect(turns,o,true);
+    if(freeOK())return callFree(turns,o).catch(function(e){if(e&&e.code==="cancelled")throw e;freeFail();throw e;});
+    throw {code:"no_ai"};
+  });
+}
+/* AI зөвхөн алдааны төрлийг (код) өгнө; монгол тайлбарыг апп өөрөө гаргана — жижиг загвар монголоор муу бичдэг */
+var ERRMN={
+TENSE:["Цаг буруу","Үйл явдал хэзээ болсноос хамаарч цагийг сонгоно: өнгөрсөн бол өнгөрсөн цаг."],
+AGREEMENT:["Тохиролцоо","Үйл үг нь өгүүлэгчтэйгээ (би, тэр, тэд) тохирох ёстой."],
+PLURAL:["Тоо","Олон зүйлийг олон тооны хэлбэрээр бичнэ."],
+ARTICLE:["Артикль","Нэр үгийн өмнө тохирох артикль (a/an/the, der/die/das) хэрэгтэй эсвэл хэрэггүй."],
+PREPOSITION:["Угтвар үг","Байршил, цаг, чиглэлийг заах угтвар үг буруу байна."],
+PARTICLE:["Нөхцөл, дагавар","Үгийг холбох нөхцөл (は/が/を/に, 은/는, 을/를 гэх мэт) буруу байна."],
+WORD_ORDER:["Үгийн дараалал","Өгүүлбэр доторх үгсийн байрлал буруу байна."],
+SPELLING:["Үсгийн алдаа","Үгийг зөв бичих хэрэгтэй."],
+WORD_CHOICE:["Үг сонголт","Энэ утгад өөр, илүү тохирох үг хэрэглэнэ."],
+FORM:["Үгийн хэлбэр","Үйл үг эсвэл тэмдэг нэрийн хэлбэр буруу байна (жишээ нь to + үйл үг, -ing, хувилал)."],
+CASE:["Тийн ялгал","Нэр үгийн тийн ялгалын төгсгөл буруу байна."],
+GENDER:["Хүйс","Нэр үгийн хүйс (эр, эм, саармаг) ба түүнд тохирох хэлбэр буруу."],
+MISSING:["Дутуу үг","Өгүүлбэрт шаардлагатай үг дутуу байна."],
+EXTRA:["Илүү үг","Өгүүлбэрт шаардлагагүй үг байна."],
+PUNCTUATION:["Цэг таслал","Цэг, таслал, том үсгийг зөв хэрэглэнэ."],
+STYLE:["Найруулга","Утга ойлгогдож байгаа ч илүү байгалийн хэллэг бий."]
+};
+var WTIP={TENSE:"Бичсэнийхээ дараа үйл үг бүрийг шалгаад, тухайн үйл явдал хэзээ болсонд тохирох цагтай эсэхийг хар.",AGREEMENT:"Үйл үг бүрийн өмнөх өгүүлэгчийг (he, she, I...) хараад хэлбэрийг нь шалга.",PLURAL:"Хоёр ба түүнээс дээш зүйлийг олон тоогоор бичсэн эсэхээ шалга.",ARTICLE:"Нэр үг бүрийн өмнө артикль хэрэгтэй эсэхийг шалгах дадал суулга.",PREPOSITION:"Угтвар үгсийг нэр үгтэй нь хамт хэллэг болгож цээжил (in the morning, at night).",PARTICLE:"Нөхцөлүүдийг жишээ өгүүлбэрээр нь давт — Дүрэм табд хичээл бий.",WORD_ORDER:"Энгийн өгүүлбэрийн бүтцийг (хэн + юу хийв + юуг) баримтал.",SPELLING:"Шинэ үгээ бичиж давтах нь үсгийн алдааг багасгана.",WORD_CHOICE:"Шинэ үгийг жишээ өгүүлбэртэй нь цээжил — Үгс табын жишээг хар.",FORM:"Үйл үгийн хэлбэрүүдийг Дүрэм табаас давт.",CASE:"Тийн ялгалын хүснэгтийг давтаад жишээ өгүүлбэр бич.",GENDER:"Нэр үгийг хүйс, артикльтай нь хамт цээжил.",MISSING:"Өгүүлбэр бүрт өгүүлэгч, үйл үг байгаа эсэхийг шалга.",EXTRA:"Өгүүлбэрээ чангаар уншаад илүүц үгийг хас.",PUNCTUATION:"Өгүүлбэрийг том үсгээр эхэлж, цэгээр төгсгө.",STYLE:"Уншсан түүхүүдээс байгалийн хэллэгийг анзаарч суралц."};
+function writePrompt(topic,text,lv){
+  var LN=LANG_EN[state.lang];
+  return "You are a kind "+LN+" writing teacher for a Mongolian learner at level "+LVDESC[lv==="all"?"b1":lv]+".\n"+
+   "Task the learner was given: "+topic+"\n"+
+   "Check the learner's text below. Reply in EXACTLY this format and nothing else:\n"+
+   "SCORE: <0-10>\nCORRECTED:\n<the learner's full text rewritten in correct, natural "+LN+" with minimal changes; keep every sentence>\nMISTAKES:\n"+
+   "- <wrong words copied from the learner's text> => <corrected words> :: <ONE code>\n"+
+   "Never change numbers, names, places or facts the learner wrote; only fix grammar, spelling and word choice. The task text is in Mongolian — do not translate or comment on it.\n"+
+   "Codes: "+Object.keys(ERRMN).join(", ")+".\n"+
+   "(at most 5 of the most important mistakes; write '- none' if there are none)\n"+
+   (state.lang==="ja"?"Writing a word in kana instead of kanji is NOT a mistake. Do not change kana to kanji.\n":"")+
+   (state.lang==="zh"?"Do not add or require pinyin.\n":"")+
+   "Do not use markdown and do not add any other text.\n\nLearner's text:\n"+text;
+}
+function parseWrite(t){
+  t=String(t).replace(/\*\*/g,"");
+  var r={score:null,corr:"",mist:[],tip:""};
+  var m=t.match(/SCORE:\s*(\d+(?:\.\d+)?)/i);if(m)r.score=Math.max(0,Math.min(10,Math.round(parseFloat(m[1]))));
+  m=t.match(/CORRECTED:\s*([\s\S]*?)(?:\n\s*MISTAKES:|$)/i);if(m)r.corr=m[1].trim();
+  m=t.match(/MISTAKES:\s*([\s\S]*?)(?:\n\s*TIP:|$)/i);
+  var cnt={};
+  if(m)m[1].split("\n").forEach(function(l){
+    l=l.replace(/^[\s\-•*\d.)]+/,"").replace(/[\s\-]+$/,"").trim();if(!l||/^none\b/i.test(l))return;
+    var a=l.split("::"),b=a[0].split(/=>|→|->/),code=String(a[1]||"").toUpperCase().replace(/[^A-Z_]/g,"");
+    var bad=(b[0]||"").trim().replace(/^["«'“]|["»'”]$/g,""),good=(b[1]||"").trim().replace(/^["«'“]|["»'”]$/g,"");
+    if(!bad&&!good||bad===good)return;
+    if(!ERRMN[code])code="STYLE";cnt[code]=(cnt[code]||0)+1;
+    r.mist.push({bad:bad,good:good,code:code});
+  });
+  var top=Object.keys(cnt).sort(function(x,y){return cnt[y]-cnt[x];})[0];
+  r.tip=top?WTIP[top]:"Сайн бичжээ! Дараагийн удаа арай урт, холбоос үгтэй (because, but, so) өгүүлбэр бичиж үзээрэй.";
+  return r;
+}
+/* зассан текстийг эх бичвэртэй үгээр харьцуулж, өөрчлөгдсөн үгсийг тодруулна */
+function diffWords(a,b){
+  var cjk=state.lang==="ja"||state.lang==="zh",A=cjk?Array.from(a):a.split(/(\s+)/),B=cjk?Array.from(b):b.split(/(\s+)/),n=A.length,m=B.length,d=[],i,j;
+  if(n*m>90000)return [[b,false]];
+  function k(x){return String(x).toLowerCase().replace(/[.,!?;:"'«»。、，！？]/g,"");}
+  for(i=0;i<=n;i++){d[i]=new Array(m+1).fill(0);}
+  for(i=n-1;i>=0;i--)for(j=m-1;j>=0;j--)d[i][j]=k(A[i])===k(B[j])?d[i+1][j+1]+1:Math.max(d[i+1][j],d[i][j+1]);
+  var out=[];i=0;j=0;
+  while(j<m){if(i<n&&k(A[i])===k(B[j])){out.push([B[j],false]);i++;j++;}else if(i<n&&d[i+1][j]>=d[i][j+1])i++;else{out.push([B[j],!/^\s+$/.test(B[j])]);j++;}}
+  return out;
+}
+function viewWrite(root){
+  var P=ui.play,W=P.w||(P.w={topic:null,text:sget("wdraft",""),busy:false,res:null,err:"",ctl:null});
+  var lv=effLevel()==="all"?(P.elv||"a1"):effLevel(),lim=WLIM[lv];
+  if(!W.topic){
+    root.append(h("p",{class:"muted"},"Сэдэв сонгоод "+LANGN[state.lang]+" хэлээр бич. AI алдааг чинь засаж, монголоор тайлбарлана."));
+    if(state.mode!=="kid")root.append(h("div",{class:"seg"},[["a1","A1–A2"],["b1","B1"],["b2","B2"]].map(function(l){
+      return h("button",{"aria-pressed":String(lv===l[0]),onclick:function(){P.elv=l[0];render();}},l[1]);})));
+    WTOPICS[lv].concat([["Чөлөөт сэдэв","Хүссэн зүйлээ бич."]]).forEach(function(t){
+      root.append(h("button",{class:"lrow",type:"button",onclick:function(){W.topic=t;W.res=null;W.err="";render();window.scrollTo(0,0);}},
+        h("span",{class:"hexb"},"✍️"),h("span",null,h("div",{class:"t"},t[0]),h("div",{class:"muted small"},t[1]))));
+    });
+    var hist=(sget("writes",[])||[]).filter(function(x){return x.lang===state.lang;}).slice(-5).reverse();
+    if(hist.length){
+      root.append(h("p",{class:"muted small",style:"margin-top:16px"},"Сүүлийн бичвэрүүд"));
+      hist.forEach(function(x){root.append(h("div",{class:"srow"},h("span",null,x.d+" · "+x.t),h("span",{class:"big"},x.s!=null?x.s+"/10":"—")));});
+    }
+    return root;
+  }
+  root.append(h("button",{class:"back",onclick:function(){if(W.ctl)W.ctl.abort();W.topic=null;W.res=null;W.busy=false;render();}},"‹ Сэдвүүд"));
+  root.append(h("h2",{style:"margin-bottom:2px"},W.topic[0]));
+  root.append(h("p",{class:"muted",style:"margin-top:0"},W.topic[1]+" ("+lim[0]+"–"+lim[1]+" үг)"));
+  if(W.res){
+    var R=W.res,src=W.sent;
+    root.append(h("div",{class:"goalbox"},
+      h("div",{class:"ringw"},ringEl((R.score||0)/10,90,10),h("span",{class:"c"},R.score!=null?R.score+"/10":"—")),
+      h("div",null,h("div",{style:"font-weight:700"},R.score>=8?"Маш сайн! 🎉":R.score>=5?"Сайн байна 👍":"Дахин оролдоорой 💪"),h("div",{class:"muted small"},R.mist.length?R.mist.length+" алдаа олдлоо":"Алдаа олдсонгүй"))));
+    if(R.corr){
+      var box=h("div",{class:"note",style:"margin-top:12px;line-height:1.7"},h("div",{style:"font-weight:700;margin-bottom:4px"},"✅ Зассан хувилбар"));
+      var p=h("div");
+      diffWords(src,R.corr).forEach(function(x){p.append(x[1]?h("mark",{style:"background:color-mix(in srgb,var(--ok) 25%,transparent);color:inherit;border-radius:4px;padding:0 2px"},x[0]):x[0]);});
+      box.append(p,h("div",{class:"row"},h("button",{class:"btn",type:"button",onclick:function(){speak(cleanSpeak(R.corr));}},"🔊 Сонсох")));
+      root.append(box);
+    }
+    if(R.mist.length){
+      root.append(h("p",{style:"font-weight:700;margin:16px 0 4px"},"📌 Алдаанууд"));
+      var ul=h("ul",{class:"exl"});
+      R.mist.forEach(function(x){ul.append(h("li",null,
+        h("div",null,h("span",{style:"color:var(--danger);text-decoration:line-through"},x.bad)," → ",h("b",{style:"color:var(--ok)"},x.good)),
+        h("div",{class:"muted small"},h("b",null,ERRMN[x.code][0]+": "),ERRMN[x.code][1])));});
+      root.append(ul);
+    }
+    if(R.tip)root.append(h("div",{class:"note",style:"margin-top:12px"},"💡 "+R.tip));
+    root.append(h("p",{class:"muted small",style:"margin:10px 0 0"},"AI-ийн засвар заримдаа алдаатай байж болно. Эргэлзвэл багш, мэддэг хүнээсээ асуугаарай."));
+    root.append(h("div",{class:"row"},
+      h("button",{class:"btn",type:"button",onclick:function(){W.res=null;render();}},"Засаад дахин илгээх"),
+      h("button",{class:"btn primary",type:"button",onclick:function(){W.topic=null;W.res=null;W.text="";sset("wdraft","");render();}},"Шинэ сэдэв")));
+    return root;
+  }
+  var ta=h("textarea",{class:"tin",rows:"9",maxlength:"1500","aria-label":"Бичвэр",placeholder:LANGN[state.lang]+" хэлээр энд бичнэ үү...",spellcheck:"false",disabled:W.busy,style:"width:100%;resize:vertical;font:inherit;line-height:1.5"});
+  ta.value=W.text;
+  var cnt=h("div",{class:"muted small",style:"text-align:right"});
+  function paintCnt(){var n=wCount(ta.value);cnt.textContent=n+" үг"+(n<lim[0]?" · дор хаяж "+lim[0]:n>lim[1]?" · "+lim[1]+"-аас бүү хэтрүүл":"");cnt.style.color=n>lim[1]?"var(--danger)":"";}
+  ta.addEventListener("input",function(){W.text=ta.value;sset("wdraft",ta.value);paintCnt();});
+  paintCnt();
+  root.append(ta,cnt);
+  if(W.err)root.append(h("div",{class:"fb bad"},W.err));
+  if(W.busy)root.append(h("div",{class:"fb"},"⏳ AI шалгаж байна..."));
+  root.append(h("div",{class:"row"},h("button",{class:"btn primary",type:"button",disabled:W.busy,onclick:function(){
+    var t=ta.value.trim(),n=wCount(t);
+    if(n<lim[0]){toast("Дор хаяж "+lim[0]+" үг бичнэ үү");return;}
+    if(n>lim[1]*1.3){toast(lim[1]+" орчим үгээр товчилно уу");return;}
+    W.busy=true;W.err="";W.sent=t;W.ctl=new AbortController();render();
+    writeAI([{role:"user",content:writePrompt(W.topic[0]+" — "+W.topic[1],t,lv)}],{signal:W.ctl.signal,task:"check",onText:function(){}}).then(function(r){
+      var R=parseWrite(r&&r.text||"");
+      if(!R.corr&&R.score==null)throw {code:"empty_completion"};
+      /* эх бичвэрт аль хэдийн байгаа "засвар" нь алдаа биш — AI заримдаа ийм хоосон мөр гаргадаг */
+      var cjkW=state.lang==="ja"||state.lang==="zh",nrm=function(x){x=String(x).toLowerCase().replace(/[.,!?;:"'«»。、，！？]/g,"");return cjkW?x.replace(/\s+/g,""):" "+x.replace(/\s+/g," ").trim()+" ";};
+      R.mist=R.mist.filter(function(x){return !x.good||nrm(t).indexOf(nrm(x.good))<0;});
+      W.res=R;W.busy=false;
+      var hs=sget("writes",[]);if(!Array.isArray(hs))hs=[];hs.push({d:dkey(new Date()),lang:state.lang,t:W.topic[0],s:R.score});sset("writes",hs.slice(-30));
+      logAct("wr");addXP(10+(R.score||0));if(R.score>=8)celebrate(true,true);
+      if(state.tab==="play")render();window.scrollTo(0,0);
+    }).catch(function(e){
+      W.busy=false;if(e&&(e.code==="cancelled"||e.name==="AbortError"))return;
+      W.err=e&&e.code==="no_ai"?"AI одоогоор ашиглах боломжгүй байна (интернэт шалгана уу). Бичвэр чинь хадгалагдсан.":errCopy(e&&e.code)+" Бичвэр чинь хадгалагдсан.";
+      if(state.tab==="play")render();
+    });
+  }},"✅ Шалгуулах")));
+  return root;
+}
 var MOCK_MIN=15;
 function viewExamHome(root){
   var P=ui.play,info=EXAM_INFO[state.lang];
@@ -5659,7 +5825,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20260927-9";
+var BUILD="20260927-10";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){

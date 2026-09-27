@@ -48,4 +48,16 @@ ck("handles OpenAI-style delta.content chunks",/"text":"Hi"/.test(conv2)&&/"text
 // stream converter direct
 const conv=await new Response(convertStream(mkStream(['data: {"response":"A"}\ndata: {"response":"B"}','\n']))).text();
 ck("stream flush handles trailing line without newline",/"text":"A"/.test(conv)&&/"text":"B"/.test(conv));
+// task:"check" (writing correction): low temperature, longer answer, model only from the allowlist
+lastRun=null;await worker.fetch(req("POST","/chat",{headers:{Origin:ORIGIN},body:goodBody}),okEnv());
+ck("chat keeps temperature 0.8 and 450 tokens",lastRun.input.temperature===0.8&&lastRun.input.max_tokens===450);
+lastRun=null;await worker.fetch(req("POST","/chat",{headers:{Origin:ORIGIN},body:Object.assign({task:"check"},goodBody)}),okEnv());
+ck("check uses temperature 0.2 and 900 tokens",lastRun.input.temperature===0.2&&lastRun.input.max_tokens===900);
+ck("check defaults to mistral",/mistral/.test(lastRun.model));
+lastRun=null;await worker.fetch(req("POST","/chat",{headers:{Origin:ORIGIN},body:Object.assign({task:"check",model:"llama70"},goodBody)}),okEnv());
+ck("check can pick an allowlisted model",/llama/.test(lastRun.model));
+lastRun=null;await worker.fetch(req("POST","/chat",{headers:{Origin:ORIGIN},body:Object.assign({task:"check",model:"@cf/evil/expensive-model"},goodBody)}),okEnv());
+ck("unknown model name is ignored",/mistral/.test(lastRun.model));
+lastRun=null;await worker.fetch(req("POST","/chat",{headers:{Origin:ORIGIN},body:Object.assign({model:"llama70"},goodBody)}),okEnv());
+ck("plain chat ignores the model field",/mistral/.test(lastRun.model)&&lastRun.input.temperature===0.8);
 console.log("\nPASS",pass,"FAIL",fail);process.exit(fail?1:0);
