@@ -2527,12 +2527,13 @@ var SCEN=[
 /* compact vocabulary packs: level|word|meaning|example|example meaning|reading|category */
 (function(){
   var pk=window.WORDS_MORE||{},seen={};
-  WORDS.forEach(function(w){seen[w[1]]=1;});
+  /* давхардлыг хэл тус бүрээр шалгана: хятад 学校 байгаа нь япон 学校-г хаяхгүй */
+  WORDS.forEach(function(w){seen[(w[6]||"en")+":"+w[1]]=1;});
   Object.keys(pk).forEach(function(lang){
     String(pk[lang]).split("\n").forEach(function(line){
       var x=line.trim().split("|");
-      if(x.length<4||!x[1]||seen[x[1]])return;
-      seen[x[1]]=1;
+      if(x.length<4||!x[1]||seen[lang+":"+x[1]])return;
+      seen[lang+":"+x[1]]=1;
       WORDS.push([x[0],x[1],x[2],x[3],null,x[6]||null,lang,x[5]||null,x[4]||null]);
     });
   });
@@ -3086,7 +3087,82 @@ function levA(a,b){
   for(i=1;i<=m;i++)for(j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
   return d[m][n];
 }
+/* Япон: танигч ханзаар (学校), хичээл канагаар (がっこう) бичдэг тул хоёуланг нь ромажи болгож харьцуулна */
+var KANA_R=null,JA_RD=null,JA_MAXK=1;
+function kanaTable(){
+  if(KANA_R)return KANA_R;KANA_R={};
+  var rows="あa いi うu えe おo かka きki くku けke こko さsa しshi すsu せse そso たta ちchi つtsu てte とto なna にni ぬnu ねne のno はha ひhi ふfu へhe ほho まma みmi むmu めme もmo やya ゆyu よyo らra りri るru れre ろro わwa をo んn がga ぎgi ぐgu げge ごgo ざza じji ずzu ぜze ぞzo だda ぢji づzu でde どdo ばba びbi ぶbu べbe ぼbo ぱpa ぴpi ぷpu ぺpe ぽpo ぁa ぃi ぅu ぇe ぉo ゔvu".split(" ");
+  rows.forEach(function(x){KANA_R[x.charAt(0)]=x.slice(1);});
+  return KANA_R;
+}
+function kanaRomaji(s){
+  var T=kanaTable(),out="",i,c,n,r;
+  /* катакана → хирагана */
+  s=String(s).replace(/[ァ-ヶ]/g,function(k){return String.fromCharCode(k.charCodeAt(0)-0x60);});
+  for(i=0;i<s.length;i++){
+    c=s.charAt(i);n=s.charAt(i+1);
+    if(c==="っ"){var nx=kanaRomaji(n);if(nx)out+=nx.charAt(0);continue;}
+    if(c==="ー"){var v=out.match(/[aeiou]$/);if(v)out+=v[0];continue;}
+    r=T[c];
+    if(r==null){out+=c;continue;}
+    if(n&&"ゃゅょ".indexOf(n)>=0&&/i$/.test(r)){
+      var y={"ゃ":"a","ゅ":"u","ょ":"o"}[n],base=r.slice(0,-1);
+      out+=(/^(sh|ch|j)$/.test(base)?base:base+"y")+y;i++;continue;
+    }
+    out+=r;
+  }
+  return out;
+}
+function jaReadings(){
+  if(JA_RD)return JA_RD;JA_RD={};
+  WORDS.forEach(function(w){
+    if(w[6]!=="ja"||!w[7])return;
+    var k=String(w[1]).replace(/\s*[(（][^)）]*[)）]/g,"").replace(/[\s〜~・]/g,""),r=String(w[7]).toLowerCase().replace(/[^a-zāēīōū]/g,"");
+    if(!k||!r||!/[一-鿿々]/.test(k))return;
+    if(!JA_RD[k])JA_RD[k]=r;
+    /* 食べる (taberu) → 食 = ta: хувилсан хэлбэр (食べて) ч таарна */
+    var m=k.match(/^(.*[一-鿿々])([ぁ-ん]+)$/);
+    if(m){var suf=kanaRomaji(m[2]);if(r.slice(-suf.length)===suf&&r.length>suf.length&&!JA_RD[m[1]])JA_RD[m[1]]=r.slice(0,-suf.length);}
+    JA_MAXK=Math.max(JA_MAXK,k.length);
+  });
+  /* үгийн санд толгой үг болж ороогүй ч хичээл, түүхэнд байнга гардаг үгс (ханз → уншлага) */
+  ("私:watashi 毎日:mainichi 毎朝:maiasa 家族:kazoku 日本語:nihongo 日本:nihon 面白:omoshiro ご飯:gohan 朝ご飯:asagohan 昼ご飯:hirugohan 晩ご飯:bangohan 何:nani 先生:sensei 学生:gakusei 大学:daigaku 大学生:daigakusei "+
+   "本:hon 飲:no 買:ka 読:yo 書:ka 話:hana 聞:ki 来:ki 帰:kae 起:o 寝:ne 勉強:benkyou 仕事:shigoto 家:uchi 父:chichi 母:haha 弟:otouto 兄:ani 姉:ane 妹:imouto 医者:isha 料理:ryouri 上手:jouzu 好:su 楽:tano "+
+   "雨:ame 夏:natsu 冬:fuyu 春:haru 秋:aki 東京:toukyou 京都:kyouto 店長:tenchou 敬語:keigo 難:muzuka 最初:saisho 午後:gogo 午前:gozen 歩:aru 乗:no 疲:tsuka 肉:niku 魚:sakana 一日:ichinichi 去年:kyonen 初:haji 多:oo 古:furu "+
+   "お寺:otera 寺:tera 親切:shinsetsu 教:oshi 思:omo 全部:zenbu 円:en 日曜日:nichiyoubi 月曜日:getsuyoubi 水:mizu 茶:cha お茶:ocha 行:i 見:mi 食:ta 会:a 作:tsuku 使:tsuka 待:ma 持:mo 住:su 働:hatara 休:yasu 入:hai 出:de 今:ima")
+    .split(" ").forEach(function(p){var x=p.split(":");if(!JA_RD[x[0]])JA_RD[x[0]]=x[1];JA_MAXK=Math.max(JA_MAXK,x[0].length);});
+  return JA_RD;
+}
+function jaKey(t){
+  var s=cleanSpeak(String(t)).replace(/[\s、。！？!?,.「」…]/g,""),D=jaReadings(),out="",i=0;
+  /* танигч тоог цифрээр бичдэг: 4人 → よにん, 6時 → ろくじ */
+  var NUM=["ぜろ","いち","に","さん","よん","ご","ろく","なな","はち","きゅう","じゅう"];
+  s=s.replace(/(\d+)(人|時|分)?/g,function(m,d,c){
+    var n=parseInt(d,10);if(n>10)return m;
+    var k=NUM[n];
+    if(c==="人")return n===1?"ひとり":n===2?"ふたり":n===4?"よにん":k+"にん";
+    if(c==="時")return (n===4?"よ":n===7?"しち":n===9?"く":k)+"じ";
+    if(c==="分")return k+"ふん";
+    return k;
+  });
+  while(i<s.length){
+    var hit=null;
+    if(/[一-鿿々]/.test(s.charAt(i))||s.length>i+1){
+      for(var L=Math.min(JA_MAXK,s.length-i);L>=1;L--){var sub=s.substr(i,L);if(D[sub]&&/[一-鿿々]/.test(sub)){hit=sub;break;}}
+    }
+    if(hit){out+="\u0001"+D[hit]+"\u0001";i+=hit.length;}else{out+=s.charAt(i);i++;}
+  }
+  /* үлдсэн канаг ромажи болгоно (толь бичгийн хэсгийг хамгаална) */
+  out=out.split("\u0001").map(function(p,k){return k%2?p:kanaRomaji(p);}).join("");
+  return out.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z一-鿿]/g,"")
+    .replace(/ou/g,"o").replace(/([aeiou])\1+/g,"$1").replace(/ei/g,"e");
+}
 function speechSim(a,target){
+  if(state.lang==="ja"){
+    var tj=jaKey(target),hj=jaKey(a);if(!tj||!hj)return 0;
+    if(hj.indexOf(tj)>=0)return 1;
+    return Math.max(0,1-lev(hj,tj)/Math.max(hj.length,tj.length));
+  }
   if(state.lang==="zh"){
     var ta=zhKey(target),aa=zhKey(a);if(!ta.length||!aa.length)return 0;
     if(("|"+aa.join("|")+"|").indexOf("|"+ta.join("|")+"|")>=0)return 1;
@@ -5583,7 +5659,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20260927-8";
+var BUILD="20260927-9";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
