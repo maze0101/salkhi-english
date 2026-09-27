@@ -3101,6 +3101,76 @@ function noteSpeech(sc){
   var k=dkey(new Date());state.speech.last=k;
   sset("speech",state.speech);
 }
+/* дуудлагын нарийвчилсан үнэлгээ: зорилтот өгүүлбэрийн аль нэгж танигдсаныг LCS-ээр тааруулж, алдсан авианд зөвлөгөө өгнө */
+var PRON_TIPS={
+en:[[/th/,"th: хэлний үзүүрийг дээд шүдэндээ хүргээд үлээ — «с», «з», «ф» биш."],[/^w|[^h]w/,"w: уруулаа дугуйлаад «у»-гаар эхэл — «в» биш."],[/v/,"v: доод уруулаа дээд шүдэнд хүргэж дуугарга."],[/r/,"r: хэлээ таглайд хүргэхгүй, бага зэрэг ар тийш нугал — монгол «р» шиг чичирхийлүүлэхгүй."],[/(ed|s)$/,"Төгсгөлийн -s, -ed-ийг залгилгүй тод хэл."],[/[bdgkpt]$/,"Үгийн төгсгөлийн гийгүүлэгчийг (t, d, k) бүү залги."],[/l/,"l: хэлний үзүүрийг дээд шүдний ард тулга."]],
+de:[[/ü/,"ü: «и» хэлэнгээ уруулаа «ү» шиг дугуйл."],[/ö/,"ö: «э» хэлэнгээ уруулаа «ө» шиг дугуйл."],[/sch/,"sch = «ш»."],[/ch/,"ch: ich, nicht-д зөөлөн «хь»; ach, Buch-т хоолойн «х»."],[/^s[pt]/,"Үгийн эхэнд sp, st = «шп», «шт»."],[/z/,"z = «ц» (Zeit — цайт)."],[/ei/,"ei = «ай», ie = урт «ии»."],[/w/,"w = «в», v ихэвчлэн «ф»."],[/r/,"r: хоолойн ар талаар, чичирхийлүүлэхгүй."],[/ä/,"ä = «э»."]],
+ru:[[/ы/,"ы: «и»-г хэлний үндсээр, уруулаа татахгүй хэл."],[/ь/,"ь (зөөлний тэмдэг): өмнөх гийгүүлэгчийг зөөлрүүл."],[/щ/,"щ = урт зөөлөн «шш»."],[/р/,"р: хэлний үзүүрийг чичирхийлүүл."],[/о/,"Өргөлтгүй «о» нь «а» шиг сонсогддог (молоко — малако)."],[/[её]/,"е = «йэ», ё = «йо» — эхэнд нь «й» бий."],[/[жшц]/,"ж, ш, ц үргэлж хатуу — араас нь «и» ирсэн ч «ы» шиг сонсогдоно."]],
+ja:[[/[っッ]/,"っ (жижиг цу): дараагийн гийгүүлэгчийн өмнө богино зогсолт хий."],[/ー|おう|えい|うう|いい/,"Урт эгшгийг бүтэн хоёр цохилт үргэлжлүүл."],[/[らりるれろラリルレロ]/,"ら行: «р», «л» хоёрын дунд — хэлээ таглайд нэг л удаа цохи."],[/[つツ]/,"つ = «ц»."],[/[ふフ]/,"ふ: уруулаараа зөөлөн үлээ — англи f биш."],[/ん/,"ん-г бүтэн нэг цохилт хэл."]],
+ko:[["tense","ㄲ ㄸ ㅃ ㅆ ㅉ: хоолойгоо чангалж, амьсгал гаргалгүй хэл."],["asp","ㅊ ㅋ ㅌ ㅍ: хүчтэй амьсгалтай хэл."],["eo","ㅓ: амаа нээлттэй, уруулаа дугуйлахгүй «о» — ㅗ-оос ялгаатай."],["eu","ㅡ: уруулаа дугуйлахгүй «ы»."],["final","Үеийн төгсгөлийн гийгүүлэгчийг (받침) тод хэл."]],
+zh:[[/^(zh|ch|sh)/,"zh, ch, sh: хэлний үзүүрийг дээш нугалж хэл."],[/^[zcs](?!h)/,"z, c, s: хэлээ шүдэнд ойртуулж «дз», «ц», «с»."],[/^[jqx]/,"j, q, x: уруулаа татаж «жи», «чи», «ши» шиг зөөлөн."],[/v/,"ü: «и» хэлэнгээ уруулаа дугуйл."],[/^r/,"r: англи r, монгол «ж» хоёрын дунд."],[/./,"Аялга (tone): mā má mǎ mà — удаан сонсоод аяыг нь дагаж хэл."]]
+};
+function koTipKeys(s){
+  var out=[];
+  Array.from(s).forEach(function(c){
+    var n=c.charCodeAt(0)-0xAC00;if(n<0||n>11171)return;
+    var ini=Math.floor(n/588),med=Math.floor(n%588/28),fin=n%28;
+    if([1,4,8,10,13].indexOf(ini)>=0)out.push("tense");
+    if([14,15,16,17].indexOf(ini)>=0)out.push("asp");
+    if(med===4)out.push("eo");if(med===18)out.push("eu");
+    if(fin)out.push("final");
+  });
+  return out;
+}
+function pronUnits(t){
+  if(state.lang==="zh"){var cs=Array.from(String(t)).filter(function(c){return /[㐀-鿿]/.test(c);});var ks=zhKey(cs.join(""));return cs.map(function(c,i){return [c,ks[i]||c];});}
+  if(state.lang==="ja")return Array.from(cleanSpeak(String(t))).filter(function(c){return !/[\s、。！？!?,.]/.test(c);}).map(function(c){return [c,c];});
+  return cleanSpeak(String(t)).split(/\s+/).filter(Boolean).map(function(w){return [w,nz(w)];}).filter(function(u){return u[1];});
+}
+function pronDiff(heard,target){
+  var T=pronUnits(target),Hd=pronUnits(heard),m=T.length,n=Hd.length,d=[],i,j;
+  function eq(a,b){return a===b||(a.length>=4&&b.length>=4&&1-lev(a,b)/Math.max(a.length,b.length)>=0.75);}
+  for(i=0;i<=m;i++){d[i]=[];for(j=0;j<=n;j++)d[i][j]=0;}
+  for(i=m-1;i>=0;i--)for(j=n-1;j>=0;j--)d[i][j]=eq(T[i][1],Hd[j][1])?d[i+1][j+1]+1:Math.max(d[i+1][j],d[i][j+1]);
+  var ok=T.map(function(){return false;});i=0;j=0;
+  while(i<m&&j<n){if(eq(T[i][1],Hd[j][1])){ok[i]=true;i++;j++;}else if(d[i+1][j]>=d[i][j+1])i++;else j++;}
+  return T.map(function(u,k){return {t:u[0],key:u[1],ok:ok[k]};});
+}
+function pronTips(missed){
+  var L=state.lang,tips=[],tbl=PRON_TIPS[L]||[];
+  missed.forEach(function(u){
+    var s=L==="zh"?u.key:String(u.t).toLowerCase(),keys=L==="ko"?koTipKeys(s):null;
+    tbl.forEach(function(r){
+      var hit=keys?keys.indexOf(r[0])>=0:r[0].test(s);
+      if(hit&&tips.indexOf(r[1])<0)tips.push(r[1]);
+    });
+  });
+  if(L==="zh"&&tips.length>1){var tone=tips.filter(function(t){return /Аялга/.test(t);});tips=tips.filter(function(t){return !/Аялга/.test(t);}).slice(0,1).concat(tone);}
+  return tips.slice(0,2);
+}
+function pronReport(st,alts,target,sc,good){
+  var best=alts[0],bs=-1;alts.forEach(function(a){var s=speechSim(a,target);if(s>bs){bs=s;best=a;}});
+  var diff=pronDiff(best,target),missed=diff.filter(function(u){return !u.ok;});
+  if(sc>=95)missed=[];
+  /* япон танигч ихэвчлэн ханзаар бичдэг тул хана/кана таарахгүй бол тэмдэглэхгүй */
+  var jaKanji=state.lang==="ja"&&/[一-鿿]/.test(best)&&!/[一-鿿]/.test(target);
+  if(jaKanji||(state.lang==="ja"&&diff.filter(function(u){return u.ok;}).length<diff.length*0.3)){missed=[];diff=[];}
+  var sep=state.lang==="zh"||state.lang==="ja"?"":" ";
+  var line=h("div",{style:"font-size:20px;margin:6px 0;font-weight:700;line-height:1.5"});
+  diff.forEach(function(u,k){
+    var bad=missed.indexOf(u)>=0;
+    line.append(h("span",{style:bad?"color:var(--danger);text-decoration:underline wavy;text-underline-offset:4px":"color:var(--ok)"},u.t));
+    if(sep&&k<diff.length-1)line.append(sep);
+  });
+  st.textContent="";st.className="fb "+(good?"ok":"bad");
+  st.append(h("div",null,good?"Зөв дуудлаа! Оноо "+sc+"%":"Оноо "+sc+"% · Танигдсан: «"+best+"»"));
+  if(diff.length>1||missed.length)st.append(line);
+  if(!good&&!missed.length)st.append(h("div",{class:"small",style:"font-weight:600;color:var(--ink);margin-top:4px"},"💡 🐢 Удаан горимд шилжүүлээд сонсоод, дараа нь дахин хэлээрэй."));
+  if(missed.length){
+    st.append(h("div",{class:"muted small",style:"font-weight:600"},good?"Бараг төгс! Улаан хэсгийг анхаараарай.":"Улаанаар тэмдэглэсэн хэсгийг дахин хэлж үзээрэй."));
+    pronTips(missed).forEach(function(t){st.append(h("div",{class:"small",style:"font-weight:600;color:var(--ink);margin-top:4px"},"💡 "+t));});
+  }
+}
 function checkSpeech(target,st,xp){
   st.className="fb";st.textContent="Микрофон асааж байна...";
   askMic(function(){
@@ -3112,8 +3182,9 @@ function checkSpeech(target,st,xp){
       rec.onresult=function(e){
         var alts=[];for(var i=0;i<e.results[0].length;i++)alts.push(e.results[0][i].transcript);
         var sc=speechScore(alts,target);noteSpeech(sc);
-        if(speechOk(alts,target)){st.className="fb ok";st.textContent="Зөв дуудлаа! Оноо "+sc+"% · +"+xp+" XP";addXP(xp);addStar();celebrate();}
-        else{st.className="fb bad";st.textContent="Танигдсан: «"+alts[0]+"». Оноо "+sc+"%. Дахин оролдоорой.";}
+        var good=speechOk(alts,target);
+        pronReport(st,alts,target,sc,good);
+        if(good){addXP(xp);addStar();celebrate();}
       };
       rec.onerror=function(){st.className="fb bad";st.textContent="Микрофон ажиллахгүй байна. Зөвшөөрлөө шалгана уу.";};
       rec.start();
@@ -4100,11 +4171,12 @@ function viewStory(){
     root.append(h("p",{class:"muted small",style:"margin:0"},"Үгэн дээр дарвал утга нь гарна. 🇲🇳 товч өгүүлбэрийн орчуулгыг харуулна."));
     var ul=h("ul",{class:"exl"});
     st.s.forEach(function(x,i){
-      var show=s.all||s.tr[i];
+      var show=s.all||s.tr[i],fb=h("div",{class:"fb",style:"display:none","aria-live":"polite"});
+      var mic=SR?h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":"Хэлж үзэх",onclick:function(){fb.style.display="block";checkSpeech(cleanSpeak(x[0]),fb,2);}},"🎤"):null;
       ul.append(h("li",null,
-        h("div",{style:"display:flex;gap:8px;align-items:center"},h("b",{style:"flex:1"},tapWords(x[0],x[1])),
-          h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-pressed":String(!!show),"aria-label":"Орчуулга",onclick:function(){s.tr[i]=!s.tr[i];render();}},"🇲🇳"),speakBtn(x[0])),
-        show?h("span",{class:"muted"},x[1]):null));
+        h("div",{style:"display:flex;gap:6px;align-items:center"},h("b",{style:"flex:1"},tapWords(x[0],x[1])),
+          h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-pressed":String(!!show),"aria-label":"Орчуулга",onclick:function(){s.tr[i]=!s.tr[i];render();}},"🇲🇳"),speakBtn(x[0]),mic),
+        show?h("span",{class:"muted"},x[1]):null,fb));
     });
     root.append(ul);
     root.append(h("div",{class:"row"},h("button",{class:"btn primary",onclick:function(){s.stage="quiz";s.qi=0;s.score=0;s.picked=null;s.opts=null;render();window.scrollTo(0,0);}},"Асуултад хариулах")));
@@ -5483,7 +5555,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20260927-3";
+var BUILD="20260927-4";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
