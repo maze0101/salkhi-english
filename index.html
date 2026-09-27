@@ -178,6 +178,11 @@ p+p{margin-top:10px}
 .modes{position:absolute;right:16px;top:16px;z-index:2;display:flex;background:rgba(255,255,255,.22);border-radius:999px;padding:3px;backdrop-filter:blur(6px)}
 .modes button{padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#fff}
 .modes button[aria-pressed="true"]{background:#fff;color:#2B2A55}
+.forbtn{position:absolute;right:16px;top:58px;z-index:2;padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#fff;background:rgba(255,255,255,.22);backdrop-filter:blur(6px)}
+.gameview.mnview,.gameview.mnview iframe{background:var(--bg)}
+.gameview.mnview .bar{background:#1F5F5B;border-color:#174a47;color:#fff}
+.gameview.mnview .bar button{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff}
+.gameview.mnview .bar span{color:#E9C46A}
 .hero .txt{top:60px}
 
 /* adult: calm, focused, sharper */
@@ -2826,6 +2831,7 @@ function renderLevels(){
 }
 function renderModes(){
   var el=document.getElementById("modes");el.textContent="";
+  if(!document.getElementById("forbtn"))el.after(h("button",{class:"forbtn",id:"forbtn",type:"button",onclick:openForeign},"🌍 Гадаад иргэн · Foreigner"));
   [["adult","Том хүн"],["senior","Ахмад"],["kid","Хүүхэд"]].forEach(function(m){
     el.append(h("button",{"aria-pressed":String(state.mode===m[0]),onclick:function(){
       var old=state.mode;
@@ -5355,16 +5361,19 @@ function mockResult(root,E){
 }
 /* ---------- games: the Gobi chess/draughts app, shown full screen ---------- */
 var GAMES_URL="https://maze0101.github.io/gobi-chess/gobi-chess.html";
-function openGames(){
+function openGames(){openView(GAMES_URL,"Шатар, даам","ШАТАР · ДААМ","← Салхи руу буцах");}
+/* гадаад иргэн: монгол хэл заах хуудсыг бүтэн дэлгэцээр нээнэ; сонголтыг санаж дараа нээхэд шууд харуулна */
+function openForeign(){sset("foreign",1);openView("learn-mongolian.html","Learn Mongolian","LEARN MONGOLIAN","← Салхи · Back",function(){sset("foreign",0);},"mnview");}
+function openView(url,label,title,backText,onClose,cls){
   if(document.querySelector(".gameview"))return;
   var prevOverflow=document.body.style.overflow;
-  function close(){view.remove();document.body.style.overflow=prevOverflow;document.removeEventListener("keydown",onKey);}
+  function close(){view.remove();document.body.style.overflow=prevOverflow;document.removeEventListener("keydown",onKey);if(onClose)onClose();}
   function onKey(e){if(e.key==="Escape")close();}
-  var view=h("div",{class:"gameview",role:"dialog","aria-modal":"true","aria-label":"Шатар, даам"},
+  var view=h("div",{class:"gameview"+(cls?" "+cls:""),role:"dialog","aria-modal":"true","aria-label":label},
     h("div",{class:"bar"},
-      h("button",{type:"button",onclick:close},"← Салхи руу буцах"),
-      h("span",null,"ШАТАР · ДААМ")),
-    h("iframe",{src:GAMES_URL,title:"Шатар, даам",allow:"clipboard-write"}));
+      h("button",{type:"button",onclick:close},backText),
+      h("span",null,title)),
+    h("iframe",{src:url,title:label,allow:"clipboard-write; autoplay"}));
   document.body.style.overflow="hidden";
   document.body.append(view);
   document.addEventListener("keydown",onKey);
@@ -5571,7 +5580,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20260927-5";
+var BUILD="20260927-6";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
@@ -5619,6 +5628,7 @@ function skyUpdate(now){
 }
 skyUpdate();setInterval(skyUpdate,60000);
 checkNotif();setInterval(checkNotif,30000);syncNotifMeta();
+if(sget("foreign",0)&&location.hash!=='#daily')openForeign();
 if(location.hash==='#daily'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}openDaily();}
 try{navigator.serviceWorker.addEventListener('message',function(e){if(e.data&&e.data.type==='daily')openDaily();});}catch(e){}
 document.addEventListener("visibilitychange",function(){if(!document.hidden){checkUpdate(false);checkNotif();skyUpdate();}});
