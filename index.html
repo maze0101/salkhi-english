@@ -5494,6 +5494,21 @@ function makeCert(c){
     celebrate(true,true);
   }catch(e){toast("Гэрчилгээ үүсгэж чадсангүй");}
 }
+/* гадаад найздаа монгол хэл заах хуудас (англи интерфэйстэй) */
+function mnCard(){
+  var url=new URL("learn-mongolian.html",location.href).href;
+  return h("div",{class:"note",style:"margin-top:22px"},
+    h("div",{style:"font-weight:700"},"🇲🇳 Гадаад найздаа монгол хэл заа"),
+    h("p",{class:"muted small",style:"margin:4px 0 0"},"Англи хэлтэй хуудас: кирилл үсэг, хэрэгтэй хэллэг, 700+ үг, сорил — бүгд монгол дуутай."),
+    h("div",{class:"row"},
+      h("a",{class:"btn",href:url,target:"_blank",rel:"noopener",style:"text-decoration:none;color:inherit"},"Нээх"),
+      h("button",{class:"btn primary",type:"button",onclick:function(){
+        var t="Learn Mongolian with me! Alphabet, phrases and words with audio: "+url;
+        if(navigator.share)navigator.share({title:"Learn Mongolian",url:url,text:"Learn Mongolian with me!"}).catch(function(){});
+        else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){toast("Холбоос хуулагдлаа");},function(){toast(url,6000);});
+        else toast(url,6000);
+      }},"📤 Хуваалцах")));
+}
 function viewStats(){
   var root=h("div"),p=WORDS;
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
@@ -5529,6 +5544,7 @@ function viewStats(){
   badges.forEach(function(b){tg.append(h("div",{class:"tr"+(b[2]?"":" lock"),title:b[1]},h("i",null,b[0]),b[1]));});
   root.append(tg);
   root.append(certPanel());
+  root.append(mnCard());
   var names=["Ням","Дав","Мяг","Лха","Пүр","Баа","Бям"],days=[],max=1,i,d;
   for(i=6;i>=0;i--){d=new Date();d.setDate(d.getDate()-i);var x=state.daily[dkey(d)]||0;days.push([names[d.getDay()],x]);if(x>max)max=x;}
   root.append(h("p",{class:"muted small",style:"margin-top:18px"},"Сүүлийн 7 хоногийн XP"));
@@ -5555,7 +5571,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20260927-4";
+var BUILD="20260927-5";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){

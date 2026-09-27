@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learn Mongolian · Salkhi</title>
+<meta name="description" content="Learn Mongolian: Cyrillic alphabet with audio, everyday phrases, 700+ words and quizzes.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#1F5F5B">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap&subset=cyrillic,cyrillic-ext" rel="stylesheet">
+<style>
+:root{--bg:#F4F5F2;--surface:#fff;--ink:#1D2320;--ink-2:#5F6B66;--line:#E1E5E0;--brand:#1F5F5B;--brand-ink:#fff;--accent:#E9C46A;--ok:#2A8C5A;--bad:#C0392B;--shadow:0 2px 10px rgba(20,40,35,.07)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101614;--surface:#18201D;--ink:#E8EEEB;--ink-2:#9AA8A2;--line:#2A3531;--brand:#5FB3A8;--brand-ink:#0C1412;--accent:#E9C46A;--ok:#4CC38A;--bad:#F07167;--shadow:none}}
+:root[data-theme="dark"]{--bg:#101614;--surface:#18201D;--ink:#E8EEEB;--ink-2:#9AA8A2;--line:#2A3531;--brand:#5FB3A8;--brand-ink:#0C1412;--accent:#E9C46A;--ok:#4CC38A;--bad:#F07167;--shadow:none}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Manrope,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px 110px}
+header{padding:28px 0 8px}
+header h1{margin:0;font-size:30px;letter-spacing:-.02em}
+header p{margin:4px 0 0;color:var(--ink-2)}
+.flag{display:inline-block;width:34px;height:22px;border-radius:4px;vertical-align:-3px;margin-right:8px;background:linear-gradient(90deg,#C4272F 33.3%,#015197 33.3% 66.6%,#C4272F 66.6%)}
+nav{position:fixed;left:12px;right:12px;bottom:12px;max-width:560px;margin:0 auto;display:flex;background:var(--surface);border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,.18);z-index:5;border:1px solid var(--line)}
+nav button{flex:1;padding:14px 4px;font-weight:700;font-size:14px;color:var(--ink-2)}
+nav button[aria-current="page"]{color:var(--brand)}
+h2{font-size:21px;margin:20px 0 8px}
+.muted{color:var(--ink-2)}.small{font-size:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow);margin:10px 0}
+.btn{padding:12px 16px;border-radius:14px;font-weight:700;border:1px solid var(--line);background:var(--surface)}
+.btn.primary{background:var(--brand);color:var(--brand-ink);border-color:transparent}
+.row{display:flex;gap:10px;margin-top:12px}.row>*{flex:1}
+.abc{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px}
+.abc button{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:10px 2px;font-size:24px;font-weight:800;line-height:1.1}
+.abc button small{display:block;font-size:12px;color:var(--ink-2);font-weight:600;margin-top:3px}
+.abc button[aria-pressed="true"]{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 14%,var(--surface))}
+.big{font-size:56px;font-weight:800;line-height:1}
+.mn{font-size:24px;font-weight:800}
+.rom{color:var(--brand);font-weight:700}
+.list .it{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.list .it>div{flex:1}
+.spk{flex:none;width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:18px}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.seg button{padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:14px;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--brand);color:var(--brand-ink);border-color:transparent}
+.fc{min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;user-select:none}
+.fc .en{font-size:30px;font-weight:800}
+.opt{display:block;width:100%;text-align:left;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);font-weight:600;margin-top:10px}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,var(--surface))}
+.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 13%,var(--surface))}
+.bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;background:var(--brand)}
+.stat{display:flex;gap:10px}.stat>div{flex:1;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px}
+.stat b{display:block;font-size:22px}
+select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
+.theme{position:absolute;top:18px;right:16px;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
+header{position:relative}
+.toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;z-index:9;max-width:90vw}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">🌓</button>
+  <h1><span class="flag" aria-hidden="true"></span>Learn Mongolian</h1>
+  <p>Alphabet, phrases and 700+ everyday words — with native-style audio.</p>
+</header>
+<main id="main"></main>
+</div>
+<nav id="nav" aria-label="Sections"></nav>
+
+<script src="ai-config.js"></script>
+<script src="words-en.js"></script>
+<script src="words2-en.js"></script>
+<script src="words3-en.js"></script>
+<script src="words4-en.js"></script>
+<script src="words5-en.js"></script>
+<script src="words6-en.js"></script>
+<script src="words7-en.js"></script>
+<script>
+(function(){
+"use strict";
+/* ---------- data ---------- */
+var ABC=[
+["А а","a","as in 'father'","аав","father"],["Б б","b","","бороо","rain"],["В в","v","between English v and w","ваар","vase"],
+["Г г","g","","гэр","ger, home"],["Д д","d","","долоо","seven"],["Е е","ye","'ye' as in 'yes'","ес","nine"],
+["Ё ё","yo","'yo' as in 'yonder'","ёс","custom, tradition"],["Ж ж","j","as in 'jump'","жимс","fruit"],["З з","z","closer to 'dz'","зам","road"],
+["И и","i","as in 'machine'","ишиг","baby goat"],["Й й","i","short 'i', after vowels","далай","sea"],["К к","k","loanwords only","кино","movie"],
+["Л л","l","breathy — tongue on the palate, air along the sides","луу","dragon"],["М м","m","","морь","horse"],["Н н","n","","нар","sun"],
+["О о","o","open 'o' as in 'hot' (British)","ой","forest"],["Ө ө","ö","like German ö / 'u' in 'burn'","өвөө","grandfather"],["П п","p","loanwords mostly","паспорт","passport"],
+["Р р","r","rolled","рашаан","mineral spring"],["С с","s","","сар","moon, month"],["Т т","t","","тэмээ","camel"],
+["У у","u","like 'o' in 'bought', lips rounded","ус","water"],["Ү ү","ü","like German ü / French u","үхэр","cow"],["Ф ф","f","loanwords only","фото","photo"],
+["Х х","kh","throaty, like Scottish 'loch'","хот","city"],["Ц ц","ts","as in 'cats'","цас","snow"],["Ч ч","ch","as in 'church'","чих","ear"],
+["Ш ш","sh","","шөл","soup"],["Щ щ","shch","Russian loanwords only","щётка","brush"],["Ъ ъ","—","hard sign, rare","",""],
+["Ы ы","y","appears in endings like -ын","малын","of the livestock"],["Ь ь","i","soft sign — softens the consonant before it","хонь","sheep"],
+["Э э","e","as in 'bed'","эмээ","grandmother"],["Ю ю","yu","'yu' as in 'you'","юм","thing"],["Я я","ya","'ya' as in 'yard'","ямаа","goat"]
+];
+var PHRASES=[
+["Greetings",[["Сайн байна уу?","Hello! (lit. Are you well?)"],["Сайн. Та сайн байна уу?","Fine. And you?"],["Өглөөний мэнд","Good morning"],["Баяртай","Goodbye"],["Дараа уулзъя","See you later"],["Сайн яваарай","Have a good trip (to someone leaving)"],["Сайхан амраарай","Have a good rest"]]],
+["Basics",[["Тийм","Yes"],["Үгүй","No"],["Баярлалаа","Thank you"],["Зүгээр ээ","It's fine / You're welcome"],["Уучлаарай","Sorry / Excuse me"],["Би ойлгохгүй байна","I don't understand"],["Удаан ярина уу","Please speak slowly"],["Та англиар ярьдаг уу?","Do you speak English?"]]],
+["Meeting people",[["Таны нэр хэн бэ?","What is your name?"],["Миний нэрийг Анна гэдэг","My name is Anna"],["Танилцсандаа баяртай байна","Nice to meet you"],["Та хаанаас ирсэн бэ?","Where are you from?"],["Би Америкаас ирсэн","I'm from America"],["Би монгол хэл сурч байна","I am learning Mongolian"]]],
+["Food & drink",[["Цэс өгөөч","The menu, please"],["Тооцоогоо өгөөч","The bill, please"],["Амттай байна","It's delicious"],["Сүүтэй цай","Milk tea"],["Би цагаан хоолтон","I'm vegetarian"],["Сайхан хооллоорой","Enjoy your meal"],["Эрүүл мэндийн төлөө!","Cheers! (To health!)"]]],
+["Getting around",[["Энэ хэд вэ?","How much is this?"],["Жорлон хаана байна вэ?","Where is the toilet?"],["Такси дуудаж өгөөч","Please call a taxi"],["Энд зогсоорой","Stop here, please"],["Хэдэн цаг болж байна вэ?","What time is it?"],["Тусална уу!","Help!"]]],
+["Culture",[["Нохой хорио!","Hold the dogs! (called out when arriving at a ger)"],["Сар шинэдээ сайхан шинэлээрэй","Happy Lunar New Year (Tsagaan Sar)"],["Амар байна уу?","Are you well? (traditional greeting at Tsagaan Sar)"],["Наадмын мэнд!","Happy Naadam!"]]],
+["Numbers",[["нэг","1"],["хоёр","2"],["гурав","3"],["дөрөв","4"],["тав","5"],["зургаа","6"],["долоо","7"],["найм","8"],["ес","9"],["арав","10"],["хорь","20"],["зуу","100"],["мянга","1,000"]]]
+];
+var CATS=[["all","All"],["basic","Everyday"],["verbs","Verbs"],["adjectives","Adjectives"],["time","Time"],["people","People"],["places","Places"],["kitchen","Food"],["weather","Weather"],["health","Health"],["home","Home"],["shopping","Shopping"]];
+var WORDS=[];
+(function(){
+  var seen={};
+  String((window.WORDS_MORE||{}).en||"").split("\n").forEach(function(line){
+    var x=line.trim().split("|");if(x.length<3||!x[1]||!x[2])return;
+    var mn=x[2].trim();if(seen[mn]||/[a-z]/i.test(mn))return;seen[mn]=1;
+    WORDS.push({lv:x[0],en:x[1],mn:mn,exEn:x[3]||"",exMn:x[4]||"",cat:x[6]||""});
+  });
+})();
+var TR={"а":"a","б":"b","в":"v","г":"g","д":"d","е":"ye","ё":"yo","ж":"j","з":"z","и":"i","й":"i","к":"k","л":"l","м":"m","н":"n","о":"o","ө":"ö","п":"p","р":"r","с":"s","т":"t","у":"u","ү":"ü","ф":"f","х":"kh","ц":"ts","ч":"ch","ш":"sh","щ":"shch","ъ":"","ы":"y","ь":"i","э":"e","ю":"yu","я":"ya"};
+function rom(s){return Array.from(String(s)).map(function(c){var l=c.toLowerCase(),t=TR[l];if(t==null)return c;return c!==l&&t?t[0].toUpperCase()+t.slice(1):t;}).join("");}
+
+/* ---------- storage ---------- */
+function sget(k,d){try{var v=localStorage.getItem("mnlearn:"+k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function sset(k,v){try{localStorage.setItem("mnlearn:"+k,JSON.stringify(v));}catch(e){}}
+var S={tab:"abc",box:sget("box",{}),best:sget("best",0),lv:sget("lv","a1"),cat:"all",theme:sget("theme","auto"),abc:null,fc:null,flip:false,quiz:null,qn:0,qok:0,mode:"en"};
+if(typeof S.box!=="object"||!S.box)S.box={};
+
+/* ---------- helpers ---------- */
+function h(tag,p){var el=document.createElement(tag);if(p)for(var k in p){var v=p[k];if(k==="class")el.className=v;else if(k.indexOf("on")===0)el.addEventListener(k.slice(2),v);else if(v===true)el.setAttribute(k,"");else if(v!==false&&v!=null)el.setAttribute(k,v);}
+  for(var i=2;i<arguments.length;i++)add(el,arguments[i]);return el;}
+function add(el,c){if(c==null||c===false)return;if(Array.isArray(c)){c.forEach(function(x){add(el,x);});return;}el.append(c.nodeType?c:document.createTextNode(String(c)));}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function toast(t){var o=document.querySelector(".toast");if(o)o.remove();var e=h("div",{class:"toast",role:"status"},t);document.body.append(e);setTimeout(function(){e.remove();},2600);}
+
+/* ---------- audio: Mongolian neural voice via the Salkhi worker, device voice as fallback ---------- */
+var TTS=window.SALKHI_AI&&window.SALKHI_AI.url?String(window.SALKHI_AI.url).replace(/\/chat\/?$/,"/tts"):null,cur=null,ttsDown=0;
+function sayDevice(t){
+  try{
+    var v=(speechSynthesis.getVoices()||[]).filter(function(x){return /^mn/i.test(x.lang);})[0];
+    if(!v){toast("Audio unavailable right now — check your connection.");return;}
+    var u=new SpeechSynthesisUtterance(t);u.lang="mn-MN";u.voice=v;u.rate=.9;speechSynthesis.cancel();speechSynthesis.speak(u);
+  }catch(e){}
+}
+function say(t){
+  t=String(t||"").replace(/\s*\([^)]*\)/g,"").trim();if(!t)return;
+  if(cur){try{cur.pause();}catch(e){}}
+  if(!TTS||Date.now()-ttsDown<300000){sayDevice(t);return;}
+  var a=new Audio(TTS+"?l=mn&r=-10&t="+encodeURIComponent(t));cur=a;
+  function fail(){if(cur!==a)return;cur=null;ttsDown=Date.now();sayDevice(t);}
+  a.onerror=fail;var p;try{p=a.play();}catch(e){fail();return;}if(p&&p.catch)p.catch(fail);
+}
+function spk(t){return h("button",{class:"spk",type:"button","aria-label":"Play audio",onclick:function(e){e.stopPropagation();say(t);}},"🔊");}
+
+/* ---------- views ---------- */
+var main=document.getElementById("main"),nav=document.getElementById("nav");
+var TABS=[["abc","Alphabet"],["phr","Phrases"],["words","Words"],["quiz","Quiz"]];
+function renderNav(){nav.textContent="";TABS.forEach(function(t){nav.append(h("button",{type:"button","aria-current":S.tab===t[0]?"page":null,onclick:function(){S.tab=t[0];renderNav();render();window.scrollTo(0,0);}},t[1]));});}
+function render(){
+  main.textContent="";
+  main.append(S.tab==="abc"?vAbc():S.tab==="phr"?vPhr():S.tab==="words"?vWords():vQuiz());
+}
+function vAbc(){
+  var r=h("div");
+  r.append(h("div",{class:"card"},h("b",null,"About Mongolian"),h("ul",{class:"small",style:"margin:6px 0 0;padding-left:18px"},
+    h("li",null,"Written in Cyrillic (35 letters) since the 1940s; the vertical traditional script is also taught in schools."),
+    h("li",null,"Word order is Subject – Object – Verb: «Би цай ууна» = I tea drink."),
+    h("li",null,"Vowel harmony: endings change to match the word's vowels (гэр-т, хот-од)."),
+    h("li",null,"Ө and Ү are the two letters that aren't in Russian — master them first."))));
+  r.append(h("h2",null,"Cyrillic alphabet"));
+  r.append(h("p",{class:"muted small",style:"margin:0 0 8px"},"Tap a letter to hear an example word."));
+  var g=h("div",{class:"abc"});
+  ABC.forEach(function(a,i){g.append(h("button",{type:"button","aria-pressed":String(S.abc===i),onclick:function(){S.abc=i;render();if(a[3])say(a[3]);}},a[0].split(" ")[0],h("small",null,a[1])));});
+  if(S.abc!=null){
+    var a=ABC[S.abc];
+    r.append(h("div",{class:"card",style:"display:flex;gap:14px;align-items:center"},
+      h("div",{class:"big"},a[0]),
+      h("div",{style:"flex:1"},h("div",{class:"rom"},"[ "+a[1]+" ]"),a[2]?h("div",{class:"small muted"},a[2]):null,
+        a[3]?h("div",{style:"margin-top:4px"},h("b",null,a[3]),h("span",{class:"muted"}," · "+rom(a[3])+" — "+a[4])):null),
+      a[3]?spk(a[3]):null));
+  }
+  r.append(g);
+  return r;
+}
+function vPhr(){
+  var r=h("div");
+  PHRASES.forEach(function(sec){
+    r.append(h("h2",null,sec[0]));
+    var l=h("div",{class:"list card",style:"padding:0 16px"});
+    sec[1].forEach(function(p){
+      l.append(h("div",{class:"it"},h("div",null,h("div",{class:"mn",style:"font-size:19px"},p[0]),h("div",{class:"rom small"},rom(p[0])),h("div",{class:"muted small"},p[1])),spk(p[0])));
+    });
+    r.append(l);
+  });
+  return r;
+}
+function pool(){return WORDS.filter(function(w){return w.lv===S.lv&&(S.cat==="all"||w.cat===S.cat);});}
+function filters(r){
+  r.append(h("div",{class:"seg"},[["a1","Beginner"],["b1","Intermediate"],["b2","Advanced"]].map(function(l){
+    return h("button",{type:"button","aria-pressed":String(S.lv===l[0]),onclick:function(){S.lv=l[0];sset("lv",l[0]);S.fc=null;S.quiz=null;render();}},l[1]);})));
+  var sel=h("select",{"aria-label":"Category",onchange:function(){S.cat=sel.value;S.fc=null;S.quiz=null;render();}});
+  CATS.forEach(function(c){var o=h("option",{value:c[0]},c[1]);if(c[0]===S.cat)o.selected=true;sel.append(o);});
+  r.append(sel);
+}
+function pickCard(){
+  var p=pool();if(!p.length)return null;
+  var wt=p.map(function(w){return 1/Math.pow(1+(S.box[w.en]||0),2);}),t=wt.reduce(function(a,b){return a+b;},0)*Math.random();
+  for(var i=0;i<p.length;i++){t-=wt[i];if(t<=0&&(!S.fc||p[i]!==S.fc||p.length===1))return p[i];}
+  return p[0];
+}
+function vWords(){
+  var r=h("div");filters(r);
+  var p=pool(),known=p.filter(function(w){return (S.box[w.en]||0)>=2;}).length;
+  r.append(h("div",{class:"small muted",style:"margin-top:10px"},"Learned "+known+" of "+p.length),h("div",{class:"bar"},h("i",{style:"width:"+(p.length?known/p.length*100:0)+"%"})));
+  if(!S.fc)S.fc=pickCard();
+  var w=S.fc;if(!w){r.append(h("p",{class:"muted"},"No words in this category yet."));return r;}
+  var card=h("div",{class:"card fc",role:"button",tabindex:"0","aria-label":"Flip card",onclick:function(){S.flip=!S.flip;render();if(S.flip)say(w.mn);}},
+    h("div",{class:"en"},w.en),
+    S.flip?[h("div",{class:"mn",style:"margin-top:14px"},w.mn),h("div",{class:"rom"},rom(w.mn)),
+      w.exMn?h("div",{class:"small",style:"margin-top:12px"},h("b",null,w.exMn),h("div",{class:"muted"},w.exEn)):null,
+      h("div",{class:"row",style:"justify-content:center"},spk(w.mn),w.exMn?h("button",{class:"btn",style:"flex:none",type:"button",onclick:function(e){e.stopPropagation();say(w.exMn);}},"🔊 Example"):null)]
+     :h("div",{class:"muted small",style:"margin-top:16px"},"Tap to see it in Mongolian"));
+  card.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();card.click();}});
+  r.append(card);
+  if(S.flip)r.append(h("div",{class:"row"},
+    h("button",{class:"btn",type:"button",onclick:function(){S.box[w.en]=0;sset("box",S.box);S.fc=pickCard();S.flip=false;render();}},"Again"),
+    h("button",{class:"btn primary",type:"button",onclick:function(){S.box[w.en]=Math.min(4,(S.box[w.en]||0)+1);sset("box",S.box);S.fc=pickCard();S.flip=false;render();}},"I knew it")));
+  return r;
+}
+function newQ(){
+  var p=pool();if(p.length<4)p=WORDS.filter(function(w){return w.lv===S.lv;});
+  var w=p[Math.floor(Math.random()*p.length)],seen={},opts=[w];seen[w.en]=seen[w.mn]=1;
+  shuffle(p).some(function(x){if(seen[x.en]||seen[x.mn])return false;seen[x.en]=seen[x.mn]=1;opts.push(x);return opts.length>=4;});
+  S.quiz={w:w,o:shuffle(opts),picked:null};
+  if(S.mode==="mn")setTimeout(function(){say(w.mn);},150);
+}
+function vQuiz(){
+  var r=h("div");filters(r);
+  r.append(h("div",{class:"seg"},[["mn","🔊 Listen → English"],["en","English → Mongolian"]].map(function(m){
+    return h("button",{type:"button","aria-pressed":String(S.mode===m[0]),onclick:function(){S.mode=m[0];S.quiz=null;render();}},m[1]);})));
+  r.append(h("div",{class:"stat"},h("div",null,h("b",null,S.qok+"/"+S.qn),h("span",{class:"small muted"},"this session")),h("div",null,h("b",null,String(S.best)),h("span",{class:"small muted"},"best streak"))));
+  if(!S.quiz)newQ();
+  var q=S.quiz,w=q.w,mnMode=S.mode==="mn";
+  r.append(h("div",{class:"card",style:"text-align:center;margin-top:12px"},
+    mnMode?[h("div",{class:"mn"},w.mn),h("div",{class:"rom"},rom(w.mn)),h("div",{class:"row",style:"justify-content:center"},spk(w.mn))]
+      :h("div",{class:"en",style:"font-size:26px;font-weight:800"},w.en)));
+  q.o.forEach(function(o){
+    var cls="opt";if(q.picked){if(o===w)cls+=" ok";else if(o===q.picked)cls+=" bad";}
+    r.append(h("button",{class:cls,type:"button",disabled:!!q.picked,onclick:function(){
+      q.picked=o;S.qn++;
+      if(o===w){S.qok++;S.run=(S.run||0)+1;if(S.run>S.best){S.best=S.run;sset("best",S.best);}S.box[w.en]=Math.min(4,(S.box[w.en]||0)+1);}
+      else{S.run=0;S.box[w.en]=0;}
+      sset("box",S.box);if(!mnMode)say(w.mn);render();
+    }},mnMode?o.en:[h("b",null,o.mn),h("span",{class:"muted small"}," · "+rom(o.mn))]));
+  });
+  if(q.picked)r.append(h("button",{class:"btn primary",type:"button",style:"width:100%;margin-top:12px",onclick:function(){newQ();render();}},"Next"));
+  return r;
+}
+function applyTheme(){if(S.theme==="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",S.theme);}
+document.getElementById("theme").addEventListener("click",function(){S.theme=S.theme==="auto"?(matchMedia("(prefers-color-scheme: dark)").matches?"light":"dark"):"auto";sset("theme",S.theme);applyTheme();});
+applyTheme();renderNav();render();
+})();
+</script>
+</body>
+</html>
