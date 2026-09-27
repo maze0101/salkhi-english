@@ -178,6 +178,9 @@ p+p{margin-top:10px}
 .modes{position:absolute;right:16px;top:16px;z-index:2;display:flex;background:rgba(255,255,255,.22);border-radius:999px;padding:3px;backdrop-filter:blur(6px)}
 .modes button{padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#fff}
 .modes button[aria-pressed="true"]{background:#fff;color:#2B2A55}
+/* нарийн утсан дээр горимын товчнууд хурдны товчийг дарахгүйн тулд хурдны товчийг зөвхөн дүрсээр харуулна */
+@media (max-width:385px){#ratebtn{padding:0;width:38px}#ratebtn .lbl{display:none}}
+@media (max-width:350px){.modes button{padding:6px 6px;font-size:12px}.forbtn{font-size:12px}.forbtn .lbl{display:none}}
 .forbtn{position:absolute;right:16px;top:58px;z-index:2;padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#fff;background:rgba(255,255,255,.22);backdrop-filter:blur(6px)}
 .gameview.mnview,.gameview.mnview iframe{background:var(--bg)}
 .gameview.mnview .bar{background:#1F5F5B;border-color:#174a47;color:#fff}
@@ -2831,7 +2834,7 @@ function renderLevels(){
 }
 function renderModes(){
   var el=document.getElementById("modes");el.textContent="";
-  if(!document.getElementById("forbtn"))el.after(h("button",{class:"forbtn",id:"forbtn",type:"button",onclick:openForeign},"🌍 Гадаад иргэн · Foreigner"));
+  if(!document.getElementById("forbtn"))el.after(h("button",{class:"forbtn",id:"forbtn",type:"button",onclick:openForeign},"🌍 Гадаад",h("span",{class:"lbl"}," иргэн")," · Foreigner"));
   [["adult","Том хүн"],["senior","Ахмад"],["kid","Хүүхэд"]].forEach(function(m){
     el.append(h("button",{"aria-pressed":String(state.mode===m[0]),onclick:function(){
       var old=state.mode;
@@ -2898,7 +2901,7 @@ document.getElementById("skinbtn").addEventListener("click",openSkins);
 applySkin();
 var rateBtn=h("button",{class:"themebtn",id:"ratebtn",type:"button"});
 document.getElementById("themebtn").after(rateBtn);
-function paintRate(){rateBtn.textContent=state.rate<1?"🐢 Удаан":"🐇 Хэвийн";rateBtn.setAttribute("aria-label","Дууны хурд: "+(state.rate<1?"удаан":"хэвийн")+". Солихын тулд дарна уу");}
+function paintRate(){rateBtn.textContent="";rateBtn.append(state.rate<1?"🐢":"🐇",h("span",{class:"lbl"},state.rate<1?" Удаан":" Хэвийн"));rateBtn.setAttribute("aria-label","Дууны хурд: "+(state.rate<1?"удаан":"хэвийн")+". Солихын тулд дарна уу");}
 rateBtn.addEventListener("click",function(){state.rate=state.rate<1?1:0.65;sset("rate",state.rate);paintRate();toast(state.rate<1?"🐢 Удаан дуудлага":"🐇 Хэвийн хурд");});
 paintRate();
 document.getElementById("themebtn").addEventListener("click",function(){
@@ -5580,7 +5583,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20260927-6";
+var BUILD="20260927-8";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
