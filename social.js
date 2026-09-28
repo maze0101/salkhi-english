@@ -4,7 +4,7 @@
   var SDK="https://www.gstatic.com/firebasejs/10.12.2/";
   var env=null,root=null,db=null,uid=null,prof=null,screen="boot",sub="friends";
   var friendsData=[],listeners=[],msgCount=0,lastSend=0,chatWith=null,quiz=null,busy=false,info="";
-  var BLOCK_KEY="salkhi:blocks",DONE_KEY="salkhi:chdone";
+  var BLOCK_KEY="salkhi:blocks",DONE_KEY="salkhi:chdone",BOARD_KEY="salkhi:board";
 
   function ls(k,d){try{var v=JSON.parse(localStorage.getItem(k));return v==null?d:v;}catch(e){return d;}}
   function lset(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
@@ -50,8 +50,8 @@
   function syncProfile(){
     if(!db||!uid||!prof)return;
     var m=me();
-    prof.xp=m.xp;prof.streak=m.streak;prof.lang=m.lang;
-    db.ref("users/"+uid).update({xp:m.xp,streak:m.streak,lang:m.lang,ts:firebase.database.ServerValue.TIMESTAMP}).catch(function(){});
+    prof.xp=m.xp;prof.streak=m.streak;prof.lang=m.lang;prof.wxp=m.wxp;prof.wk=m.wk;
+    db.ref("users/"+uid).update({xp:m.xp,streak:m.streak,lang:m.lang,wxp:m.wxp,wk:m.wk,ts:firebase.database.ServerValue.TIMESTAMP}).catch(function(){});
   }
   function randCode(){
     var a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",s="";
@@ -64,8 +64,8 @@
     return db.ref("codes/"+code).transaction(function(cur){return cur===null?uid:undefined;}).then(function(res){
       if(!res.committed){if(tries>6)throw new Error("код үүсгэж чадсангүй");return createProfile(name,tries+1);}
       var m=me();
-      prof={name:name,code:code,lang:m.lang,xp:m.xp,streak:m.streak};
-      return db.ref("users/"+uid).set({name:name,code:code,lang:m.lang,xp:m.xp,streak:m.streak,ts:firebase.database.ServerValue.TIMESTAMP});
+      prof={name:name,code:code,lang:m.lang,xp:m.xp,streak:m.streak,wxp:m.wxp,wk:m.wk};
+      return db.ref("users/"+uid).set({name:name,code:code,lang:m.lang,xp:m.xp,streak:m.streak,wxp:m.wxp,wk:m.wk,ts:firebase.database.ServerValue.TIMESTAMP});
     });
   }
   function blocks(){return ls(BLOCK_KEY,[]);}
@@ -75,7 +75,7 @@
   function loadFriends(){
     db.ref("friends/"+uid).once("value").then(function(snap){
       var ids=Object.keys(snap.val()||{});
-      return Promise.all(ids.map(function(id){return db.ref("users/"+id).once("value").then(function(s){var v=s.val();return v?{uid:id,name:v.name,xp:v.xp||0,streak:v.streak||0,lang:v.lang||""}:null;});}));
+      return Promise.all(ids.map(function(id){return db.ref("users/"+id).once("value").then(function(s){var v=s.val();return v?{uid:id,name:v.name,xp:v.xp||0,streak:v.streak||0,lang:v.lang||"",wxp:v.wxp||0,wk:v.wk||""}:null;});}));
     }).then(function(list){
       friendsData=list.filter(Boolean);
       if(screen==="home"&&sub==="friends")paint();
@@ -108,14 +108,22 @@
       }},"📤 Хуваалцах"));
     var inp=h("input",{class:"tin",type:"text",maxlength:"6",autocapitalize:"characters",autocomplete:"off",placeholder:"Найзын код (6 тэмдэгт)","aria-label":"Найзын код"});
     var add=h("button",{class:"btn primary",style:"margin-top:8px",onclick:function(){addFriend(inp.value);inp.value="";}},"➕ Найз нэмэх");
+    /* долоо хоногийн XP нь зөвхөн энэ долоо хоногт шинэчлэгдсэн бол тооцогдоно; өмнөх долоо хоногийнх 0 */
+    var wk=me().wk,week=ls(BOARD_KEY,"week")!=="all";
+    function wx(r){return r.wk===wk?(r.wxp||0):0;}
     var rows=friendsData.slice();
-    rows.push({uid:uid,name:prof.name+" (та)",xp:prof.xp||0,streak:prof.streak||0,lang:prof.lang,self:true});
-    rows.sort(function(a,b){return b.xp-a.xp;});
-    var board=h("div",{style:"margin-top:14px"},h("div",{style:"font-weight:700;margin-bottom:6px"},"🏆 Найзуудын жагсаалт"));
+    rows.push({uid:uid,name:prof.name+" (та)",xp:prof.xp||0,streak:prof.streak||0,lang:prof.lang,wxp:me().wxp,wk:wk,self:true});
+    rows.sort(function(a,b){return week?(wx(b)-wx(a)||b.xp-a.xp):b.xp-a.xp;});
+    var board=h("div",{style:"margin-top:14px"},
+      h("div",{style:"display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px"},
+        h("div",{style:"font-weight:700"},"🏆 Найзуудын жагсаалт"),
+        h("div",{class:"seg",style:"margin:0"},
+          h("button",{"aria-pressed":String(week),onclick:function(){lset(BOARD_KEY,"week");paint();}},"Энэ 7 хоног"),
+          h("button",{"aria-pressed":String(!week),onclick:function(){lset(BOARD_KEY,"all");paint();}},"Нийт"))));
     rows.forEach(function(r,i){
       var line=h("div",{class:"note",style:"display:flex;align-items:center;gap:8px;margin-top:8px"},
         h("div",{style:"width:26px;font-weight:800"},String(i+1)),
-        h("div",{style:"flex:1;min-width:0"},h("div",{style:"font-weight:700"},r.name),h("div",{class:"muted small"},"🔥 "+r.streak+" · "+r.xp+" XP")));
+        h("div",{style:"flex:1;min-width:0"},h("div",{style:"font-weight:700"},r.name),h("div",{class:"muted small"},"🔥 "+r.streak+" · "+(week?wx(r)+" XP энэ 7 хоногт · нийт "+r.xp:r.xp+" XP"))));
       if(!r.self){
         line.append(
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Чат","aria-label":"Чат",onclick:function(){openChat(r);}},"💬"),
