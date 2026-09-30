@@ -105,6 +105,19 @@ button:disabled{opacity:.5;cursor:not-allowed}
 @keyframes sm-cheer{50%{transform:rotate(-35deg)}}
 @keyframes sm-cheerL{50%{transform:rotate(35deg)}}
 @media (prefers-reduced-motion:reduce){.kfox *,.kidq *{animation-duration:.01s!important;animation-iteration-count:1!important}}
+.kmini{position:fixed;right:max(14px,calc(50% - 266px));bottom:92px;width:76px;height:64px;z-index:4;pointer-events:none;display:none}
+:root[data-mode="kid"] .kmini{display:block}
+.kmini .sm-m{width:76px;transform:translateY(130%);transition:transform .45s cubic-bezier(.3,1.4,.5,1)}
+.kmini.on .sm-m{transform:translateY(0)}
+.hero .kmini svg,.kmini svg{position:static;display:block;width:100%;height:auto;overflow:hidden}
+.kmini .sm-crop{height:64px;overflow:hidden;border-radius:0 0 18px 18px}
+.kmini .sm-say{position:absolute;right:88%;bottom:34px;white-space:nowrap;background:#FFD83A;color:#1B1934;font:800 14px/1.2 Montserrat,system-ui,sans-serif;padding:7px 12px;border-radius:16px 16px 4px 16px;box-shadow:0 3px 0 rgba(0,0,0,.12);
+  opacity:0;transform:scale(.5);transform-origin:100% 100%;transition:.25s cubic-bezier(.3,1.5,.5,1)}
+.kmini .sm-say.show{opacity:1;transform:scale(1)}
+.kmini .sm-m.jump .sm-critter{animation:sm-hop .8s cubic-bezier(.3,1.4,.5,1)}
+.kmini .sm-critter{transform-origin:150px 260px;transform-box:view-box}
+.kmini .sm-lid{transform-box:fill-box;transform-origin:center;animation:sm-blink 4s 1s infinite}
+@media (prefers-reduced-motion:reduce){.kmini .sm-m{transition:none}.kmini *{animation-duration:.01s!important;animation-iteration-count:1!important}}
 @media (max-width:360px){.kfox{right:50px;width:100px}:root[data-mode="kid"] .hero .kidq{font-size:15px;max-width:13ch}.kfox .sm-say{font-size:12px;padding:6px 10px;right:-8%;bottom:98%;border-radius:16px 16px 16px 4px;transform-origin:0 100%}}
 .rotor{animation:spin 14s linear infinite}
 .rotor.r2{animation-duration:20s}
@@ -242,7 +255,7 @@ p+p{margin-top:10px}
 :root[data-mode="adult"] .brand,:root[data-mode="adult"] h2,:root[data-mode="adult"] .en,:root[data-mode="adult"] .big{font-family:"Manrope",system-ui,sans-serif;font-weight:800;letter-spacing:-.02em}
 
 /* kids: bright, chunky, bouncy */
-:root[data-mode="kid"]{--bg:#FFF9E8;--ink:#2A2350;--ink-2:#6A6390;--line:#F0E3B8;--sky:#E5484D;--dune:#FFD93D;--dune-2:#6BCB77;--dune-3:#4D96FF;--neon:#6BCB77;--neon-ink:#0B2A10;--focus:#4D96FF;--shadow:0 5px 0 rgba(30,30,80,.14)}
+:root[data-mode="kid"]{--bg:#FFF9E8;--ink:#2A2350;--ink-2:#6A6390;--line:#F0E3B8;--sky:#E4572E;--dune:#FFD93D;--dune-2:#6BCB77;--dune-3:#4D96FF;--neon:#6BCB77;--neon-ink:#0B2A10;--focus:#4D96FF;--shadow:0 5px 0 rgba(30,30,80,.14)}
 :root[data-mode="kid"] body{font-size:18px}
 :root[data-mode="kid"] .hero{background:linear-gradient(170deg,#4D96FF,#7CC4FF 65%,#FFF3B0 130%);border-radius:0 0 48px 48px}
 :root[data-mode="kid"] .hero .tag{font-size:18px}
@@ -263,10 +276,10 @@ p+p{margin-top:10px}
 
 @media (prefers-color-scheme: dark){
 :root[data-mode="adult"]:not([data-theme="light"]){--bg:#0E1716;--surface:#16231F;--ink:#E6F0EC;--ink-2:#9BB2AA;--line:#2A3D38;--sky:#2F7F79;--shadow:0 4px 16px rgba(0,0,0,.4)}
-:root[data-mode="kid"]:not([data-theme="light"]){--bg:#1A1730;--surface:#26214A;--ink:#FFF6E0;--ink-2:#BDB6E6;--line:#3D3670;--sky:#E5484D;--shadow:0 5px 0 rgba(0,0,0,.35)}
+:root[data-mode="kid"]:not([data-theme="light"]){--bg:#1A1730;--surface:#26214A;--ink:#FFF6E0;--ink-2:#BDB6E6;--line:#3D3670;--sky:#E4572E;--shadow:0 5px 0 rgba(0,0,0,.35)}
 }
 :root[data-mode="adult"][data-theme="dark"]{--bg:#0E1716;--surface:#16231F;--ink:#E6F0EC;--ink-2:#9BB2AA;--line:#2A3D38;--sky:#2F7F79;--shadow:0 4px 16px rgba(0,0,0,.4)}
-:root[data-mode="kid"][data-theme="dark"]{--bg:#1A1730;--surface:#26214A;--ink:#FFF6E0;--ink-2:#BDB6E6;--line:#3D3670;--sky:#E5484D;--shadow:0 5px 0 rgba(0,0,0,.35)}
+:root[data-mode="kid"][data-theme="dark"]{--bg:#1A1730;--surface:#26214A;--ink:#FFF6E0;--ink-2:#BDB6E6;--line:#3D3670;--sky:#E4572E;--shadow:0 5px 0 rgba(0,0,0,.35)}
 :root[data-mode="kid"] .levels{display:none}
 /* skins (өнгөний загварууд) */
 :root[data-skin="ocean"]{--bg:#EEF6FB;--surface:#FFFFFF;--ink:#10263A;--ink-2:#4C6A82;--line:#D3E3EF;--sky:#1E6FB8;--dune:#7CC0E8;--dune-2:#B6DDF3;--dune-3:#2A86D0;--neon:#F4D35E;--neon-ink:#2B2200;--focus:#1E6FB8;--shadow:0 4px 16px rgba(20,70,120,.14)}
@@ -425,21 +438,40 @@ p+p{margin-top:10px}
       <p class="tag kidq" id="kidq"></p>
     </div>
   </header>
+<div class="kmini" id="salkhiMini" aria-hidden="true"><div class="sm-m"><div class="sm-crop"></div></div><div class="sm-say"></div></div>
 <script>
-/* Салхи үнэг (hero дотор, зөвхөн хүүхдийн горимд). Аппаас: salkhiMarmot.say("Зөв! 🎉", true). Бусад горимд хөдөлгөөн зогсоно. */
+/* Салхи үнэг — хүүхдийн горимын маскот. hero-д шагайж мэндэлнэ; hero харагдахгүй үед буланд жижиг үнэг гарна.
+   Аппаас: salkhiMarmot.cheer(big) · salkhiMarmot.oops() · salkhiMarmot.tip(tab) · salkhiMarmot.say(text, hop). Бусад горимд бүгд зогсоно. */
 (function(){
-  var fox=document.getElementById("salkhiFox"),q=document.getElementById("kidq");if(!fox||!q)return;
+  var fox=document.getElementById("salkhiFox"),q=document.getElementById("kidq"),mini=document.getElementById("salkhiMini");if(!fox||!q||!mini)return;
   var QUESTIONS=["Өнөөдөр ямар шинэ зүйл сурч байна?","Өнөөдөр 5 үг давтах уу?","Сонсоод 3 үг зөв олж чадах уу?"];
   var GREETINGS=["Сайн уу! 👋","Hello! 🇬🇧","こんにちは! 🇯🇵","안녕! 🇰🇷","你好! 🇨🇳","Привет! 🇷🇺","Hallo! 🇩🇪"];
+  var PRAISE=["Зөв! 🎉","Мундаг! ⭐","Ёстой гоё! 🌟","Сайн байна! 👏","Яг зөв! ✅"],BIG=["Гайхалтай! 🏆","Чи од шүү! 🌟","Ура! 🎉"];
+  var OOPS=["Бараг л болсон! 💪","Дахиад оролдоё 🙂","Алдаа бол сурах арга! 🌱"];
+  var TIPS={words:"Шинэ үгс сурцгаая! 📚",alpha:"Үсэг сурцгаая! ✏️",grammar:"Дүрэм бол тоглоом! 🧩",listen:"Чихээ сэртэл! 👂",chat:"Надтай ярилцаарай! 💬",play:"Тоглоом тоглоё! 🎮",stats:"Хараач, чи ахиж байна! 📈"};
   var reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
   var wait=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
-  var shown=function(){return document.documentElement.getAttribute("data-mode")==="kid";};
-  var whenShown=async function(){while(!shown())await wait(500);};
-  var m=fox.querySelector(".sm-m"),bubble=fox.querySelector(".sm-say"),caret="<span class=\"sm-caret\"></span>",hideT,g=0;
+  var kid=function(){return document.documentElement.getAttribute("data-mode")==="kid";};
+  var whenKid=async function(){while(!kid())await wait(500);};
+  var pick=function(a){return a[Math.floor(Math.random()*a.length)];};
+  mini.querySelector(".sm-crop").append(fox.querySelector("svg").cloneNode(true));
+  var hero=document.querySelector("header.hero"),heroOn=true,lastReact=0,g=0,caret="<span class=\"sm-caret\"></span>";
+  var F={hero:{m:fox.querySelector(".sm-m"),b:fox.querySelector(".sm-say"),t:0},mini:{m:mini.querySelector(".sm-m"),b:mini.querySelector(".sm-say"),t:0}};
+  function syncMini(){mini.classList.toggle("on",kid()&&!heroOn);}
+  if("IntersectionObserver" in window&&hero)new IntersectionObserver(function(es){heroOn=es[0].isIntersecting;syncMini();},{threshold:.35}).observe(hero);
+  new MutationObserver(syncMini).observe(document.documentElement,{attributes:true,attributeFilter:["data-mode"]});
+  async function sayOn(f,text,hop){
+    if(hop){f.m.classList.remove("jump");void f.m.offsetWidth;f.m.classList.add("jump");}
+    clearTimeout(f.t);f.b.textContent="";f.b.classList.add("show");
+    for(var ch of Array.from(text)){f.b.textContent+=ch;if(!reduce)await wait(35);}
+    f.t=setTimeout(function(){f.b.classList.remove("show");f.m.classList.remove("jump");},2000);
+  }
+  function say(text,hop){if(!kid())return;syncMini();return sayOn(heroOn?F.hero:F.mini,text,hop);}
+  function react(text,hop){lastReact=Date.now();return say(text,hop);}
   async function typeLoop(){
-    await whenShown();await wait(700);var n=0;
+    await whenKid();await wait(700);var n=0;
     while(true){
-      await whenShown();
+      await whenKid();
       var t=QUESTIONS[n++%QUESTIONS.length];
       if(reduce){q.textContent=t;await wait(4500);continue;}
       for(var i=1;i<=t.length;i++){q.innerHTML=t.slice(0,i)+caret;await wait(55);}
@@ -448,29 +480,38 @@ p+p{margin-top:10px}
       await wait(300);
     }
   }
-  async function say(text,hop){
-    if(!shown())return;
-    if(hop){m.classList.remove("jump");void m.offsetWidth;m.classList.add("jump");}
-    clearTimeout(hideT);bubble.textContent="";bubble.classList.add("show");
-    for(var ch of Array.from(text)){bubble.textContent+=ch;if(!reduce)await wait(45);}
-    hideT=setTimeout(function(){bubble.classList.remove("show");m.classList.remove("jump");},1800);
-  }
+  /* сул үед зөвхөн hero дахь үнэг мэндэлнэ; саяхан хариу үйлдэл хийсэн бол түр чимээгүй */
   async function talkLoop(){
-    await whenShown();await wait(2800);
-    while(true){await whenShown();await say(GREETINGS[g++%GREETINGS.length],g%2===0);await wait(3600);}
+    await whenKid();await wait(2800);
+    while(true){await whenKid();if(heroOn&&Date.now()-lastReact>6000)await sayOn(F.hero,GREETINGS[g++%GREETINGS.length],g%2===0);await wait(3600);}
   }
-  var react=function(){say(GREETINGS[g++%GREETINGS.length],true);};
-  m.addEventListener("click",react);
-  m.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();react();}});
+  var tap=function(){react(GREETINGS[g++%GREETINGS.length],true);};
+  F.hero.m.addEventListener("click",tap);
+  F.hero.m.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();tap();}});
   addEventListener("pointermove",function(e){
-    if(!shown())return;
-    var r=m.getBoundingClientRect();
-    var dx=Math.max(-1,Math.min(1,(e.clientX-(r.left+r.width/2))/(r.width/2)));
-    var dy=Math.max(-1,Math.min(1,(e.clientY-(r.top+r.height*.45))/(r.height/2)));
-    fox.querySelectorAll(".sm-p").forEach(function(p){p.setAttribute("cx",+p.dataset.x-3+dx*5);p.setAttribute("cy",+p.dataset.y+3+dy*5);});
+    if(!kid())return;
+    [[F.hero.m,fox],[F.mini.m,mini]].forEach(function(x){
+      var r=x[0].getBoundingClientRect();if(!r.width)return;
+      var dx=Math.max(-1,Math.min(1,(e.clientX-(r.left+r.width/2))/(r.width/2)));
+      var dy=Math.max(-1,Math.min(1,(e.clientY-(r.top+r.height*.45))/(r.height/2)));
+      x[1].querySelectorAll(".sm-p").forEach(function(p){p.setAttribute("cx",+p.dataset.x-3+dx*5);p.setAttribute("cy",+p.dataset.y+3+dy*5);});
+    });
   });
-  window.salkhiMarmot={say:say};
-  typeLoop();talkLoop();
+  /* буруу хариултын хайрцаг (.fb.bad) гарахад урамшуулна */
+  var lastOops=0;
+  function watchMain(){var main=document.getElementById("main");if(main)new MutationObserver(function(ms){
+    if(!kid()||Date.now()-lastOops<2500)return;
+    for(var i=0;i<ms.length;i++)for(var k=0;k<ms[i].addedNodes.length;k++){var n=ms[i].addedNodes[k];
+      if(n.nodeType===1&&((n.matches&&n.matches(".fb.bad"))||(n.querySelector&&n.querySelector(".fb.bad")))){lastOops=Date.now();react(pick(OOPS),false);return;}}
+  }).observe(main,{childList:true,subtree:true});}
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",watchMain);else watchMain();
+  window.salkhiMarmot={
+    say:say,
+    cheer:function(big){react(big?pick(BIG):pick(PRAISE),true);},
+    oops:function(){lastOops=Date.now();react(pick(OOPS),false);},
+    tip:function(tab){if(TIPS[tab])react(TIPS[tab],false);}
+  };
+  syncMini();typeLoop();talkLoop();
 })();
 </script>
   <div class="strip" id="strip"></div>
@@ -709,7 +750,7 @@ function applyMode(){
 }
 applyMode();
 function sceneOk(s){return !s[3]||s[3]===state.mode||(state.mode==="senior"&&s[3]==="adult");}
-function wrongPre(){return state.mode==="senior"?"Дахин оролдоё 🙂 Зөв хариулт: ":"Буруу. Зөв хариулт: ";}
+function wrongPre(){return state.mode==="senior"?"Дахин оролдоё 🙂 Зөв хариулт: ":state.mode==="kid"?"Өө, бараг! 🦊 Зөв нь: ":"Буруу. Зөв хариулт: ";}
 function seniorCats(){
   var first=["health","people","kitchen","home","travel","places","weather"],a=ADULT_CATS,out=[a[0]];
   first.forEach(function(k){a.forEach(function(c){if(c[0]===k&&out.indexOf(c)<0)out.push(c);});});
@@ -879,6 +920,7 @@ function toast(t,ms){
   setTimeout(function(){e.remove();},ms||2800);
 }
 function celebrate(big,force){
+  if(state.mode==="kid"&&window.salkhiMarmot)window.salkhiMarmot.cheer(big);
   if(reduce||(state.mode!=="kid"&&!force))return;
   var em=["⭐","🌟","✨","🎉"],n=big?22:7;
   for(var i=0;i<n;i++){(function(i){
@@ -1044,12 +1086,14 @@ function renderTabs(){
     }},t[1]));
   });
 }
+var kidTab=null;
 function render(){
   if(state.tab==="social"&&state.mode==="kid")state.tab="words";
   if(state.tab==="grammar"&&state.mode==="senior")state.tab="words";
   if(window.Social&&state.tab!=="social")window.Social.detach();
   elMain.textContent="";elMain.style.zoom=state.fz===1?"":String(state.fz);
   if(state.tab==="levels"&&state.mode==="kid")state.tab="words";
+  if(state.mode==="kid"){if(kidTab!==null&&kidTab!==state.tab&&window.salkhiMarmot)window.salkhiMarmot.tip(state.tab);kidTab=state.tab;}else kidTab=null;
   if(state.tab==="levels")elMain.append(viewLevels());
   else if(state.tab==="words")elMain.append(viewWords());
   else if(state.tab==="alpha")elMain.append(viewAlpha());
@@ -4332,7 +4376,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20260930-3";
+var BUILD="20260930-4";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
