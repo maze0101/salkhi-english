@@ -107,8 +107,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
 @media (prefers-reduced-motion:reduce){.kfox *,.kidq *{animation-duration:.01s!important;animation-iteration-count:1!important}}
 .kmini{position:fixed;right:max(14px,calc(50% - 266px));bottom:92px;width:76px;height:64px;z-index:4;pointer-events:none;display:none}
 :root[data-mode="kid"] .kmini{display:block}
-.kmini .sm-m{width:76px;transform:translateY(130%);transition:transform .45s cubic-bezier(.3,1.4,.5,1)}
-.kmini.on .sm-m{transform:translateY(0)}
+.kmini .sm-m{width:76px;opacity:0;visibility:hidden;transform:translateY(40%);transition:transform .45s cubic-bezier(.3,1.4,.5,1),opacity .25s,visibility 0s .45s}
+.kmini.on .sm-m{opacity:1;visibility:visible;transform:translateY(0);transition:transform .45s cubic-bezier(.3,1.4,.5,1),opacity .25s,visibility 0s}
 .hero .kmini svg,.kmini svg{position:static;display:block;width:100%;height:auto;overflow:hidden}
 .kmini .sm-crop{height:64px;overflow:hidden;border-radius:0 0 18px 18px}
 .kmini .sm-say{position:absolute;right:88%;bottom:34px;white-space:nowrap;background:#FFD83A;color:#1B1934;font:800 14px/1.2 Montserrat,system-ui,sans-serif;padding:7px 12px;border-radius:16px 16px 4px 16px;box-shadow:0 3px 0 rgba(0,0,0,.12);
@@ -4376,7 +4376,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20260930-4";
+var BUILD="20260930-5";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
