@@ -1,0 +1,134 @@
+<!-- ===== Салхи · Үнэг компонент (эхлэл) ===== -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&display=swap" rel="stylesheet">
+<style>
+.sm{--sm-bg:#25224A;--sm-line:#3A3670;--sm-ink:#EDEBFF;--sm-muted:#B8B4E6;--sm-red:#E5484D;--sm-yellow:#FFD83A;
+  position:relative;overflow:hidden;border-radius:28px;background:linear-gradient(180deg,#2B2856 0%,var(--sm-bg) 60%);
+  border:2px solid var(--sm-line);min-height:360px;font-family:Montserrat,system-ui,sans-serif;color:var(--sm-ink)}
+.sm *{box-sizing:border-box}
+.sm-h{font-weight:800;font-size:clamp(22px,6.4vw,30px);line-height:1.12;margin:0;padding:22px 22px 0;min-height:3.6em;letter-spacing:-.01em}
+.sm-caret{display:inline-block;width:3px;height:.9em;background:var(--sm-yellow);margin-left:2px;vertical-align:-.08em;animation:sm-car 1s steps(1) infinite}
+.sm-sub{margin:6px 22px 0;font-weight:600;font-size:14px;color:var(--sm-muted)}
+.sm-stage{position:absolute;left:0;right:0;bottom:0;height:62%}
+.sm-m{position:absolute;left:50%;bottom:-2%;width:min(74%,320px);transform:translate(-50%,110%);animation:sm-peek 1s .8s cubic-bezier(.2,1.2,.4,1) forwards;cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none}
+.sm-m svg{width:100%;height:auto;display:block;overflow:visible}
+.sm-m:focus-visible{outline:3px solid var(--sm-yellow);outline-offset:4px;border-radius:12px}
+.sm-critter{transform-origin:150px 260px;transform-box:view-box;animation:sm-idle 6s 1.9s ease-in-out infinite}
+.sm-head{transform-origin:150px 150px;transform-box:view-box;animation:sm-tilt 6s 1.9s ease-in-out infinite}
+.sm-ear{transform-box:fill-box;transform-origin:50% 100%;animation:sm-ear 3s 2.1s ease-in-out infinite}
+.sm-ear.r{animation-delay:2.4s}
+.sm-lid{transform-box:fill-box;transform-origin:center;animation:sm-blink 4s 2.2s infinite}
+.sm-nose{transform-box:fill-box;transform-origin:center;animation:sm-sniff 1.8s 1.9s ease-in-out infinite}
+.sm-tail{transform-origin:244px 262px;transform-box:view-box;animation:sm-tail 2.6s 1.9s ease-in-out infinite}
+@keyframes sm-tail{0%,100%{transform:rotate(0)}50%{transform:rotate(-10deg)}}
+.sm-arm{transform-origin:216px 238px;transform-box:view-box;animation:sm-wave 1.4s 1.8s ease-in-out 2}
+.sm-armL{transform-origin:86px 238px;transform-box:view-box}
+.sm-m.jump .sm-critter{animation:sm-hop .8s cubic-bezier(.3,1.4,.5,1)}
+.sm-m.jump .sm-arm{animation:sm-cheer .8s ease-in-out}
+.sm-m.jump .sm-armL{animation:sm-cheerL .8s ease-in-out}
+.sm-say{position:absolute;left:58%;top:-2%;max-width:44%;background:var(--sm-yellow);color:#1B1934;font-weight:800;font-size:15px;padding:9px 14px;border-radius:18px 18px 18px 4px;
+  opacity:0;transform:scale(.5);transform-origin:0 100%;transition:.25s cubic-bezier(.3,1.5,.5,1);pointer-events:none}
+.sm-say.show{opacity:1;transform:scale(1)}
+.sm-b{position:absolute;width:44px;height:44px;border-radius:50%;background:#322E62;border:2px solid var(--sm-line);display:grid;place-items:center;font-size:20px;opacity:0;
+  animation:sm-pop .5s forwards, sm-float 3.5s ease-in-out infinite}
+.sm-b1{left:8%;top:6%;animation-delay:1.9s,2.4s}
+.sm-b2{left:30%;top:-8%;width:38px;height:38px;font-size:17px;animation-delay:2.1s,2.6s}
+.sm-b3{right:6%;top:26%;animation-delay:2.3s,2.8s}
+@keyframes sm-car{50%{opacity:0}}
+@keyframes sm-peek{to{transform:translate(-50%,0)}}
+@keyframes sm-idle{0%,100%{transform:translateY(0)}20%{transform:translateY(-6px) scaleY(1.02)}40%{transform:translateY(0)}60%{transform:translateY(-3px)}80%{transform:translateY(2px) scaleY(.985)}}
+@keyframes sm-tilt{0%,15%,100%{transform:rotate(0)}25%,40%{transform:rotate(-9deg)}55%,70%{transform:rotate(8deg)}80%{transform:rotate(0)}}
+@keyframes sm-ear{0%,80%,100%{transform:rotate(0)}85%{transform:rotate(-14deg)}90%{transform:rotate(10deg)}}
+@keyframes sm-blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes sm-sniff{0%,60%,100%{transform:scale(1)}70%,90%{transform:scale(1.12,.9)}80%{transform:scale(.95,1.05)}}
+@keyframes sm-wave{0%,100%{transform:rotate(0)}25%{transform:rotate(-20deg)}75%{transform:rotate(12deg)}}
+@keyframes sm-hop{0%{transform:none}15%{transform:translateY(6px) scale(1.06,.92)}50%{transform:translateY(-60px) scale(.95,1.07)}80%{transform:translateY(4px) scale(1.05,.95)}100%{transform:none}}
+@keyframes sm-cheer{50%{transform:rotate(-35deg)}}
+@keyframes sm-cheerL{50%{transform:rotate(35deg)}}
+@keyframes sm-pop{0%{opacity:0;transform:scale(.3)}100%{opacity:1;transform:scale(1)}}
+@keyframes sm-float{50%{translate:0 -8px}}
+@media (prefers-reduced-motion:reduce){.sm *{animation-duration:.01s!important;animation-iteration-count:1!important}}
+</style>
+
+<div class="sm" id="salkhiMarmot">
+  <h2 class="sm-h"></h2>
+  <p class="sm-sub">Үнэг дээр дарж мэндлээрэй</p>
+  <div class="sm-stage">
+    <div class="sm-b sm-b1">📖</div><div class="sm-b sm-b2">✏️</div><div class="sm-b sm-b3">⭐</div>
+    <div class="sm-m" tabindex="0" role="button" aria-label="Үнэг дээр дарж мэндлүүлэх">
+      <svg viewBox="0 0 300 260">
+        <path class="sm-tail" d="M244 262 C296 240 300 186 272 166 C282 200 266 232 232 252Z" fill="#FFA45C"/>
+        <path class="sm-tail" d="M272 166 C288 174 296 190 293 206 C285 188 279 176 272 166Z" fill="#FFF8EE"/>
+        <g class="sm-critter">
+          <ellipse cx="150" cy="262" rx="92" ry="70" fill="#FFA45C"/>
+          <ellipse cx="150" cy="258" rx="52" ry="42" fill="#FFF8EE"/>
+          <path class="sm-armL" d="M86 238 Q68 220 80 202" stroke="#F28D45" stroke-width="22" fill="none" stroke-linecap="round"/>
+          <g class="sm-head">
+            <g class="sm-ear"><path d="M70 110 Q70 40 102 38 Q126 48 132 92Z" fill="#FFA45C" stroke="#FFA45C" stroke-width="10" stroke-linejoin="round"/><path d="M86 98 Q88 60 104 58 Q116 66 118 94Z" fill="#FFC9C2"/></g>
+            <g class="sm-ear r"><path d="M230 110 Q230 40 198 38 Q174 48 168 92Z" fill="#FFA45C" stroke="#FFA45C" stroke-width="10" stroke-linejoin="round"/><path d="M214 98 Q212 60 196 58 Q184 66 182 94Z" fill="#FFC9C2"/></g>
+            <ellipse cx="150" cy="140" rx="98" ry="80" fill="#FFA45C"/>
+            <ellipse cx="150" cy="175" rx="66" ry="44" fill="#FFF8EE"/>
+            <g class="sm-lid"><ellipse cx="112" cy="138" rx="15" ry="18" fill="#2A2238"/><circle class="sm-p" data-x="117" data-y="131" cx="117" cy="131" r="6" fill="#fff"/><circle cx="107" cy="146" r="2.5" fill="#fff"/></g>
+            <g class="sm-lid"><ellipse cx="188" cy="138" rx="15" ry="18" fill="#2A2238"/><circle class="sm-p" data-x="193" data-y="131" cx="193" cy="131" r="6" fill="#fff"/><circle cx="183" cy="146" r="2.5" fill="#fff"/></g>
+            <ellipse class="sm-nose" cx="150" cy="164" rx="9" ry="6.5" fill="#5A3A3A"/>
+            <path d="M136 176 Q150 196 164 176Z" fill="#7A3B3B"/>
+            <path d="M143 184 Q150 192 157 184 Q150 180 143 184Z" fill="#FF8A8A"/>
+            <ellipse cx="92" cy="170" rx="15" ry="9" fill="#FF8A8A" opacity=".55"/>
+            <ellipse cx="208" cy="170" rx="15" ry="9" fill="#FF8A8A" opacity=".55"/>
+          </g>
+          <path class="sm-arm" d="M216 238 Q252 214 244 176" stroke="#F28D45" stroke-width="22" fill="none" stroke-linecap="round"/>
+        </g>
+        <path d="M-20 262 Q150 200 320 262Z" fill="#B39A3A"/>
+        <path d="M-20 262 Q150 220 320 262Z" fill="#4E9A5B"/>
+      </svg>
+    </div>
+    <div class="sm-say"></div>
+  </div>
+</div>
+
+<script>
+/* Салхи үнэг. Аппаас: salkhiMarmot.say("Зөв! 🎉", true) гэж дуудаж болно. */
+(function(){
+  const root=document.getElementById('salkhiMarmot'); if(!root) return;
+  const QUESTIONS=["Өнөөдөр ямар шинэ зүйл сурч байна?","Өнөөдөр 5 үг давтах уу?","Сонсоод 3 үг зөв олж чадах уу?"];
+  const GREETINGS=["Сайн уу! 👋","Hello! 🇬🇧","こんにちは! 🇯🇵","안녕! 🇰🇷","你好! 🇨🇳","Привет! 🇷🇺","Hallo! 🇩🇪"];
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const h=root.querySelector('.sm-h'), m=root.querySelector('.sm-m'), bubble=root.querySelector('.sm-say');
+  const caret='<span class="sm-caret"></span>';
+  let hideT, g=0;
+
+  async function typeLoop(){
+    await wait(700); let q=0;
+    while(true){
+      const t=QUESTIONS[q++%QUESTIONS.length];
+      if(reduce){h.textContent=t; await wait(4500); continue;}
+      for(let i=1;i<=t.length;i++){h.innerHTML=t.slice(0,i)+caret; await wait(55);}
+      await wait(3200);
+      for(let i=t.length;i>=0;i--){h.innerHTML=t.slice(0,i)+caret; await wait(22);}
+      await wait(300);
+    }
+  }
+  async function say(text,hop){
+    if(hop){m.classList.remove('jump'); void m.offsetWidth; m.classList.add('jump');}
+    clearTimeout(hideT); bubble.textContent=''; bubble.classList.add('show');
+    for(const ch of Array.from(text)){bubble.textContent+=ch; if(!reduce) await wait(45);}
+    hideT=setTimeout(()=>{bubble.classList.remove('show'); m.classList.remove('jump');},1800);
+  }
+  async function talkLoop(){
+    await wait(2800);
+    while(true){ await say(GREETINGS[g++%GREETINGS.length], g%2===0); await wait(3600); }
+  }
+  const react=()=>say(GREETINGS[g++%GREETINGS.length],true);
+  m.addEventListener('click',react);
+  m.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();react();}});
+  addEventListener('pointermove',e=>{
+    const r=m.getBoundingClientRect();
+    const dx=Math.max(-1,Math.min(1,(e.clientX-(r.left+r.width/2))/(r.width/2)));
+    const dy=Math.max(-1,Math.min(1,(e.clientY-(r.top+r.height*.45))/(r.height/2)));
+    root.querySelectorAll('.sm-p').forEach(p=>{p.setAttribute('cx',+p.dataset.x-3+dx*5);p.setAttribute('cy',+p.dataset.y+3+dy*5);});
+  });
+  window.salkhiMarmot={say};
+  typeLoop(); talkLoop();
+})();
+</script>
+<!-- ===== Салхи · Үнэг компонент (төгсгөл) ===== -->
