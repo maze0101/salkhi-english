@@ -4682,7 +4682,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20261002-1";
+var BUILD="20261002-2";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
@@ -4739,33 +4739,44 @@ function wxText(c){
   if(c===0)return "Цэлмэг";if(c<=2)return "Багавтар үүлтэй";if(c===3)return "Үүлэрхэг";if(c<=48)return "Манантай";
   if(c<=57)return "Шиврээ бороо";if(c<=67||(c>=80&&c<=82))return "Бороотой";if(c<=77||c===85||c===86)return "Цастай";if(c>=95)return "Аянгатай";return "Хувьсамтгай";
 }
-function wxRender(d){
-  var b=document.getElementById("wxbtn");if(!b||!d)return;
-  var t=Math.round(d.t),city=WX_CITIES[d.i]||WX_CITIES[0];
+function wxRender(d,i){
+  var b=document.getElementById("wxbtn");if(!b)return;
+  var city=WX_CITIES[i]||WX_CITIES[0];
   b.textContent="";
-  b.append(h("span",{class:"ic"},wxIcon(d.c,d.day)),h("span",{class:"t"},(t<0?"−"+(-t):String(t))+"°"),h("span",null,city[0]));
-  b.title=city[0]+": "+wxText(d.c)+", "+t+"°C · салхи "+Math.round(d.w)+" м/с · дарж хот солино";
+  if(!d){
+    b.append(h("span",{class:"ic"},"🌡"),h("span",{class:"t"},"—°"),h("span",null,city[0]));
+    b.title=city[0]+": мэдээлэл татаж чадсангүй · дарж хот солино";
+  }else{
+    var t=Math.round(d.t);if(t===0)t=0;
+    b.append(h("span",{class:"ic"},wxIcon(d.c,d.day)),h("span",{class:"t"},(t<0?"−"+(-t):String(t))+"°"),h("span",null,city[0]));
+    b.title=city[0]+": "+wxText(d.c)+", "+t+"°C · салхи "+Math.round(d.w)+" м/с · дарж хот солино";
+  }
   b.setAttribute("aria-label",b.title);
   b.hidden=false;b.style.opacity="";
 }
+/* Кэш хот бүрээр: {"0":{at,t,c,day,w}, ...} */
+function wxCache(){var c=sget("wx",{});return c&&typeof c==="object"&&!("i" in c)?c:{};}
 function wxLoad(force){
-  var i=sget("wxCity",0),city=WX_CITIES[i]||WX_CITIES[0],cache=sget("wx",null);
-  if(cache&&cache.i===i)wxRender(cache);
-  if(!force&&cache&&cache.i===i&&Date.now()-cache.at<30*60000)return;
-  if(!navigator.onLine)return;
+  var i=sget("wxCity",0);if(!WX_CITIES[i])i=0;
+  var city=WX_CITIES[i],cached=wxCache()[i];
+  var fail=function(){if(sget("wxCity",0)===i&&(force||cached))wxRender(cached||null,i);};
+  if(cached)wxRender(cached,i);
+  if(!force&&cached&&Date.now()-cached.at<30*60000)return;
+  if(!navigator.onLine){fail();return;}
   fetch("https://api.open-meteo.com/v1/forecast?latitude="+city[1]+"&longitude="+city[2]+"&current=temperature_2m,weather_code,is_day,wind_speed_10m&wind_speed_unit=ms&timezone=Asia%2FUlaanbaatar")
     .then(function(r){return r.ok?r.json():null;})
     .then(function(j){
-      if(!j||!j.current||sget("wxCity",0)!==i)return;
-      var d={i:i,at:Date.now(),t:j.current.temperature_2m,c:j.current.weather_code,day:j.current.is_day===1,w:j.current.wind_speed_10m};
-      sset("wx",d);wxRender(d);
-    }).catch(function(){var b=document.getElementById("wxbtn");if(b)b.style.opacity="";});
+      if(!j||!j.current||typeof j.current.temperature_2m!=="number"){fail();return;}
+      var d={at:Date.now(),t:j.current.temperature_2m,c:j.current.weather_code,day:j.current.is_day===1,w:j.current.wind_speed_10m};
+      var all=wxCache();all[i]=d;sset("wx",all);
+      if(sget("wxCity",0)===i)wxRender(d,i);
+    }).catch(fail);
 }
 document.getElementById("wxbtn").onclick=function(){
   if(!navigator.onLine){toast("Интернэт холболтгүй байна. Цаг агаарыг шинэчилж чадсангүй.");return;}
-  var i=(sget("wxCity",0)+1)%WX_CITIES.length;sset("wxCity",i);
+  var i=((sget("wxCity",0)|0)+1)%WX_CITIES.length;sset("wxCity",i);
   this.lastChild.textContent=WX_CITIES[i][0];this.style.opacity=".55";
-  wxLoad(true);
+  var c=wxCache()[i];wxLoad(!c||Date.now()-c.at>=30*60000);
 };
 wxLoad();setInterval(wxLoad,10*60000);
 checkNotif();setInterval(checkNotif,30000);syncNotifMeta();
