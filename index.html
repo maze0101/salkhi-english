@@ -567,7 +567,7 @@ p+p{margin-top:10px}
 <script>
 /* зөвхөн сонгосон хэлний үгсийг эхэлж ачаална; бусад хэлийг хэрэгтэй үед нь loadLangs() татна */
 /* хэл бүрийн дүрмийн хичээлийн багцын тоо: lp-<хэл>-1.js ... lp-<хэл>-N.js */
-window.LESSON_PACKS={en:17,ja:9,ko:6,zh:6,ru:6,de:4};
+window.LESSON_PACKS={en:18,ja:9,ko:6,zh:6,ru:6,de:4};
 window.WORDS_FILES=function(l){
   var f=["words-","words2-","words3-","words4-","words5-","words6-","words7-","words8-","words9-"].map(function(p){return p+l+".js";});
   for(var i=1;i<=(window.LESSON_PACKS[l]||0);i++)f.push("lp-"+l+"-"+i+".js");
@@ -4683,7 +4683,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20261002-4";
+var BUILD="20261002-5";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
