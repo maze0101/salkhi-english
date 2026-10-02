@@ -243,7 +243,8 @@ p+p{margin-top:10px}
 .wxbtn .ic{font-size:16px;line-height:1}
 .wxbtn .t{font-size:15px}
 .wxbtn[hidden]{display:none}
-:root[data-mode="kid"] .wxbtn{right:auto;left:16px}
+.wxbtn{background:rgba(15,30,30,.38);text-shadow:0 1px 2px rgba(0,0,0,.25)}
+:root[data-mode="kid"] .wxbtn{right:auto;left:16px;background:#fff;color:var(--ink);text-shadow:none;box-shadow:0 3px 0 rgba(30,30,80,.14)}
 .forbtn{position:absolute;right:16px;top:58px;z-index:2;padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#fff;background:rgba(255,255,255,.22);backdrop-filter:blur(6px)}
 .gameview.mnview,.gameview.mnview iframe{background:var(--bg)}
 .gameview.mnview .bar{background:#1F5F5B;border-color:#174a47;color:#fff}
@@ -4682,7 +4683,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20261002-2";
+var BUILD="20261002-3";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
