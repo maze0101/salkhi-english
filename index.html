@@ -238,13 +238,14 @@ p+p{margin-top:10px}
 /* нарийн утсан дээр горимын товчнууд хурдны товчийг дарахгүйн тулд хурдны товчийг зөвхөн дүрсээр харуулна */
 @media (max-width:385px){#ratebtn{padding:0;width:38px}#ratebtn .lbl{display:none}}
 @media (max-width:350px){.modes button{padding:6px 6px;font-size:12px}.forbtn{font-size:12px}.forbtn .lbl{display:none}}
-/* Цаг агаар: hero-ийн доод буланд (🎨-ийн хажууд, хүүхдийн горимд үнэгнээс зүүн), дарахад хот солигдоно */
-.wxbtn{position:absolute;right:62px;bottom:16px;z-index:2;display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#fff;background:rgba(255,255,255,.22);backdrop-filter:blur(6px);transition:opacity .3s}
+/* Цаг агаар: Карт/Тест/Жагсаалт-ын хажууд, дарахад хот солигдоно */
+.segrow{display:flex;align-items:center;gap:8px;margin-bottom:14px;max-width:100%}
+.segrow .seg{margin-bottom:0;flex:none}
+.wxbtn{flex:0 1 auto;min-width:0;overflow:hidden}
+.wxbtn span:last-child{overflow:hidden;text-overflow:ellipsis}
+.wxbtn{display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-weight:700;font-size:14px;white-space:nowrap;transition:opacity .3s}
 .wxbtn .ic{font-size:16px;line-height:1}
-.wxbtn .t{font-size:15px}
 .wxbtn[hidden]{display:none}
-.wxbtn{background:rgba(15,30,30,.38);text-shadow:0 1px 2px rgba(0,0,0,.25)}
-:root[data-mode="kid"] .wxbtn{right:auto;left:16px;background:#fff;color:var(--ink);text-shadow:none;box-shadow:0 3px 0 rgba(30,30,80,.14)}
 .forbtn{position:absolute;right:16px;top:58px;z-index:2;padding:6px 12px;border-radius:999px;font-weight:700;font-size:13px;color:#fff;background:rgba(255,255,255,.22);backdrop-filter:blur(6px)}
 .gameview.mnview,.gameview.mnview iframe{background:var(--bg)}
 .gameview.mnview .bar{background:#1F5F5B;border-color:#174a47;color:#fff}
@@ -456,7 +457,6 @@ p+p{margin-top:10px}
       </div>
       <div class="sm-say" aria-live="polite"></div>
     </div>
-    <button class="wxbtn" id="wxbtn" type="button" hidden></button>
     <div class="txt">
       <div class="brand">Салхи</div>
       <p class="tag">Англи, япон, солонгос, хятад, орос, герман хэлний үг, дүрэм, яриа</p>
@@ -1732,10 +1732,10 @@ function viewWords(){
   if(!v.cur||p.indexOf(v.cur)<0){v.cur=pickWord();v.flipped=false;v.quiz=null;}
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
   root.append(taskPanel());
-  root.append(h("div",{class:"seg",role:"group","aria-label":"Горим"},
+  root.append(h("div",{class:"segrow"},h("div",{class:"seg",role:"group","aria-label":"Горим"},
     h("button",{"aria-pressed":String(v.mode==="card"),onclick:function(){v.mode="card";v.flipped=false;render();}},"Карт"),
     h("button",{"aria-pressed":String(v.mode==="quiz"),onclick:function(){v.mode="quiz";v.quiz=null;render();}},"Тест"),
-    h("button",{"aria-pressed":String(v.mode==="list"),onclick:function(){v.mode="list";render();}},"Жагсаалт")));
+    h("button",{"aria-pressed":String(v.mode==="list"),onclick:function(){v.mode="list";render();}},"Жагсаалт")),wxChip()));
 
   root.append(catChips());
   var wnote=state.mode==="kid"?null:lvNote(effLevel(),wordLvFor(effLevel()));if(wnote)root.append(wnote);
@@ -4683,7 +4683,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20261002-3";
+var BUILD="20261002-4";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
@@ -4741,7 +4741,7 @@ function wxText(c){
   if(c<=57)return "Шиврээ бороо";if(c<=67||(c>=80&&c<=82))return "Бороотой";if(c<=77||c===85||c===86)return "Цастай";if(c>=95)return "Аянгатай";return "Хувьсамтгай";
 }
 function wxRender(d,i){
-  var b=document.getElementById("wxbtn");if(!b)return;
+  var b=wxChip();
   var city=WX_CITIES[i]||WX_CITIES[0];
   b.textContent="";
   if(!d){
@@ -4773,7 +4773,12 @@ function wxLoad(force){
       if(sget("wxCity",0)===i)wxRender(d,i);
     }).catch(fail);
 }
-document.getElementById("wxbtn").onclick=function(){
+/* Нэг л товч үүсгээд viewWords бүрт дахин ашиглана (render-ээс өмнө ч дуудагдаж болно) */
+function wxChip(){
+  if(!wxChip.el)wxChip.el=h("button",{class:"wxbtn",type:"button",hidden:true,onclick:wxClick});
+  return wxChip.el;
+}
+function wxClick(){
   if(!navigator.onLine){toast("Интернэт холболтгүй байна. Цаг агаарыг шинэчилж чадсангүй.");return;}
   var i=((sget("wxCity",0)|0)+1)%WX_CITIES.length;sset("wxCity",i);
   this.lastChild.textContent=WX_CITIES[i][0];this.style.opacity=".55";
