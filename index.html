@@ -635,8 +635,12 @@ var LV_LABEL={a1:"A1",a2:"A2",b1:"B1",b2:"B2",c1:"C1",c2:"C2"};
 var LV_NAME={a1:"Эхлэгч",a2:"Анхан",b1:"Дунд",b2:"Дундаас дээш",c1:"Ахисан",c2:"Чөлөөтэй"};
 var LVO={a1:0,a2:1,b1:2,b2:3,c1:4,c2:5};
 var LV_ALL=["a1","a2","b1","b2","c1","c2"];
-/* хүүхдийн горим A2: A1-ийг ч багтаана */
-function lvHas(sel,v){return sel==="all"||v===sel||(sel==="a2"&&v==="a1"&&state.mode==="kid");}
+/* хүүхдийн горимд түвшин хуримтлагдана: B1 сонговол A1, A2, B1 бүгд */
+function lvHas(sel,v){
+  if(sel==="all"||v===sel)return true;
+  if(typeof state!=="undefined"&&state.mode==="kid"){var a=LV_ALL.indexOf(v),b=LV_ALL.indexOf(sel);return a>=0&&b>=0&&a<=b;}
+  return false;
+}
 /* тухайн түвшинд контент байхгүй бол хамгийн ойрын доод түвшнийг ашиглана */
 function lvFor(sel,has){var i=LV_ALL.indexOf(sel);for(var j=i;j>=0;j--)if(has(LV_ALL[j]))return LV_ALL[j];return sel;}
 function lvNote(want,got){return want!==got&&want!=="all"?h("div",{class:"note",style:"margin:8px 0"},LV_LABEL[want]+" түвшинд энэ хэсгийн контент одоогоор алга — "+LV_LABEL[got]+" түвшнийхийг харуулж байна."):null;}
@@ -783,7 +787,7 @@ var state={
   lang:sget("lang","en"), skin:sget("skin","default"), aiopt:sget("aiopt",{}), aimem:sget("aimem",{}), openaiKey:sget("openaikey",""), apiKey:sget("apikey",""), stars:sget("stars",0), listenOk:sget("listenOk",0), goal:sget("goal",20), theme:sget("theme","auto"), cat:"all",
   rate:sget("rate",1), freeze:sget("freeze",0), frozen:sget("frozen",{}), frzMark:sget("frzMark",0), langxp:sget("langxp",{}), miss:sget("miss",[]),
   stories:sget("stories",{}), speech:sget("speech",{n:0,sum:0}), fz:sget("fz",1), exam:sget("exam",{}),
-  act:sget("act",{}), games:sget("games",{}), kidlv:sget("kidlv","hard"), examLog:sget("examLog",[]), certName:sget("certName",""), mbook:sget("mbook",{})
+  act:sget("act",{}), games:sget("games",{}), kidlv:{easy:"a1",hard:"a2"}[sget("kidlv","a2")]||sget("kidlv","a2"), examLog:sget("examLog",[]), certName:sget("certName",""), mbook:sget("mbook",{})
 };
 if(!isObjS(state.act))state.act={};
 if(!isObjS(state.games))state.games={};
@@ -982,10 +986,12 @@ function cleanAI(t){
   if(state.lang==="zh")t=t.replace(/[A-Za-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+/g,"");
   return t.replace(/\s+/g," ").trim();
 }
-/* хүүхдийн горим: «Хялбар» = A1, «Хэцүү» = A1+A2 ба хүнд шалгалт */
-function kidHard(){return state.mode==="kid"&&state.kidlv!=="easy";}
-function kidLvOk(lv){return lv==="a1"||(kidHard()&&lv==="a2");}
-function effLevel(){return state.mode==="kid"?(kidHard()?"a2":"a1"):state.level;}
+/* хүүхдийн горимын түвшин (A1–C2, хуримтлагдана); A1-ээс дээш бол «Үнэгний адал явдал» хэцүү */
+var KID_LV=[["a1","🌱"],["a2","🌿"],["b1","🌳"],["b2","⭐"],["c1","🚀"],["c2","👑"]];
+function kidLv(){return LV_ALL.indexOf(state.kidlv)>=0?state.kidlv:"a2";}
+function kidHard(){return state.mode==="kid"&&kidLv()!=="a1";}
+function kidLvOk(lv){var i=LV_ALL.indexOf(lv);return i>=0&&i<=LV_ALL.indexOf(kidLv());}
+function effLevel(){return state.mode==="kid"?kidLv():state.level;}
 var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
 function toast(t,ms){
   var old=document.getElementById("toast");if(old)old.remove();
@@ -1063,14 +1069,14 @@ function acctBtn(){
 function renderLevels(){
   var el=document.getElementById("levels");el.textContent="";
   if(state.mode==="kid"){
-    [["easy","🌱 Хялбар"],["hard","🔥 Хэцүү"]].forEach(function(l){
-      el.append(h("button",{class:"lv","aria-pressed":String((state.kidlv==="easy"?"easy":"hard")===l[0]),onclick:function(){
-        if(state.kidlv===l[0])return;
+    KID_LV.forEach(function(l){
+      el.append(h("button",{class:"lv","aria-pressed":String(kidLv()===l[0]),title:LV_LABEL[l[0]],onclick:function(){
+        if(kidLv()===l[0])return;
         state.kidlv=l[0];sset("kidlv",l[0]);
         ui.vocab.cur=null;ui.vocab.quiz=null;ui.vocab.flipped=false;ui.grammar.lesson=null;ui.grammar.custom=null;ui.listen.cur=null;ui.listen.story.cur=null;ui.listen.dlg.cur=null;ui.play.kx=null;
-        toast(l[0]==="easy"?"🌱 Хялбар: A1 үгс, энгийн шалгалт":"🔥 Хэцүү: A2 үгс, хүнд шалгалт");
+        toast(l[1]+" "+LV_LABEL[l[0]]+(l[0]==="a1"?": энгийн шалгалт":": хэцүү шалгалт"));
         renderLevels();render();
-      }},l[1]));
+      }},l[1]+" "+LV_LABEL[l[0]]));
     });
     return;
   }
@@ -3833,7 +3839,7 @@ function viewKidExamHome(root){
     h("div",{style:"font-size:44px;line-height:1.1"},"🦊🗺"),
     h("div",{style:"font-weight:800;font-size:20px;margin-top:6px"},"Үнэгний адал явдал"),
     h("div",{class:"muted"},"Зогсоол бүр "+KX_N+" асуулттай шалгалт. 2 од авбал дараагийн зогсоол нээгдэнэ, 3 од авбал медаль авна!"),
-    h("div",{style:"margin-top:8px;font-weight:700"},kidHard()?"🔥 Хэцүү: ⏱ цагтай, 6 сонголт, үгээ бичих, сонсоод бичих":"🌱 Хялбар: 4 сонголт, зурагтай асуултууд")));
+    h("div",{style:"margin-top:8px;font-weight:700"},kidHard()?"🔥 Хэцүү ("+LV_LABEL[kidLv()]+"): ⏱ цагтай, 6 сонголт, үгээ бичих, сонсоод бичих":"🌱 Хялбар (A1): 4 сонголт, зурагтай асуултууд")));
   /* медалиуд */
   root.append(h("p",{class:"muted small",style:"margin:14px 0 6px"},"🏅 Миний медаль ("+medals.length+" / "+(cats.length+1)+")"));
   var mrow=h("div",{class:"kxmedals"});
