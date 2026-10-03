@@ -1321,6 +1321,7 @@ function setClsLists(code,o){
 var CLS_LESSONS=sget("clslessons",{})||{};
 function clsLesson(k){
   var p=CLS_LESSONS[k];if(!p)return null;
+  if(p.ref){var R=LESSONS.filter(function(x){return x.id===p.ref;})[0];return R||null;}
   return {id:"t:"+k,lang:p.lang,lv:"",t:p.t,intro:p.intro||[],rule:p.rule||"",ex:p.ex||[],q:p.q||[],o:p.o||[],f:p.f||[],teacher:p.cname||""};
 }
 function setClsLessons(code,o){
@@ -1329,8 +1330,18 @@ function setClsLessons(code,o){
   sset("clslessons",CLS_LESSONS);
 }
 function clsLessonDone(k){var L=clsLesson(k);return L?lessonPassed(L):null;}
-function openClsLesson(k){
-  var L=clsLesson(k);if(!L)return;
+function clsLessonsFor(lang){
+  if(!(window.WORDS_LOADED&&WORDS_LOADED[lang]))return null;
+  return LESSONS.filter(function(L){return (L.lang||"en")===lang&&L.lv;}).map(function(L){return {id:L.id,t:L.t,lv:L.lv};})
+    .sort(function(a,b){return (LVO[a.lv]||0)-(LVO[b.lv]||0);});
+}
+function openClsLesson(k,again){
+  var p=CLS_LESSONS[k],L=clsLesson(k);
+  if(!L){
+    /* сангийн хичээл өөр хэлнийх бол тэр хэлийг ачаалаад нээнэ */
+    if(p&&p.ref&&!again){loadLangs([p.lang],function(){openClsLesson(k,true);});return;}
+    toast("Хичээл олдсонгүй");return;
+  }
   if(L.lang!==state.lang){var b=[].find.call(document.querySelectorAll("#langs button"),function(x){return x.textContent===LANGN[L.lang];});if(b)b.click();}
   if(state.mode==="senior"){toast("Дүрмийн хичээл «Том хүн» горимд нээгдэнэ");return;}
   var g=ui.grammar;g.mod=null;g.lesson=L;g.custom=null;g.stage="read";g.saved=false;
@@ -5311,6 +5322,7 @@ function clsEnv(){
     me:function(lang){var m=this;return {name:m.name(),xp:state.xp,wxp:weekXP(),wk:weekKey(),streak:streak(),words:m.metric("words",lang),lessons:m.metric("lessons",lang)||0};},
     setLists:setClsLists,listProgress:clsListProgress,openList:openClsList,
     setLessons:setClsLessons,lessonDone:clsLessonDone,openLesson:openClsLesson,orderText:orderText,
+    lessonsFor:clsLessonsFor,loadLang:function(l,cb){loadLangs([l],cb);},
     close:function(){ui.cls=false;render();window.scrollTo(0,0);}};
 }
 function viewStats(){

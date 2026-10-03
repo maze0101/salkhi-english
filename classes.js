@@ -71,7 +71,10 @@
     return {t:v.t,intro:intro,rule:v.rule||"",ex:ex,q:q,o:o,f:f};
   }
   function storeLessons(code,ls,lang,cname){
-    var o={};Object.keys(ls||{}).forEach(function(lid){var p=parseLesson(ls[lid]);p.lang=lang;p.cname=cname;p.ts=ls[lid].ts||0;o[lid]=p;});
+    var o={};Object.keys(ls||{}).forEach(function(lid){
+      var v=ls[lid],p=v.ref?{ref:v.ref,t:v.t,lv:v.lv||""}:parseLesson(v);
+      p.lang=lang;p.cname=cname;p.ts=v.ts||0;o[lid]=p;
+    });
     env.setLessons(code,o);
   }
   function storeLists(code,lists,lang,cname){
@@ -287,6 +290,37 @@
           run(ref.set(v),function(){S.form=null;S.data=null;env.toast("Хадгалагдлаа ✅");});
         }},"Хадгалах"))));
   }
+  var LVN={a1:"A1",a2:"A2",b1:"B1",b2:"B2",c1:"C1",c2:"C2"};
+  function lessonPicker(root,d){
+    var code=S.code,lang=d.c.lang||"en",all=env.lessonsFor(lang);
+    var box=h("div",{class:"note",style:"margin-top:8px"},h("b",null,"📚 Хичээлийн сангаас нэмэх"));
+    root.append(box);
+    if(!all){box.append(h("p",{class:"muted small"},"Хичээлүүдийг ачаалж байна…"));env.loadLang(lang,paint);return;}
+    var have={};Object.keys(d.lessons||{}).forEach(function(k){if(d.lessons[k].ref)have[d.lessons[k].ref]=k;});
+    var lvs=Object.keys(LVN).filter(function(l){return all.some(function(x){return x.lv===l;});});
+    if(!S.plv||lvs.indexOf(S.plv)<0)S.plv=lvs[0];
+    var seg=h("div",{class:"seg",style:"margin:8px 0;flex-wrap:wrap"});
+    lvs.forEach(function(l){seg.append(h("button",{"aria-pressed":String(S.plv===l),onclick:function(){S.plv=l;paint();}},LVN[l]));});
+    var q=h("input",{class:"tin",type:"search",placeholder:"🔎 Хичээл хайх (ж: past, は, 了)",value:S.pq||"","aria-label":"Хичээл хайх",autocomplete:"off"});
+    var listEl=h("div",{style:"max-height:420px;overflow-y:auto;margin-top:6px"});
+    function fill(){
+      listEl.textContent="";var t=(S.pq||"").toLowerCase();
+      var rows=all.filter(function(x){return t?x.t.toLowerCase().indexOf(t)>=0:x.lv===S.plv;}).slice(0,80);
+      if(!rows.length)listEl.append(h("p",{class:"muted small"},"Хичээл олдсонгүй."));
+      rows.forEach(function(x){
+        var added=!!have[x.id];
+        listEl.append(h("div",{class:"srow"},
+          h("span",{style:"flex:1"},h("span",{class:"lvtag",style:"margin-right:6px"},LVN[x.lv]||""),x.t),
+          h("button",{class:"btn"+(added?" ghost":" primary"),style:"padding:6px 12px;flex:none",disabled:added||busy,"aria-label":added?"Нэмсэн":"Нэмэх",onclick:function(){
+            var r=db.ref("tlessons/"+code).push(),v={ref:x.id,t:String(x.t).slice(0,60),lv:x.lv||"",ts:now()};
+            run(r.set(v),function(){d.lessons[r.key]=v;storeLessons(code,d.lessons,lang,d.c.name);env.toast("Нэмэгдлээ ✅");});
+          }},added?"✓":"➕")));
+      });
+    }
+    q.addEventListener("input",function(){S.pq=q.value.trim();fill();});
+    box.append(seg,q,listEl,h("div",{class:"row"},h("button",{class:"btn",onclick:function(){S.form=null;S.pq="";paint();}},"Болсон")));
+    fill();
+  }
   function lessonEditor(root,d,lid){
     var code=S.code,cur=lid?d.lessons[lid]:{};
     function field(lbl,hint,el){return [h("div",{style:"font-weight:700;margin-top:12px"},lbl),hint?h("div",{class:"muted small"},hint):null,el];}
@@ -362,20 +396,23 @@
     /* багшийн хичээл */
     var tls=Object.keys(d.lessons||{}).sort(function(a,b){return (d.lessons[a].ts||0)-(d.lessons[b].ts||0);});
     root.append(h("h3",{style:"margin:18px 0 6px"},"📘 Хичээл"));
-    if(!tls.length&&S.form!=="lesson")root.append(h("p",{class:"muted small"},"Өөрийн дүрмийн хичээлийг тайлбар, жишээ, тестийн хамт бичиж ангидаа өгөөрэй."));
+    if(!tls.length&&S.form!=="lesson"&&S.form!=="pick")root.append(h("p",{class:"muted small"},"Аппын бэлэн дүрмийн хичээлүүдээс сонгоод ангидаа нэмээрэй."));
     tls.forEach(function(lid){
       var L=d.lessons[lid];
       if(S.form==="lesson:"+lid)return lessonEditor(root,d,lid);
-      root.append(h("div",{class:"srow"},h("span",{style:"flex:1"},"📘 "+L.t),
+      root.append(h("div",{class:"srow"},h("span",{style:"flex:1"},L.lv&&LVN[L.lv]?h("span",{class:"lvtag",style:"margin-right:6px"},LVN[L.lv]):null,(L.ref?"":"✏️ ")+L.t),
         h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":"Үзэх",onclick:function(){env.openLesson(code+":"+lid);}},"👁"),
-        h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":"Засах",onclick:function(){S.form="lesson:"+lid;paint();}},"✏️"),
+        L.ref?null:h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":"Засах",onclick:function(){S.form="lesson:"+lid;paint();}},"✏️"),
         h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":"Устгах",onclick:function(){
           if(S.rmLes!==lid){S.rmLes=lid;env.toast("Дахин дарвал «"+L.t+"» устгагдана");return;}
           S.rmLes=null;run(db.ref("tlessons/"+code+"/"+lid).remove(),function(){S.data=null;});
         }},"🗑")));
     });
-    if(S.form==="lesson")lessonEditor(root,d,null);
-    else if(String(S.form).indexOf("lesson:")!==0)root.append(h("button",{class:"btn",style:"width:100%;margin-top:6px",onclick:function(){S.form="lesson";paint();}},"➕ Хичээл нэмэх"));
+    if(S.form==="pick")lessonPicker(root,d);
+    else if(S.form==="lesson")lessonEditor(root,d,null);
+    else if(String(S.form).indexOf("lesson:")!==0)root.append(h("div",{class:"row",style:"margin-top:6px"},
+      h("button",{class:"btn primary",style:"flex:1",onclick:function(){S.form="pick";S.pq="";paint();}},"📚 Сангаас хичээл нэмэх"),
+      h("button",{class:"btn ghost",style:"flex:none",onclick:function(){S.form="lesson";paint();}},"✏️ Өөрөө бичих")));
     /* даалгавар */
     root.append(h("h3",{style:"margin:18px 0 6px"},"📋 Даалгавар"));
     ids.forEach(function(tid){
