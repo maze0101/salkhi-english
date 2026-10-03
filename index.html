@@ -124,6 +124,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 .strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 20px;margin-top:-18px;position:relative}
+.stat.acct{font:inherit;font-size:14px;font-weight:700;color:inherit;border:0;cursor:pointer}
+.stat.acct:disabled{opacity:.7;cursor:wait}
 .stat{background:var(--surface);box-shadow:var(--shadow);padding:7px 14px;border-radius:999px;font-weight:700;font-size:14px}
 .stat b{background:var(--neon);color:var(--neon-ink);padding:0 7px;border-radius:999px;margin-right:6px}
 .levels{display:flex;gap:6px;padding:12px 20px 4px;overflow-x:auto}
@@ -1000,10 +1002,21 @@ var elMain=document.getElementById("main");
 function renderStrip(){
   var s=document.getElementById("strip");s.textContent="";
   s.append(h("div",{class:"stat"},h("b",null,String(state.xp)),"XP"));
-  if(state.mode==="senior")return;
+  if(state.mode==="senior"){s.append(acctBtn());return;}
   s.append(h("div",{class:"stat",title:state.freeze?"🧊 Streak хамгаалалт: "+state.freeze:null},h("b",null,String(streak())),"өдөр дараалан"+(state.freeze?" 🧊"+(state.freeze>1?state.freeze:""):"")));
   s.append(h("div",{class:"stat","aria-label":"Өдрийн зорилго "+todayXP()+" / "+state.goal+" XP"},ringEl(todayXP()/state.goal,20,4),todayXP()+"/"+state.goal));
   if(state.mode==="kid")s.append(h("div",{class:"stat"},"⭐ "+state.stars));
+  else s.append(acctBtn());
+}
+/* нэвтрэх товч: нэвтрээгүй бол Google цонх, нэвтэрсэн бол «Явц» таб */
+function acctBtn(){
+  var S=window.SalkhiSync,a=S&&S.account();
+  if(!S||!window.SALKHI_FB)return "";
+  if(a)return h("button",{class:"stat acct",type:"button",title:"Явц Google-д хадгалагдаж байна","aria-label":"Бүртгэл: "+a.name,onclick:function(){state.tab="stats";renderTabs();render();window.scrollTo(0,0);}},"☁️ "+(a.name.split(" ")[0]||"Нэвтэрсэн"));
+  return h("button",{class:"stat acct",type:"button",title:"Google-ээр нэвтэрч явцаа хадгалах",onclick:function(e){
+    var b=e.currentTarget;b.disabled=true;b.textContent="⏳";
+    S.quickSignIn().then(function(){renderStrip();if(state.tab==="stats")render();});
+  }},"🔐 Нэвтрэх");
 }
 function renderLevels(){
   var el=document.getElementById("levels");el.textContent="";
@@ -4895,7 +4908,7 @@ function wxClick(){
   var c=wxCache()[i];wxLoad(!c||Date.now()-c.at>=30*60000);
 };
 wxLoad();setInterval(wxLoad,10*60000);
-if(window.SalkhiSync)SalkhiSync.boot(toast);
+if(window.SalkhiSync)SalkhiSync.boot(toast,function(){renderStrip();if(state.tab==="stats")render();});
 checkNotif();setInterval(checkNotif,30000);syncNotifMeta();
 if(sget("foreign",0)&&location.hash!=='#daily')openForeign();
 if(location.hash==='#daily'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}openDaily();}

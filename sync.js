@@ -105,7 +105,7 @@
   function remoteObj(v){var o=v&&typeof v.j==="string"?parse(v.j):null;return o&&isObj(o.data)?{data:o.data,mt:isObj(o.mt)?o.mt:{},rst:+o.rst||0}:{data:{},mt:{},rst:0};}
 
   /* ---------- татах / илгээх ---------- */
-  var busy=false,timer=null,lastErr="",tst=null;
+  var busy=false,timer=null,lastErr="",tst=null,onChange=null;
   function ref(u){return firebase.database().ref("progress/"+u.uid);}
   function push(){
     if(!meta().g)return Promise.resolve();
@@ -147,7 +147,8 @@
 
   /* ---------- нэвтрэх / гарах ---------- */
   function afterLogin(){
-    var m=meta();m.g=1;setMeta(m);
+    var m=meta(),u=firebase.auth().currentUser;m.g=1;m.name=u&&(u.displayName||u.email)||"";setMeta(m);
+    if(onChange)onChange();
     if(window.Social&&window.Social.reset)window.Social.reset();
     return pull();
   }
@@ -178,7 +179,8 @@
   function signOut(){
     clearTimeout(timer);
     return push().then(function(){return ready();}).then(function(){
-      var m=meta();delete m.g;delete m.last;setMeta(m);
+      var m=meta();delete m.g;delete m.last;delete m.name;setMeta(m);
+      if(onChange)onChange();
       if(window.Social&&window.Social.reset)window.Social.reset();
       return firebase.auth().signOut();
     });
@@ -221,9 +223,16 @@
     return wrap;
   }
 
+  /* толгой хэсгийн товчинд: Firebase ачаалалгүйгээр нэвтэрсэн эсэхийг мэдэх */
+  function account(){var m=meta();return m.g?{name:m.name||""}:null;}
+  function quickSignIn(){
+    if(!cfg())return Promise.resolve();
+    return signIn().then(function(){if(tst)tst("✅ Нэвтэрлээ. Явц тань хадгалагдана.");},function(e){var t=errText(e);if(t&&tst)tst(t);});
+  }
+
   /* ---------- эхлэл ---------- */
-  function boot(toast){
-    tst=toast||null;
+  function boot(toast,changed){
+    tst=toast||null;onChange=changed||null;
     if(!cfg())return;
     if(sessionStorage.getItem("salkhi:gredir")){
       sessionStorage.removeItem("salkhi:gredir");
@@ -236,6 +245,6 @@
     document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden"&&meta().g&&timer){clearTimeout(timer);timer=null;push();}});
   }
 
-  window.SalkhiSync={touch:touch,reset:reset,panel:panel,boot:boot,signIn:signIn,signOut:signOut,push:push,pull:pull,_merge:merge};
+  window.SalkhiSync={account:account,quickSignIn:quickSignIn,touch:touch,reset:reset,panel:panel,boot:boot,signIn:signIn,signOut:signOut,push:push,pull:pull,_merge:merge};
   window.SalkhiFB={load:load,ready:ready,user:user};
 })();
