@@ -123,7 +123,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .rotor.r2{animation-duration:20s}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-.strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 20px;margin-top:-18px;position:relative}
+.strip{display:flex;gap:6px;flex-wrap:nowrap;padding:0 16px;margin-top:-18px;position:relative;overflow-x:auto;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
 /* картын нийтлэг загвар */
 :root{--rc:18px;--sh-card:0 1px 2px rgba(20,15,60,.05),0 6px 18px rgba(20,15,60,.07)}
 :root[data-theme="dark"]{--sh-card:0 1px 2px rgba(0,0,0,.3),0 8px 22px rgba(0,0,0,.28)}
@@ -173,8 +174,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .auth-or{display:flex;align-items:center;gap:12px;margin:22px 0;color:var(--ink-2);font-size:14px}
 .auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
 .auth-g{display:flex;align-items:center;justify-content:center;gap:12px;padding:15px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;font-size:17px}
-.stat{background:var(--surface);box-shadow:var(--shadow);padding:7px 14px;border-radius:999px;font-weight:700;font-size:14px}
-.stat b{background:var(--neon);color:var(--neon-ink);padding:0 7px;border-radius:999px;margin-right:6px}
+.stat{flex:none;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;background:var(--surface);box-shadow:var(--shadow);padding:7px 11px;border-radius:999px;font-weight:700;font-size:13.5px}
+.stat b{background:var(--neon);color:var(--neon-ink);padding:0 7px;border-radius:999px}
 .levels{display:flex;gap:6px;padding:12px 20px 4px;overflow-x:auto}
 .lv{padding:8px 16px;border-radius:14px;border:1px solid var(--line);font-weight:600;font-size:14px;white-space:nowrap;background:var(--surface)}
 .lv[aria-pressed="true"]{background:var(--sky);color:#fff;border-color:var(--sky)}
@@ -1021,6 +1022,8 @@ function cleanAI(t){
 var KID_LV=[["a1","🌱"],["a2","🌿"],["b1","🌳"],["b2","⭐"],["c1","🚀"],["c2","👑"]];
 function kidLv(){return LV_ALL.indexOf(state.kidlv)>=0?state.kidlv:"a2";}
 function kidHard(){return state.mode==="kid"&&kidLv()!=="a1";}
+/* 0 (A1) … 5 (C2): «Үнэгний адал явдал»-ын хүндрэл */
+function kidTier(){return state.mode==="kid"?LV_ALL.indexOf(kidLv()):0;}
 function kidLvOk(lv){var i=LV_ALL.indexOf(lv);return i>=0&&i<=LV_ALL.indexOf(kidLv());}
 function effLevel(){return state.mode==="kid"?kidLv():state.level;}
 var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1085,7 +1088,7 @@ function renderStrip(){
   var s=document.getElementById("strip");s.textContent="";
   s.append(h("div",{class:"stat"},h("b",null,String(state.xp)),"XP"));
   if(state.mode==="senior"){s.append(acctBtn());return;}
-  s.append(h("div",{class:"stat",title:state.freeze?"🧊 Streak хамгаалалт: "+state.freeze:null},h("b",null,String(streak())),"өдөр дараалан"+(state.freeze?" 🧊"+(state.freeze>1?state.freeze:""):"")));
+  s.append(h("div",{class:"stat",title:state.freeze?"🧊 Streak хамгаалалт: "+state.freeze:streak()+" өдөр дараалан","aria-label":streak()+" өдөр дараалан"},h("b",null,String(streak())),"🔥"+(state.freeze?" 🧊"+(state.freeze>1?state.freeze:""):"")));
   s.append(h("div",{class:"stat","aria-label":"Өдрийн зорилго "+todayXP()+" / "+state.goal+" XP"},ringEl(todayXP()/state.goal,20,4),todayXP()+"/"+state.goal));
   if(state.mode==="kid")s.append(h("div",{class:"stat"},"⭐ "+state.stars));
   s.append(acctBtn());
@@ -3981,8 +3984,8 @@ function viewKidExamHome(root){
   root.append(h("div",{class:"note",style:"text-align:center"},
     h("div",{style:"font-size:44px;line-height:1.1"},"🦊🗺"),
     h("div",{style:"font-weight:800;font-size:20px;margin-top:6px"},"Үнэгний адал явдал"),
-    h("div",{class:"muted"},"Зогсоол бүр "+KX_N+" асуулттай шалгалт. 2 од авбал дараагийн зогсоол нээгдэнэ, 3 од авбал медаль авна!"),
-    h("div",{style:"margin-top:8px;font-weight:700"},kidHard()?"🔥 Хэцүү ("+LV_LABEL[kidLv()]+"): ⏱ цагтай, 6 сонголт, үгээ бичих, сонсоод бичих":"🌱 Хялбар (A1): 4 сонголт, зурагтай асуултууд")));
+    h("div",{class:"muted"},"Зогсоол бүр "+(kidTier()>=2?15:KX_N)+" асуулттай шалгалт. 2 од авбал дараагийн зогсоол нээгдэнэ, 3 од авбал медаль авна!"),
+    h("div",{style:"margin-top:8px;font-weight:700"},kidHard()?"🔥 Хэцүү ("+LV_LABEL[kidLv()]+"): "+(kidTier()>=2?"15 асуулт, ⏱ "+(kidTier()>=4?"12":"15")+" сек, түвшний үгс, ":"⏱ цагтай, ")+"6 сонголт, үгээ бичих, сонсоод бичих":"🌱 Хялбар (A1): 4 сонголт, зурагтай асуултууд")));
   /* медалиуд */
   root.append(h("p",{class:"muted small",style:"margin:14px 0 6px"},"🏅 Миний медаль ("+medals.length+" / "+(cats.length+1)+")"));
   var mrow=h("div",{class:"kxmedals"});
@@ -4022,14 +4025,18 @@ function startKidExam(){
   if(hard)types=types.concat(sp?["type","dict"]:["rev","ear"]);
   if(SR&&kxOpt.say)types.push("say");
   /* төрөл бүр дор хаяж нэг удаа, үлдсэнийг санамсаргүй */
-  var tlist=shuffle(types);while(tlist.length<KX_N)tlist.push(types[Math.floor(Math.random()*types.length)]);
-  tlist=shuffle(tlist.slice(0,KX_N));
-  var order=shuffle(ws),spell=shuffle(ws.filter(kxSpellable)),qs=[];
+  /* түвшин B1+: 15 асуулт, сонгосон түвшний зураггүй үгс (утга, монгол→гадаад, сонсох асуултад) */
+  var tier=kidTier(),N=tier>=2?15:KX_N;
+  var lvw=tier>=2?modeWords().filter(function(w){return !w[4]&&w[0]!=="a1"&&kidLvOk(w[0])&&w[1].length<=24&&w[2].length<=30;}):[];
+  var tlist=shuffle(types);while(tlist.length<N)tlist.push(types[Math.floor(Math.random()*types.length)]);
+  tlist=shuffle(tlist.slice(0,N));
+  var order=shuffle(ws),spell=shuffle(ws.filter(kxSpellable)),lvo=shuffle(lvw),qs=[];
   tlist.forEach(function(t,i){
+    if(lvo.length>=6&&(t==="mean"||t==="rev"||t==="ear")&&i%2===0){qs.push(kxQ(t,lvo[i%lvo.length],lvo));return;}
     var w=t==="spell"||t==="type"||t==="dict"?spell[i%spell.length]:order[i%order.length];
     qs.push(kxQ(t,w,ws));
   });
-  P.kx={qs:qs,qi:0,score:0,done:false,lives:kxOpt.lives?3:0,hard:hard};
+  P.kx={qs:qs,qi:0,score:0,done:false,lives:kxOpt.lives?3:0,hard:hard,tier:tier};
   render();window.scrollTo(0,0);
   kxAutoSay(qs[0],400);
 }
@@ -4040,7 +4047,7 @@ function kxQ(t,w,ws){
   if(t==="yn")q.show=Math.random()<0.5?w:others[0];
   if(t==="spell"){
     var ch=Array.from(w[1].toLowerCase()),pool=ch.slice(),ab=Array.from(ALPH[state.lang]||"");
-    if(hard&&ab.length)for(var k=0;k<3;k++)pool.push(ab[Math.floor(Math.random()*ab.length)]);
+    if(hard&&ab.length)for(var k=0,nd=kidTier()>=2?4:3;k<nd;k++)pool.push(ab[Math.floor(Math.random()*ab.length)]);
     var sh=shuffle(pool),n=0;while(sh.slice(0,ch.length).join("")===ch.join("")&&n++<8)sh=shuffle(pool);q.ch=sh;q.built=[];
   }
   if(t==="type"||t==="dict"){q.val="";q.tries=0;}
@@ -4071,7 +4078,7 @@ function viewKidExam(root){
   function cls(o,right){return "opt"+(q.done?(right?" ok":o===q.picked?" bad":""):"");}
   /* хэцүү: асуулт бүрт цаг (бичих 30с, бусад 20с); дуусвал буруу */
   if(K.hard&&!q.done&&q.t!=="say"){
-    var total=q.t==="type"||q.t==="dict"?30000:20000;
+    var tw=q.t==="type"||q.t==="dict",tr=K.tier||1,total=tr>=4?(tw?20000:12000):tr>=2?(tw?25000:15000):(tw?30000:20000);
     if(!q.end)q.end=Date.now()+total;
     var left=q.end-Date.now();
     root.append(h("div",{class:"kxtime","aria-label":"Үлдсэн хугацаа"},h("i",{style:"animation-duration:"+total+"ms;animation-delay:-"+(total-Math.max(0,left))+"ms"})));
@@ -4177,7 +4184,7 @@ function viewKidExam(root){
     }
   }
   if(q.done){
-    var right=w[4]+" "+w[1]+" — "+w[2];
+    var right=(w[4]?w[4]+" ":"")+w[1]+" — "+w[2];
     root.append(h("div",{class:"fb "+(q.ok?"ok":"bad")},q.ok?"Зөв! 🎉 "+right:q.timeout?"⏱ Хугацаа дууслаа! "+right:(q.t==="pair"?"Бүгдийг холболоо! Дараагийн удаа алдаагүй хийгээрэй 💪":wrongPre()+right)));
     if(K.out)root.append(h("div",{class:"fb bad"},"💔 Амь дууслаа"));
     root.append(h("div",{class:"row"},h("button",{class:"btn primary",onclick:function(){kxNext(K);}},K.out||K.qi+1>=K.qs.length?"Дүнгээ харах 🏁":"Дараагийх ›")));
@@ -4206,14 +4213,14 @@ function kxListen(q,finish){
   },function(){q.busy=false;q.msg=micSettingsHint();render();});
 }
 function kxResult(root,P,K){
-  var st=kxStars(K.score),before=kxMedals(),cats=kidExamCats(),stops=cats.concat([["all","🏆 Бүгд"]]),idx=cats.map(function(c){return c[0];}).indexOf(P.kcat);
+  var sc10=Math.round(K.score*KX_N/K.qs.length),st=kxStars(sc10),before=kxMedals(),cats=kidExamCats(),stops=cats.concat([["all","🏆 Бүгд"]]),idx=cats.map(function(c){return c[0];}).indexOf(P.kcat);
   var wasOpen=idx>=0&&kxOpen(cats,idx+1);
   if(!K.done){
-    K.done=true;K.rec=gameBest(state.lang+":kx:"+P.kcat,K.score)&&K.score>0;
+    K.done=true;K.rec=gameBest(state.lang+":kx:"+P.kcat,sc10)&&K.score>0;
     K.medal=kxMedals().length>before.length;
     K.unlock=idx>=0&&!wasOpen&&kxOpen(cats,idx+1);
     var miss=[];K.qs.forEach(function(q){q.mw.forEach(function(m){if(miss.indexOf(m[1])<0)miss.push(m[1]);});});
-    kxLog.push({d:dkey(new Date()),l:state.lang,c:P.kcat,s:K.score,m:miss});
+    kxLog.push({d:dkey(new Date()),l:state.lang,c:P.kcat,s:sc10,m:miss});
     while(kxLog.length>KX_LOG_MAX)kxLog.shift();
     sset("kxlog",kxLog);
     logAct("g");addXP(K.score*5);if(st||K.medal)celebrate(true,true);
@@ -4232,7 +4239,7 @@ function kxResult(root,P,K){
   K.qs.forEach(function(q){q.mw.forEach(function(m){if(!seen[m[1]]){seen[m[1]]=1;miss.push(m);}});});
   if(miss.length){
     root.append(h("p",{class:"muted small",style:"margin:14px 0 6px"},"Дахиад давтъя (📒 Алдаа хэсэгт хадгалагдлаа)"));
-    miss.forEach(function(m){root.append(h("div",{class:"srow"},h("span",null,m[4]+"  "+m[1]+" — "+m[2]),speakBtn(m[1])));});
+    miss.forEach(function(m){root.append(h("div",{class:"srow"},h("span",null,(m[4]?m[4]+"  ":"")+m[1]+" — "+m[2]),speakBtn(m[1])));});
   }
   root.append(h("div",{class:"row"},
     h("button",{class:"btn",onclick:function(){P.kx=null;render();}},"🗺 Зам руу"),
