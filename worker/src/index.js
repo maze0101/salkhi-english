@@ -153,6 +153,78 @@ async function handleTTS(req,env,ctx,url){
   return res;
 }
 
+/* ---------- /vision: зургийн гол эд зүйлийг таниад сонгосон хэлээр нэрлэнэ («Камераар сур») ----------
+   POST {image:"<base64 jpeg>", lang:"en"} → {word, reading, mn, emoji, en}. Зураг хадгалагдахгүй.
+   2 шат: vision загвар англи нэр + эможи гаргана, дараа нь mistral зорилтот хэл ба монгол руу орчуулна
+   (vision загвар монгол, япон үгэнд сул). */
+const VISION_MODEL="@cf/meta/llama-3.2-11b-vision-instruct";
+const MAX_IMAGE_BYTES=400000;
+const VISION_LANGS={en:"English",ja:"Japanese",ko:"Korean",zh:"Simplified Chinese",ru:"Russian",de:"German"};
+/* орчуулгын жишээ (dog) — загвар хэлбэрийг нь дуурайна */
+const VISION_EX={
+  en:'{"word":"dog","reading":"","mn":"нохой"}',ja:'{"word":"いぬ","reading":"inu","mn":"нохой"}',ko:'{"word":"개","reading":"gae","mn":"нохой"}',
+  zh:'{"word":"狗","reading":"gǒu","mn":"нохой"}',ru:'{"word":"собака","reading":"","mn":"нохой"}',de:'{"word":"der Hund","reading":"","mn":"нохой"}'
+};
+export function decodeImage(b64){
+  if(typeof b64!=="string")return null;
+  b64=b64.replace(/^data:image\/[a-z]+;base64,/,"");
+  if(!b64||b64.length>MAX_IMAGE_BYTES*4/3+8||/[^A-Za-z0-9+/=]/.test(b64))return null;
+  let bin;try{bin=atob(b64);}catch(e){return null;}
+  const out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);
+  return out.length>=100?out:null;
+}
+/* Workers AI нь JSON-ыг заримдаа объект, заримдаа текст хэлбэрээр буцаадаг */
+export function jsonFrom(v){
+  if(v&&typeof v==="object")return v;
+  const m=String(v||"").match(/\{[\s\S]*\}/);if(!m)return null;
+  try{return JSON.parse(m[0]);}catch(e){return null;}
+}
+function clip(v,n){return typeof v==="string"?v.trim().slice(0,n):"";}
+export function parseSeen(v){
+  const o=jsonFrom(v);if(!o)return null;
+  const en=clip(o.en||o.word,40).toLowerCase();
+  return /^[a-z][a-z \-]{0,39}$/.test(en)?{en:en,emoji:clip(o.emoji,8)}:null;
+}
+export function parseVision(v){
+  const o=jsonFrom(v);if(!o)return null;
+  const r={word:clip(o.word,40),reading:clip(o.reading,60),mn:clip(o.mn,40),emoji:clip(o.emoji,8)};
+  if(/^empty|^none$|^n\/a$/i.test(r.reading))r.reading="";
+  /* монгол утга кирилл байх ёстой */
+  return r.word&&/[Ѐ-ӿ]/.test(r.mn)?r:null;
+}
+const SEE_PROMPT="What is the ONE main everyday object in this photo? If it is a person, answer person. Keep it child-safe. "+
+  "Reply with ONLY JSON: {\"en\":\"a simple English noun\",\"emoji\":\"one matching emoji\"}";
+async function runAI(env,model,input){
+  try{return await env.AI.run(model,input);}
+  catch(e){
+    /* Meta-гийн лицензийг нэг удаа зөвшөөрөх шаардлагатай */
+    if(/agree/i.test(String(e&&e.message||e))){await env.AI.run(model,{prompt:"agree"});return await env.AI.run(model,input);}
+    throw e;
+  }
+}
+async function handleVision(req,env,cors){
+  let body;try{body=await req.json();}catch(e){return json({error:"bad_json"},400,cors);}
+  const lang=body&&VISION_LANGS[body.lang]?body.lang:null;
+  const img=decodeImage(body&&body.image);
+  if(!lang||!img)return json({error:"bad_image"},400,cors);
+  let seen,tr;
+  try{
+    const a=await runAI(env,VISION_MODEL,{prompt:SEE_PROMPT,image:Array.from(img),max_tokens:60,temperature:0.1});
+    seen=parseSeen(a&&a.response);
+    if(!seen){console.error("vision unparsed:",JSON.stringify(a).slice(0,200));return json({error:"not_found"},422,cors);}
+    const L=VISION_LANGS[lang];
+    const q="Translate the English noun \""+seen.en+"\" for a child learning "+L+". Give the everyday "+L+" word"+
+      (lang==="ja"?" (hiragana, or common kanji)":lang==="de"?" with its article":"")+
+      ", its "+(lang==="ja"?"romaji":lang==="zh"?"pinyin with tone marks":lang==="ko"?"romanization":"reading (empty string)")+
+      " and the Mongolian word in Cyrillic. Reply with ONLY JSON like this example for dog: "+VISION_EX[lang];
+    const b=await env.AI.run(env.MODEL||DEFAULT_MODEL,{messages:[{role:"system",content:SAFETY},{role:"user",content:q}],max_tokens:80,temperature:0.1});
+    tr=parseVision(b&&b.response);
+    if(!tr){console.error("translate unparsed:",JSON.stringify(b).slice(0,200));return json({error:"not_found"},422,cors);}
+  }catch(e){console.error("vision failed:",e&&e.message?e.message:String(e));return json({error:"ai_unavailable"},503,cors);}
+  tr.emoji=seen.emoji||tr.emoji;tr.en=seen.en;
+  return json(tr,200,Object.assign({"cache-control":"no-store"},cors));
+}
+
 export default {
   async fetch(req,env,ctx){
     const pre=new URL(req.url);
@@ -169,7 +241,7 @@ export default {
     if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors});
     const url=new URL(req.url);
     if(url.pathname==="/"&&req.method==="GET")return new Response("Salkhi AI is running.",{status:200,headers:cors});
-    if(req.method!=="POST"||url.pathname!=="/chat")return json({error:"not_found"},404,cors);
+    if(req.method!=="POST"||(url.pathname!=="/chat"&&url.pathname!=="/vision"))return json({error:"not_found"},404,cors);
     if(!okOrigin)return json({error:"forbidden"},403,cors);
 
     if(env.LIMITER){
@@ -177,6 +249,7 @@ export default {
       const r=await env.LIMITER.limit({key:ip});
       if(!r.success)return json({error:"rate_limited"},429,cors);
     }
+    if(url.pathname==="/vision")return handleVision(req,env,cors);
 
     let body;try{body=await req.json();}catch(e){return json({error:"bad_json"},400,cors);}
     const msgs=sanitizeMessages(body&&body.messages);

@@ -1,4 +1,4 @@
-import worker,{convertStream,sanitizeMessages} from "./src/index.js";
+import worker,{convertStream,sanitizeMessages,decodeImage,parseVision,parseSeen} from "./src/index.js";
 let pass=0,fail=0;const ck=(n,c,x)=>{if(c){pass++;console.log("✅",n);}else{fail++;console.log("❌",n,x||"");}};
 const ORIGIN="https://maze0101.github.io";
 function mkStream(chunks){const enc=new TextEncoder();return new ReadableStream({start(c){chunks.forEach(x=>c.enqueue(enc.encode(x)));c.close();}});}
@@ -60,4 +60,22 @@ lastRun=null;await worker.fetch(req("POST","/chat",{headers:{Origin:ORIGIN},body
 ck("unknown model name is ignored",/mistral/.test(lastRun.model));
 lastRun=null;await worker.fetch(req("POST","/chat",{headers:{Origin:ORIGIN},body:Object.assign({model:"llama70"},goodBody)}),okEnv());
 ck("plain chat ignores the model field",/mistral/.test(lastRun.model)&&lastRun.input.temperature===0.8);
+// /vision
+const IMG=Buffer.alloc(300,7).toString("base64");
+ck("decodeImage accepts data URI jpeg",decodeImage("data:image/jpeg;base64,"+IMG)?.length===300);
+ck("decodeImage rejects junk",decodeImage("<script>")===null&&decodeImage(123)===null&&decodeImage("")===null);
+ck("decodeImage rejects oversized",decodeImage("A".repeat(600000))===null);
+ck("parseVision extracts JSON from chatter",JSON.stringify(parseVision('Here: {"word":"cup","reading":"","mn":"аяга","emoji":"☕"} done'))===JSON.stringify({word:"cup",reading:"",mn:"аяга",emoji:"☕"}));
+ck("parseVision needs word and Cyrillic mn",parseVision('{"word":"cup"}')===null&&parseVision("no json")===null&&parseVision({word:"neko",mn:"neko"})===null);
+ck("parseVision accepts object response",parseVision({word:"ねこ",reading:"neko",mn:"муур"}).word==="ねこ");
+ck("parseSeen keeps simple English noun only",parseSeen({en:"Apple",emoji:"🍎"}).en==="apple"&&parseSeen({en:"<b>x</b>"})===null);
+let vRun=null;const vEnv=(resp,seen)=>okEnv({AI:{run:async(m,i)=>{if(i.image){vRun={m,i};return {response:seen===undefined?{en:"cat",emoji:"🐱"}:seen};}return {response:resp};}}});
+r=await worker.fetch(req("POST","/vision",{headers:{Origin:ORIGIN},body:{image:IMG,lang:"ja"}}),vEnv('{"word":"ねこ","reading":"neko","mn":"муур","emoji":"🐱"}'));
+let vj=await r.json();ck("vision ok returns word",r.status===200&&vj.word==="ねこ"&&vj.mn==="муур"&&vRun.m.includes("vision")&&Array.isArray(vRun.i.image));
+r=await worker.fetch(req("POST","/vision",{headers:{Origin:"https://evil.example"},body:{image:IMG,lang:"en"}}),vEnv("{}"));ck("vision foreign origin 403",r.status===403);
+r=await worker.fetch(req("POST","/vision",{headers:{Origin:ORIGIN},body:{image:IMG,lang:"xx"}}),vEnv("{}"));ck("vision bad lang 400",r.status===400);
+r=await worker.fetch(req("POST","/vision",{headers:{Origin:ORIGIN},body:{image:IMG,lang:"en"}}),vEnv("I cannot tell"));ck("vision untranslatable 422",r.status===422);
+r=await worker.fetch(req("POST","/vision",{headers:{Origin:ORIGIN},body:{image:IMG,lang:"en"}}),vEnv("{}","no idea"));ck("vision unrecognized 422",r.status===422);
+let agreed=0;r=await worker.fetch(req("POST","/vision",{headers:{Origin:ORIGIN},body:{image:IMG,lang:"en"}}),okEnv({AI:{run:async(m,i)=>{if(i.prompt==="agree"){agreed++;return {};}if(i.image&&!agreed)throw new Error("5016: Prior to using this model, you must submit the prompt agree");return {response:i.image?{en:"cup",emoji:"☕"}:'{"word":"cup","mn":"аяга"}'};}}}));
+ck("vision auto-accepts model license once",r.status===200&&agreed===1);
 console.log("\nPASS",pass,"FAIL",fail);process.exit(fail?1:0);

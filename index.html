@@ -3643,6 +3643,7 @@ function viewPlay(){
   if(state.mode!=="kid")P.kx=null;
   if(P.kx)return viewKidExam(root);
   if(P.game)return viewGame(root);
+  if(P.cam)return viewCam(root);
   if(P.ex)return viewMock(root);
   root.append(h("h2",null,"Сорил"));
   var nMB=mbCount();
@@ -3666,6 +3667,8 @@ function viewPlay(){
       h("i",{"aria-hidden":"true"},g[1]),
       h("div",null,h("b",null,g[2]),h("span",null,g[3]+(best!=null?" · Шилдэг: "+(g[0]==="match"?fmtSec(best):g[0]==="dict"?best+"%":best):"")))));
   });
+  if(camURL())root.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.cam={};render();window.scrollTo(0,0);}},
+    h("i",{"aria-hidden":"true"},"📷"),h("div",null,h("b",null,"Камераар сур"),h("span",null,"Эд зүйлийн зургийг ав, AI нэрийг нь хэлнэ"))));
   root.append(h("div",{style:"margin-top:10px"},gameCard()));
   return root;
 }
@@ -3715,6 +3718,83 @@ function gameOver(root,G,lines,xp,again){
   root.append(h("div",{class:"row"},
     h("button",{class:"btn",onclick:function(){ui.play.game=null;render();}},"Бусад тоглоом"),
     h("button",{class:"btn primary",onclick:function(){startGame(again);}},"Дахин тоглох")));
+}
+/* «Камераар сур»: эд зүйлийн зургийг аваад AI нэрийг нь сонгосон хэлээр хэлнэ (worker /vision). Зураг хадгалагдахгүй. */
+function camURL(){var u=window.SALKHI_AI&&window.SALKHI_AI.url;return u?u.replace(/\/chat$/,"/vision"):null;}
+function camShrink(file,cb){
+  var img=new Image(),url=URL.createObjectURL(file);
+  img.onload=function(){
+    var s=Math.min(1,512/Math.max(img.width,img.height)),c=document.createElement("canvas");
+    c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+    cb(c.toDataURL("image/jpeg",0.75));
+  };
+  img.onerror=function(){URL.revokeObjectURL(url);cb(null);};
+  img.src=url;
+}
+/* монгол утгыг апп-ын толь бичгээс шалгана (AI-ийн монгол орчуулга заримдаа буруу) */
+function camLookup(r){
+  var L=state.lang,bare=function(s){return String(s||"").toLowerCase().replace(/^(der|die|das)\s+/,"").trim();},t=bare(r.word);
+  for(var i=0;i<WORDS.length;i++){var w=WORDS[i];if((w[6]||"en")===L&&bare(w[1])===t)return w;}
+  if(r.en)for(i=0;i<WORDS.length;i++){w=WORDS[i];if((w[6]||"en")==="en"&&w[1].toLowerCase()===r.en)return {mnOnly:w[2]};}
+  return null;
+}
+function camSend(dataUrl){
+  var C=ui.play.cam;C.img=dataUrl;C.busy=true;C.res=null;C.err="";render();
+  fetch(camURL(),{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({image:dataUrl,lang:state.lang})})
+    .then(function(r){return r.json().then(function(j){return {s:r.status,j:j};});})
+    .then(function(x){
+      C.busy=false;
+      if(x.s===200&&x.j&&x.j.word){
+        var r=x.j,hit=camLookup(r);
+        if(hit&&hit.mnOnly)r.mn=hit.mnOnly;else if(hit){r.mn=hit[2];if(hit[7]&&!r.reading)r.reading=hit[7];}
+        C.res=r;addXP(3);
+        var log=sget("camlog",[]);log=log.filter(function(e){return !(e.l===state.lang&&e.w===r.word);});
+        log.push({l:state.lang,w:r.word,m:r.mn,e:r.emoji||"",r:r.reading||""});while(log.length>40)log.shift();sset("camlog",log);
+        setTimeout(function(){speak(cleanSpeak(r.word));},200);
+      }else C.err=x.s===422?"Юу болохыг таньж чадсангүй 🤔 Эд зүйлээ ойроос, гэрэлтэй газар дахин авна уу.":x.s===429?"Хэт олон зураг илгээлээ. Түр хүлээгээд дахин оролдоорой.":"AI одоогоор ажиллахгүй байна. Дараа дахин оролдоорой.";
+      render();
+    })
+    .catch(function(){C.busy=false;C.err="Интернэт холболтоо шалгана уу.";render();});
+}
+function viewCam(root){
+  var P=ui.play,C=P.cam;
+  root.append(h("button",{class:"back",onclick:function(){P.cam=null;render();}},"‹ Тоглоомууд"));
+  root.append(h("h2",null,"📷 Камераар сур"));
+  root.append(h("p",{class:"muted"},"Эргэн тойрныхоо эд зүйлийн (аяга, ном, муур…) зургийг ав. "+LANGN[state.lang]+" нэрийг нь хэлээд өгнө!"));
+  var file=h("input",{type:"file",accept:"image/*",capture:"environment",style:"display:none","aria-label":"Зураг сонгох"});
+  file.addEventListener("change",function(){var f=file.files[0];if(!f)return;camShrink(f,function(d){if(d)camSend(d);else{C.err="Зургийг уншиж чадсангүй.";render();}});});
+  root.append(file);
+  if(C.img)root.append(h("img",{src:C.img,alt:"Авсан зураг",style:"display:block;width:100%;max-height:260px;object-fit:contain;border-radius:18px;background:var(--surface);margin:8px 0"}));
+  if(C.busy)root.append(h("div",{class:"note",style:"text-align:center"},"🦊 Харж байна..."));
+  if(C.err)root.append(h("div",{class:"fb bad"},C.err));
+  if(C.res){
+    var r=C.res,st=h("div",{class:"fb",style:"display:none"});
+    root.append(h("div",{class:"note",style:"text-align:center"},
+      h("div",{style:"font-size:64px;line-height:1.1"},r.emoji||"✨"),
+      h("div",{style:"font-size:clamp(30px,9vw,42px);font-weight:800;margin-top:4px"},r.word),
+      r.reading?h("div",{class:"muted"},r.reading):null,
+      h("div",{style:"font-size:20px;margin-top:4px"},"🇲🇳 "+r.mn)));
+    var saved=WORDS.some(function(w){return (w[6]||"en")===state.lang&&w[1]===r.word;});
+    root.append(h("div",{class:"row",style:"flex-wrap:wrap"},
+      h("button",{class:"btn",onclick:function(){speak(cleanSpeak(r.word));}},"🔊 Сонсох"),
+      SR?h("button",{class:"btn",onclick:function(){st.style.display="block";checkSpeech(cleanSpeak(r.word),st,2);}},"🎤 Давтаж хэл"):null,
+      saved?null:h("button",{class:"btn",onclick:function(){
+        var e=["a1",r.word,r.mn,"",r.emoji||null,"mine",state.lang,r.reading||""];
+        state.custom.push(e);WORDS.push(e);sset("custom",state.custom);toast("💾 «Миний үгс»-д хадгаллаа");render();
+      }},"💾 Хадгалах")));
+    root.append(st);
+  }
+  root.append(h("button",{class:"btn primary",style:"width:100%;margin-top:12px;font-size:20px",disabled:!!C.busy,onclick:function(){file.value="";file.click();}},C.res||C.err?"📷 Дахин зураг авах":"📷 Зураг авах"));
+  var log=sget("camlog",[]).filter(function(e){return e.l===state.lang;}).reverse();
+  if(log.length){
+    root.append(h("p",{class:"muted small",style:"margin:18px 0 6px"},"🗂 Миний цуглуулга ("+log.length+")"));
+    var g=h("div",{class:"kxgrid"});
+    log.forEach(function(e){g.append(h("button",{class:"opt",style:"margin:0;text-align:center",onclick:function(){speak(cleanSpeak(e.w));}},h("div",{style:"font-size:30px"},e.e||"✨"),h("div",{style:"font-weight:700"},e.w),h("div",{class:"muted small"},e.m)));});
+    root.append(g);
+  }
+  root.append(h("p",{class:"muted small",style:"margin-top:12px"},"Зургийг зөвхөн таних үед ашиглана, хаана ч хадгалахгүй."));
+  return root;
 }
 function viewGame(root){
   var G=ui.play.game;
@@ -4150,8 +4230,39 @@ function parentReport(){
     var w=mbWord(t);
     body.append(h("div",{class:"srow"},h("span",null,(w&&w[4]?w[4]+"  ":"")+t+(w?" — "+w[2]:"")),h("span",{class:"muted small"},cnt[t]+" удаа")));
   });
+  body.append(h("button",{class:"btn primary",style:"width:100%;margin-top:12px",onclick:sendParentReport},"📧 Тайланг эцэг эхэд илгээх"));
   return h("details",{class:"note",style:"margin-top:18px"},h("summary",{style:"font-weight:700;cursor:pointer"},"👪 Эцэг эхэд зориулсан тайлан"),body);
 }
+/* долоо хоногийн тайлан: текстээр бэлдээд хуваалцах цэс эсвэл эцэг эхийн и-мэйл (mailto) рүү */
+function weekReportText(){
+  var days=[],i,d,xp=0,act=0,L=state.lang;
+  for(i=0;i<7;i++){d=new Date();d.setDate(d.getDate()-i);days.push(dkey(d));}
+  days.forEach(function(k){var v=state.daily[k]||0;xp+=v;if(v)act++;});
+  var acc=window.SalkhiSync&&SalkhiSync.account(),nm=acc&&acc.name||"Хүүхэд";
+  var known=modeWords().filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
+  var wk=kxLog.filter(function(r){return r.l===L&&days.indexOf(r.d)>=0;});
+  var avg=wk.length?Math.round(wk.reduce(function(a,r){return a+r.s;},0)/wk.length*10)/10:null;
+  var cnt={};wk.forEach(function(r){(r.m||[]).forEach(function(t){cnt[t]=(cnt[t]||0)+1;});});
+  var top=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a];}).slice(0,5).map(function(t){var w=mbWord(t);return t+(w?" ("+w[2]+")":"");});
+  var lines=["🦊 Салхи — 7 хоногийн тайлан","",nm+" · "+LANGN[L]+" хэл"+(state.mode==="kid"?" · "+LV_LABEL[kidLv()]:""),"",
+    "⭐ Энэ 7 хоногт: "+xp+" XP, "+act+" өдөр хичээллэсэн",
+    "🔥 Дараалсан өдөр: "+streak(),
+    "📚 Цээжилсэн үг: "+known,
+    "✅ Дуусгасан дүрмийн хичээл: "+Object.keys(state.lessons).length,
+    "🦊 Шалгалт: "+wk.length+" удаа"+(avg!=null?", дундаж "+avg+" / "+KX_N:"")];
+  if(top.length)lines.push("","Давтах хэрэгтэй үгс: "+top.join(", "));
+  lines.push("",act>=5?"Маш хичээнгүй байна! Магтаж урамшуулаарай 👏":act>=2?"Сайн байна. Өдөр бүр 10 минут хичээллэхэд туслаарай 🙂":"Энэ 7 хоногт бага хичээллэсэн. Хамтдаа нэг шалгалт өгөөд үзээрэй 💪");
+  return lines.join("\n");
+}
+function sendParentReport(){
+  var t=weekReportText(),acc=window.SalkhiSync&&SalkhiSync.account(),to=acc&&acc.email||"";
+  sset("prsent",Date.now());
+  if(navigator.share){navigator.share({title:"Салхи — 7 хоногийн тайлан",text:t}).then(function(){toast("Тайлан илгээгдлээ 📬");render();}).catch(function(){});return;}
+  location.href="mailto:"+encodeURIComponent(to)+"?subject="+encodeURIComponent("Салхи — 7 хоногийн тайлан")+"&body="+encodeURIComponent(t);
+  render();
+}
+/* 7 хоног тутам «тайлан бэлэн» сануулга (хүүхдийн горим) */
+function parentReportDue(){var s=sget("prsent",0);return state.mode==="kid"&&Date.now()-s>7*86400000&&Object.keys(state.daily).length>0;}
 /* exam practice: format guide + timed mock test with four sections */
 var EXAM_INFO={
 en:{n:"IELTS / CEFR",parts:["Listening — 4 хэсэг, 40 асуулт, ~30 минут","Reading — 3 урт текст, 40 асуулт, 60 минут","Writing — 2 даалгавар (график тайлбар, эссэ), 60 минут","Speaking — шалгагчтай 11–14 минутын ярилцлага"],tips:["Сонсохдоо асуултаа урьдчилан уншиж, түлхүүр үгийг тэмдэглэ.","Уншлагад эхлээд текстийг гүйлгэж хараад (skimming) дараа нь хариулт хай.","Эссэд санаа бүрээ жишээгээр баталж, холбоос үг (however, therefore) ашигла.","Ярианд богино хариулт биш, шалтгаан, жишээтэй 2–3 өгүүлбэрээр хариул."]},
@@ -4881,6 +4992,11 @@ function viewStats(){
   var lvl=Math.floor(state.xp/100)+1;
   root.append(h("h2",null,"Профайл"));
   if(window.SalkhiSync)root.append(SalkhiSync.profileCard(h,render,toast,{lvl:lvl,xp:state.xp,streak:streak()},true));
+  if(parentReportDue())root.append(h("div",{class:"note",style:"margin-top:12px;display:flex;gap:10px;align-items:center"},
+    h("span",{style:"font-size:28px","aria-hidden":"true"},"📬"),
+    h("div",{style:"flex:1"},h("b",null,"7 хоногийн тайлан бэлэн боллоо"),h("div",{class:"muted small"},"Ээж аавдаа явцаа илгээгээрэй")),
+    h("button",{class:"btn primary",style:"flex:none",onclick:sendParentReport},"Илгээх")));
+  else if(state.mode==="kid")root.append(h("button",{class:"btn",style:"width:100%;margin-top:12px",onclick:sendParentReport},"📧 Тайланг эцэг эхэд илгээх"));
   root.append(h("h3",{style:"margin:22px 0 10px"},"Миний явц"));
   var gb=h("div",{class:"goalbox"}),rw=h("div",{class:"ringw"},ringEl(todayXP()/state.goal,110,12),h("span",{class:"c"},Math.min(100,Math.round(todayXP()/state.goal*100))+"%"));
   rw.firstChild.style.margin="0";
