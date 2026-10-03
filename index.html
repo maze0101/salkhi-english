@@ -624,6 +624,8 @@ p+p{margin-top:10px}
 <script src="abroad.js"></script>
 <script src="idioms.js"></script>
 <script src="culture.js"></script>
+<script src="writing.js"></script>
+<script src="classes.js"></script>
 <script src="numbers.js"></script>
 <script src="hanzi.js"></script>
 <script src="ai-config.js"></script>
@@ -1074,7 +1076,7 @@ function applyFreeze(){
 function addXP(n){
   applyFreeze();
   var k=dkey(new Date()),before=state.daily[k]||0;
-  state.xp+=n;state.daily[k]=before+n;
+  state.xp+=n;state.daily[k]=before+n;if(window.Classes)Classes.touch();
   state.langxp[state.lang]=(state.langxp[state.lang]||0)+n;
   sset("xp",state.xp);sset("daily",state.daily);sset("langxp",state.langxp);
   var m=Math.floor(streak()/7);
@@ -2454,12 +2456,17 @@ function viewAlpha(){
   var a=ui.alpha,root=h("div"),secs=ALPHA[state.lang]||[];
   var cjk=["zh","ja","ko"].indexOf(state.lang)>=0&&!!window.HanziCompare;
   if(a.sec==="hz"&&!cjk)a.sec="abc";
-  var STL={phr:"Хэллэг",hz:"Ханз",qz:"Үсгийн тест",mp:"Авиа ялгах",num:"Тоо"};
+  var STL={phr:"Хэллэг",hz:"Ханз",qz:"Үсгийн тест",mp:"Авиа ялгах",num:"Тоо",wr:"Бичих"};
+  var wrOk=!!(window.StrokeWrite&&StrokeWrite.has(state.lang));
+  if(a.sec==="wr"&&!wrOk)a.sec="abc";
   root.append(h("h2",null,(STL[a.sec]||"Үсэг")+" · "+LANGN[state.lang]));
   function sb(k,t){return h("button",{"aria-pressed":String(k==="abc"?!STL[a.sec]:a.sec===k),onclick:function(){stopVoice();a.sec=k;render();}},t);}
   var seg=h("div",{class:"seg",style:"flex-wrap:wrap"},sb("abc","Үсэг"),sb("num","🔢 Тоо"),sb("qz","Тест"),sb("mp","Ялгах"),sb("phr","Хэллэг"));
+  if(wrOk)seg.append(sb("wr","✍️ Бичих"));
   if(cjk)seg.append(sb("hz","Ханз"));
   root.append(seg);
+  if(a.sec==="wr"){root.append(StrokeWrite.view({h:h,lang:function(){return state.lang;},render:render,speak:function(t){speak(t);},addXP:addXP,
+    celebrate:function(){celebrate(true,true);},sget:sget,sset:sset}));return root;}
   if(a.sec==="phr"){root.append(viewPhrases());return root;}
   if(a.sec==="qz"){root.append(viewAQuiz());return root;}
   if(a.sec==="num"&&window.NumLearn){root.append(window.NumLearn.view({h:h,lang:function(){return state.lang;},render:render,speak:function(t){speak(t);},addXP:addXP}));return root;}
@@ -5093,22 +5100,68 @@ function certList(){
   var out=[],known=WORDS.filter(function(w){return (state.box[w[1]]||0)>=2;}).length,lvl=Math.floor(state.xp/100)+1;
   Object.keys(state.exam).forEach(function(k){
     var p=k.split(":"),lang=p[0],lv=p[1],pct=state.exam[k];
-    if(!EXAMS[lang]||!EXAMS[lang][lv]||pct<60)return;
+    if(!EXAMS[lang]||!EXAMS[lang][lv]||pct<80)return;
     out.push({ic:"📝",t:LANGN[lang]+" хэл · "+EXAMS[lang][lv],d:"дасгал шалгалтад "+pct+"% амжилт гаргав",lang:lang});
   });
   Object.keys(LANGN).forEach(function(lang){
     kxMedals(lang).forEach(function(c){out.push({ic:"🏅",t:LANGN[lang]+" хэл · "+KX_MEDAL[c],d:"Үнэгний шалгалтад "+KX_N+"/"+KX_N+" авав",lang:lang});});
   });
+  levelCerts().forEach(function(c){if(c.ok)out.push({ic:"🎓",t:LANGN[c.lang]+" хэл · "+LV_LABEL[c.lv]+" түвшин",d:LV_LABEL[c.lv]+" түвшний дүрмийн хичээлүүдийг амжилттай дуусгав",lang:c.lang});});
   [5,10,20,50].forEach(function(n){if(lvl>=n)out.push({ic:"⚡",t:"Түвшин "+n,d:"Салхи аппад "+(n-1)*100+"+ XP цуглуулав"});});
   [100,300,1000].forEach(function(n){if(known>=n)out.push({ic:"📚",t:n+" үг",d:n+" үг цээжлэв"});});
   [30,100].forEach(function(n){if(streak()>=n)out.push({ic:"🔥",t:n+" өдөр",d:n+" өдөр дараалан суралцав"});});
   return out;
 }
+/* түвшин дуусгах: тухайн хэлний тухайн түвшний дүрмийн хичээлүүдийн 80%-ийг 60%-иас дээш оноотой давсан байх.
+   Хичээлүүд хэлээрээ ачаалагддаг тул ачаалагдсан хэлүүдийг л тооцно. */
+function lessonPassed(L){var b=state.lessons[L.id];if(!b)return false;var t=L.q.length+(L.o||[]).length+(L.f||[]).length;return b>=Math.ceil(t*0.6);}
+function levelCerts(){
+  var by={};
+  LESSONS.forEach(function(L){var k=(L.lang||"en")+":"+L.lv;(by[k]=by[k]||[]).push(L);});
+  return Object.keys(by).map(function(k){
+    var p=k.split(":"),ls=by[k],n=ls.filter(lessonPassed).length,need=Math.ceil(ls.length*0.8);
+    return {lang:p[0],lv:p[1],n:n,total:ls.length,need:need,ok:ls.length>=3&&n>=need};
+  }).filter(function(c){return LANGN[c.lang]&&LV_LABEL[c.lv];});
+}
+/* дараагийн түвшний гэрчилгээ хүртэл хэр үлдсэн */
+function nextLevelCert(){
+  var cs=levelCerts().filter(function(c){return c.lang===state.lang&&!c.ok;}).sort(function(a,b){return LVO[a.lv]-LVO[b.lv];});
+  return cs[0]||null;
+}
+function certId(c){
+  var t=(state.certName||"")+"|"+c.t+"|"+dkey(new Date()),x=2166136261;
+  for(var i=0;i<t.length;i++){x^=t.charCodeAt(i);x=Math.imul(x,16777619)>>>0;}
+  return "SLX-"+x.toString(36).toUpperCase().slice(0,6);
+}
+/* JPEG-ээс нэг хуудастай PDF (A4 хэвтээ) — гадны сангүй */
+function jpegToPdf(jpg,iw,ih){
+  var W=842,H=595,NL="\n",enc=function(s){var a=new Uint8Array(s.length);for(var i=0;i<s.length;i++)a[i]=s.charCodeAt(i)&255;return a;};
+  var content="q "+W+" 0 0 "+H+" 0 0 cm /Im0 Do Q";
+  var objs=["<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+W+" "+H+"] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>",
+    null,"<< /Length "+content.length+" >>"+NL+"stream"+NL+content+NL+"endstream"];
+  var parts=[enc("%PDF-1.4"+NL+"%\xE2\xE3\xCF\xD3"+NL)],off=[],pos=parts[0].length;
+  objs.forEach(function(o,i){
+    off.push(pos);var chunk;
+    if(o===null){
+      var head=enc((i+1)+" 0 obj"+NL+"<< /Type /XObject /Subtype /Image /Width "+iw+" /Height "+ih+" /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length "+jpg.length+" >>"+NL+"stream"+NL),
+          tail=enc(NL+"endstream"+NL+"endobj"+NL);
+      chunk=new Uint8Array(head.length+jpg.length+tail.length);chunk.set(head,0);chunk.set(jpg,head.length);chunk.set(tail,head.length+jpg.length);
+    }else chunk=enc((i+1)+" 0 obj"+NL+o+NL+"endobj"+NL);
+    parts.push(chunk);pos+=chunk.length;
+  });
+  var xref="xref"+NL+"0 "+(objs.length+1)+NL+"0000000000 65535 f "+NL+off.map(function(o){return ("000000000"+o).slice(-10)+" 00000 n "+NL;}).join("")+
+    "trailer"+NL+"<< /Size "+(objs.length+1)+" /Root 1 0 R >>"+NL+"startxref"+NL+pos+NL+"%%EOF";
+  parts.push(enc(xref));
+  return new Blob(parts,{type:"application/pdf"});
+}
+function saveBlob(b,name){var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.append(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href);},4000);}
 function certPanel(){
   var list=certList(),wrap=h("div",{style:"margin-top:22px"});
   wrap.append(h("h2",{style:"font-size:18px"},"🎓 Гэрчилгээ"));
   if(!list.length){
-    wrap.append(h("p",{class:"muted small"},"Сорил таб → Загвар шалгалтад 60%-иас дээш авах, Lv 5 хүрэх эсвэл 100 үг цээжлэхэд гэрчилгээ нээгдэнэ."));
+    wrap.append(h("p",{class:"muted small"},"Түвшний дүрмийн хичээлүүдийг дуусгах, загвар шалгалтад 80%-иас дээш авах, Lv 5 хүрэх эсвэл 100 үг цээжлэхэд гэрчилгээ нээгдэнэ."));
+    var nx0=nextLevelCert();if(nx0)wrap.append(certProgress(nx0));
     return wrap;
   }
   var nm=h("input",{class:"tin",placeholder:"Гэрчилгээнд бичих нэр",value:state.certName,autocomplete:"name","aria-label":"Гэрчилгээнд бичих нэр",style:"margin-top:0"});
@@ -5116,12 +5169,21 @@ function certPanel(){
   wrap.append(nm);
   list.forEach(function(c){
     wrap.append(h("div",{class:"srow"},h("span",null,c.ic+" "+c.t,h("div",{class:"muted small"},c.d)),
-      h("button",{class:"btn",style:"padding:8px 12px;flex:none",type:"button",onclick:function(){state.certName=nm.value.trim().slice(0,40);sset("certName",state.certName);makeCert(c);}},"📜 Авах")));
+      h("div",{style:"display:flex;gap:6px;flex:none"},
+        h("button",{class:"btn",style:"padding:8px 10px",type:"button","aria-label":"PDF татах",onclick:function(){state.certName=nm.value.trim().slice(0,40);sset("certName",state.certName);makeCert(c,"pdf");}},"📄 PDF"),
+        h("button",{class:"btn",style:"padding:8px 10px",type:"button","aria-label":"Зураг хуваалцах",onclick:function(){state.certName=nm.value.trim().slice(0,40);sset("certName",state.certName);makeCert(c);}},"📤"))));
   });
+  var nx=nextLevelCert();if(nx)wrap.append(certProgress(nx));
   wrap.append(h("p",{class:"muted small"},"Эдгээр нь аппын доторх амжилтын гэрчилгээ бөгөөд албан ёсны шалгалтын гэрчилгээ биш."));
   return wrap;
 }
-function makeCert(c){
+function certProgress(c){
+  return h("div",{class:"note",style:"margin-top:10px;padding:10px 14px"},
+    h("div",{class:"small",style:"font-weight:700"},"🎓 Дараагийн: "+LANGN[c.lang]+" "+LV_LABEL[c.lv]+" түвшний гэрчилгээ"),
+    h("div",{class:"muted small"},"Давсан хичээл: "+c.n+" / "+c.need+" (нийт "+c.total+")"),
+    h("div",{style:"height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin-top:6px"},h("i",{style:"display:block;height:100%;background:var(--sky);width:"+Math.min(100,Math.round(c.n/c.need*100))+"%"})));
+}
+function makeCert(c,fmt){
   try{
     var W=1600,H=1130,cv=document.createElement("canvas");cv.width=W;cv.height=H;var x=cv.getContext("2d");
     x.fillStyle="#FFFBF2";x.fillRect(0,0,W,H);
@@ -5142,6 +5204,12 @@ function makeCert(c){
     x.font="400 22px Manrope, system-ui, sans-serif";x.fillText("Аппын доторх амжилтын гэрчилгээ · албан ёсны шалгалтын гэрчилгээ биш",W/2,1040);
     x.beginPath();x.arc(W/2,930,60,0,Math.PI*2);x.fillStyle="#C9A24A";x.fill();
     x.fillStyle="#fff";x.font="700 64px system-ui, sans-serif";x.fillText("★",W/2,952);
+    x.fillStyle="#999";x.font="500 22px Manrope, system-ui, sans-serif";x.fillText("№ "+certId(c),W/2,1075);
+    if(fmt==="pdf"){
+      var du=cv.toDataURL("image/jpeg",0.92),bin=atob(du.split(",")[1]),jpg=new Uint8Array(bin.length);
+      for(var i=0;i<bin.length;i++)jpg[i]=bin.charCodeAt(i);
+      saveBlob(jpegToPdf(jpg,W,H),"salkhi-gerchilgee.pdf");toast("📄 PDF гэрчилгээ татагдлаа");celebrate(true,true);return;
+    }
     cv.toBlob(function(b){
       if(!b)return;
       var f=new File([b],"salkhi-gerchilgee.png",{type:"image/png"});
@@ -5166,7 +5234,23 @@ function mnCard(){
         else toast(url,6000);
       }},"📤 Хуваалцах")));
 }
+/* Профайл > 🏫 Анги (classes.js) */
+function clsEnv(){
+  return {h:h,sget:sget,sset:sset,render:render,toast:toast,lang:function(){return state.lang;},kid:function(){return state.mode==="kid";},
+    name:function(){var a=window.SalkhiSync&&SalkhiSync.account();return state.certName||(a&&a.name)||"";},
+    signedIn:function(){return !!(window.SalkhiSync&&SalkhiSync.account());},
+    metric:function(k,lang){
+      if(k==="streak")return streak();
+      if(k==="xp")return state.langxp[lang]||0;
+      if(k==="lessons"){var ls=LESSONS.filter(function(L){return (L.lang||"en")===lang;});return ls.length?ls.filter(lessonPassed).length:null;}
+      if(k==="words"){if(!(window.WORDS_LOADED&&WORDS_LOADED[lang])&&lang!==state.lang)return null;return WORDS.filter(function(w){return (w[6]||"en")===lang&&(state.box[w[1]]||0)>=2;}).length;}
+      return null;
+    },
+    me:function(lang){var m=this;return {name:m.name(),xp:state.xp,wxp:weekXP(),streak:streak(),words:m.metric("words",lang),lessons:m.metric("lessons",lang)||0};},
+    close:function(){ui.cls=false;render();window.scrollTo(0,0);}};
+}
 function viewStats(){
+  if(ui.cls&&window.Classes)return Classes.view(clsEnv());
   var root=h("div"),p=WORDS;
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
   var done=Object.keys(state.lessons).length;
@@ -5178,6 +5262,11 @@ function viewStats(){
     h("div",{style:"flex:1"},h("b",null,"7 хоногийн тайлан бэлэн боллоо"),h("div",{class:"muted small"},"Ээж аавдаа явцаа илгээгээрэй")),
     h("button",{class:"btn primary",style:"flex:none",onclick:sendParentReport},"Илгээх")));
   else if(state.mode==="kid")root.append(h("button",{class:"btn",style:"width:100%;margin-top:12px",onclick:sendParentReport},"📧 Тайланг эцэг эхэд илгээх"));
+  if(window.Classes&&window.SALKHI_FB){
+    var nc=Classes.count();
+    root.append(h("button",{class:"lrow",type:"button",style:"margin-top:12px",onclick:function(){ui.cls=true;render();window.scrollTo(0,0);}},
+      h("span",{class:"hexb ico"},"🏫"),h("span",{style:"flex:1"},h("div",{class:"t"},"Анги"),h("div",{class:"muted small"},nc?nc+" анги · даалгавраа харах":"Багшийн ангид нэгдэх эсвэл анги үүсгэх")),h("span",{"aria-hidden":"true"},"›")));
+  }
   root.append(h("h3",{style:"margin:22px 0 10px"},"Миний явц"));
   var gb=h("div",{class:"goalbox"}),rw=h("div",{class:"ringw"},ringEl(todayXP()/state.goal,110,12),h("span",{class:"c"},Math.min(100,Math.round(todayXP()/state.goal*100))+"%"));
   rw.firstChild.style.margin="0";
@@ -5344,6 +5433,7 @@ function wxClick(){
 };
 wxLoad();setInterval(wxLoad,10*60000);
 if(window.SalkhiSync)SalkhiSync.boot(toast,function(){renderStrip();if(state.tab==="stats")render();},h,!sget("foreign",0)&&!location.hash);
+if(window.Classes&&window.SALKHI_FB)Classes.init(clsEnv());
 checkNotif();setInterval(checkNotif,30000);syncNotifMeta();
 if(sget("foreign",0)&&location.hash!=='#daily')openForeign();
 if(location.hash==='#daily'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}openDaily();}

@@ -68,6 +68,53 @@
         ".read": false,
         ".write": "auth != null && !data.exists()"
       }
+    },
+    "classes": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('teacher').val() === auth.uid) || (data.exists() && data.child('teacher').val() === auth.uid))",
+        ".validate": "$code.matches(/^[A-Z0-9]{6}$/) && newData.hasChildren(['name','teacher','lang']) && newData.child('teacher').val() === auth.uid && newData.child('name').isString() && newData.child('name').val().length <= 40 && newData.child('lang').isString() && newData.child('lang').val().length <= 3 && (!newData.child('tname').exists() || (newData.child('tname').isString() && newData.child('tname').val().length <= 30))"
+      }
+    },
+    "members": {
+      "$code": {
+        ".read": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        ".write": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && (root.child('classes/'+$code).exists() || !newData.exists())",
+          ".validate": "newData.hasChildren(['name','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 30"
+        }
+      }
+    },
+    "tasks": {
+      "$code": {
+        ".read": "auth != null && (root.child('classes/'+$code+'/teacher').val() === auth.uid || root.child('members/'+$code+'/'+auth.uid).exists())",
+        ".write": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        "$tid": {
+          ".validate": "newData.hasChildren(['k','n','ts']) && newData.child('k').isString() && newData.child('k').val().length <= 10 && newData.child('n').isNumber() && newData.child('n').val() >= 1 && newData.child('n').val() <= 10000 && (!newData.child('t').exists() || (newData.child('t').isString() && newData.child('t').val().length <= 60))"
+        }
+      }
+    },
+    "cstats": {
+      "$code": {
+        ".read": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        ".write": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && (root.child('members/'+$code+'/'+auth.uid).exists() || !newData.exists())",
+          ".validate": "newData.hasChildren(['name','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 30"
+        }
+      }
+    },
+    "mycls": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "$code": {
+          ".validate": "newData.val() === 't' || newData.val() === 's'"
+        }
+      }
     }
   }
 }
