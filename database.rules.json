@@ -73,7 +73,7 @@
       "$code": {
         ".read": "auth != null",
         ".write": "auth != null && ((!data.exists() && newData.child('teacher').val() === auth.uid) || (data.exists() && data.child('teacher').val() === auth.uid))",
-        ".validate": "$code.matches(/^[A-Z0-9]{6}$/) && newData.hasChildren(['name','teacher','lang']) && newData.child('teacher').val() === auth.uid && newData.child('name').isString() && newData.child('name').val().length <= 40 && newData.child('lang').isString() && newData.child('lang').val().length <= 3 && (!newData.child('tname').exists() || (newData.child('tname').isString() && newData.child('tname').val().length <= 30))"
+        ".validate": "$code.matches(/^[A-Z0-9]{6}$/) && newData.hasChildren(['name','teacher','lang']) && newData.child('teacher').val() === auth.uid && newData.child('name').isString() && newData.child('name').val().length <= 40 && newData.child('lang').isString() && newData.child('lang').val().length <= 3 && (!newData.child('tname').exists() || (newData.child('tname').isString() && newData.child('tname').val().length <= 30)) && (!newData.child('board').exists() || newData.child('board').isBoolean())"
       }
     },
     "members": {
@@ -113,6 +113,25 @@
         ".write": "auth != null && auth.uid === $uid",
         "$code": {
           ".validate": "newData.val() === 't' || newData.val() === 's'"
+        }
+      }
+    },
+    "wlists": {
+      "$code": {
+        ".read": "auth != null && (root.child('classes/'+$code+'/teacher').val() === auth.uid || root.child('members/'+$code+'/'+auth.uid).exists())",
+        ".write": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        "$lid": {
+          ".validate": "newData.hasChildren(['name','w','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 40 && newData.child('w').isString() && newData.child('w').val().length <= 45000"
+        }
+      }
+    },
+    "board": {
+      "$code": {
+        ".read": "auth != null && (root.child('classes/'+$code+'/teacher').val() === auth.uid || (root.child('classes/'+$code+'/board').val() === true && root.child('members/'+$code+'/'+auth.uid).exists()))",
+        ".write": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && (root.child('members/'+$code+'/'+auth.uid).exists() || !newData.exists())",
+          ".validate": "newData.hasChildren(['name','wxp','wk']) && newData.child('name').isString() && newData.child('name').val().length <= 30 && newData.child('wxp').isNumber() && newData.child('wk').isString() && newData.child('wk').val().length <= 12"
         }
       }
     }

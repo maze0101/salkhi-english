@@ -6,7 +6,8 @@
     xp:["⚡","XP цуглуулах","XP"],
     lessons:["📘","Дүрмийн хичээл давах","хичээл"],
     words:["📚","Шинэ үг цээжлэх","үг"],
-    days:["🔥","Өдөр дараалан хичээллэх","өдөр"]
+    days:["🔥","Өдөр дараалан хичээллэх","өдөр"],
+    list:["📝","Жагсаалтын үгсийг цээжлэх","үг"]
   };
   var LANGS={en:"Англи",ja:"Япон",ko:"Солонгос",zh:"Хятад",ru:"Орос",de:"Герман"};
   var env=null,h=null,db=null,uid=null,busy=false,err="",timer=null;
@@ -38,6 +39,7 @@
   }
   /* даалгавар бүрийн суурь утгыг анх харсан үед тэмдэглэнэ (xp, lessons, words) */
   function progressFor(code,tid,t,lang){
+    if(t.k==="list"){var lp=env.listProgress(code+":"+t.lid);return lp==null?null:Math.min(lp,t.n);}
     var cur=metric(t.k,lang);
     if(cur==null)return null;
     if(t.k==="days")return Math.min(cur,t.n);
@@ -48,8 +50,16 @@
   function pushStats(code,tasks,lang){
     var p={};
     Object.keys(tasks||{}).forEach(function(tid){var v=progressFor(code,tid,tasks[tid],lang);if(v!=null)p[tid]=v;});
-    var me=env.me(lang);
-    return db.ref("cstats/"+code+"/"+uid).set({name:String(my()[code]&&my()[code].name||me.name||"Сурагч").slice(0,30),xp:me.xp,wxp:me.wxp,streak:me.streak,words:me.words==null?-1:me.words,lessons:me.lessons,p:p,ts:TS()});
+    var me=env.me(lang),nm=String(my()[code]&&my()[code].name||me.name||"Сурагч").slice(0,30);
+    db.ref("board/"+code+"/"+uid).set({name:nm,wxp:me.wxp,wk:me.wk}).catch(function(){});
+    return db.ref("cstats/"+code+"/"+uid).set({name:nm,xp:me.xp,wxp:me.wxp,streak:me.streak,words:me.words==null?-1:me.words,lessons:me.lessons,p:p,ts:TS()});
+  }
+  function parseList(v){
+    return String(v&&v.w||"").split("\n").map(function(l){var p=l.split("|");return [p[0],p.slice(1).join("|")];}).filter(function(p){return p[0]&&p[1];});
+  }
+  function storeLists(code,lists,lang,cname){
+    var o={};Object.keys(lists||{}).forEach(function(lid){o[lid]={name:lists[lid].name,lang:lang,cname:cname,words:parseList(lists[lid])};});
+    env.setLists(code,o);
   }
   /* бүх ангийнхаа явцыг илгээнэ (апп нээгдэх, XP нэмэгдэхэд) */
   function syncAll(){
@@ -57,8 +67,9 @@
     if(!codes.length)return Promise.resolve();
     return connect().then(function(){
       return Promise.all(codes.map(function(code){
-        return Promise.all([db.ref("tasks/"+code).once("value"),db.ref("classes/"+code+"/lang").once("value")]).then(function(r){
-          return pushStats(code,r[0].val()||{},r[1].val()||"en");
+        return Promise.all([db.ref("tasks/"+code).once("value"),db.ref("classes/"+code).once("value"),db.ref("wlists/"+code).once("value")]).then(function(r){
+          var cv=r[1].val()||{};storeLists(code,r[2].val(),cv.lang||"en",cv.name||"");
+          return pushStats(code,r[0].val()||{},cv.lang||"en");
         }).catch(function(){});
       }));
     }).catch(function(){});
@@ -93,14 +104,16 @@
     });
   }
   function leaveClass(code){
-    return Promise.all([db.ref("members/"+code+"/"+uid).remove(),db.ref("cstats/"+code+"/"+uid).remove(),db.ref("mycls/"+uid+"/"+code).remove()]).then(function(){
-      var m=my();delete m[code];setMy(m);
+    return Promise.all([db.ref("board/"+code+"/"+uid).remove(),db.ref("cstats/"+code+"/"+uid).remove()]).then(function(){
+      return Promise.all([db.ref("members/"+code+"/"+uid).remove(),db.ref("mycls/"+uid+"/"+code).remove()]);
+    }).then(function(){
+      var m=my();delete m[code];setMy(m);env.setLists(code,{});
     });
   }
   function deleteClass(code){
-    return Promise.all(["tasks/","members/","cstats/"].map(function(p){return db.ref(p+code).remove();})).then(function(){
+    return Promise.all(["tasks/","members/","cstats/","wlists/","board/"].map(function(p){return db.ref(p+code).remove();})).then(function(){
       return db.ref("classes/"+code).remove();
-    }).then(function(){return db.ref("mycls/"+uid+"/"+code).remove();}).then(function(){var m=my();delete m[code];setMy(m);});
+    }).then(function(){return db.ref("mycls/"+uid+"/"+code).remove();}).then(function(){var m=my();delete m[code];setMy(m);env.setLists(code,{});});
   }
   /* бусад төхөөрөмжөөс нэгдсэн ангиудыг (Google-ээр нэвтэрсэн бол) татна */
   function refreshMine(){
@@ -119,13 +132,17 @@
   }
   function loadClass(code){
     var role=(my()[code]||{}).role;
-    var q=[db.ref("classes/"+code).once("value"),db.ref("tasks/"+code).once("value")];
+    var q=[db.ref("classes/"+code).once("value"),db.ref("tasks/"+code).once("value"),db.ref("wlists/"+code).once("value")];
     if(role==="t")q.push(db.ref("members/"+code).once("value"),db.ref("cstats/"+code).once("value"));
     return Promise.all(q).then(function(r){
-      var d={c:r[0].val(),tasks:r[1].val()||{},members:r[2]?r[2].val()||{}:null,stats:r[3]?r[3].val()||{}:null};
+      var d={c:r[0].val(),tasks:r[1].val()||{},lists:r[2].val()||{},members:r[3]?r[3].val()||{}:null,stats:r[4]?r[4].val()||{}:null};
       if(!d.c)throw new Error("Анги устгагдсан байна");
-      if(role==="s")return pushStats(code,d.tasks,d.c.lang||"en").then(function(){return d;});
-      return d;
+      storeLists(code,d.lists,d.c.lang||"en",d.c.name);
+      var p=role==="s"?pushStats(code,d.tasks,d.c.lang||"en"):Promise.resolve();
+      return p.then(function(){
+        if(!d.c.board&&role==="s")return d;
+        return db.ref("board/"+code).once("value").then(function(b){d.board=b.val()||{};return d;},function(){return d;});
+      });
     });
   }
   function run(p,after){busy=true;err="";paint();p.then(function(x){busy=false;if(after)after(x);paint();},fail);}
@@ -181,7 +198,19 @@
     root.append(h("h2",null,"🎒 "+d.c.name));
     root.append(h("p",{class:"muted"},LANGS[lang]+" хэл · Багш: "+(d.c.tname||"")));
     if(lang!==env.lang())root.append(h("div",{class:"note small",style:"margin:6px 0"},"💡 Даалгавар "+LANGS[lang]+" хэл дээр тоологдоно. Дээрээс хэлээ "+LANGS[lang]+" болгоорой."));
-    var ids=sortedTasks(d);
+    var ids=sortedTasks(d),lids=Object.keys(d.lists||{});
+    if(lids.length){
+      root.append(h("h3",{style:"margin:16px 0 6px"},"📝 Үгсийн жагсаалт"));
+      lids.forEach(function(lid){
+        var L=d.lists[lid],tot=L.n||parseList(L).length,k=code+":"+lid,v=env.listProgress(k)||0;
+        root.append(h("div",{class:"note",style:"margin:8px 0;padding:10px 14px"},
+          h("div",{style:"font-weight:700"},"📝 "+L.name),
+          h("div",{class:"muted small"},"Цээжилсэн: "+v+" / "+tot),
+          h("div",{class:"row",style:"margin-top:6px"},
+            h("button",{class:"btn primary",onclick:function(){env.openList(k,"words");}},"📖 Карт, тест"),
+            h("button",{class:"btn",onclick:function(){env.openList(k,"play");}},"🎮 Тоглоом"))));
+      });
+    }
     root.append(h("h3",{style:"margin:16px 0 6px"},"📋 Даалгавар"));
     if(!ids.length)root.append(h("p",{class:"muted small"},"Багш одоогоор даалгавар өгөөгүй байна."));
     ids.forEach(function(tid){
@@ -189,14 +218,56 @@
       root.append(h("div",{class:"note",style:"margin:8px 0;padding:10px 14px"},
         h("div",{style:"font-weight:700"},taskLine(t)),
         h("div",{style:"height:10px;border-radius:8px;background:var(--line);overflow:hidden;margin:8px 0 4px"},h("i",{style:"display:block;height:100%;width:"+pc+"%;background:"+(v>=t.n?"var(--ok)":"var(--sky)")})),
-        h("div",{class:"muted small"},v>=t.n?"✅ Биелсэн":v+" / "+t.n+(late?" · ⏰ хугацаа хэтэрсэн":""))));
+        h("div",{class:"muted small"},v>=t.n?"✅ Биелсэн":v+" / "+t.n+(late?" · ⏰ хугацаа хэтэрсэн":"")),
+        t.k==="list"&&d.lists[t.lid]&&v<t.n?h("button",{class:"btn",style:"margin-top:6px",onclick:function(){env.openList(code+":"+t.lid,"words");}},"📖 Сурах"):null));
     });
+    if(d.c.board){root.append(h("h3",{style:"margin:18px 0 6px"},"🏆 7 хоногийн рейтинг"));boardView(root,d,true);}
     root.append(h("div",{class:"row"},
       h("button",{class:"btn",onclick:function(){S.data=null;paint();}},"🔄 Шинэчлэх"),
       h("button",{class:"btn ghost",onclick:function(){
         if(!S.confirm){S.confirm=true;env.toast("Дахин дарвал ангиас гарна");return;}
         S.confirm=false;run(leaveClass(code),function(){S.scr="home";S.code=null;});
       }},"Ангиас гарах")));
+  }
+  /* "үг — орчуулга" мөрүүдийг задлана: таб, |, —, –, =, " - " тусгаарлагч */
+  function parseInput(t){
+    var out=[],seen={};
+    String(t).split(/\r?\n/).forEach(function(l){
+      l=l.trim();if(!l)return;
+      var m=l.match(/^(.+?)\s*(?:\t|\||—|–|=|\s-\s)\s*(.+)$/);if(!m)return;
+      var w=m[1].trim().slice(0,60).replace(/\|/g,"/"),mn=m[2].trim().slice(0,80).replace(/\|/g,"/");
+      if(!w||!mn||seen[w])return;seen[w]=1;out.push([w,mn]);
+    });
+    return out.slice(0,300);
+  }
+  function listEditor(root,d,lid){
+    var code=S.code,cur=lid?d.lists[lid]:null;
+    var nm=h("input",{class:"tin",placeholder:"Жагсаалтын нэр (ж: 5-р бүлгийн үгс)",maxlength:"40",value:cur?cur.name:"","aria-label":"Жагсаалтын нэр"});
+    var ta=h("textarea",{class:"tin",rows:"9",placeholder:"Мөр бүрт нэг үг: үг — орчуулга\napple — алим\nbook | ном\n(Excel-ээс хоёр баганыг шууд хуулж болно)","aria-label":"Үгс",style:"font-family:inherit;resize:vertical"});
+    if(cur)ta.value=parseList(cur).map(function(p){return p[0]+" — "+p[1];}).join("\n");
+    var cnt=h("div",{class:"muted small",style:"margin-top:4px"},"");
+    function upd(){var n=parseInput(ta.value).length;cnt.textContent=n+" үг танигдлаа"+(n>=300?" (дээд тал 300)":"");}
+    ta.addEventListener("input",upd);upd();
+    root.append(h("div",{class:"note",style:"margin-top:8px"},h("b",null,lid?"✏️ Жагсаалт засах":"📝 Шинэ үгсийн жагсаалт"),nm,ta,cnt,
+      h("div",{class:"row"},h("button",{class:"btn",onclick:function(){S.form=null;paint();}},"Болих"),
+        h("button",{class:"btn primary",disabled:busy,onclick:function(){
+          var name=nm.value.trim().slice(0,40),ws=parseInput(ta.value);
+          if(!name||ws.length<2){env.toast("Нэр болон дор хаяж 2 үг оруулна уу");return;}
+          var v={name:name,w:ws.map(function(p){return p[0]+"|"+p[1];}).join("\n"),n:ws.length,ts:now()};
+          var ref=lid?db.ref("wlists/"+code+"/"+lid):db.ref("wlists/"+code).push();
+          run(ref.set(v),function(){S.form=null;S.data=null;env.toast("Хадгалагдлаа ✅");});
+        }},"Хадгалах"))));
+  }
+  function boardView(root,d,mine){
+    var b=d.board||{},wk=env.me(d.c.lang||"en").wk;
+    var rows=Object.keys(b).map(function(u){return {u:u,name:b[u].name,x:b[u].wk===wk?b[u].wxp||0:0};}).sort(function(a,c){return c.x-a.x;});
+    if(!rows.length){root.append(h("p",{class:"muted small"},"Одоогоор оролцогч алга."));return;}
+    rows.slice(0,mine?10:50).forEach(function(r,i){
+      var me=r.u===uid;
+      root.append(h("div",{class:"srow",style:me?"font-weight:800;background:var(--line);border-radius:10px;padding-left:8px;padding-right:8px":""},
+        h("span",null,(i<3?["🥇","🥈","🥉"][i]:(i+1)+".")+" "+r.name+(me?" (би)":"")),h("b",null,r.x+" XP")));
+    });
+    if(mine){var k=rows.findIndex(function(r){return r.u===uid;});if(k>=10)root.append(h("p",{class:"muted small"},"Таны байр: "+(k+1)+" / "+rows.length));}
   }
   function viewTeacher(root,d){
     var code=S.code,ids=sortedTasks(d),mem=d.members||{},stats=d.stats||{},uids=Object.keys(mem);
@@ -212,6 +283,22 @@
         else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){env.toast("Хуулагдлаа");});
         else env.toast(t,8000);
       }},"📤 Код илгээх")));
+    /* үгсийн жагсаалт */
+    var lids=Object.keys(d.lists||{}).sort(function(a,b){return (d.lists[a].ts||0)-(d.lists[b].ts||0);});
+    root.append(h("h3",{style:"margin:18px 0 6px"},"📝 Үгсийн жагсаалт"));
+    if(!lids.length&&S.form!=="list")root.append(h("p",{class:"muted small"},"Сурах бичгийн бүлэг бүрийн үгсийг оруулж, ангидаа даалгавар болгон өгөөрэй."));
+    lids.forEach(function(lid){
+      var L=d.lists[lid];
+      if(S.form==="list:"+lid)return listEditor(root,d,lid);
+      root.append(h("div",{class:"srow"},h("span",{style:"flex:1"},"📝 "+L.name,h("div",{class:"muted small"},(L.n||parseList(L).length)+" үг")),
+        h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":"Засах",onclick:function(){S.form="list:"+lid;paint();}},"✏️"),
+        h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":"Устгах",onclick:function(){
+          if(S.rmList!==lid){S.rmList=lid;env.toast("Дахин дарвал «"+L.name+"» устгагдана");return;}
+          S.rmList=null;run(db.ref("wlists/"+code+"/"+lid).remove(),function(){S.data=null;});
+        }},"🗑")));
+    });
+    if(S.form==="list")listEditor(root,d,null);
+    else if(String(S.form).indexOf("list:")!==0)root.append(h("button",{class:"btn",style:"width:100%;margin-top:6px",onclick:function(){S.form="list";paint();}},"➕ Үгсийн жагсаалт нэмэх"));
     /* даалгавар */
     root.append(h("h3",{style:"margin:18px 0 6px"},"📋 Даалгавар"));
     ids.forEach(function(tid){
@@ -223,20 +310,32 @@
     });
     if(S.form==="task"){
       var kd=h("select",{class:"tin","aria-label":"Даалгаврын төрөл"});
-      Object.keys(KINDS).forEach(function(k){kd.append(h("option",{value:k},KINDS[k][0]+" "+KINDS[k][1]));});
+      Object.keys(KINDS).forEach(function(k){if(k==="list"&&!lids.length)return;kd.append(h("option",{value:k},KINDS[k][0]+" "+KINDS[k][1]));});
       var n=h("input",{class:"tin",type:"number",min:"1",max:"10000",value:"100","aria-label":"Тоо"});
-      kd.addEventListener("change",function(){n.value={xp:100,lessons:5,words:30,days:7}[kd.value];});
+      var ls=h("select",{class:"tin","aria-label":"Жагсаалт",style:"display:none"});
+      lids.forEach(function(lid){ls.append(h("option",{value:lid},d.lists[lid].name+" ("+(d.lists[lid].n||0)+" үг)"));});
+      function lsSync(){if(kd.value==="list"){ls.style.display="";var L=d.lists[ls.value];n.value=L?L.n||parseList(L).length:10;}else ls.style.display="none";}
+      ls.addEventListener("change",lsSync);
+      kd.addEventListener("change",function(){n.value={xp:100,lessons:5,words:30,days:7}[kd.value]||10;lsSync();});
       var tt=h("input",{class:"tin",placeholder:"Тайлбар (заавал биш)",maxlength:"60","aria-label":"Тайлбар"});
       var du=h("input",{class:"tin",type:"date","aria-label":"Дуусах огноо"});
-      root.append(h("div",{class:"note",style:"margin-top:8px"},h("b",null,"➕ Шинэ даалгавар"),kd,
+      root.append(h("div",{class:"note",style:"margin-top:8px"},h("b",null,"➕ Шинэ даалгавар"),kd,ls,
         h("div",{class:"muted small",style:"margin-top:8px"},"Хэмжээ"),n,tt,h("div",{class:"muted small",style:"margin-top:8px"},"Дуусах огноо (заавал биш)"),du,
         h("div",{class:"row"},h("button",{class:"btn",onclick:function(){S.form=null;paint();}},"Болих"),
           h("button",{class:"btn primary",disabled:busy,onclick:function(){
             var num=Math.max(1,Math.min(10000,parseInt(n.value,10)||0)),due=du.value?new Date(du.value+"T23:59:00").getTime():0;
             var t={k:kd.value,n:num,t:tt.value.trim().slice(0,60),due:due,ts:now()};
+            if(kd.value==="list"){if(!ls.value){env.toast("Жагсаалт сонгоно уу");return;}t.lid=ls.value;if(!t.t)t.t="«"+d.lists[ls.value].name+"» цээжлэх";}
             run(db.ref("tasks/"+code).push(t),function(){S.form=null;S.data=null;});
           }},"Нэмэх"))));
     }else root.append(h("button",{class:"btn",style:"width:100%;margin-top:6px",onclick:function(){S.form="task";paint();}},"➕ Даалгавар өгөх"));
+    /* рейтинг */
+    root.append(h("h3",{style:"margin:20px 0 6px"},"🏆 7 хоногийн рейтинг"));
+    root.append(h("div",{class:"srow"},h("span",{class:"small",style:"flex:1"},d.c.board?"Сурагчид ангийнхаа рейтингийг харж байна.":"Унтраалттай — сурагчид бие биеийнхээ XP-г харахгүй."),
+      h("button",{class:"btn"+(d.c.board?"":" primary"),style:"flex:none",disabled:busy,onclick:function(){
+        run(db.ref("classes/"+code+"/board").set(!d.c.board),function(){S.data=null;env.toast(d.c.board?"Рейтинг унтарлаа":"Рейтинг асаалаа 🏆");});
+      }},d.c.board?"Унтраах":"Асаах")));
+    if(d.c.board)boardView(root,d,false);
     /* сурагчид */
     root.append(h("h3",{style:"margin:20px 0 6px"},"👥 Сурагчдын явц"));
     if(!uids.length)root.append(h("p",{class:"muted small"},"Одоогоор сурагч нэгдээгүй байна. Кодоо сурагчдадаа илгээгээрэй."));
