@@ -124,6 +124,15 @@ button:disabled{opacity:.5;cursor:not-allowed}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 .strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 20px;margin-top:-18px;position:relative}
+/* картын нийтлэг загвар */
+:root{--rc:18px;--sh-card:0 1px 2px rgba(20,15,60,.05),0 6px 18px rgba(20,15,60,.07)}
+:root[data-theme="dark"]{--sh-card:0 1px 2px rgba(0,0,0,.3),0 8px 22px rgba(0,0,0,.28)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--sh-card:0 1px 2px rgba(0,0,0,.3),0 8px 22px rgba(0,0,0,.28)}}
+.opt,.lrow,.scn,.gamecard,.chip{transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
+@media (hover:hover){.opt:not(:disabled):hover,.lrow:hover,.scn:not(:disabled):hover,.gamecard:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--sky) 40%,var(--line));box-shadow:0 2px 4px rgba(20,15,60,.06),0 12px 26px rgba(20,15,60,.12)}}
+.opt:not(:disabled):active,.lrow:active,.scn:not(:disabled):active,.gamecard:active,.chip:active{transform:scale(.98)}
+.opt:focus-visible,.lrow:focus-visible,.scn:focus-visible,.gamecard:focus-visible{outline:3px solid color-mix(in srgb,var(--sky) 55%,transparent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.opt,.lrow,.scn,.gamecard,.chip{transition:none}.opt:hover,.lrow:hover,.scn:hover,.gamecard:hover{transform:none}}
 .stat.acct{font:inherit;font-size:14px;font-weight:700;color:inherit;border:0;cursor:pointer}
 .stat.acct:disabled{opacity:.7;cursor:wait}
 .pf-card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
@@ -230,17 +239,18 @@ h2{font:700 22px/1.25 "Unbounded",system-ui,sans-serif;letter-spacing:-.01em;mar
 
 /* options */
 .q{font-size:20px;font-weight:700;margin:6px 0 2px;line-height:1.35}
-.opt{display:block;width:100%;text-align:left;padding:14px 16px;border-radius:16px;box-shadow:var(--shadow);border:1.5px solid var(--line);background:var(--surface);font-weight:600;margin-top:10px}
+.opt{display:block;width:100%;text-align:left;padding:14px 16px;border-radius:var(--rc);box-shadow:var(--sh-card);border:1.5px solid var(--line);background:var(--surface);font-weight:600;margin-top:10px}
 .opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 16%,var(--surface))}
 .opt.bad{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 14%,var(--surface))}
 .fb{margin-top:12px;font-weight:700}
 .fb.ok{color:var(--ok)}.fb.bad{color:var(--danger)}
 
 /* grammar */
-.hexb{flex:none;width:48px;height:48px;border-radius:16px;background:var(--dune-3);display:grid;place-items:center;font:700 12px "Unbounded",system-ui,sans-serif;color:#fff}
+.hexb{flex:none;width:46px;height:46px;border-radius:15px;background:var(--dune-3);display:grid;place-items:center;font:700 12px "Unbounded",system-ui,sans-serif;color:#fff}
+.hexb.ico{font-size:24px;background:color-mix(in srgb,var(--sky) 14%,var(--surface))}
 .hexb.done{background:var(--neon);color:var(--neon-ink)}
 .lvtag{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:var(--dune-3);color:#fff;font:700 11px "Unbounded",system-ui,sans-serif;vertical-align:middle}
-.lrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 0;border-bottom:1px solid var(--line)}
+.lrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:12px 14px;margin-top:10px;border:1px solid var(--line);border-radius:var(--rc);background:var(--surface);box-shadow:var(--sh-card);font:inherit;color:inherit}
 .lrow .t{font-weight:700}
 .rule{margin:14px 0;padding:14px 16px;border-left:4px solid var(--sky);box-shadow:var(--shadow);background:var(--surface);font-weight:600;border-radius:0 12px 12px 0}
 .exl{list-style:none;padding:0;margin-top:8px}
@@ -252,7 +262,7 @@ p+p{margin-top:10px}
 .back{color:var(--ink-2);font-weight:700;padding:4px 0;margin-bottom:8px}
 
 /* chat */
-.scn{display:block;width:100%;text-align:left;padding:16px;border-radius:18px;box-shadow:var(--shadow);border:1px solid var(--line);background:var(--surface);font-weight:700;margin-top:10px}
+.scn{display:block;width:100%;text-align:left;padding:16px;border-radius:var(--rc);box-shadow:var(--sh-card);border:1px solid var(--line);background:var(--surface);font-weight:700;margin-top:10px}
 .msgs{display:flex;flex-direction:column;gap:12px;padding-bottom:12px}
 .b{max-width:88%;padding:11px 14px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere}
 .b.ai{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:6px}
@@ -264,7 +274,8 @@ p+p{margin-top:10px}
 .composer textarea{flex:1;resize:none;border:1.5px solid var(--line);background:var(--surface);border-radius:16px;padding:11px 14px;min-height:46px;max-height:120px}
 .composer .btn{padding:12px 16px}
 .rec{background:var(--danger);color:#fff;border-color:transparent}
-.note{padding:12px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);margin-top:12px;font-size:14px}
+.note{padding:14px 16px;border-radius:var(--rc);background:var(--surface);border:1px solid var(--line);box-shadow:var(--sh-card);margin-top:12px;font-size:14px}
+.note .note{box-shadow:none;background:var(--bg)}
 
 /* stats */
 .big{font:700 40px/1 "Unbounded",system-ui,sans-serif;letter-spacing:-.03em}
@@ -394,7 +405,10 @@ p+p{margin-top:10px}
 .ringw{position:relative;width:110px;height:110px;flex:none}
 .ringw svg{transform:rotate(-90deg)}
 .ringw span.c{position:absolute;inset:0;display:grid;place-items:center;font:700 18px "Unbounded",system-ui,sans-serif}
-.goalbox{display:flex;gap:18px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.goalbox{display:flex;gap:18px;align-items:center;padding:16px;margin-top:6px;border:1px solid var(--line);border-radius:var(--rc);background:var(--surface);box-shadow:var(--sh-card)}
+.goalbox>div:last-child{flex:1;min-width:0}
+.goalbox .seg{display:flex;width:100%;margin-bottom:0}
+.goalbox .seg button{flex:1;padding:7px 0}
 .kxmedals{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
 .kxmedal{text-align:center;font-size:12px;font-weight:700;padding:8px 4px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line)}
 .kxmedal i{display:block;font-style:normal;font-size:28px;line-height:1.2}
@@ -427,8 +441,8 @@ p+p{margin-top:10px}
 .splash b{font-size:26px;letter-spacing:.5px;animation:splashpop .7s .1s ease-out both}
 @keyframes splashpop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.splash img,.splash b{animation:none}.splash{transition:none}}
-.gamecard{display:flex;align-items:center;gap:14px;width:100%;margin:14px 0;padding:14px 16px;border-radius:18px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow);text-align:left}
-.gamecard i{font-style:normal;font-size:30px;line-height:1;width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:#251808;color:#f5ecd8;flex:none}
+.gamecard{display:flex;align-items:center;gap:14px;width:100%;margin:14px 0;padding:14px 16px;border-radius:var(--rc);border:1px solid var(--line);background:var(--surface);box-shadow:var(--sh-card);text-align:left;font:inherit;color:inherit}
+.gamecard i{font-style:normal;font-size:28px;line-height:1;width:50px;height:50px;display:flex;align-items:center;justify-content:center;border-radius:16px;background:color-mix(in srgb,var(--sky) 14%,var(--surface));flex:none}
 .gamecard b{display:block;font-size:16px}
 .gamecard span{display:block;font-size:13px;color:var(--ink-2)}
 .gamecard::after{content:"›";margin-left:auto;font-size:26px;color:var(--ink-2)}
@@ -5029,7 +5043,7 @@ function viewStats(){
   root.append(weekReport());
   var nMB=mbCount();
   if(nMB)root.append(h("button",{class:"lrow",type:"button",onclick:function(){state.tab="play";ui.play.sec="mb";ui.play.game=null;ui.play.ex=null;ui.play.mbr=null;renderTabs();render();window.scrollTo(0,0);}},
-    h("span",{class:"hexb"},"📒"),h("span",{style:"flex:1"},h("div",{class:"t"},"Алдааны дэвтэр"),h("div",{class:"muted small"},nMB+" алдаа давтахыг хүлээж байна")),h("span",{"aria-hidden":"true"},"›")));
+    h("span",{class:"hexb ico"},"📒"),h("span",{style:"flex:1"},h("div",{class:"t"},"Алдааны дэвтэр"),h("div",{class:"muted small"},nMB+" алдаа давтахыг хүлээж байна")),h("span",{"aria-hidden":"true"},"›")));
   root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Түвшин"),h("span",{class:"big"},"Lv "+lvl)));
   root.append(h("div",{style:"height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin:2px 0 4px",role:"progressbar","aria-valuemin":"0","aria-valuemax":"100","aria-valuenow":String(state.xp%100)},h("i",{style:"display:block;height:100%;width:"+(state.xp%100)+"%;background:var(--neon)"})));
   root.append(h("p",{class:"muted small",style:"margin:0 0 6px"},"Lv "+(lvl+1)+" хүртэл "+(100-state.xp%100)+" XP"));

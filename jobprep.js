@@ -341,7 +341,7 @@ health|der Krankenwagen||Түргэн тусламжийн машин|🚑`
     Object.keys(CATS).forEach(function(c){
       var n=all.filter(function(x){return x.c===c;}).length;if(!n)return;
       root.append(h("button",{class:"lrow",type:"button",onclick:function(){J.sec="cat";J.cat=c;J.flip={};env.render();window.scrollTo(0,0);}},
-        h("span",{class:"hexb"},CATS[c].split(" ")[0]),
+        h("span",{class:"hexb ico"},CATS[c].split(" ")[0]),
         h("span",{style:"flex:1"},h("div",{class:"t"},CATS[c].split(" ").slice(1).join(" ")),h("div",{class:"muted small"},n+" үг")),
         h("span",{"aria-hidden":"true"},"›")));
     });
