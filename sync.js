@@ -107,6 +107,8 @@
   /* ---------- татах / илгээх ---------- */
   var busy=false,timer=null,lastErr="",tst=null,onChange=null;
   function ref(u){return firebase.database().ref("progress/"+u.uid);}
+  /* нэр, и-мэйл: Firebase Console-оос хэн нэвтэрснийг харахад */
+  function rec(u,M){return {j:JSON.stringify(M),ts:now(),name:u.displayName||"",email:u.email||""};}
   function push(){
     if(!meta().g)return Promise.resolve();
     return ready().then(function(u){
@@ -114,7 +116,7 @@
       var L=snapshot();
       return ref(u).transaction(function(cur){
         var M=merge(L,remoteObj(cur));
-        return {j:JSON.stringify(M),ts:now()};
+        return rec(u,M);
       }).then(function(){var m=meta();m.last=now();setMeta(m);lastErr="";});
     }).catch(function(e){lastErr=String(e&&e.message||e);});
   }
@@ -127,7 +129,7 @@
       return ref(u).once("value").then(function(snap){
         var R=remoteObj(snap.val()),M=merge(snapshot(),R),changed=apply(M);
         var m=meta();m.last=now();m.name=u.displayName||u.email||m.name||"";m.email=u.email||"";m.photo=u.photoURL||"";setMeta(m);lastErr="";
-        var p=same(M,R)?Promise.resolve():ref(u).set({j:JSON.stringify(M),ts:now()});
+        var v=snap.val()||{},p=same(M,R)?(v.name===(u.displayName||"")&&v.email===(u.email||"")?Promise.resolve():ref(u).update({name:u.displayName||"",email:u.email||""})):ref(u).set(rec(u,M));
         return p.then(function(){
           if(changed){
             var n=+sessionStorage.getItem("salkhi:syncReload")||0;
