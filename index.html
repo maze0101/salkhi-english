@@ -126,6 +126,31 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 20px;margin-top:-18px;position:relative}
 .stat.acct{font:inherit;font-size:14px;font-weight:700;color:inherit;border:0;cursor:pointer}
 .stat.acct:disabled{opacity:.7;cursor:wait}
+/* нэвтрэх хуудас */
+.auth{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.auth-in{position:relative;max-width:440px;margin:0 auto;padding:max(56px,env(safe-area-inset-top)) 24px 32px;min-height:100%;display:flex;flex-direction:column;justify-content:center}
+.auth-x{position:absolute;top:max(14px,env(safe-area-inset-top));right:16px;width:40px;height:40px;border-radius:50%;border:0;background:var(--surface);color:var(--ink-2);font-size:18px;box-shadow:var(--shadow)}
+.auth-logo{display:flex;align-items:center;gap:14px}
+.auth-logo img{width:56px;height:56px;border-radius:16px;box-shadow:var(--shadow)}
+.auth-logo span{font-size:34px;font-weight:800;letter-spacing:.02em;color:var(--sky)}
+.auth-sub{color:var(--ink-2);margin:14px 0 24px;font-size:16px;line-height:1.45}
+.auth-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:5px;border-radius:999px;background:var(--surface);border:1px solid var(--line);margin-bottom:18px}
+.auth-seg button{border:0;background:none;padding:12px;border-radius:999px;font:inherit;font-weight:700;font-size:16px;color:var(--ink-2)}
+.auth-seg button[aria-selected=true]{background:var(--sky);color:#fff}
+.auth-form{display:flex;flex-direction:column}
+.auth-l{color:var(--ink-2);font-size:15px;margin:12px 0 8px}
+.auth-f{width:100%;padding:15px 16px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:17px}
+.auth-f:focus{outline:none;border-color:var(--sky)}
+.auth-link{align-self:flex-start;border:0;background:none;padding:12px 0 0;color:var(--sky);text-decoration:underline;font:inherit;font-size:15px}
+.auth-link.center{align-self:center;margin-top:18px;padding:8px}
+.auth-msg{margin:14px 0 0;color:var(--danger);font-size:15px}
+.auth-msg.ok{color:var(--ok)}
+.auth-main{margin-top:22px;padding:16px;border:0;border-radius:16px;background:var(--sky);color:#fff;font:inherit;font-weight:700;font-size:17px}
+.auth-main:disabled,.auth-g:disabled{opacity:.6}
+.auth-or{display:flex;align-items:center;gap:12px;margin:22px 0;color:var(--ink-2);font-size:14px}
+.auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.auth-g{display:flex;align-items:center;justify-content:center;gap:12px;padding:15px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;font-size:17px}
+.auth-foot{text-align:center;color:var(--ink-2);font-size:13px;margin:10px 0 0}
 .stat{background:var(--surface);box-shadow:var(--shadow);padding:7px 14px;border-radius:999px;font-weight:700;font-size:14px}
 .stat b{background:var(--neon);color:var(--neon-ink);padding:0 7px;border-radius:999px;margin-right:6px}
 .levels{display:flex;gap:6px;padding:12px 20px 4px;overflow-x:auto}
@@ -1013,10 +1038,7 @@ function acctBtn(){
   var S=window.SalkhiSync,a=S&&S.account();
   if(!S||!window.SALKHI_FB)return "";
   if(a)return h("button",{class:"stat acct",type:"button",title:"Явц Google-д хадгалагдаж байна","aria-label":"Бүртгэл: "+a.name,onclick:function(){state.tab="stats";renderTabs();render();window.scrollTo(0,0);}},"☁️ "+(a.name.split(" ")[0]||"Нэвтэрсэн"));
-  return h("button",{class:"stat acct",type:"button",title:"Google-ээр нэвтэрч явцаа хадгалах",onclick:function(e){
-    var b=e.currentTarget;b.disabled=true;b.textContent="⏳";
-    S.quickSignIn().then(function(){renderStrip();if(state.tab==="stats")render();});
-  }},"🔐 Нэвтрэх");
+  return h("button",{class:"stat acct",type:"button",title:"Нэвтэрч явцаа хадгалах",onclick:function(){S.openAuth("in");}},"🔐 Нэвтрэх");
 }
 function renderLevels(){
   var el=document.getElementById("levels");el.textContent="";
@@ -4908,7 +4930,7 @@ function wxClick(){
   var c=wxCache()[i];wxLoad(!c||Date.now()-c.at>=30*60000);
 };
 wxLoad();setInterval(wxLoad,10*60000);
-if(window.SalkhiSync)SalkhiSync.boot(toast,function(){renderStrip();if(state.tab==="stats")render();});
+if(window.SalkhiSync)SalkhiSync.boot(toast,function(){renderStrip();if(state.tab==="stats")render();},h,state.mode!=="kid"&&!sget("foreign",0)&&!location.hash);
 checkNotif();setInterval(checkNotif,30000);syncNotifMeta();
 if(sget("foreign",0)&&location.hash!=='#daily')openForeign();
 if(location.hash==='#daily'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}openDaily();}
