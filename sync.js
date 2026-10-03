@@ -287,8 +287,7 @@
         g.innerHTML=GLOGO;g.append(h("span",null,"Google-ээр үргэлжлүүлэх"));
         box.append(h("div",{class:"auth-or"},h("span",null,"эсвэл")),g);
       }
-      box.append(h("button",{type:"button",class:"auth-link center",onclick:function(){closeAuth(true);}},"Нэвтрэхгүйгээр үргэлжлүүлэх"),
-        h("p",{class:"auth-foot"},"Явц тань Google Firebase-д хадгалагдана. Нууц үгийг Салхи хардаггүй."));
+      box.append(h("button",{type:"button",class:"auth-link center",onclick:function(){closeAuth(true);}},"Нэвтрэхгүйгээр үргэлжлүүлэх"));
     }
     paint();
     document.body.style.overflow="hidden";
