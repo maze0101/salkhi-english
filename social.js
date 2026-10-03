@@ -30,12 +30,13 @@
     if(!cfg()){screen="setup";paint();return;}
     if(db&&uid){enter();return;}
     screen="boot";paint();
-    loadSDK().then(function(){
+    /* sync.js байвал Google-ээр нэвтэрсэн хэрэглэгчийг дахин ашиглана (эс бөгөөс нэргүй) */
+    (window.SalkhiFB?window.SalkhiFB.user():loadSDK().then(function(){
       if(!firebase.apps.length)firebase.initializeApp(cfg());
+      return firebase.auth().signInAnonymously().then(function(c){return c.user;});
+    })).then(function(u){
       db=firebase.database();
-      return firebase.auth().signInAnonymously();
-    }).then(function(cred){
-      uid=cred.user.uid;
+      uid=u.uid;
       return db.ref("users/"+uid).once("value");
     }).then(function(snap){
       prof=snap.val();
@@ -482,6 +483,8 @@
       setTimeout(init,0);
       return root;
     },
-    detach:function(){detach();}
+    detach:function(){detach();},
+    /* нэвтрэлт солигдоход (Google холбох / гарах) */
+    reset:function(){detach();db=null;uid=null;prof=null;friendsData=[];chatWith=null;quiz=null;screen="boot";}
   };
 })();

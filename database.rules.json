@@ -56,6 +56,13 @@
         }
       }
     },
+    "progress": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['j','ts']) && newData.child('j').isString() && newData.child('j').val().length <= 3000000 && newData.child('ts').isNumber()"
+      }
+    },
     "reports": {
       "$id": {
         ".read": false,

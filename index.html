@@ -557,6 +557,7 @@ p+p{margin-top:10px}
 <script src="hanzi.js"></script>
 <script src="ai-config.js"></script>
 <script src="firebase-config.js"></script>
+<script src="sync.js"></script>
 <script src="social.js"></script>
 <script src="placement-more-en.js"></script>
 <script src="placement-more-zh.js"></script>
@@ -728,7 +729,7 @@ c2:"CEFR C2: near-native, sophisticated language, subtle nuance, wordplay and fo
 /* ---------- storage ---------- */
 function isObjS(x){return !!x&&typeof x==="object"&&!Array.isArray(x);}
 function sget(k,d){try{var v=localStorage.getItem("salkhi:"+k);return v?JSON.parse(v):d;}catch(e){return d;}}
-function sset(k,v){try{localStorage.setItem("salkhi:"+k,JSON.stringify(v));}catch(e){}}
+function sset(k,v){try{var j=JSON.stringify(v);if(localStorage.getItem("salkhi:"+k)===j)return;localStorage.setItem("salkhi:"+k,j);if(window.SalkhiSync)SalkhiSync.touch(k);}catch(e){}}
 
 var state={
   level:sget("level","all"), tab:"words",
@@ -4773,10 +4774,12 @@ function viewStats(){
   root.append(langProgress());
   root.append(fontPanel());
   root.append(notifPanel());
+  if(state.mode!=="kid"&&window.SalkhiSync)root.append(SalkhiSync.panel(h,render,toast));
   root.append(dataPanel());
   root.append(h("div",{style:"margin-top:26px"},
     h("button",{class:"btn ghost",onclick:function(){
       if(!ui.resetArmed){ui.resetArmed=true;render();return;}
+      if(window.SalkhiSync)SalkhiSync.reset();
       state.act={};state.games={};state.examLog=[];sset("act",{});sset("games",{});sset("examLog",[]);kxLog=[];sset("kxlog",[]);
       state.mbook={w:[],wr:[],c:[],p:[]};sset("mbook",state.mbook);
       state.stories={};state.exam={};state.speech={n:0,sum:0};sset("stories",{});sset("exam",{});sset("speech",{n:0,sum:0});
@@ -4892,6 +4895,7 @@ function wxClick(){
   var c=wxCache()[i];wxLoad(!c||Date.now()-c.at>=30*60000);
 };
 wxLoad();setInterval(wxLoad,10*60000);
+if(window.SalkhiSync)SalkhiSync.boot(toast);
 checkNotif();setInterval(checkNotif,30000);syncNotifMeta();
 if(sget("foreign",0)&&location.hash!=='#daily')openForeign();
 if(location.hash==='#daily'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}openDaily();}
