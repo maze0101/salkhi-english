@@ -631,7 +631,8 @@ var LV_LABEL={a1:"A1",a2:"A2",b1:"B1",b2:"B2",c1:"C1",c2:"C2"};
 var LV_NAME={a1:"Эхлэгч",a2:"Анхан",b1:"Дунд",b2:"Дундаас дээш",c1:"Ахисан",c2:"Чөлөөтэй"};
 var LVO={a1:0,a2:1,b1:2,b2:3,c1:4,c2:5};
 var LV_ALL=["a1","a2","b1","b2","c1","c2"];
-function lvHas(sel,v){return sel==="all"||v===sel;}
+/* хүүхдийн горим A2: A1-ийг ч багтаана */
+function lvHas(sel,v){return sel==="all"||v===sel||(sel==="a2"&&v==="a1"&&state.mode==="kid");}
 /* тухайн түвшинд контент байхгүй бол хамгийн ойрын доод түвшнийг ашиглана */
 function lvFor(sel,has){var i=LV_ALL.indexOf(sel);for(var j=i;j>=0;j--)if(has(LV_ALL[j]))return LV_ALL[j];return sel;}
 function lvNote(want,got){return want!==got&&want!=="all"?h("div",{class:"note",style:"margin:8px 0"},LV_LABEL[want]+" түвшинд энэ хэсгийн контент одоогоор алга — "+LV_LABEL[got]+" түвшнийхийг харуулж байна."):null;}
@@ -977,7 +978,7 @@ function cleanAI(t){
   if(state.lang==="zh")t=t.replace(/[A-Za-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+/g,"");
   return t.replace(/\s+/g," ").trim();
 }
-function effLevel(){return state.mode==="kid"?"a1":state.level;}
+function effLevel(){return state.mode==="kid"?"a2":state.level;}
 var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
 function toast(t,ms){
   var old=document.getElementById("toast");if(old)old.remove();
@@ -1226,7 +1227,7 @@ function pool(){
   return WORDS.filter(function(w){
     if((w[6]||"en")!==state.lang)return false;
     var inKid=KID_SET.indexOf(w[5])>=0,mine=w[5]==="mine";
-    if(kid?!(inKid||mine||(!w[5]&&w[0]==="a1")):inKid)return false;
+    if(kid?!(inKid||mine||(!w[5]&&(w[0]==="a1"||w[0]==="a2"))):inKid)return false;
     if(state.cat==="saved"){if(state.saved.indexOf(w[1])<0)return false;}
     else if(state.cat!=="all"&&w[5]!==state.cat)return false;
     return mine||lvHas(lv,w[0]);
@@ -1739,7 +1740,7 @@ function notifPanel(){
 }
 function modeWords(){
   var kid=state.mode==="kid";
-  return WORDS.filter(function(w){if((w[6]||"en")!==state.lang)return false;var k=KID_SET.indexOf(w[5])>=0;return kid?(k||w[5]==="mine"||(!w[5]&&w[0]==="a1")):!k;});
+  return WORDS.filter(function(w){if((w[6]||"en")!==state.lang)return false;var k=KID_SET.indexOf(w[5])>=0;return kid?(k||w[5]==="mine"||(!w[5]&&(w[0]==="a1"||w[0]==="a2"))):!k;});
 }
 function catChips(){
   var list0=state.mode==="kid"?KID_CATS:state.mode==="senior"?seniorCats():ADULT_CATS,list=list0.filter(function(c){return ["all","saved","mine"].indexOf(c[0])>=0||WORDS.some(function(w){return (w[6]||"en")===state.lang&&w[5]===c[0];});}),el=h("div",{class:"chips",role:"group","aria-label":"Ангилал"});
@@ -3549,7 +3550,7 @@ function gameWords(){
   function fit(w){return w[1].length<=22&&w[2].length<=30;}
   var all=WORDS.filter(function(w){return (w[6]||"en")===L&&fit(w);});
   var ws=all.filter(function(w){
-    if(kid&&KID_SET.indexOf(w[5])<0&&w[0]!=="a1")return false;
+    if(kid&&KID_SET.indexOf(w[5])<0&&w[0]!=="a1"&&w[0]!=="a2")return false;
     return lvHas(lv,w[0]);
   });
   return ws.length>=12?ws:all;
