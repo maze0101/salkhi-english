@@ -598,6 +598,8 @@ p+p{margin-top:10px}
 <script src="dialogs-more.js"></script>
 <script src="dialogs-senior.js"></script>
 <script src="synonyms.js"></script>
+<script src="mnerr.js"></script>
+<script src="jobprep.js"></script>
 <script src="hanzi.js"></script>
 <script src="ai-config.js"></script>
 <script src="firebase-config.js"></script>
@@ -646,7 +648,7 @@ function lvHas(sel,v){
 function lvFor(sel,has){var i=LV_ALL.indexOf(sel);for(var j=i;j>=0;j--)if(has(LV_ALL[j]))return LV_ALL[j];return sel;}
 function lvNote(want,got){return want!==got&&want!=="all"?h("div",{class:"note",style:"margin:8px 0"},LV_LABEL[want]+" түвшинд энэ хэсгийн контент одоогоор алга — "+LV_LABEL[got]+" түвшнийхийг харуулж байна."):null;}
 /* яриа, сонсох сэдвийн түвшин */
-var SCN_LV={free:"a1",cafe:"a1",zoo:"a1",toys:"a1",grandchild:"a1",shop:"a2",restaurant:"a2",directions:"a2",taxi:"a2",neighbor:"a2",pharmacy:"a2",travel:"b1",doctor:"b1",airport:"b1",work:"b1",interview:"b2",ielts:"c1"};
+var SCN_LV={mn_ger:"a2",mn_tsagaan:"b1",mn_naadam:"b1",mn_guide:"b2",free:"a1",cafe:"a1",zoo:"a1",toys:"a1",grandchild:"a1",shop:"a2",restaurant:"a2",directions:"a2",taxi:"a2",neighbor:"a2",pharmacy:"a2",travel:"b1",doctor:"b1",airport:"b1",work:"b1",interview:"b2",ielts:"c1"};
 function scnLv(id){return SCN_LV[id]||"b1";}
 
 var WORDS=window.SALKHI_CORE.WORDS,LESSONS=window.SALKHI_CORE.LESSONS;
@@ -721,7 +723,12 @@ var SCEN=[
 ["work","Ажлын уулзалт","a colleague at a workplace chatting before and during a team meeting","adult"],
 ["zoo","Амьтны хүрээлэнд","a cheerful zoo guide talking with a child about the animals they can see","kid"],
 ["toys","Тоглоомын дэлгүүр","a kind shop assistant in a toy store chatting with a child about their favourite toys","kid"],
-["doctor","Эмнэлэгт зочлох","a caring doctor asking a patient about their symptoms during a check-up"]
+["doctor","Эмнэлэгт зочлох","a caring doctor asking a patient about their symptoms during a check-up"],
+/* Монголоо гадаад хүнд тайлбарлах: AI нь сониуч гадаад хүн, суралцагч нь монгол хүн */
+["mn_ger","🇲🇳 Гэрт зочин хүлээж авах","a curious foreign guest visiting a Mongolian family ger for the first time. The learner is the Mongolian host. Ask about the ger, its parts and how it is built, customs such as not stepping on the threshold, milk tea, airag and dairy food. React warmly to what the learner explains"],
+["mn_naadam","🇲🇳 Наадмыг тайлбарлах","a foreign tourist at the Naadam festival in Mongolia. The learner is a Mongolian friend. Ask one curious question at a time about wrestling, horse racing, archery, the deel, khuushuur and why Naadam matters, and react with interest"],
+["mn_tsagaan","🇲🇳 Цагаан сарыг тайлбарлах","a foreign coworker who has been invited to celebrate Tsagaan Sar with a Mongolian family. The learner is the Mongolian colleague. Ask about the lunar new year, the zolgokh greeting, buuz, gifts, visiting elders and what to wear or say"],
+["mn_guide","🇲🇳 Жуулчны хөтөч болох","a foreign tourist on a trip in Mongolia. The learner is the tour guide. Ask about places such as the Gobi desert, Khuvsgul lake, Kharkhorin and Chinggis Khaan, the weather, nomadic life and what to buy as souvenirs, one question at a time","adult"]
 ];
 /* compact vocabulary packs: level|word|meaning|example|example meaning|reading|category */
 /* үгсийн багц a1/b1/b2 гэж тэмдэглэгдсэн: өдөр тутмын сэдвийн A1 үгс A2, IELTS-ийн B2 үгс C1 болно */
@@ -1882,6 +1889,7 @@ function speakBtn(text,label){
   return h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":label||"Сонсох",onclick:function(){speak(cleanSpeak(text));}},"🔊");
 }
 function fullSentence(q){
+  if(q.say)return cleanSpeak(q.say);
   if(q.type==="order")return cleanSpeak(q.sentence);
   /* "Ээж: ___" гэх мэт монгол шошгыг авна (орос дуу монгол үгийг уншихгүй) */
   var t=q.q.replace(/^[^_:：]*[Ѐ-ӿ][^_:：]*[:：]\s*/,"");
@@ -1930,6 +1938,15 @@ function startCustom(kind,title,qs){
   g.lesson={id:"_"+kind,t:title,intro:[],rule:"",ex:[],q:[]};g.custom=kind;
   g.stage="quiz";g.qs=qs;g.qi=0;g.score=0;g.picked=null;g.built=[];g.saved=false;g.log=[];
   render();window.scrollTo(0,0);
+}
+/* Монголчуудын түгээмэл алдаа (mnerr.js): аль өгүүлбэр зөв бэ, хариулсны дараа яагаад гэдгийг тайлбарлана */
+function MN_ERR_OK(){return !!(window.MN_ERR&&window.MN_ERR[state.lang]);}
+function startMnErr(){
+  var rows=window.MN_ERR[state.lang].split("\n").map(function(r){return r.split("|");}).filter(function(r){return r.length>=5;});
+  var qs=shuffle(rows).slice(0,10).map(function(r){
+    return {type:"choice",q:"Аль өгүүлбэр зөв бэ?",o:shuffle([r[0],r[1]].concat(r[2]?[r[2]]:[])),a:r[0],mn:r[3],why:r[4],say:r[0]};
+  });
+  startCustom("mnerr","🇲🇳 Монголчуудын түгээмэл алдаа",qs);
 }
 function startMissed(){
   var qs=[];
@@ -2086,6 +2103,7 @@ function viewQuestion(root,g,L){
   }
   if(answered){
     root.append(h("div",{class:"fb "+(ok?"ok":"bad")},ok?"Зөв!":wrongPre()+ans));
+    if(q.why)root.append(h("div",{class:"note",style:"margin-top:8px"},"💡 "+q.why));
     var fullS=fullSentence(q);
     if(fullS)root.append(h("div",{class:"row"},h("button",{class:"btn",onclick:function(){speak(fullS);}},"🔊 Өгүүлбэрийг сонсох")));
     root.append(h("div",{class:"row"},h("button",{class:"btn primary",onclick:function(){g.qi++;g.picked=null;g.built=[];render();}},g.qi+1<g.qs.length?"Дараагийн асуулт":"Дүн харах")));
@@ -2149,7 +2167,8 @@ function viewGrammar(){
   root.append(h("div",{class:"row",style:"flex-wrap:wrap"},
     h("button",{class:"btn",onclick:startPlacement},"🎯 Түвшин тогтоох (10)"),
     h("button",{class:"btn",disabled:mc===0,onclick:startMissed},"🔁 Алдсанаа давт ("+mc+")"),
-    h("button",{class:"btn",onclick:startExam},"📝 Шалгалтын тест (20)")));
+    h("button",{class:"btn",onclick:startExam},"📝 Шалгалтын тест (20)"),
+    MN_ERR_OK()?h("button",{class:"btn",onclick:startMnErr},"🇲🇳 Монголчуудын алдаа"):null));
   var glv=lessonLvFor(effLevel()),list=LESSONS.filter(function(l){return (l.lang||"en")===state.lang&&lvHas(glv,l.lv);});
   var gnote=lvNote(effLevel(),glv);if(gnote)root.append(gnote);
   var wrap=h("div",{style:"margin-top:8px"}),rows=[],cnt=h("p",{class:"muted small",style:"margin:6px 0 0"});
@@ -3617,6 +3636,8 @@ var GAMES=[
   ["hang","🎯","Үг таах","Үсгээр нь таагаад дүүжлүүрээс авар"],
   ["dict","🎧","Цээж бичиг","Өгүүлбэр сонсоод бүтнээр нь бич"]
 ];
+/* гадаадад ажиллах бэлтгэл (jobprep.js): солонгос, япон, том хүн/ахмадын горимд */
+function jobOk(){return state.mode!=="kid"&&!!(window.JobPrep&&window.JobPrep.has(state.lang));}
 function viewPlay(){
   var P=ui.play,root=h("div");
   if(state.mode!=="kid")P.kx=null;
@@ -3629,7 +3650,11 @@ function viewPlay(){
     h("button",{"aria-pressed":String(P.sec==="games"),onclick:function(){P.sec="games";render();}},"🎮 Тоглоом"),
     h("button",{"aria-pressed":String(P.sec==="write"),onclick:function(){P.sec="write";render();}},"✍️ Бичих"),
     h("button",{"aria-pressed":String(P.sec==="mb"),onclick:function(){P.sec="mb";render();}},"📒 Алдаа"+(nMB?" "+nMB:"")),
-    h("button",{"aria-pressed":String(P.sec==="exam"),onclick:function(){P.sec="exam";render();}},"📝 Шалгалт")));
+    h("button",{"aria-pressed":String(P.sec==="exam"),onclick:function(){P.sec="exam";render();}},"📝 Шалгалт"),
+    jobOk()?h("button",{"aria-pressed":String(P.sec==="job"),onclick:function(){P.sec="job";render();}},"💼 Ажил"):null));
+  if(P.sec==="job"&&jobOk())return root.append(window.JobPrep.view({h:h,lang:function(){return state.lang;},render:render,toast:toast,
+    speak:function(t){speak(cleanSpeak(t));},speakBtn:speakBtn,addXP:addXP,celebrate:function(){celebrate(true,true);},
+    sget:sget,sset:sset})),root;
   if(P.sec==="exam")return state.mode==="kid"?viewKidExamHome(root):viewExamHome(root);
   if(P.sec==="write")return viewWrite(root);
   if(P.sec==="mb")return viewMB(root);
