@@ -1,14 +1,23 @@
 {
-  "name": "Салхи · Англи хэлний апп",
+  "id": "./",
+  "name": "Салхи · Гадаад хэлний апп",
   "short_name": "Салхи",
-  "description": "Англи хэлний үг, дүрэм, сонсох, ярих дасгал",
+  "description": "Англи, хятад, орос, герман, япон, солонгос хэлний үг, дүрэм, сонсох, ярих дасгал",
   "lang": "mn",
+  "dir": "ltr",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#F4F5F2",
   "theme_color": "#1F5F5B",
+  "categories": ["education", "kids"],
+  "prefer_related_applications": false,
   "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }
