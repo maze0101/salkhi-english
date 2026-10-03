@@ -621,6 +621,9 @@ p+p{margin-top:10px}
 <script src="synonyms.js"></script>
 <script src="mnerr.js"></script>
 <script src="jobprep.js"></script>
+<script src="abroad.js"></script>
+<script src="idioms.js"></script>
+<script src="culture.js"></script>
 <script src="numbers.js"></script>
 <script src="hanzi.js"></script>
 <script src="ai-config.js"></script>
@@ -752,6 +755,9 @@ var SCEN=[
 ["mn_tsagaan","🇲🇳 Цагаан сарыг тайлбарлах","a foreign coworker who has been invited to celebrate Tsagaan Sar with a Mongolian family. The learner is the Mongolian colleague. Ask about the lunar new year, the zolgokh greeting, buuz, gifts, visiting elders and what to wear or say"],
 ["mn_guide","🇲🇳 Жуулчны хөтөч болох","a foreign tourist on a trip in Mongolia. The learner is the tour guide. Ask about places such as the Gobi desert, Khuvsgul lake, Kharkhorin and Chinggis Khaan, the weather, nomadic life and what to buy as souvenirs, one question at a time","adult"]
 ];
+/* гадаадад амьдрах нөхцөлүүд (abroad.js) */
+if(window.ABROAD){ABROAD.scen.forEach(function(s){SCEN.push(s);});Object.keys(ABROAD.lv).forEach(function(k){SCN_LV[k]=ABROAD.lv[k];});}
+function isAbroad(id){return !!(window.ABROAD&&ABROAD.ids.indexOf(id)>=0);}
 /* compact vocabulary packs: level|word|meaning|example|example meaning|reading|category */
 /* үгсийн багц a1/b1/b2 гэж тэмдэглэгдсэн: өдөр тутмын сэдвийн A1 үгс A2, IELTS-ийн B2 үгс C1 болно */
 var A2_CATS={health:1,clothes:1,weather:1,hobby:1,school:1,home:1,shopping:1,city:1,tech:1,feelings:1,environment:1,sports:1,culture:1,money:1,kitchen:1,travel:1};
@@ -2163,8 +2169,15 @@ function examResult(g){
     h("div",{style:"font-weight:700"},pct+"% · "+(pct>=80?"Маш сайн 🎉":pct>=60?"Тэнцлээ 👍":"Дахин бэлдээрэй 💪")),
     h("div",{class:"muted small"},"Хамгийн сайн: "+best+"%"+(EXAMS[state.lang]&&lv!=="all"?" · ≈ "+EXAMS[state.lang][lv]:"")));
 }
+/* Дүрэм > хэлц үг (idioms.js), соёл (culture.js) */
+function modEnv(){return {h:h,lang:function(){return state.lang;},render:render,speakBtn:speakBtn,addXP:addXP,celebrate:function(){celebrate(true,true);},
+  sget:sget,sset:sset,close:function(){ui.grammar.mod=null;render();window.scrollTo(0,0);}};}
+function openMod(k){ui.grammar.mod=k;render();window.scrollTo(0,0);}
 function viewGrammar(){
   var g=ui.grammar,root=h("div");
+  if(g.mod==="idiom"&&window.Idioms&&Idioms.has(state.lang))return Idioms.view(modEnv());
+  if(g.mod==="culture"&&window.Culture&&Culture.has(state.lang))return Culture.view(modEnv());
+  g.mod=null;
   if(g.lesson){
     var L=g.lesson;
     root.append(h("button",{class:"back",onclick:function(){g.lesson=null;g.custom=null;render();}},"‹ Хичээлүүд"));
@@ -2208,7 +2221,9 @@ function viewGrammar(){
     h("button",{class:"btn",onclick:startPlacement},"🎯 Түвшин тогтоох (10)"),
     h("button",{class:"btn",disabled:mc===0,onclick:startMissed},"🔁 Алдсанаа давт ("+mc+")"),
     h("button",{class:"btn",onclick:startExam},"📝 Шалгалтын тест (20)"),
-    MN_ERR_OK()?h("button",{class:"btn",onclick:startMnErr},"🇲🇳 Монголчуудын алдаа"):null));
+    MN_ERR_OK()?h("button",{class:"btn",onclick:startMnErr},"🇲🇳 Монголчуудын алдаа"):null,
+    state.mode!=="kid"&&window.Idioms&&Idioms.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("idiom");}},"🗣 Хэлц үг"):null,
+    state.mode!=="kid"&&window.Culture&&Culture.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("culture");}},"🎎 Соёл, ёс заншил"):null));
   var glv=lessonLvFor(effLevel()),list=LESSONS.filter(function(l){return (l.lang||"en")===state.lang&&lvHas(glv,l.lv);});
   var gnote=lvNote(effLevel(),glv);if(gnote)root.append(gnote);
   var wrap=h("div",{style:"margin-top:8px"}),rows=[],cnt=h("p",{class:"muted small",style:"margin:6px 0 0"});
@@ -2564,17 +2579,21 @@ zh:mpb("妈|mā 妈|ээж ; 麻|má 麻|олсны ургамал ; 马|mǎ 马
 ru:mpb("мат||шатрын мат ; мать||ээж / был||байсан ; бил||цохисон / угол||булан ; уголь||нүүрс / дом||гэр ; том||боть / жить||амьдрах ; шить||оёх / брат||ах ; брать||авах / мыл||угаасан ; мил||хөөрхөн / кон||тойрог ; конь||морь"),
 de:mpb("Staat||улс ; Stadt||хот / Beet||цэцгийн мөр ; Bett||ор / schon||аль хэдийн ; schön||гоё / Kuchen||бялуу ; Küchen||гал тогоонууд / Hüte||малгайнууд ; Hütte||овоохой / Mutter||ээж ; Mütter||ээжүүд / lesen||унших ; lösen||шийдэх / fühlen||мэдрэх ; füllen||дүүргэх")
 };
-function newMP(){
+function newMP(silent){
   var m=ui.alpha.mp,gs=MP[state.lang]||[];
   if(!gs.length){m.cur=null;return;}
   var gi=Math.floor(Math.random()*gs.length);if(gs.length>1&&gi===m.gi)gi=(gi+1)%gs.length;
   var g=gs[gi];m.gi=gi;m.g=g;m.cur=g[Math.floor(Math.random()*g.length)];m.picked=null;
-  setTimeout(function(){speak(m.cur[0]);},250);
+  if(!silent)setTimeout(function(){speak(m.cur[0]);},250);
 }
 function viewMP(){
   var m=ui.alpha.mp||(ui.alpha.mp={cur:null,g:null,gi:-1,picked:null,ok:0,n:0,lang:null}),root=h("div");
   if(!m.cur||m.lang!==state.lang){m.lang=state.lang;m.ok=0;m.n=0;newMP();}
   if(!m.cur){root.append(h("p",{class:"muted"},"Энэ хэлэнд дасгал алга."));return root;}
+  if(SR)root.append(h("div",{class:"seg",style:"margin:4px 0 8px"},
+    h("button",{"aria-pressed":String(m.mode!=="say"),onclick:function(){if(m.mode==="say"){m.mode="ear";newMP();}render();}},"👂 Сонсож ялгах"),
+    h("button",{"aria-pressed":String(m.mode==="say"),onclick:function(){m.mode="say";m.say=null;render();}},"🎤 Хэлж ялгах")));
+  if(SR&&m.mode==="say")return viewMPSay(root,m);
   root.append(h("p",{class:"muted"},"Төстэй сонсогддог үгс. Сонсоод алийг нь хэлснийг сонго."));
   root.append(h("button",{class:"btn primary",style:"width:100%;margin:8px 0 4px;font-size:20px",onclick:function(){speak(m.cur[0]);}},"🔊 Дахин сонсох"));
   root.append(h("button",{class:"btn ghost",style:"width:100%;margin:0 0 8px",onclick:function(){speak(m.cur[0],null,true);}},"🐢 Удаан"));
@@ -2595,6 +2614,50 @@ function viewMP(){
   }
   root.append(h("p",{class:"muted small",style:"margin-top:12px"},"Оноо: "+m.ok+" / "+m.n));
   return root;
+}
+/* «Хэлж ялгах»: хос үгийн аль нэгийг хэлүүлээд танигч аль үгийг сонссоныг харуулна (ship ↔ sheep, 달 ↔ 탈 ↔ 딸) */
+function viewMPSay(root,m){
+  if(!m.say||m.g.indexOf(m.say)<0){m.say=m.g[Math.floor(Math.random()*m.g.length)];m.sres=null;}
+  var w=m.say,st=h("div",{class:"fb",style:m.sres?"":"display:none","aria-live":"polite"});
+  root.append(h("p",{class:"muted"},"Доорх үгийг хэлээрэй. Төстэй үгнээс ялгагдаж байгаа эсэхийг шалгана."));
+  root.append(h("div",{class:"note",style:"text-align:center;padding:16px"},
+    h("div",{style:"font-size:clamp(30px,9vw,44px);font-weight:800"},w[1]),
+    h("div",{class:"muted"},w[2]),
+    h("div",{class:"muted small",style:"margin-top:6px"},"Андуурч болох: "+m.g.filter(function(o){return o!==w;}).map(function(o){return o[1];}).join(", "))));
+  root.append(h("div",{class:"row"},
+    h("button",{class:"btn",onclick:function(){speak(w[0]);}},"🔊 Сонсох"),
+    h("button",{class:"btn ghost",onclick:function(){speak(w[0],null,true);}},"🐢 Удаан"),
+    h("button",{class:"btn primary",onclick:function(){st.style.display="";mpListen(m,w,st);}},"🎤 Хэлэх")));
+  root.append(st);
+  if(m.sres)mpShow(st,m.sres);
+  root.append(h("div",{class:"row"},h("button",{class:"btn",onclick:function(){newMP(true);m.say=null;render();}},"Дараагийн хос ›")));
+  root.append(h("p",{class:"muted small",style:"margin-top:12px"},"Оноо: "+(m.sok||0)+" / "+(m.sn||0)));
+  return root;
+}
+function mpListen(m,w,st){
+  st.className="fb";st.textContent="Микрофон асааж байна...";
+  askMic(function(){
+    try{
+      var rec=new SR();rec.lang=LANG_TTS[state.lang]||"en-US";rec.maxAlternatives=5;rec.interimResults=false;
+      rec.onaudiostart=function(){st.className="fb";st.textContent="🎙️ Сонсож байна... одоо хэлээрэй";};
+      rec.onresult=function(e){
+        var alts=[];for(var i=0;i<e.results[0].length;i++)alts.push(e.results[0][i].transcript);
+        /* бүлгийн үг бүртэй харьцуулж хамгийн ойрыг нь олно */
+        var heard=null,hs=-1;
+        m.g.forEach(function(o){alts.forEach(function(a){var x=speechSim(a,o[0]);if(x>hs||(x===hs&&o===w)){hs=x;heard=o;}});});
+        var sc=speechScore(alts,w[0]),good=heard===w&&hs>=0.8;
+        noteSpeech(sc);m.sn=(m.sn||0)+1;if(good){m.sok=(m.sok||0)+1;addXP(3);addStar();celebrate();}
+        m.sres={alts:alts,w:w,heard:heard,hs:hs,sc:sc,good:good};render();
+      };
+      rec.onerror=function(){st.className="fb bad";st.textContent="Микрофон ажиллахгүй байна. Зөвшөөрлөө шалгана уу.";};
+      rec.start();
+    }catch(e){st.textContent="Микрофон ажиллахгүй байна.";}
+  },function(){st.className="fb bad";st.textContent=micSettingsHint();});
+}
+function mpShow(st,r){
+  pronReport(st,r.alts,r.w[0],r.sc,r.good);
+  if(!r.good&&r.heard&&r.heard!==r.w&&r.hs>=0.6)
+    st.insertBefore(h("div",{style:"font-weight:800;margin-bottom:4px"},"🔁 «"+r.heard[1]+"» ("+r.heard[2]+") шиг сонсогдлоо — «"+r.w[1]+"» биш."),st.firstChild);
 }
 function newDlg(){
   var d=ui.listen.dlg,sc=(LANGPACK[state.lang]||LANGPACK.en).scripts,keys=Object.keys(sc),lv=effLevel();
@@ -3367,12 +3430,16 @@ function viewChat(){
     var el=effLevel(),lv=el==="all"?"Дунд":LV_NAME[el];
     root.append(h("p",{class:"muted small",style:"margin-top:10px"},"Түвшин: "+lv+(el==="all"?" (дээрээс түвшнээ сонгож болно)":"")));
     var cl=el==="all"?null:el;
-    SCEN.filter(sceneOk).map(function(s,i){return [s,i];}).sort(function(a,b){
+    var scBtn=function(s){return h("button",{class:"scn",disabled:sampleReady&&!chatAvailable(),onclick:function(){startChat(s[0]);}},s[1],h("span",{class:"lvtag"},LV_LABEL[scnLv(s[0])]));};
+    SCEN.filter(function(s){return sceneOk(s)&&!isAbroad(s[0]);}).map(function(s,i){return [s,i];}).sort(function(a,b){
       var x=cl?(lvHas(cl,scnLv(a[0][0]))?0:1)-(lvHas(cl,scnLv(b[0][0]))?0:1):LVO[scnLv(a[0][0])]-LVO[scnLv(b[0][0])];return x||a[1]-b[1];
-    }).forEach(function(p){
-      var s=p[0];
-      root.append(h("button",{class:"scn",disabled:sampleReady&&!chatAvailable(),onclick:function(){startChat(s[0]);}},s[1],h("span",{class:"lvtag"},LV_LABEL[scnLv(s[0])])));
-    });
+    }).forEach(function(p){root.append(scBtn(p[0]));});
+    var ab=SCEN.filter(function(s){return sceneOk(s)&&isAbroad(s[0]);});
+    if(ab.length){
+      root.append(h("h3",{style:"margin:18px 0 2px"},"🌍 Гадаадад амьдрах"));
+      root.append(h("p",{class:"muted small",style:"margin:0 0 4px"},"Эмнэлэг, цагдаа, банк, байр, визний алба, ажлын ярилцлага. Нөхцөл бүрт хэрэгтэй хэллэгийн жагсаалттай."));
+      ab.forEach(function(s){root.append(scBtn(s));});
+    }
     return root;
   }
   if(c.sum)return viewChatSum();
@@ -3385,6 +3452,12 @@ function viewChat(){
     h("button",{class:"btn ghost",style:"padding:6px 12px;font-size:14px;flex:none",onclick:function(){
       if(c.ctl)c.ctl.abort();c.started=false;c.msgs=[];c.busy=false;c.error="";render();
     }},"Шинэ яриа")));
+  var phr=isAbroad(c.scn)?ABROAD.phrases(state.lang,c.scn):[];
+  if(phr.length){
+    var det=h("details",{class:"note",style:"margin:0 0 10px;padding:10px 14px"},h("summary",{style:"cursor:pointer;font-weight:700"},"📋 Хэрэгтэй хэллэг ("+phr.length+")"));
+    phr.forEach(function(p){det.append(h("div",{class:"srow"},h("span",null,h("b",null,p.t),p.r?h("div",{class:"muted small"},p.r):null,h("div",{class:"muted small"},p.mn)),speakBtn(p.t)));});
+    root.append(det);
+  }
   root.append(h("div",{class:"msgs",id:"msgs","aria-live":"polite"}));
   root.append(h("div",{class:"note",id:"chatstate",style:"display:none"}));
   var inp=h("textarea",{id:"chatin",rows:"1",placeholder:"Сонгосон хэлээрээ бич эсвэл ярь...","aria-label":"Мессеж"});
@@ -3675,8 +3748,65 @@ var GAMES=[
   ["speed","⚡","60 секунд","Минутанд хэдэн үгийн утгыг олох вэ?"],
   ["scramble","🔤","Үг бүтээх","Холилдсон үсгээс үгийг бүтээ"],
   ["hang","🎯","Үг таах","Үсгээр нь таагаад дүүжлүүрээс авар"],
-  ["dict","🎧","Цээж бичиг","Өгүүлбэр сонсоод бүтнээр нь бич"]
+  ["dict","🎧","Цээж бичиг","Өгүүлбэр сонсоод бүтнээр нь бич"],
+  ["order","🧱","Өгүүлбэр бүтээх","Монгол утгаас нь үгсийг зөв дарааллаар байрлуул"]
 ];
+/* «Өгүүлбэр бүтээх»: дүрмийн хичээлүүдийн жишээ өгүүлбэр (монгол орчуулгатай), хятад/япон нь үгээр хуваагдсан байх ёстой */
+function orderPool(){
+  var glv=lessonLvFor(effLevel()),cjk=state.lang==="zh"||state.lang==="ja",out=[],seen={};
+  LESSONS.forEach(function(l){
+    if((l.lang||"en")!==state.lang||!lvHas(glv,l.lv))return;
+    (l.ex||[]).forEach(function(e){
+      if(!e||!e[0]||!e[1]||(cjk&&String(e[0]).indexOf(" ")<0))return;
+      var t=orderText(e[0]),n=t.split(" ").length;
+      if(n<3||n>9||seen[t]||/_{2,}/.test(t))return;
+      seen[t]=1;out.push({s:t,full:e[0],mn:e[1]});
+    });
+  });
+  return out;
+}
+function nextOrder(G){
+  var it=pickDistinct(G.pool,1,function(x){return !G.used[x.s];})[0];G.used[it.s]=1;
+  var w=it.s.split(" "),sh=shuffle(w),n=0;
+  while(sh.join(" ")===it.s&&n++<8)sh=shuffle(w);
+  G.q={it:it,words:sh,built:[],picked:null};
+  G.round++;
+}
+function viewOrder(root,G){
+  gameHead(root,"🧱 Өгүүлбэр бүтээх",h("span",{class:"big"},Math.min(G.round,G.rounds)+"/"+G.rounds));
+  var q=G.q,answered=q.picked!=null;
+  if(G.round>G.rounds||(answered&&G.over)){
+    var rec=!G.done&&gameBest(state.lang+":order",G.score);
+    gameOver(root,G,["Зөв: "+G.score+" / "+G.rounds,rec?"🏆 Шинэ дээд амжилт!":""],G.score*2,"order");
+    return root;
+  }
+  root.append(h("div",{class:"q"},"Энэ өгүүлбэрийг "+LANGN[state.lang].toLowerCase()+" хэлээр бүтээ"));
+  root.append(h("p",{style:"font-size:19px;font-weight:700;margin:4px 0 10px"},"🇲🇳 "+q.it.mn));
+  var built=h("div",{class:"built"});
+  q.built.forEach(function(i,pos){built.append(h("button",{class:"chip",disabled:answered,onclick:function(){q.built.splice(pos,1);render();}},q.words[i]));});
+  if(!q.built.length)built.append(h("span",{class:"muted small"},"Доорх үгсийг дарж өгүүлбэр бүтээ"));
+  root.append(built);
+  var bank=h("div",{class:"bank"});
+  q.words.forEach(function(w,i){if(q.built.indexOf(i)<0)bank.append(h("button",{class:"chip",disabled:answered,onclick:function(){q.built.push(i);render();}},w));});
+  root.append(bank);
+  if(!answered){
+    root.append(h("div",{class:"row"},
+      h("button",{class:"btn ghost",disabled:!q.built.length,onclick:function(){q.built=[];render();}},"Арилгах"),
+      h("button",{class:"btn primary",disabled:q.built.length!==q.words.length,onclick:function(){
+        q.picked=q.built.map(function(i){return q.words[i];}).join(" ");
+        if(q.picked===q.it.s){G.score++;addStar();celebrate();}else G.miss++;
+        speak(cleanSpeak(q.it.full));render();
+      }},"Шалгах")));
+    return root;
+  }
+  var ok=q.picked===q.it.s;
+  root.append(h("div",{class:"fb "+(ok?"ok":"bad")},ok?"Зөв! 🎉":wrongPre()+q.it.full));
+  root.append(h("div",{class:"row"},speakBtn(q.it.full),h("button",{class:"btn primary",onclick:function(){
+    if(G.round>=G.rounds){G.over=true;render();return;}
+    nextOrder(G);render();window.scrollTo(0,0);
+  }},G.round>=G.rounds?"Дүнгээ харах 🏁":"Дараагийх ›")));
+  return root;
+}
 /* гадаадад ажиллах бэлтгэл (jobprep.js): солонгос, япон, том хүн/ахмадын горимд */
 function jobOk(){return state.mode!=="kid"&&!!(window.JobPrep&&window.JobPrep.has(state.lang));}
 function viewPlay(){
@@ -3703,6 +3833,7 @@ function viewPlay(){
   root.append(h("p",{class:"muted"},LANGN[state.lang]+" үгсээр тоглоно. Түвшнээ дээд хэсгээс сонгоорой."));
   GAMES.forEach(function(g){
     if(g[0]==="hang"&&!ALPH[state.lang])return;
+    if(g[0]==="order"&&state.mode==="kid")return;
     var best=state.games[state.lang+":"+g[0]];
     root.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){startGame(g[0]);}},
       h("i",{"aria-hidden":"true"},g[1]),
@@ -3725,6 +3856,10 @@ function startGame(kind){
     G.round=0;G.rounds=5;G.pool=ws.filter(dictable);G.used={};G.sum=0;G.xp=0;
     if(G.pool.length<5){toast("Энэ түвшинд тохирох өгүүлбэр цөөн байна");return;}
     nextDict(G);
+  }else if(kind==="order"){
+    G.round=0;G.rounds=8;G.pool=orderPool();G.used={};
+    if(G.pool.length<8){toast("Энэ түвшинд тохирох өгүүлбэр цөөн байна");return;}
+    nextOrder(G);
   }else if(kind==="scramble"||kind==="hang"){
     G.round=0;G.rounds=5;G.pool=ws.filter(kind==="hang"?hangable:scramblable);
     if(G.pool.length<5){toast("Энэ түвшинд тохирох үг цөөн байна");return;}
@@ -3840,6 +3975,7 @@ function viewCam(root){
 function viewGame(root){
   var G=ui.play.game;
   if(G.kind==="dict")return viewDict(root,G);
+  if(G.kind==="order")return viewOrder(root,G);
   if(G.kind==="match"){
     var clock=h("span",{class:"big",id:"gclock"},fmtSec((Date.now()-G.t0)/1000));
     gameHead(root,"🧩 Хос олох",clock);
