@@ -1992,7 +1992,7 @@ function startMnErr(){
   var qs=shuffle(rows).slice(0,10).map(function(r){
     return {type:"choice",q:"Аль өгүүлбэр зөв бэ?",o:shuffle([r[0],r[1]].concat(r[2]?[r[2]]:[])),a:r[0],mn:r[3],why:r[4],say:r[0]};
   });
-  startCustom("mnerr","🇲🇳 Монголчуудын түгээмэл алдаа",qs);
+  startCustom("mnerr","🎯 Түгээмэл алдаанаас сэргийлье",qs);
 }
 function startMissed(){
   var qs=[];
@@ -2221,7 +2221,7 @@ function viewGrammar(){
     h("button",{class:"btn",onclick:startPlacement},"🎯 Түвшин тогтоох (10)"),
     h("button",{class:"btn",disabled:mc===0,onclick:startMissed},"🔁 Алдсанаа давт ("+mc+")"),
     h("button",{class:"btn",onclick:startExam},"📝 Шалгалтын тест (20)"),
-    MN_ERR_OK()?h("button",{class:"btn",onclick:startMnErr},"🇲🇳 Монголчуудын алдаа"):null,
+    MN_ERR_OK()?h("button",{class:"btn",onclick:startMnErr},"🎯 Түгээмэл алдаа"):null,
     state.mode!=="kid"&&window.Idioms&&Idioms.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("idiom");}},"🗣 Хэлц үг"):null,
     state.mode!=="kid"&&window.Culture&&Culture.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("culture");}},"🎎 Соёл, ёс заншил"):null));
   var glv=lessonLvFor(effLevel()),list=LESSONS.filter(function(l){return (l.lang||"en")===state.lang&&lvHas(glv,l.lv);});
