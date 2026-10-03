@@ -1317,6 +1317,25 @@ function setClsLists(code,o){
   sset("clslists",CLS_LISTS);
   var ck=clsKey();if(ck&&!CLS_LISTS[ck])state.cat="all";
 }
+/* багшийн хичээл (classes.js): "t:<код>:<id>" дугаартай энгийн хичээл болж нээгдэнэ, оноо state.lessons-д хадгалагдана */
+var CLS_LESSONS=sget("clslessons",{})||{};
+function clsLesson(k){
+  var p=CLS_LESSONS[k];if(!p)return null;
+  return {id:"t:"+k,lang:p.lang,lv:"",t:p.t,intro:p.intro||[],rule:p.rule||"",ex:p.ex||[],q:p.q||[],o:p.o||[],f:p.f||[],teacher:p.cname||""};
+}
+function setClsLessons(code,o){
+  Object.keys(CLS_LESSONS).forEach(function(k){if(k.indexOf(code+":")===0)delete CLS_LESSONS[k];});
+  Object.keys(o||{}).forEach(function(lid){CLS_LESSONS[code+":"+lid]=o[lid];});
+  sset("clslessons",CLS_LESSONS);
+}
+function clsLessonDone(k){var L=clsLesson(k);return L?lessonPassed(L):null;}
+function openClsLesson(k){
+  var L=clsLesson(k);if(!L)return;
+  if(L.lang!==state.lang){var b=[].find.call(document.querySelectorAll("#langs button"),function(x){return x.textContent===LANGN[L.lang];});if(b)b.click();}
+  if(state.mode==="senior"){toast("Дүрмийн хичээл «Том хүн» горимд нээгдэнэ");return;}
+  var g=ui.grammar;g.mod=null;g.lesson=L;g.custom=null;g.stage="read";g.saved=false;
+  state.tab="grammar";renderTabs();render();window.scrollTo(0,0);
+}
 function clsListProgress(k){var L=CLS_LISTS[k];return L?(L.words||[]).filter(function(p){return (state.box[p[0]]||0)>=2;}).length:null;}
 function openClsList(k,where){
   var L=CLS_LISTS[k];if(!L)return;
@@ -2212,14 +2231,15 @@ function viewGrammar(){
     if(g.stage==="read"){
       root.append(h("h2",null,L.t));
       L.intro.forEach(function(t){root.append(h("p",null,t));});
-      root.append(h("div",{class:"rule"},L.rule));
+      if(L.rule)root.append(h("div",{class:"rule"},L.rule));
+      if(L.teacher)root.append(h("p",{class:"muted small",style:"margin:4px 0 0"},"📘 Багшийн хичээл · "+L.teacher));
       root.append(h("p",{class:"muted small"},"Жишээ"));
       root.append(h("div",{class:"row",style:"margin:0 0 6px"},h("button",{class:"btn",onclick:function(){speakSeq(L.ex.map(function(e){return cleanSpeak(e[0]);}));}},"🔊 Бүгдийг сонсох")));
       var ul=h("ul",{class:"exl"});
       L.ex.forEach(function(e){
         var st=h("div",{class:"fb",style:"display:none"});
         var mic=SR?h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":"Хэлж үзэх",onclick:function(){st.style.display="block";checkSpeech(cleanSpeak(e[0]),st,2);}},"🎤"):null;
-        ul.append(h("li",null,h("div",{style:"display:flex;gap:8px;align-items:center"},h("b",{style:"flex:1"},e[0]),speakBtn(e[0]),mic),h("span",{class:"muted"},e[1]),st));
+        ul.append(h("li",null,h("div",{style:"display:flex;gap:8px;align-items:center"},h("b",{style:"flex:1"},e[0]),speakBtn(e[0]),mic),e[1]?h("span",{class:"muted"},e[1]):null,st));
       });
       root.append(ul);
       root.append(h("div",{class:"row"},
@@ -2252,6 +2272,17 @@ function viewGrammar(){
     MN_ERR_OK()?h("button",{class:"btn",onclick:startMnErr},"🎯 Түгээмэл алдаа"):null,
     state.mode!=="kid"&&window.Idioms&&Idioms.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("idiom");}},"🗣 Хэлц үг"):null,
     state.mode!=="kid"&&window.Culture&&Culture.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("culture");}},"🎎 Соёл, ёс заншил"):null));
+  var tks=Object.keys(CLS_LESSONS).filter(function(k){return CLS_LESSONS[k].lang===state.lang;});
+  if(tks.length){
+    root.append(h("h3",{style:"margin:16px 0 6px"},"📘 Багшийн хичээл"));
+    tks.forEach(function(k){
+      var p=CLS_LESSONS[k],done=clsLessonDone(k);
+      root.append(h("button",{class:"lrow",type:"button",onclick:function(){openClsLesson(k);}},
+        h("span",{class:"hexb ico"},done?"✅":"📘"),
+        h("span",{style:"flex:1;text-align:left"},h("div",{class:"t"},p.t),h("div",{class:"muted small"},p.cname||"")),
+        h("span",{"aria-hidden":"true"},"›")));
+    });
+  }
   var glv=lessonLvFor(effLevel()),list=LESSONS.filter(function(l){return (l.lang||"en")===state.lang&&lvHas(glv,l.lv);});
   var gnote=lvNote(effLevel(),glv);if(gnote)root.append(gnote);
   var wrap=h("div",{style:"margin-top:8px"}),rows=[],cnt=h("p",{class:"muted small",style:"margin:6px 0 0"});
@@ -5279,6 +5310,7 @@ function clsEnv(){
     },
     me:function(lang){var m=this;return {name:m.name(),xp:state.xp,wxp:weekXP(),wk:weekKey(),streak:streak(),words:m.metric("words",lang),lessons:m.metric("lessons",lang)||0};},
     setLists:setClsLists,listProgress:clsListProgress,openList:openClsList,
+    setLessons:setClsLessons,lessonDone:clsLessonDone,openLesson:openClsLesson,orderText:orderText,
     close:function(){ui.cls=false;render();window.scrollTo(0,0);}};
 }
 function viewStats(){

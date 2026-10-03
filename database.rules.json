@@ -134,6 +134,15 @@
           ".validate": "newData.hasChildren(['name','wxp','wk']) && newData.child('name').isString() && newData.child('name').val().length <= 30 && newData.child('wxp').isNumber() && newData.child('wk').isString() && newData.child('wk').val().length <= 12"
         }
       }
+    },
+    "tlessons": {
+      "$code": {
+        ".read": "auth != null && (root.child('classes/'+$code+'/teacher').val() === auth.uid || root.child('members/'+$code+'/'+auth.uid).exists())",
+        ".write": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        "$lid": {
+          ".validate": "newData.hasChildren(['t','ts']) && newData.child('t').isString() && newData.child('t').val().length <= 60 && (!newData.child('intro').exists() || (newData.child('intro').isString() && newData.child('intro').val().length <= 4000)) && (!newData.child('rule').exists() || (newData.child('rule').isString() && newData.child('rule').val().length <= 200)) && (!newData.child('ex').exists() || (newData.child('ex').isString() && newData.child('ex').val().length <= 5000)) && (!newData.child('q').exists() || (newData.child('q').isString() && newData.child('q').val().length <= 5000)) && (!newData.child('o').exists() || (newData.child('o').isString() && newData.child('o').val().length <= 3000)) && (!newData.child('f').exists() || (newData.child('f').isString() && newData.child('f').val().length <= 3000))"
+        }
+      }
     }
   }
 }
