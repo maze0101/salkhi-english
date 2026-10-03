@@ -86,8 +86,23 @@
     return out;
   }
   function zhPy(w){return Array.from(w).map(function(c){return PY[c]||c;}).join(" ");}
-  /* {w: үндсэн уншлага (дуудах), r: нэмэлт мөр} */
-  function word(lang,n){
+  /* монгол уншлага: араас нь үг ирвэл тоо холбох хэлбэртэй болно (гурав → гурван зуу, хорь → хорин тав, зуу → зуун тав) */
+  var MN1=",нэг,хоёр,гурав,дөрөв,тав,зургаа,долоо,найм,ес".split(","),
+      MN1a=",нэг,хоёр,гурван,дөрвөн,таван,зургаан,долоон,найман,есөн".split(","),
+      MN10=",арав,хорь,гуч,дөч,тавь,жар,дал,ная,ер".split(","),
+      MN10a=",арван,хорин,гучин,дөчин,тавин,жаран,далан,наян,ерэн".split(",");
+  function mn(n){
+    if(n===0)return "тэг";if(n===10000)return "арван мянга";
+    var t=Math.floor(n/1000),h=Math.floor(n%1000/100),d=Math.floor(n%100/10),o=n%10,w=[];
+    if(t)w.push(t===1?"мянга":MN1a[t]+" мянга");
+    if(h){var rest=d||o;w.push((h===1?"":MN1a[h]+" ")+(rest?"зуун":"зуу"));}
+    if(d)w.push(o?MN10a[d]:MN10[d]);
+    if(o)w.push(MN1[o]);
+    return w.join(" ");
+  }
+  /* {w: үндсэн уншлага (дуудах), r: нэмэлт мөр, m: монгол} */
+  function word(lang,n){var x=word0(lang,n);x.m=mn(n);return x;}
+  function word0(lang,n){
     if(lang==="en")return {w:en(n)};
     if(lang==="de")return {w:de(n)};
     if(lang==="ru")return {w:ru(n)};
@@ -123,13 +138,13 @@
       var w=word(L,n);
       root.append(h("button",{class:"srow",type:"button",style:"width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);font:inherit;color:inherit;cursor:pointer;gap:12px",onclick:function(){env.speak(w.w);}},
         h("b",{style:"min-width:56px;font-size:20px"},String(n)),
-        h("span",{style:"flex:1"},h("div",{style:"font-weight:700"},w.w),w.r?h("div",{class:"muted small"},w.r):null),
+        h("span",{style:"flex:1"},h("div",{style:"font-weight:700"},w.w),w.r?h("div",{class:"muted small"},w.r):null,h("div",{class:"muted small"},"🇲🇳 "+w.m)),
         h("span",{"aria-hidden":"true"},"🔊")));
     });
   }
   function feedback(root){
     var w=word(env.lang(),S.cur);
-    root.append(h("div",{class:"fb "+(S.ok?"ok":"bad")},(S.ok?"Зөв! +2 XP · ":"Буруу. Зөв нь: ")+S.cur+" — "+w.w+(w.r?" ("+w.r+")":"")));
+    root.append(h("div",{class:"fb "+(S.ok?"ok":"bad")},(S.ok?"Зөв! +2 XP · ":"Буруу. Зөв нь: ")+S.cur+" — "+w.w+(w.r?" ("+w.r+")":"")+" · 🇲🇳 "+w.m));
     root.append(h("div",{class:"row"},h("button",{class:"btn",onclick:function(){say(S.cur);}},"🔊 Дахин сонсох"),
       h("button",{class:"btn primary",onclick:function(){newQ();env.render();}},"Дараагийх ›")));
   }
@@ -173,6 +188,6 @@
       }
       return root;
     },
-    _word:word
+    _word:word,_mn:mn
   };
 })();
