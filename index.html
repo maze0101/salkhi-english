@@ -405,6 +405,10 @@ p+p{margin-top:10px}
 @keyframes kxpulse{50%{transform:scale(1.08)}}
 @media (prefers-reduced-motion:reduce){.kxstop.cur button{animation:none}}
 .kxgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.kxtime{height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin:6px 0 8px}
+.kxtime i{display:block;height:100%;width:100%;background:var(--danger);transform-origin:left;animation:kxt linear forwards}
+@keyframes kxt{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.kxtime i{animation-timing-function:steps(10)}}
 .kxnew{margin-top:8px;font-weight:800;padding:8px 12px;border-radius:14px;background:color-mix(in srgb,var(--dune) 45%,var(--surface))}
 .trophies{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:10px}
 .tr{padding:12px 6px;border-radius:16px;background:var(--surface);box-shadow:var(--shadow);text-align:center;font-size:12px;font-weight:700}
@@ -3789,7 +3793,7 @@ function viewGame(root){
 }
 
 /* хүүхдийн шалгалт: сэдэв бүр адал явдлын замын нэг зогсоол, 10 асуулт, цаггүй, хариулт бүрийн дараа шууд хэлнэ */
-var KX_N=10,KX_LOG_MAX=80;
+var KX_N=10,KX_LOG_MAX=80,kxTimer=null;
 var KX_MEDAL={all:"Үгийн их аварга",animal:"Амьтны аварга",color:"Өнгөний аварга",number:"Тооны аварга",food:"Хоолны аварга",body:"Биеийн аварга",transport:"Унааны аварга",family:"Гэр бүлийн аварга",nature:"Байгалийн аварга"};
 var kxOpt=sget("kxopt",{say:true,lives:false}),kxLog=sget("kxlog",[]);
 if(!isObjS(kxOpt))kxOpt={say:true,lives:false};
@@ -3829,7 +3833,7 @@ function viewKidExamHome(root){
     h("div",{style:"font-size:44px;line-height:1.1"},"🦊🗺"),
     h("div",{style:"font-weight:800;font-size:20px;margin-top:6px"},"Үнэгний адал явдал"),
     h("div",{class:"muted"},"Зогсоол бүр "+KX_N+" асуулттай шалгалт. 2 од авбал дараагийн зогсоол нээгдэнэ, 3 од авбал медаль авна!"),
-    h("div",{style:"margin-top:8px;font-weight:700"},kidHard()?"🔥 Хэцүү: 6 сонголт, үгээ бичих, сонсоод үгийг олох":"🌱 Хялбар: 4 сонголт, зурагтай асуултууд")));
+    h("div",{style:"margin-top:8px;font-weight:700"},kidHard()?"🔥 Хэцүү: ⏱ цагтай, 6 сонголт, үгээ бичих, сонсоод бичих":"🌱 Хялбар: 4 сонголт, зурагтай асуултууд")));
   /* медалиуд */
   root.append(h("p",{class:"muted small",style:"margin:14px 0 6px"},"🏅 Миний медаль ("+medals.length+" / "+(cats.length+1)+")"));
   var mrow=h("div",{class:"kxmedals"});
@@ -3864,16 +3868,16 @@ function startKidExam(){
   var P=ui.play,ws=kidExamWords(P.kcat);
   if(ws.length<4){P.kcat="all";ws=kidExamWords("all");}
   if(ws.length<4){toast("Шалгалт хийхэд үг хүрэлцэхгүй байна");return;}
-  var hard=kidHard(),types=hard?["pic","ear","mean","pair"]:["pic","ear","mean","yn","pair"];
-  if(ws.some(kxSpellable))types.push("spell");
-  if(hard&&ws.some(kxSpellable))types.push("type","type");
+  var hard=kidHard(),sp=ws.some(kxSpellable),types=hard?["ear","mean","rev","pair"]:["pic","ear","mean","yn","pair"];
+  if(sp)types.push("spell");
+  if(hard)types=types.concat(sp?["type","dict"]:["rev","ear"]);
   if(SR&&kxOpt.say)types.push("say");
   /* төрөл бүр дор хаяж нэг удаа, үлдсэнийг санамсаргүй */
   var tlist=shuffle(types);while(tlist.length<KX_N)tlist.push(types[Math.floor(Math.random()*types.length)]);
   tlist=shuffle(tlist.slice(0,KX_N));
   var order=shuffle(ws),spell=shuffle(ws.filter(kxSpellable)),qs=[];
   tlist.forEach(function(t,i){
-    var w=t==="spell"||t==="type"?spell[i%spell.length]:order[i%order.length];
+    var w=t==="spell"||t==="type"||t==="dict"?spell[i%spell.length]:order[i%order.length];
     qs.push(kxQ(t,w,ws));
   });
   P.kx={qs:qs,qi:0,score:0,done:false,lives:kxOpt.lives?3:0,hard:hard};
@@ -3882,20 +3886,20 @@ function startKidExam(){
 }
 /* хэцүү: 6 сонголт (холбох нь 4 хэвээр), үсэг бүтээхэд 2 илүү үсэг */
 function kxQ(t,w,ws){
-  var hard=kidHard(),others=shuffle(ws.filter(function(x){return x!==w;})).slice(0,hard&&t!=="pair"?5:3);
+  var hard=kidHard(),others=shuffle(ws.filter(function(x){return x!==w;})).slice(0,hard?5:3);
   var q={t:t,w:w,o:shuffle([w].concat(others)),done:false,ok:false,mw:[]};
   if(t==="yn")q.show=Math.random()<0.5?w:others[0];
   if(t==="spell"){
     var ch=Array.from(w[1].toLowerCase()),pool=ch.slice(),ab=Array.from(ALPH[state.lang]||"");
-    if(hard&&ab.length)for(var k=0;k<2;k++)pool.push(ab[Math.floor(Math.random()*ab.length)]);
+    if(hard&&ab.length)for(var k=0;k<3;k++)pool.push(ab[Math.floor(Math.random()*ab.length)]);
     var sh=shuffle(pool),n=0;while(sh.slice(0,ch.length).join("")===ch.join("")&&n++<8)sh=shuffle(pool);q.ch=sh;q.built=[];
   }
-  if(t==="type"){q.val="";q.tries=0;}
+  if(t==="type"||t==="dict"){q.val="";q.tries=0;}
   if(t==="pair"){q.left=shuffle(q.o);q.right=shuffle(q.o);q.m={};q.sel=null;q.miss=0;q.bad=null;}
   if(t==="say")q.tries=0;
   return q;
 }
-function kxAutoSay(q,ms){if(q&&q.t==="ear")setTimeout(function(){if(ui.play.kx&&state.tab==="play")speak(cleanSpeak(q.w[1]));},ms);}
+function kxAutoSay(q,ms){if(q&&(q.t==="ear"||q.t==="dict"))setTimeout(function(){if(ui.play.kx&&state.tab==="play")speak(cleanSpeak(q.w[1]));},ms);}
 function kxNext(K){
   K.qi=K.out?K.qs.length:K.qi+1;
   render();window.scrollTo(0,0);kxAutoSay(K.qs[K.qi],300);
@@ -3916,6 +3920,19 @@ function viewKidExam(root){
     say();render();
   }
   function cls(o,right){return "opt"+(q.done?(right?" ok":o===q.picked?" bad":""):"");}
+  /* хэцүү: асуулт бүрт цаг (бичих 30с, бусад 20с); дуусвал буруу */
+  if(K.hard&&!q.done&&q.t!=="say"){
+    var total=q.t==="type"||q.t==="dict"?30000:20000;
+    if(!q.end)q.end=Date.now()+total;
+    var left=q.end-Date.now();
+    root.append(h("div",{class:"kxtime","aria-label":"Үлдсэн хугацаа"},h("i",{style:"animation-duration:"+total+"ms;animation-delay:-"+(total-Math.max(0,left))+"ms"})));
+    clearTimeout(kxTimer);
+    kxTimer=setTimeout(function(){
+      if(ui.play.kx!==K||K.qs[K.qi]!==q||q.done)return;
+      q.timeout=true;
+      finish(false,q.t==="pair"?q.o.filter(function(o){return !q.m[o[1]];}):null);
+    },Math.max(0,left));
+  }
   if(q.t==="pic"){
     root.append(h("div",{class:"q",style:"text-align:center"},"Энэ юу вэ?"));
     root.append(h("div",{class:"emo",style:"text-align:center;font-size:96px"},w[4]));
@@ -3927,6 +3944,10 @@ function viewKidExam(root){
     q.o.forEach(function(o){grid.append(K.hard?h("button",{class:cls(o,o===w),style:"margin:0;text-align:center;font-size:20px",disabled:q.done,onclick:function(){q.picked=o;finish(o===w);}},o[1])
       :h("button",{class:cls(o,o===w),style:"margin:0;text-align:center;font-size:56px;line-height:1.2","aria-label":o[2],disabled:q.done,onclick:function(){q.picked=o;finish(o===w);}},o[4]));});
     root.append(grid);
+  }else if(q.t==="rev"){
+    root.append(h("div",{class:"q",style:"text-align:center"},"Энэ үгийг гадаад хэлээр олоорой"));
+    root.append(h("div",{style:"text-align:center;font-size:clamp(28px,8vw,40px);font-weight:800;margin:8px 0"},w[2]));
+    q.o.forEach(function(o){root.append(h("button",{class:cls(o,o===w),style:"text-align:center",disabled:q.done,onclick:function(){q.picked=o;finish(o===w);}},o[1]));});
   }else if(q.t==="mean"){
     root.append(h("div",{class:"q",style:"text-align:center"},"Энэ үг ямар утгатай вэ?"));
     root.append(h("div",{style:"display:flex;gap:10px;align-items:center;justify-content:center;margin:6px 0"},h("div",{class:"en",style:"font-size:clamp(30px,9vw,44px)"},w[1]),speakBtn(w[1])));
@@ -3956,23 +3977,28 @@ function viewKidExam(root){
       if(q.built.length===target.length){var s=q.built.map(function(k){return q.ch[k];}).join("");finish(s===target.join(""));}else render();
     }},c));});
     root.append(bank);
-  }else if(q.t==="type"){
-    root.append(h("div",{class:"q",style:"text-align:center"},"Энэ юу вэ? Үгийг бич"));
-    root.append(h("div",{class:"emo",style:"text-align:center;font-size:88px;margin-bottom:0"},w[4]));
+  }else if(q.t==="type"||q.t==="dict"){
+    if(q.t==="dict"){
+      root.append(h("div",{class:"q",style:"text-align:center"},"Сонсоод үгийг бич"));
+      root.append(h("div",{style:"text-align:center"},h("button",{class:"btn primary",style:"font-size:28px;padding:14px 28px","aria-label":"Дахин сонсох",onclick:say},"🔊")));
+    }else{
+      root.append(h("div",{class:"q",style:"text-align:center"},"Энэ юу вэ? Үгийг бич"));
+      root.append(h("div",{class:"emo",style:"text-align:center;font-size:88px;margin-bottom:0"},w[4]));
+    }
     var inp=h("input",{class:"tin",type:"text",value:q.val,autocomplete:"off",autocapitalize:"off",spellcheck:"false","aria-label":"Хариулт",disabled:q.done,style:"text-align:center;font-size:24px"});
     var check=function(){
       if(q.done)return;q.val=inp.value;var a=inp.value.trim().toLowerCase();if(!a){inp.focus();return;}
       if(a===w[1].toLowerCase()){finish(true);return;}
       q.tries++;
       if(q.tries>=2){finish(false);return;}
-      q.msg="Бараг! Дахиад нэг оролдоорой 🙂 Эхний үсэг: «"+Array.from(w[1])[0]+"»";render();
+      q.msg="Бараг! Дахиад нэг оролдоорой 🙂 "+Array.from(w[1]).length+" үсэгтэй: "+Array.from(w[1]).map(function(c){return c===" "?"  ":"_";}).join(" ");render();
     };
     inp.addEventListener("keydown",function(e){if(e.key==="Enter")check();});
     inp.addEventListener("input",function(){q.val=inp.value;});
     root.append(inp);
     if(!q.done){
       if(q.msg)root.append(h("div",{class:"fb",style:"text-align:center"},q.msg));
-      root.append(h("div",{class:"row",style:"justify-content:center"},h("button",{class:"btn ghost",type:"button",onclick:say},"🔊 Сонсох"),h("button",{class:"btn primary",type:"button",onclick:check},"Шалгах")));
+      root.append(h("div",{class:"row",style:"justify-content:center"},q.t==="type"?h("button",{class:"btn ghost",type:"button",onclick:say},"🔊 Сонсох"):null,h("button",{class:"btn primary",type:"button",onclick:check},"Шалгах")));
       setTimeout(function(){if(document.body.contains(inp))inp.focus();},50);
     }
   }else if(q.t==="pair"){
@@ -4003,7 +4029,7 @@ function viewKidExam(root){
   }
   if(q.done){
     var right=w[4]+" "+w[1]+" — "+w[2];
-    root.append(h("div",{class:"fb "+(q.ok?"ok":"bad")},q.ok?"Зөв! 🎉 "+right:(q.t==="pair"?"Бүгдийг холболоо! Дараагийн удаа алдаагүй хийгээрэй 💪":wrongPre()+right)));
+    root.append(h("div",{class:"fb "+(q.ok?"ok":"bad")},q.ok?"Зөв! 🎉 "+right:q.timeout?"⏱ Хугацаа дууслаа! "+right:(q.t==="pair"?"Бүгдийг холболоо! Дараагийн удаа алдаагүй хийгээрэй 💪":wrongPre()+right)));
     if(K.out)root.append(h("div",{class:"fb bad"},"💔 Амь дууслаа"));
     root.append(h("div",{class:"row"},h("button",{class:"btn primary",onclick:function(){kxNext(K);}},K.out||K.qi+1>=K.qs.length?"Дүнгээ харах 🏁":"Дараагийх ›")));
   }
