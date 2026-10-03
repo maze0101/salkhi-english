@@ -126,7 +126,7 @@
       if(!isAcct(u)){var m=meta();delete m.g;setMeta(m);return;}
       return ref(u).once("value").then(function(snap){
         var R=remoteObj(snap.val()),M=merge(snapshot(),R),changed=apply(M);
-        var m=meta();m.last=now();setMeta(m);lastErr="";
+        var m=meta();m.last=now();m.name=u.displayName||u.email||m.name||"";m.email=u.email||"";m.photo=u.photoURL||"";setMeta(m);lastErr="";
         var p=same(M,R)?Promise.resolve():ref(u).set({j:JSON.stringify(M),ts:now()});
         return p.then(function(){
           if(changed){
@@ -147,7 +147,7 @@
 
   /* ---------- нэвтрэх / гарах ---------- */
   function afterLogin(){
-    var m=meta(),u=firebase.auth().currentUser;m.g=1;m.name=u&&(u.displayName||u.email)||"";setMeta(m);
+    var m=meta(),u=firebase.auth().currentUser;m.g=1;m.name=u&&(u.displayName||u.email)||"";m.email=u&&u.email||"";m.photo=u&&u.photoURL||"";setMeta(m);
     if(onChange)onChange();
     if(window.Social&&window.Social.reset)window.Social.reset();
     return pull();
@@ -195,7 +195,7 @@
   function signOut(){
     clearTimeout(timer);
     return push().then(function(){return ready();}).then(function(){
-      var m=meta();delete m.g;delete m.last;delete m.name;setMeta(m);
+      var m=meta();delete m.g;delete m.last;delete m.name;delete m.email;delete m.photo;setMeta(m);
       if(onChange)onChange();
       if(window.Social&&window.Social.reset)window.Social.reset();
       return firebase.auth().signOut();
@@ -206,7 +206,7 @@
     if(c==="auth/popup-closed-by-user"||c==="auth/cancelled-popup-request")return "";
     if(c==="auth/operation-not-allowed"||/configuration-not-found/.test(m))return "Энэ нэвтрэх арга Firebase дээр асаагаагүй байна.";
     if(c==="auth/unauthorized-domain")return "Энэ домэйн Firebase-ийн Authorized domains-д алга.";
-    if(c==="auth/network-request-failed")return "Интернэт холболтоо шалгана уу.";
+    if(c==="auth/network-request-failed"||/^load https?:/.test(m)||/network/i.test(m))return "Интернэт холболтоо шалгана уу.";
     if(c==="auth/invalid-email")return "И-мэйл хаяг буруу байна.";
     if(c==="auth/missing-password"||c==="auth/weak-password")return "Нууц үг дор хаяж 6 тэмдэгт байна.";
     if(c==="auth/email-already-in-use"||c==="auth/credential-already-in-use")return "Энэ и-мэйл бүртгэлтэй байна. «Нэвтрэх» табаар орно уу.";
@@ -295,29 +295,28 @@
     authEl.addEventListener("keydown",function(e){if(e.key==="Escape")closeAuth(true);});
   }
 
-  /* ---------- «Явц» таб дахь самбар ---------- */
-  function panel(h,rerender,toast){
-    var wrap=h("div",{style:"margin-top:22px"});
-    wrap.append(h("h2",{style:"font-size:18px"},"☁️ Миний бүртгэл"));
-    if(!cfg()){wrap.append(h("p",{class:"muted small"},"Firebase тохиргоо алга."));return wrap;}
-    var m=meta(),body=h("div");wrap.append(body);
-    function paint(u){
-      body.textContent="";
-      if(isAcct(u)&&m.g){
-        body.append(h("p",{class:"muted small"},"Нэвтэрсэн: "+(u.displayName||"")+(u.email?" · "+u.email:"")),
-          h("p",{class:"muted small"},m.last?"Сүүлд синк хийсэн: "+new Date(m.last).toLocaleString():"Синк хийгдээгүй"),
-          lastErr?h("p",{class:"muted small",style:"color:var(--danger)"},errText({message:lastErr})):"",
-          h("div",{class:"row",style:"flex-wrap:wrap"},
-            h("button",{class:"btn",onclick:function(e){e.target.disabled=true;push().then(function(){toast(lastErr?errText({message:lastErr}):"☁️ Хадгаллаа");m=meta();rerender();});}},"🔄 Одоо синк хийх"),
-            h("button",{class:"btn ghost",onclick:function(){signOut().then(function(){toast("Гарлаа. Явц энэ төхөөрөмж дээр үлдэнэ.");rerender();},function(e){toast(errText(e));});}},"Гарах")));
-      }else{
-        body.append(h("p",{class:"muted small"},"Нэвтэрвэл явц тань хадгалагдаж, утас, компьютер хооронд автоматаар шилжинэ. Найзууд тань хэвээр үлдэнэ."),
-          h("button",{class:"btn primary",onclick:function(){openAuth("in");}},"🔐 Нэвтрэх / Бүртгүүлэх"));
-      }
+  /* ---------- «Профайл» табын дээд карт ---------- */
+  /* st: {lvl,xp,streak}; auth=false бол (хүүхдийн горим) нэвтрэх товчгүй */
+  function profileCard(h,rerender,toast,st,auth){
+    var m=meta(),signed=!!(m.g&&cfg()&&auth),nm=signed?(m.name||"Хэрэглэгч"):"Зочин";
+    var av=h("div",{class:"pf-av","aria-hidden":"true"});
+    if(signed&&m.photo){var im=h("img",{src:m.photo,alt:"",referrerpolicy:"no-referrer"});im.onerror=function(){im.remove();av.textContent=nm.charAt(0).toUpperCase();};av.append(im);}
+    else av.textContent=signed?nm.charAt(0).toUpperCase():"👤";
+    var info=h("div",{class:"pf-info"},h("div",{class:"pf-name"},nm));
+    if(signed&&m.email&&m.email!==nm)info.append(h("div",{class:"pf-mail"},m.email));
+    info.append(h("div",{class:"pf-chips"},h("span",null,"Lv "+st.lvl),h("span",null,st.xp+" XP"),h("span",null,"🔥 "+st.streak)));
+    var card=h("div",{class:"pf-card"},h("div",{class:"pf-top"},av,info));
+    if(!auth||!cfg())return card;
+    if(signed){
+      card.append(h("p",{class:"pf-sync"},(lastErr?"⚠️ "+errText({message:lastErr}):"☁️ "+(m.last?"Синк хийсэн: "+new Date(m.last).toLocaleString():"Синк хийгдээгүй"))),
+        h("div",{class:"row",style:"flex-wrap:wrap;margin-top:10px"},
+          h("button",{class:"btn",onclick:function(e){e.currentTarget.disabled=true;push().then(function(){toast(lastErr?errText({message:lastErr}):"☁️ Хадгаллаа");rerender();});}},"🔄 Синк хийх"),
+          h("button",{class:"btn ghost",onclick:function(){signOut().then(function(){toast("Гарлаа. Явц энэ төхөөрөмж дээр үлдэнэ.");rerender();},function(e){toast(errText(e));});}},"Гарах")));
+    }else{
+      card.append(h("p",{class:"pf-sync"},"Нэвтэрвэл явц тань хадгалагдаж, бүх төхөөрөмж дээр үргэлжилнэ."),
+        h("button",{class:"btn primary",style:"width:100%;margin-top:10px",onclick:function(){openAuth("in");}},"🔐 Нэвтрэх / Бүртгүүлэх"));
     }
-    if(m.g){body.append(h("p",{class:"muted small"},"Уншиж байна..."));ready().then(paint,function(){paint(null);});}
-    else paint(null);
-    return wrap;
+    return card;
   }
 
   /* толгой хэсгийн товчинд: Firebase ачаалалгүйгээр нэвтэрсэн эсэхийг мэдэх */
@@ -340,6 +339,6 @@
     document.addEventListener("visibilitychange",function(){if(document.visibilityState==="hidden"&&meta().g&&timer){clearTimeout(timer);timer=null;push();}});
   }
 
-  window.SalkhiSync={account:account,openAuth:openAuth,touch:touch,reset:reset,panel:panel,boot:boot,signIn:signIn,signOut:signOut,push:push,pull:pull,_merge:merge};
+  window.SalkhiSync={account:account,openAuth:openAuth,touch:touch,reset:reset,profileCard:profileCard,boot:boot,signIn:signIn,signOut:signOut,push:push,pull:pull,_merge:merge};
   window.SalkhiFB={load:load,ready:ready,user:user};
 })();

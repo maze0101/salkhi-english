@@ -126,6 +126,16 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .strip{display:flex;gap:8px;flex-wrap:wrap;padding:0 20px;margin-top:-18px;position:relative}
 .stat.acct{font:inherit;font-size:14px;font-weight:700;color:inherit;border:0;cursor:pointer}
 .stat.acct:disabled{opacity:.7;cursor:wait}
+.pf-card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+.pf-top{display:flex;align-items:center;gap:16px}
+.pf-av{flex:none;width:68px;height:68px;border-radius:50%;background:var(--sky);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;overflow:hidden}
+.pf-av img{width:100%;height:100%;object-fit:cover}
+.pf-info{min-width:0}
+.pf-name{font-size:20px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-mail{color:var(--ink-2);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.pf-chips span{font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}
+.pf-sync{color:var(--ink-2);font-size:14px;margin:14px 0 0}
 /* нэвтрэх хуудас */
 .auth{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
 .auth-in{position:relative;max-width:440px;margin:0 auto;padding:max(56px,env(safe-area-inset-top)) 24px 32px;min-height:100%;display:flex;flex-direction:column;justify-content:center}
@@ -1035,7 +1045,7 @@ function renderStrip(){
   if(state.mode==="kid")s.append(h("div",{class:"stat"},"⭐ "+state.stars));
   else s.append(acctBtn());
 }
-/* нэвтрэх товч: нэвтрээгүй бол Google цонх, нэвтэрсэн бол «Явц» таб */
+/* нэвтрэх товч: нэвтрээгүй бол нэвтрэх хуудас, нэвтэрсэн бол «Профайл» таб */
 function acctBtn(){
   var S=window.SalkhiSync,a=S&&S.account();
   if(!S||!window.SALKHI_FB)return "";
@@ -1137,7 +1147,7 @@ function tabList(){
   if(state.mode!=="senior")T.push(["grammar","Дүрэм"]);
   T.push(["listen","Сонсох"],["chat","Ярих"],["play","Сорил"]);
   if(state.mode!=="kid")T.push(["social","Найз"]);
-  T.push(["stats","Явц"]);
+  T.push(["stats","Профайл"]);
   return T;
 }
 function renderTabs(){
@@ -4766,8 +4776,11 @@ function viewStats(){
   var root=h("div"),p=WORDS;
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
   var done=Object.keys(state.lessons).length;
-  root.append(h("h2",null,"Миний явц"));
-  var lvl=Math.floor(state.xp/100)+1,gb=h("div",{class:"goalbox"}),rw=h("div",{class:"ringw"},ringEl(todayXP()/state.goal,110,12),h("span",{class:"c"},Math.min(100,Math.round(todayXP()/state.goal*100))+"%"));
+  var lvl=Math.floor(state.xp/100)+1;
+  root.append(h("h2",null,"Профайл"));
+  if(window.SalkhiSync)root.append(SalkhiSync.profileCard(h,render,toast,{lvl:lvl,xp:state.xp,streak:streak()},state.mode!=="kid"));
+  root.append(h("h3",{style:"margin:22px 0 10px"},"Миний явц"));
+  var gb=h("div",{class:"goalbox"}),rw=h("div",{class:"ringw"},ringEl(todayXP()/state.goal,110,12),h("span",{class:"c"},Math.min(100,Math.round(todayXP()/state.goal*100))+"%"));
   rw.firstChild.style.margin="0";
   gb.append(rw,h("div",null,h("div",{style:"font-weight:700"},"Өдрийн зорилго"),h("div",{class:"muted"},todayXP()+" / "+state.goal+" XP"),
     h("div",{class:"seg",style:"margin:8px 0 0"},[10,20,50,100].map(function(n){return h("button",{"aria-pressed":String(state.goal===n),onclick:function(){state.goal=n;sset("goal",n);renderStrip();render();}},String(n));}))));
@@ -4811,7 +4824,6 @@ function viewStats(){
   root.append(langProgress());
   root.append(fontPanel());
   root.append(notifPanel());
-  if(state.mode!=="kid"&&window.SalkhiSync)root.append(SalkhiSync.panel(h,render,toast));
   root.append(dataPanel());
   root.append(h("div",{style:"margin-top:26px"},
     h("button",{class:"btn ghost",onclick:function(){
