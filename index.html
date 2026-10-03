@@ -605,6 +605,7 @@ p+p{margin-top:10px}
 <script src="synonyms.js"></script>
 <script src="mnerr.js"></script>
 <script src="jobprep.js"></script>
+<script src="numbers.js"></script>
 <script src="hanzi.js"></script>
 <script src="ai-config.js"></script>
 <script src="firebase-config.js"></script>
@@ -2417,14 +2418,15 @@ function viewAlpha(){
   var a=ui.alpha,root=h("div"),secs=ALPHA[state.lang]||[];
   var cjk=["zh","ja","ko"].indexOf(state.lang)>=0&&!!window.HanziCompare;
   if(a.sec==="hz"&&!cjk)a.sec="abc";
-  var STL={phr:"Хэллэг",hz:"Ханз",qz:"Үсгийн тест",mp:"Авиа ялгах"};
+  var STL={phr:"Хэллэг",hz:"Ханз",qz:"Үсгийн тест",mp:"Авиа ялгах",num:"Тоо"};
   root.append(h("h2",null,(STL[a.sec]||"Үсэг")+" · "+LANGN[state.lang]));
   function sb(k,t){return h("button",{"aria-pressed":String(k==="abc"?!STL[a.sec]:a.sec===k),onclick:function(){stopVoice();a.sec=k;render();}},t);}
-  var seg=h("div",{class:"seg"},sb("abc","Үсэг"),sb("qz","Тест"),sb("mp","Ялгах"),sb("phr","Хэллэг"));
+  var seg=h("div",{class:"seg",style:"flex-wrap:wrap"},sb("abc","Үсэг"),sb("num","🔢 Тоо"),sb("qz","Тест"),sb("mp","Ялгах"),sb("phr","Хэллэг"));
   if(cjk)seg.append(sb("hz","Ханз"));
   root.append(seg);
   if(a.sec==="phr"){root.append(viewPhrases());return root;}
   if(a.sec==="qz"){root.append(viewAQuiz());return root;}
+  if(a.sec==="num"&&window.NumLearn){root.append(window.NumLearn.view({h:h,lang:function(){return state.lang;},render:render,speak:function(t){speak(t);},addXP:addXP}));return root;}
   if(a.sec==="mp"){root.append(viewMP());return root;}
   if(a.sec==="hz"){
     root.append(window.HanziCompare.view({h:h,rerender:render,speakAs:function(lang,glyph,read){
