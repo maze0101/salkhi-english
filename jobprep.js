@@ -1,9 +1,10 @@
-/* Салхи: гадаадад ажиллахад бэлтгэх — Солонгосын EPS-TOPIK, Японы 特定技能 (JFT-Basic).
+/* Салхи: гадаадад ажиллахад бэлтгэх — Солонгосын EPS-TOPIK, Японы 特定技能 (JFT-Basic), англи (IELTS General/OET),
+   хятад (HSK, худалдаа/тээвэр), орос (патентын шалгалт), герман (Goethe B1, Pflege).
    Ажлын байрны үгс сэдвээр + 20 асуулттай загвар шалгалт. Мөр: сэдэв|үг|галиг|монгол утга|эможи */
 (function(){
   var CATS={
     safe:"🦺 Аюулгүй ажиллагаа",tool:"🔧 Багаж хэрэгсэл",fact:"🏭 Үйлдвэр",build:"🏗️ Барилга",farm:"🌾 Хөдөө аж ахуй",
-    care:"🦽 Асаргаа (介護)",food:"🍽️ Хоол үйлчилгээ",talk:"💬 Ажлын яриа",money:"📄 Цалин, гэрээ, амьдрал",health:"🏥 Эрүүл мэнд"
+    care:"🦽 Асаргаа",food:"🍽️ Хоол, зочид буудал",trade:"🛒 Худалдаа",trans:"🚚 Тээвэр, логистик",law:"⚖️ Бичиг баримт, хууль",talk:"💬 Ажлын яриа",money:"📄 Цалин, гэрээ, амьдрал",health:"🏥 Эрүүл мэнд"
   };
   var DATA={
 ko:`safe|안전모|anjeonmo|Хамгаалалтын малгай|⛑️
@@ -126,13 +127,200 @@ health|病院|byouin|Эмнэлэг|🏥
 health|薬|kusuri|Эм|💊
 health|けがをしました|kega o shimashita|Би гэмтчихлээ|🤕
 health|気分が悪いです|kibun ga warui desu|Биеийн байдал муу байна|🤒
-health|救急車|kyuukyuusha|Түргэн тусламжийн машин|🚑`
+health|救急車|kyuukyuusha|Түргэн тусламжийн машин|🚑`,
+en:`safe|Danger||Аюултай|⚠️
+safe|No entry||Орохыг хориглоно|⛔
+safe|Emergency exit||Яаралтай гарц|🚪
+safe|Fire extinguisher||Гал унтраагуур|🧯
+safe|No smoking||Тамхи татахыг хориглоно|🚭
+safe|Hard hat||Хамгаалалтын малгай|⛑️
+safe|Safety boots||Хамгаалалтын гутал|🥾
+safe|Gloves||Бээлий|🧤
+safe|Caution: wet floor||Болгоомжил, шал нойтон|💧
+safe|First aid||Анхны тусламж|🩹
+safe|High voltage||Өндөр хүчдэл|⚡
+tool|hammer||Алх|🔨
+tool|screwdriver||Халив|🪛
+tool|saw||Хөрөө|🪚
+tool|ladder||Шат|🪜
+tool|wrench||Гайкны түлхүүр|🔧
+tool|tape measure||Метр хэмжүүр|📏
+food|Can I take your order?||Захиалгаа өгөх үү?|📝
+food|Here is your bill.||Таны тооцоо энэ байна.|🧾
+food|Wash your hands||Гараа угаа|🧼
+food|kitchen||Гал тогоо|🍳
+food|housekeeping||Өрөө цэвэрлэгээ|🛏️
+food|check-in||Зочид буудалд бүртгүүлэх|🏨
+care|patient||Өвчтөн|🛌
+care|wheelchair||Тэргэнцэр|🦽
+care|blood pressure||Цусны даралт|🩺
+care|medicine||Эм|💊
+care|to bathe someone||Усанд оруулах|🛁
+talk|I understand.||Ойлголоо.|👌
+talk|Could you repeat that, please?||Дахин хэлж өгнө үү?|🔁
+talk|I need help.||Надад тусламж хэрэгтэй.|🆘
+talk|Sorry, I'm late.||Уучлаарай, хоцорчихлоо.|🏃
+talk|break||Завсарлага|☕
+talk|shift||Ээлж|🕘
+talk|overtime||Илүү цагийн ажил|⏰
+talk|manager||Менежер, дарга|👔
+talk|coworker||Хамт ажиллагч|🤝
+talk|I finished the task.||Даалгавраа дуусгалаа.|✅
+money|salary||Цалин|💰
+money|contract||Гэрээ|📄
+money|work permit||Ажлын зөвшөөрөл|🪪
+money|day off||Амралтын өдөр|🏖️
+money|bank account||Банкны данс|🏦
+money|insurance||Даатгал|🛡️
+money|payslip||Цалингийн хуудас|🧾
+health|hospital||Эмнэлэг|🏥
+health|I'm hurt.||Би гэмтчихлээ.|🤕
+health|I feel sick.||Миний бие муу байна.|🤒
+health|ambulance||Түргэн тусламжийн машин|🚑`,
+zh:`safe|危险|wēixiǎn|Аюултай|⚠️
+safe|禁止入内|jìnzhǐ rùnèi|Орохыг хориглоно|⛔
+safe|安全出口|ānquán chūkǒu|Яаралтай гарц|🚪
+safe|灭火器|mièhuǒqì|Гал унтраагуур|🧯
+safe|禁止吸烟|jìnzhǐ xīyān|Тамхи татахыг хориглоно|🚭
+safe|安全帽|ānquánmào|Хамгаалалтын малгай|⛑️
+safe|手套|shǒutào|Бээлий|🧤
+safe|小心地滑|xiǎoxīn dì huá|Болгоомжил, шал хальтиргаатай|💧
+trade|价格|jiàgé|Үнэ|🏷️
+trade|便宜|piányi|Хямд|💸
+trade|贵|guì|Үнэтэй|💎
+trade|打折|dǎzhé|Хөнгөлөлт|🔖
+trade|样品|yàngpǐn|Дээж, загвар|🧪
+trade|订货|dìnghuò|Бараа захиалах|📝
+trade|质量|zhìliàng|Чанар|✅
+trade|批发|pīfā|Бөөний худалдаа|📦
+trade|发票|fāpiào|Нэхэмжлэх, баримт|🧾
+trade|合同|hétong|Гэрээ|📄
+trade|付款|fùkuǎn|Төлбөр төлөх|💳
+trans|仓库|cāngkù|Агуулах|🏬
+trans|货物|huòwù|Ачаа, бараа|📦
+trans|卡车|kǎchē|Ачааны машин|🚚
+trans|司机|sījī|Жолооч|🚗
+trans|海关|hǎiguān|Гааль|🛃
+trans|发货|fāhuò|Бараа илгээх|📤
+trans|到货|dàohuò|Бараа ирэх|📥
+trans|集装箱|jízhuāngxiāng|Чингэлэг|🚢
+trans|口岸|kǒu'àn|Хилийн боомт|🛂
+talk|明白了|míngbai le|Ойлголоо|👌
+talk|请再说一遍|qǐng zài shuō yí biàn|Дахин хэлж өгнө үү|🔁
+talk|请帮帮我|qǐng bāngbang wǒ|Туслаач|🆘
+talk|老板|lǎobǎn|Эзэн, дарга|👔
+talk|同事|tóngshì|Хамт ажиллагч|🤝
+talk|加班|jiābān|Илүү цагаар ажиллах|⏰
+talk|休息|xiūxi|Амрах, завсарлага|☕
+talk|上班|shàngbān|Ажилдаа явах|🌅
+talk|下班|xiàbān|Ажлаасаа тарах|🌇
+talk|辛苦了|xīnkǔ le|Ажилласанд баярлалаа|🙏
+money|工资|gōngzī|Цалин|💰
+money|签证|qiānzhèng|Виз|🪪
+money|工作许可|gōngzuò xǔkě|Ажлын зөвшөөрөл|📋
+money|银行卡|yínhángkǎ|Банкны карт|💳
+money|宿舍|sùshè|Дотуур байр|🏠
+money|护照|hùzhào|Гадаад паспорт|🛂
+health|医院|yīyuàn|Эмнэлэг|🏥
+health|我受伤了|wǒ shòushāng le|Би гэмтчихлээ|🤕
+health|我不舒服|wǒ bù shūfu|Миний бие тавгүй байна|🤒
+health|救护车|jiùhùchē|Түргэн тусламжийн машин|🚑`,
+ru:`safe|Опасно||Аюултай|⚠️
+safe|Вход воспрещён||Орохыг хориглоно|⛔
+safe|Запасный выход||Нөөц гарц|🚪
+safe|Огнетушитель||Гал унтраагуур|🧯
+safe|Не курить||Тамхи татахыг хориглоно|🚭
+safe|Каска||Хамгаалалтын малгай|⛑️
+safe|Перчатки||Бээлий|🧤
+safe|Осторожно, высокое напряжение||Болгоомжил, өндөр хүчдэл|⚡
+safe|Аптечка||Анхны тусламжийн хайрцаг|🩹
+build|стройка||Барилгын талбай|🏗️
+build|кирпич||Тоосго|🧱
+build|цемент||Цемент|🪣
+build|доска||Банз|🪵
+build|молоток||Алх|🔨
+build|лестница||Шат|🪜
+law|патент||Патент (ажлын зөвшөөрөл)|📋
+law|миграционная карта||Цагаачлалын карт|🪪
+law|регистрация||Оршин суугаа газрын бүртгэл|🏠
+law|паспорт||Паспорт|🛂
+law|трудовой договор||Хөдөлмөрийн гэрээ|📄
+law|медицинский полис||Эрүүл мэндийн даатгал|🛡️
+law|штраф||Торгууль|💸
+law|налог||Татвар|🧾
+talk|Понятно.||Ойлголоо.|👌
+talk|Повторите, пожалуйста.||Дахин хэлж өгнө үү.|🔁
+talk|Помогите!||Туслаарай!|🆘
+talk|Извините, я опоздал.||Уучлаарай, би хоцорчихлоо.|🏃
+talk|перерыв||Завсарлага|☕
+talk|смена||Ээлж|🕘
+talk|начальник||Дарга|👔
+talk|коллега||Хамт ажиллагч|🤝
+talk|выходной||Амралтын өдөр|🏖️
+money|зарплата||Цалин|💰
+money|общежитие||Дотуур байр|🏠
+money|банковская карта||Банкны карт|💳
+health|больница||Эмнэлэг|🏥
+health|Я поранился.||Би гэмтчихлээ.|🤕
+health|Мне плохо.||Миний бие муу байна.|🤒
+health|скорая помощь||Түргэн тусламж|🚑`,
+de:`safe|Gefahr||Аюул|⚠️
+safe|Zutritt verboten||Орохыг хориглоно|⛔
+safe|Notausgang||Яаралтай гарц|🚪
+safe|Feuerlöscher||Гал унтраагуур|🧯
+safe|Rauchen verboten||Тамхи татахыг хориглоно|🚭
+safe|Schutzhelm||Хамгаалалтын малгай|⛑️
+safe|Handschuhe||Бээлий|🧤
+safe|Erste Hilfe||Анхны тусламж|🩹
+care|der Patient||Өвчтөн|🛌
+care|der Rollstuhl||Тэргэнцэр|🦽
+care|der Blutdruck||Цусны даралт|🩺
+care|das Medikament||Эм|💊
+care|waschen||Угаах (хүнийг)|🛁
+care|die Pflegekraft||Асрагч, сувилагч|🧑‍⚕️
+care|der Notfall||Яаралтай тохиолдол|🚨
+care|das Fieber||Халуурал|🌡️
+food|Was darf es sein?||Юу авах вэ?|📝
+food|die Rechnung||Тооцоо|🧾
+food|Hände waschen||Гараа угаах|🧼
+food|die Küche||Гал тогоо|🍳
+food|der Kühlschrank||Хөргөгч|🧊
+talk|Verstanden.||Ойлголоо.|👌
+talk|Können Sie das bitte wiederholen?||Дахин хэлж өгнө үү?|🔁
+talk|Ich brauche Hilfe.||Надад тусламж хэрэгтэй.|🆘
+talk|Entschuldigung, ich bin zu spät.||Уучлаарай, хоцорчихлоо.|🏃
+talk|die Pause||Завсарлага|☕
+talk|die Schicht||Ээлж|🕘
+talk|die Überstunden||Илүү цагийн ажил|⏰
+talk|der Chef||Дарга|👔
+talk|der Kollege||Хамт ажиллагч|🤝
+talk|der Feierabend||Ажлын өдрийн төгсгөл|🌇
+money|das Gehalt||Цалин|💰
+money|der Arbeitsvertrag||Хөдөлмөрийн гэрээ|📄
+money|die Aufenthaltserlaubnis||Оршин суух зөвшөөрөл|🪪
+money|die Krankenversicherung||Эрүүл мэндийн даатгал|🛡️
+money|das Konto||Банкны данс|🏦
+money|der Urlaub||Амралт|🏖️
+money|die Ausbildung||Мэргэжлийн сургалт|🎓
+health|das Krankenhaus||Эмнэлэг|🏥
+health|Ich habe mich verletzt.||Би гэмтчихлээ.|🤕
+health|Mir ist schlecht.||Миний бие муу байна.|🤒
+health|der Krankenwagen||Түргэн тусламжийн машин|🚑`
+
   };
   var INFO={
     ko:{n:"EPS-TOPIK (Солонгос)",d:"Солонгост хөдөлмөрийн гэрээгээр (E-9 виз) ажиллахад өгдөг солонгос хэлний шалгалт.",
       parts:["Унших, сонсох гэсэн хоёр хэсэгтэй, 50 орчим асуулт","Ажлын байрны үг, аюулгүй ажиллагааны тэмдэг, өдөр тутмын яриа их гардаг","Зурагтай асуулт олон: тэмдэг, багаж, үйлдлийг таних"]},
     ja:{n:"特定技能 · JFT-Basic (Япон)",d:"Японд «Тусгай ур чадвар» визээр ажиллахад япон хэлний шалгалт (JFT-Basic эсвэл JLPT N4) болон салбарын ур чадварын шалгалт өгдөг.",
-      parts:["JFT-Basic: үсэг ба үгийн сан, яриа ба илэрхийлэл, сонсох, унших гэсэн 4 хэсэг","Асаргаа (介護), хоол үйлчилгээ, үйлдвэр зэрэг салбарын үгс хэрэгтэй","Хүндэтгэлийн хэллэг (かしこまりました, 申し訳ございません) заавал сур"]}
+      parts:["JFT-Basic: үсэг ба үгийн сан, яриа ба илэрхийлэл, сонсох, унших гэсэн 4 хэсэг","Асаргаа (介護), хоол үйлчилгээ, үйлдвэр зэрэг салбарын үгс хэрэгтэй","Хүндэтгэлийн хэллэг (かしこまりました, 申し訳ございません) заавал сур"]},
+    en:{n:"Ажлын англи хэл · IELTS General, OET",d:"Австрали, Их Британи, Канад зэрэг оронд ажиллах, ажлын виз авахад ихэвчлэн IELTS General шаардагддаг. Эмч, сувилагчид OET өгдөг.",
+      parts:["IELTS General: сонсох, унших, бичих, ярих гэсэн 4 хэсэг","Аюулгүй ажиллагаа, үйлчилгээ, асаргааны үгс хэрэгтэй","Ажлын яриа: ээлж, илүү цаг, тусламж хүсэх, уучлалт гуйх"]},
+    zh:{n:"HSK · Ажлын хятад хэл",d:"Хятадад ажиллах, худалдаа хийхэд HSK гэрчилгээ (ихэвчлэн HSK 3–4) хэрэгтэй болдог. Хилийн боомт, худалдаа, тээврийн салбарт хятад хэл их хэрэглэгддэг.",
+      parts:["HSK: сонсох, унших, (HSK 3-аас эхлэн) бичих хэсэгтэй","Худалдааны үг: үнэ, хөнгөлөлт, дээж, нэхэмжлэх, гэрээ","Тээвэр: агуулах, гааль, чингэлэг, бараа илгээх, хүлээн авах"]},
+    ru:{n:"Патентын шалгалт · Орос",d:"Орост ажлын патент авахад «Комплексный экзамен» өгдөг: орос хэл, Оросын түүх, хууль тогтоомжийн үндэс.",
+      parts:["Орос хэл: унших, бичих, сонсох, ярих","Бичиг баримт: патент, цагаачлалын карт, бүртгэл, татвар","Барилга, аюулгүй ажиллагааны үгс, ажлын яриа"]},
+    de:{n:"Goethe B1 · Pflege, Ausbildung (Герман)",d:"Германд асаргааны ажил (Pflege) эсвэл мэргэжлийн сургалтаар (Ausbildung) ажиллахад ихэвчлэн Goethe эсвэл telc-ийн B1–B2 гэрчилгээ шаардагддаг.",
+      parts:["Goethe B1: унших, сонсох, бичих, ярих гэсэн 4 модуль","Асаргааны үгс: өвчтөн, цусны даралт, эм, ээлж","Бичиг баримт: хөдөлмөрийн гэрээ, оршин суух зөвшөөрөл, даатгал"]}
   };
   var J={sec:"home",cat:null,flip:{},T:null},env=null;
   function h(){return env.h.apply(null,arguments);}
@@ -168,7 +356,7 @@ health|救急車|kyuukyuusha|Түргэн тусламжийн машин|🚑`
         h("span",{style:"font-size:30px;flex:none","aria-hidden":"true"},x.e),
         h("button",{type:"button",style:"flex:1;text-align:left;background:none;border:0;padding:4px 0;color:inherit;font:inherit;cursor:pointer","aria-expanded":String(open),onclick:function(){J.flip[x.w]=!open;env.render();}},
           h("div",{style:"font-weight:800;font-size:18px"},x.w),
-          h("div",{class:"muted small"},x.r),
+          x.r?h("div",{class:"muted small"},x.r):null,
           open?h("div",{style:"margin-top:2px"},"🇲🇳 "+x.mn):h("div",{class:"muted small"},"Утгыг харах ›")),
         env.speakBtn(x.w)));
     });
@@ -201,7 +389,7 @@ health|救急車|kyuukyuusha|Түргэн тусламжийн машин|🚑`
       root.append(h("div",{class:"q"},"Энэ үг ямар утгатай вэ?"));
       root.append(h("div",{style:"display:flex;gap:10px;align-items:center;margin:6px 0"},h("div",{style:"font-size:clamp(26px,8vw,38px);font-weight:800"},w.w),env.speakBtn(w.w)));
     }else if(q.k==="rev"){
-      root.append(h("div",{class:"q"},"Энэ үгийг "+(env.lang()==="ko"?"солонгосоор":"японоор")+" олоорой"));
+      root.append(h("div",{class:"q"},"Энэ үгийг "+({ko:"солонгосоор",ja:"японоор",en:"англиар",zh:"хятадаар",ru:"оросоор",de:"германаар"}[env.lang()]||"")+" олоорой"));
       root.append(h("div",{style:"font-size:24px;font-weight:800;margin:6px 0"},w.mn));
     }else if(q.k==="ear"){
       root.append(h("div",{class:"q"},"Сонсоод утгыг нь сонго"));
@@ -215,7 +403,7 @@ health|救急車|kyuukyuusha|Түргэн тусламжийн машин|🚑`
       root.append(h("button",{class:cls,disabled:done,onclick:function(){q.picked=o;if(o===w){T.score++;env.addXP(2);}env.speak(w.w);env.render();}},label(o)));
     });
     if(done){
-      root.append(h("div",{class:"fb "+(q.picked===w?"ok":"bad")},(q.picked===w?"Зөв! ":"Буруу. ")+w.e+" "+w.w+" ("+w.r+") — "+w.mn));
+      root.append(h("div",{class:"fb "+(q.picked===w?"ok":"bad")},(q.picked===w?"Зөв! ":"Буруу. ")+w.e+" "+w.w+(w.r?" ("+w.r+")":"")+" — "+w.mn));
       root.append(h("div",{class:"row"},h("button",{class:"btn primary",onclick:function(){T.i++;env.render();window.scrollTo(0,0);autoSay();}},T.i+1<T.qs.length?"Дараагийх ›":"Дүнгээ харах 🏁")));
     }
   }
