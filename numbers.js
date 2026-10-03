@@ -58,7 +58,7 @@
     return s;
   }
   function jaK(n){
-    if(n===0)return "〇";if(n===10000)return "一万";
+    if(n===0)return "零";if(n===10000)return "一万";
     var s="",t=Math.floor(n/1000),h=Math.floor(n%1000/100),d=Math.floor(n%100/10),o=n%10;
     if(t)s+=(t===1?"":JK[t])+"千";if(h)s+=(h===1?"":JK[h])+"百";if(d)s+=(d===1?"":JK[d])+"十";s+=JK[o];
     return s;
