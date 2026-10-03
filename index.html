@@ -2243,6 +2243,11 @@ zh:[["Пиньиний эхлэл (声母)",abuild("b|波|bō p|坡|pō m|摸|m�
 ru:[["Кирилл үсэг (33)",abuild("А|Арбуз|тарвас Б|Банан|гадил В|Вода|ус Г|Гора|уул Д|Дом|байшин Е|Ель|гацуур Ё|Ёж|зараа Ж|Жук|цох З|Заяц|туулай И|Игра|тоглоом Й|Йогурт|тараг К|Кот|муур Л|Лиса|үнэг М|Мама|ээж Н|Нос|хамар О|Окно|цонх П|Папа|аав Р|Рыба|загас С|Солнце|нар Т|Трава|өвс У|Утка|нугас Ф|Флаг|туг Х|Хлеб|талх Ц|Цветок|цэцэг Ч|Чай|цай Ш|Шапка|малгай Щ|Щётка|сойз Ъ||хатуу_тэмдэг Ы|Сыр|бяслаг Ь||зөөлөн_тэмдэг Э|Этаж|давхар Ю|Юбка|банзал Я|Яблоко|алим",wordLetter)]],
 de:[["Герман цагаан толгой",abuild("A|Apfel|алим B|Buch|ном C|Computer|компьютер D|Dach|дээвэр E|Esel|илжиг F|Fisch|загас G|Garten|цэцэрлэг H|Haus|байшин I|Igel|зараа J|Jacke|хүрэм K|Katze|муур L|Lampe|чийдэн M|Mond|сар N|Nase|хамар O|Ohr|чих P|Pferd|морь Q|Quelle|булаг R|Regen|бороо S|Sonne|нар T|Tisch|ширээ U|Uhr|цаг V|Vogel|шувуу W|Wasser|ус X|Xylophon|ксилофон Y|Yoga|йог Z|Zug|галт_тэрэг Ä|Äpfel|алимнууд Ö|Öl|тос Ü|Übung|дасгал ß|Straße|гудамж",wordLetter)]]
 };
+function kana(s){return abuild(s,function(a){return [a[0],a[0],a[1],""];});}
+ALPHA.ja.splice(1,0,["Дакутэн, хандакутэн",kana("が|ga ぎ|gi ぐ|gu げ|ge ご|go ざ|za じ|ji ず|zu ぜ|ze ぞ|zo だ|da で|de ど|do ば|ba び|bi ぶ|bu べ|be ぼ|bo ぱ|pa ぴ|pi ぷ|pu ぺ|pe ぽ|po")],
+  ["Холбоо авиа (拗音)",kana("きゃ|kya きゅ|kyu きょ|kyo しゃ|sha しゅ|shu しょ|sho ちゃ|cha ちゅ|chu ちょ|cho にゃ|nya ひゃ|hya みゃ|mya りゃ|rya ぎゃ|gya じゃ|ja じゅ|ju じょ|jo びゃ|bya ぴゃ|pya")]);
+ALPHA.ko.push(["Давхар гийгүүлэгч",abuild("ㄲ|까|kk ㄸ|따|tt ㅃ|빠|pp ㅆ|싸|ss ㅉ|짜|jj",plain)],
+  ["Нийлмэл эгшиг",abuild("ㅐ|애|ae ㅒ|얘|yae ㅔ|에|e ㅖ|예|ye ㅘ|와|wa ㅙ|왜|wae ㅚ|외|oe ㅝ|워|wo ㅞ|웨|we ㅟ|위|wi ㅢ|의|ui",plain)]);
 ALPHA.zh.push(["Дөрвөн аяс (声调)",abuild("mā|妈|1-р_аяс má|麻|2-р_аяс mǎ|马|3-р_аяс mà|骂|4-р_аяс shū|书|1-р_аяс shú|熟|2-р_аяс shǔ|鼠|3-р_аяс shù|树|4-р_аяс",function(a){return [a[0],a[1],a[2].replace("_"," "),""];})]);
 var PHR="Сайн байна уу|Hello|こんにちは|안녕하세요|你好|Здравствуйте|Guten Tag\nБаяртай|Goodbye|さようなら|안녕히 가세요|再见|До свидания|Auf Wiedersehen\nБаярлалаа|Thank you|ありがとうございます|감사합니다|谢谢|Спасибо|Danke\nУучлаарай|Excuse me|すみません|죄송합니다|对不起|Извините|Entschuldigung\nТийм / Үгүй|Yes, no|はい、いいえ|네, 아니요|是，不是|Да, нет|Ja, nein\nНамайг ... гэдэг|My name is|わたしの なまえは です|제 이름은 입니다|我叫|Меня зовут|Ich heiße\nТанилцсандаа баяртай байна|Nice to meet you|はじめまして|만나서 반갑습니다|很高兴认识你|Очень приятно|Freut mich\nБи ойлгохгүй байна|I don't understand|わかりません|이해 못 해요|我不明白|Я не понимаю|Ich verstehe nicht\nДахин хэлээч|Please say it again|もういちど おねがいします|다시 말씀해 주세요|请再说一遍|Повторите, пожалуйста|Bitte noch einmal\nАнглиар ярьдаг уу?|Do you speak English?|えいごを はなせますか|영어 할 수 있어요?|你会说英语吗？|Вы говорите по-английски?|Sprechen Sie Englisch?\nЭнэ хэд вэ?|How much is this?|これは いくらですか|이거 얼마예요?|这个多少钱？|Сколько это стоит?|Was kostet das?\nЖорлон хаана вэ?|Where is the toilet?|トイレは どこですか|화장실이 어디예요?|洗手间在哪儿？|Где туалет?|Wo ist die Toilette?\nУс өгөөч|Water, please|みずを ください|물 주세요|请给我水|Воды, пожалуйста|Wasser, bitte\nКофе өгөөч|A coffee, please|コーヒーを ください|커피 주세요|我要一杯咖啡|Кофе, пожалуйста|Einen Kaffee, bitte\nТооцоо хийе|The bill, please|おかんじょうを おねがいします|계산해 주세요|请买单|Счёт, пожалуйста|Die Rechnung, bitte\nАмттай байна|It is delicious|おいしいです|맛있어요|很好吃|Очень вкусно|Das schmeckt gut\nБи цагаан хоолтон|I am vegetarian|ベジタリアンです|채식주의자예요|我吃素|Я вегетарианец|Ich bin Vegetarier\nӨрөө захиалсан|I have a reservation|よやくしています|예약했어요|我预订了房间|У меня забронировано|Ich habe reserviert\nБуудал хаана вэ?|Where is the station?|えきは どこですか|역이 어디예요?|火车站在哪儿？|Где вокзал?|Wo ist der Bahnhof?\nБи төөрчихлөө|I am lost|みちに まよいました|길을 잃었어요|我迷路了|Я заблудился|Ich habe mich verirrt\nХэдэн цаг вэ?|What time is it?|いま なんじですか|지금 몇 시예요?|现在几点？|Который час?|Wie spät ist es?\nНадад туслаач|Please help me|たすけてください|도와 주세요|请帮帮我|Помогите, пожалуйста|Bitte helfen Sie mir\nЭмч дуудаарай|Please call a doctor|いしゃを よんでください|의사를 불러 주세요|请叫医生|Вызовите врача|Rufen Sie bitte einen Arzt\nДараа уулзъя|See you later|また あとで|나중에 봐요|回头见|Увидимся|Bis später".split("\n").map(function(r){return r.split("|");});
 var PHR_IDX={en:1,ja:2,ko:3,zh:4,ru:5,de:6};
@@ -2300,13 +2305,15 @@ function viewAlpha(){
   var a=ui.alpha,root=h("div"),secs=ALPHA[state.lang]||[];
   var cjk=["zh","ja","ko"].indexOf(state.lang)>=0&&!!window.HanziCompare;
   if(a.sec==="hz"&&!cjk)a.sec="abc";
-  root.append(h("h2",null,(a.sec==="phr"?"Хэллэг":a.sec==="hz"?"Ханз":"Үсэг")+" · "+LANGN[state.lang]));
-  var seg=h("div",{class:"seg"},
-    h("button",{"aria-pressed":String(a.sec!=="phr"&&a.sec!=="hz"),onclick:function(){a.sec="abc";render();}},"Үсэг"),
-    h("button",{"aria-pressed":String(a.sec==="phr"),onclick:function(){a.sec="phr";render();}},"Хэллэг"));
-  if(cjk)seg.append(h("button",{"aria-pressed":String(a.sec==="hz"),onclick:function(){a.sec="hz";render();}},"Ханз"));
+  var STL={phr:"Хэллэг",hz:"Ханз",qz:"Үсгийн тест",mp:"Авиа ялгах"};
+  root.append(h("h2",null,(STL[a.sec]||"Үсэг")+" · "+LANGN[state.lang]));
+  function sb(k,t){return h("button",{"aria-pressed":String(k==="abc"?!STL[a.sec]:a.sec===k),onclick:function(){stopVoice();a.sec=k;render();}},t);}
+  var seg=h("div",{class:"seg"},sb("abc","Үсэг"),sb("qz","Тест"),sb("mp","Ялгах"),sb("phr","Хэллэг"));
+  if(cjk)seg.append(sb("hz","Ханз"));
   root.append(seg);
   if(a.sec==="phr"){root.append(viewPhrases());return root;}
+  if(a.sec==="qz"){root.append(viewAQuiz());return root;}
+  if(a.sec==="mp"){root.append(viewMP());return root;}
   if(a.sec==="hz"){
     root.append(window.HanziCompare.view({h:h,rerender:render,speakAs:function(lang,glyph,read){
       var t=lang==="ko"?String(read).split(" ")[0]:glyph,old=state.lang;
@@ -2352,6 +2359,106 @@ function viewAlpha(){
       h("p",{class:"muted small"},"Хятад үг бичээд «Үзэх» дар. ▶ дарвал зураасын дарааллыг харуулна, ✍️ дарвал өөрөө бичиж шалгана."),
       h("div",{class:"row",style:"margin-top:0"},inp,h("button",{class:"btn primary",style:"flex:none",onclick:function(){showHanzi(hzBox,inp.value);}},"Үзэх")),hzBox);
   }
+  return root;
+}
+/* Үсгийн тест: үсгийг хараад уншлагыг нь, эсвэл сонсоод үсгийг нь сонгоно. Алдсан үсгийг amiss:<хэл>-д хадгалж давтуулна. */
+function aqLat(){return ["en","ru","de"].indexOf(state.lang)>=0;}
+function aqAns(it){return aqLat()?it[3]:it[2];}
+function aqItems(){var out=[];(ALPHA[state.lang]||[]).forEach(function(sec,si){if(/声调/.test(sec[0]))return;sec[1].forEach(function(it){out.push({it:it,s:si});});});return out;}
+function aqKey(q,x){return q.mode==="hear"?x.it[0]:aqAns(x.it);}
+function newAQ(){
+  var q=ui.alpha.qz,all=aqItems(),miss=sget("amiss:"+state.lang,[]);
+  var pool=all.filter(function(x){return aqKey(q,x);});
+  if(q.rev){var mp=pool.filter(function(x){return miss.indexOf(x.it[0])>=0;});if(mp.length)pool=mp;else q.rev=false;}
+  if(!pool.length){q.cur=null;return;}
+  var cur=pool[Math.floor(Math.random()*pool.length)];
+  if(q.cur&&pool.length>1&&cur.it===q.cur.it)cur=pool[(pool.indexOf(cur)+1)%pool.length];
+  /* ижил хэсгээс (катакана ↔ катакана) хариулт нь өөр, дуудлага нь давхцахгүй сонголтууд */
+  var seen={},ds=[];seen[aqKey(q,cur)]=1;
+  shuffle(all.filter(function(x){return x.s===cur.s&&x.it!==cur.it&&aqKey(q,x)&&x.it[1]!==cur.it[1]&&x.it[2]!==cur.it[2];})).forEach(function(x){
+    var k=aqKey(q,x);if(ds.length<3&&!seen[k]){seen[k]=1;ds.push(x);}
+  });
+  q.cur=cur;q.opts=shuffle([cur].concat(ds));q.picked=null;
+  if(q.mode==="hear")setTimeout(function(){speak(cur.it[1]);},250);
+}
+function viewAQuiz(){
+  var q=ui.alpha.qz||(ui.alpha.qz={mode:"see",cur:null,opts:[],picked:null,rev:false,ok:0,n:0,lang:null});
+  var root=h("div");
+  if(!q.cur||q.lang!==state.lang){q.lang=state.lang;q.ok=0;q.n=0;q.rev=false;newAQ();}
+  root.append(h("div",{class:"seg",style:"margin-top:8px"},
+    h("button",{"aria-pressed":String(q.mode==="see"),onclick:function(){q.mode="see";newAQ();render();}},"👁 Хараад"),
+    h("button",{"aria-pressed":String(q.mode==="hear"),onclick:function(){q.mode="hear";newAQ();render();}},"👂 Сонсоод")));
+  if(!q.cur){root.append(h("p",{class:"muted"},"Энэ хэлэнд тест алга."));return root;}
+  var it=q.cur.it;
+  var hint=q.mode==="see"?(aqLat()?"Энэ үсгээр эхэлдэг үгийг сонго.":"Энэ үсгийг яаж уншдаг вэ?"):"Сонсоод аль үсэг болохыг сонго.";
+  root.append(h("p",{class:"muted"},hint+(q.rev?" (алдсан үсгээ давтаж байна)":"")));
+  if(q.mode==="see")root.append(h("div",{class:"note abig"},h("div",{class:"g"},it[0])));
+  else root.append(h("button",{class:"btn primary",style:"width:100%;margin:8px 0 4px;font-size:20px",onclick:function(){speak(it[1]);}},"🔊 Дахин сонсох"));
+  q.opts.forEach(function(o){
+    var cls="opt";
+    if(q.picked){if(o===q.cur)cls+=" ok";else if(o===q.picked)cls+=" bad";}
+    root.append(h("button",{class:cls,style:q.mode==="hear"?"font-size:26px;text-align:center":null,disabled:!!q.picked,onclick:function(){
+      var m=sget("amiss:"+state.lang,[]),g=it[0],ok=o===q.cur,i=m.indexOf(g);
+      q.picked=o;q.n++;
+      if(ok){q.ok++;addXP(2);if(q.rev&&i>=0)m.splice(i,1);}else if(i<0)m.push(g);
+      sset("amiss:"+state.lang,m);
+      if(q.mode==="see")speak(it[1]);
+      render();
+    }},aqKey(q,o)));
+  });
+  if(q.picked){
+    var ok=q.picked===q.cur;
+    root.append(h("div",{class:"fb "+(ok?"ok":"bad")},(ok?"Зөв! +2 XP · ":wrongPre())+it[0]+" — "+(aqLat()&&it[3]?it[3]+" ("+it[2]+")":it[2])));
+    root.append(h("div",{class:"row"},
+      h("button",{class:"btn",onclick:function(){speak(it[1]);}},"🔊 Сонсох"),
+      h("button",{class:"btn primary",onclick:function(){newAQ();render();}},"Дараагийн")));
+  }
+  var miss=sget("amiss:"+state.lang,[]);
+  root.append(h("p",{class:"muted small",style:"margin-top:12px"},"Оноо: "+q.ok+" / "+q.n+" · Алдсан үсэг: "+miss.length));
+  if(q.rev)root.append(h("button",{class:"btn",style:"width:100%",onclick:function(){q.rev=false;newAQ();render();}},"Бүх үсэг рүү буцах"));
+  else if(miss.length)root.append(h("button",{class:"btn",style:"width:100%",onclick:function(){q.rev=true;newAQ();render();}},"🔁 Алдсан үсгээ давтах ("+miss.length+")"));
+  return root;
+}
+/* Төстэй авиа ялгах: [унших, харуулах, утга] */
+function mpb(s){return s.split(" / ").map(function(g){return g.split(" ; ").map(function(x){var p=x.split("|");return [p[0],p[1]||p[0],p[2]||""];});});}
+var MP={
+en:mpb("ship||хөлөг ; sheep||хонь / bit||жаахан ; beat||цохих / live||амьдрах ; leave||явах / light||гэрэл ; right||зөв / rice||будаа ; lice||бөөс / berry||жимс ; very||маш / think||бодох ; sink||живэх / bad||муу ; bed||ор / full||дүүрэн ; fool||тэнэг / cap||малгай ; cup||аяга / walk||алхах ; work||ажиллах / fan||сэнс ; van||фургон"),
+ja:mpb("ビル||барилга ; ビール||шар айраг / おばさん||авга эгч ; おばあさん||эмээ / おじさん||авга ах ; おじいさん||өвөө / きて||ир ; きって||марк / さか||налуу ; さっか||зохиолч / いえ||гэр ; いいえ||үгүй / びょういん||эмнэлэг ; びよういん||үсчин / しゅじん||нөхөр ; しゅうじん||хоригдол / ここ||энд ; こうこう||ахлах сургууль"),
+ko:mpb("달||сар ; 탈||баг ; 딸||охин / 불||гал ; 풀||өвс ; 뿔||эвэр / 자다||унтах ; 차다||өшиглөх ; 짜다||давслаг / 굴||хясаа ; 꿀||зөгийн бал / 방||өрөө ; 빵||талх / 살||мах ; 쌀||будаа / 거리||гудамж ; 고리||гогцоо / 공||бөмбөг ; 콩||буурцаг"),
+zh:mpb("妈|mā 妈|ээж ; 麻|má 麻|олсны ургамал ; 马|mǎ 马|морь ; 骂|mà 骂|загнах / 书|shū 书|ном ; 鼠|shǔ 鼠|хулгана / 汤|tāng 汤|шөл ; 糖|táng 糖|чихэр / 买|mǎi 买|авах ; 卖|mài 卖|зарах / 四|sì 四|дөрөв ; 十|shí 十|арав / 鸡|jī 鸡|тахиа ; 七|qī 七|долоо / 路|lù 路|зам ; 绿|lǜ 绿|ногоон / 睡觉|shuìjiào 睡觉|унтах ; 水饺|shuǐjiǎo 水饺|банш"),
+ru:mpb("мат||шатрын мат ; мать||ээж / был||байсан ; бил||цохисон / угол||булан ; уголь||нүүрс / дом||гэр ; том||боть / жить||амьдрах ; шить||оёх / брат||ах ; брать||авах / мыл||угаасан ; мил||хөөрхөн / кон||тойрог ; конь||морь"),
+de:mpb("Staat||улс ; Stadt||хот / Beet||цэцгийн мөр ; Bett||ор / schon||аль хэдийн ; schön||гоё / Kuchen||бялуу ; Küchen||гал тогоонууд / Hüte||малгайнууд ; Hütte||овоохой / Mutter||ээж ; Mütter||ээжүүд / lesen||унших ; lösen||шийдэх / fühlen||мэдрэх ; füllen||дүүргэх")
+};
+function newMP(){
+  var m=ui.alpha.mp,gs=MP[state.lang]||[];
+  if(!gs.length){m.cur=null;return;}
+  var gi=Math.floor(Math.random()*gs.length);if(gs.length>1&&gi===m.gi)gi=(gi+1)%gs.length;
+  var g=gs[gi];m.gi=gi;m.g=g;m.cur=g[Math.floor(Math.random()*g.length)];m.picked=null;
+  setTimeout(function(){speak(m.cur[0]);},250);
+}
+function viewMP(){
+  var m=ui.alpha.mp||(ui.alpha.mp={cur:null,g:null,gi:-1,picked:null,ok:0,n:0,lang:null}),root=h("div");
+  if(!m.cur||m.lang!==state.lang){m.lang=state.lang;m.ok=0;m.n=0;newMP();}
+  if(!m.cur){root.append(h("p",{class:"muted"},"Энэ хэлэнд дасгал алга."));return root;}
+  root.append(h("p",{class:"muted"},"Төстэй сонсогддог үгс. Сонсоод алийг нь хэлснийг сонго."));
+  root.append(h("button",{class:"btn primary",style:"width:100%;margin:8px 0 4px;font-size:20px",onclick:function(){speak(m.cur[0]);}},"🔊 Дахин сонсох"));
+  root.append(h("button",{class:"btn ghost",style:"width:100%;margin:0 0 8px",onclick:function(){speak(m.cur[0],null,true);}},"🐢 Удаан"));
+  m.g.forEach(function(o){
+    var cls="opt";
+    if(m.picked){if(o===m.cur)cls+=" ok";else if(o===m.picked)cls+=" bad";}
+    root.append(h("button",{class:cls,disabled:!!m.picked,onclick:function(){
+      m.picked=o;m.n++;if(o===m.cur){m.ok++;addXP(3);}else addXP(1);render();
+    }},o[1]+(m.picked?"  — "+o[2]:"")));
+  });
+  if(m.picked){
+    var ok=m.picked===m.cur;
+    root.append(h("div",{class:"fb "+(ok?"ok":"bad")},ok?"Зөв! +3 XP":wrongPre()+m.cur[1]));
+    root.append(h("p",{class:"muted small",style:"margin:8px 0 4px"},"Харьцуулж сонс:"));
+    var row=h("div",{class:"row",style:"flex-wrap:wrap"});
+    m.g.forEach(function(o){row.append(h("button",{class:"btn",onclick:function(){speak(o[0]);}},"🔊 "+o[1]));});
+    root.append(row,h("div",{class:"row"},h("button",{class:"btn primary",onclick:function(){newMP();render();}},"Дараагийн")));
+  }
+  root.append(h("p",{class:"muted small",style:"margin-top:12px"},"Оноо: "+m.ok+" / "+m.n));
   return root;
 }
 function newDlg(){
