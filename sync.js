@@ -227,6 +227,7 @@
     authEl.remove();authEl=null;document.body.style.overflow="";
     if(skip){var m=meta();m.skip=1;setMeta(m);}
   }
+  function kid(){return document.documentElement.getAttribute("data-mode")==="kid";}
   function openAuth(tab){
     var h=H;if(!h||authEl||!cfg())return;
     var st={tab:tab||"in",busy:false,msg:"",ok:false};
@@ -259,13 +260,14 @@
       box.append(h("button",{type:"button",class:"auth-x","aria-label":"Хаах",onclick:function(){closeAuth(true);}},"✕"));
       var logo=h("div",{class:"auth-logo"},h("img",{src:"icon.svg",alt:"",width:"56",height:"56"}),h("span",null,"САЛХИ"));
       box.append(logo,h("p",{class:"auth-sub"},st.tab==="forgot"?"Бүртгэлтэй и-мэйлээ оруулбал нууц үг сэргээх холбоос илгээнэ.":"Хэл сурах явцаа хадгалж, бүх төхөөрөмж дээрээ үргэлжлүүлээрэй."));
+      if(kid()&&st.tab!=="forgot")box.append(h("p",{class:"auth-kid"},"👨‍👩‍👧 Хүүхэд минь, ээж аавдаа туслуулаад тэдний и-мэйлээр бүртгүүлээрэй."));
       if(st.tab!=="forgot")box.append(h("div",{class:"auth-seg",role:"tablist"},
         h("button",{type:"button",role:"tab","aria-selected":String(st.tab==="in"),onclick:function(){st.tab="in";st.msg="";paint();}},"Нэвтрэх"),
         h("button",{type:"button",role:"tab","aria-selected":String(st.tab==="up"),onclick:function(){st.tab="up";st.msg="";paint();}},"Бүртгүүлэх")));
       var form=h("form",{class:"auth-form",novalidate:"novalidate"});
       form.addEventListener("submit",submit);
-      if(st.tab==="up")form.append(h("label",{class:"auth-l"},"Нэр"),name);
-      form.append(h("label",{class:"auth-l"},"И-мэйл"),email);
+      if(st.tab==="up")form.append(h("label",{class:"auth-l"},kid()?"Хүүхдийн нэр":"Нэр"),name);
+      form.append(h("label",{class:"auth-l"},kid()&&st.tab!=="forgot"?"Эцэг эхийн и-мэйл":"И-мэйл"),email);
       if(st.tab!=="forgot"){
         var shown=pw.type==="text";
         var eye=h("button",{type:"button",class:"auth-eye","aria-label":shown?"Нууц үгийг нуух":"Нууц үгийг харах","aria-pressed":String(shown),onclick:function(){

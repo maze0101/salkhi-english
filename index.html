@@ -160,6 +160,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .auth-msg.ok{color:var(--ok)}
 .auth-main{margin-top:22px;padding:16px;border:0;border-radius:16px;background:var(--sky);color:#fff;font:inherit;font-weight:700;font-size:17px}
 .auth-main:disabled,.auth-g:disabled{opacity:.6}
+.auth-kid{margin:-10px 0 20px;padding:12px 14px;border-radius:14px;background:var(--surface);border:1px dashed var(--line);font-size:15px;line-height:1.45}
 .auth-or{display:flex;align-items:center;gap:12px;margin:22px 0;color:var(--ink-2);font-size:14px}
 .auth-or::before,.auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
 .auth-g{display:flex;align-items:center;justify-content:center;gap:12px;padding:15px;border-radius:16px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;font-size:17px}
@@ -1057,7 +1058,7 @@ function renderStrip(){
   s.append(h("div",{class:"stat",title:state.freeze?"🧊 Streak хамгаалалт: "+state.freeze:null},h("b",null,String(streak())),"өдөр дараалан"+(state.freeze?" 🧊"+(state.freeze>1?state.freeze:""):"")));
   s.append(h("div",{class:"stat","aria-label":"Өдрийн зорилго "+todayXP()+" / "+state.goal+" XP"},ringEl(todayXP()/state.goal,20,4),todayXP()+"/"+state.goal));
   if(state.mode==="kid")s.append(h("div",{class:"stat"},"⭐ "+state.stars));
-  else s.append(acctBtn());
+  s.append(acctBtn());
 }
 /* нэвтрэх товч: нэвтрээгүй бол нэвтрэх хуудас, нэвтэрсэн бол «Профайл» таб */
 function acctBtn(){
@@ -4854,7 +4855,7 @@ function viewStats(){
   var done=Object.keys(state.lessons).length;
   var lvl=Math.floor(state.xp/100)+1;
   root.append(h("h2",null,"Профайл"));
-  if(window.SalkhiSync)root.append(SalkhiSync.profileCard(h,render,toast,{lvl:lvl,xp:state.xp,streak:streak()},state.mode!=="kid"));
+  if(window.SalkhiSync)root.append(SalkhiSync.profileCard(h,render,toast,{lvl:lvl,xp:state.xp,streak:streak()},true));
   root.append(h("h3",{style:"margin:22px 0 10px"},"Миний явц"));
   var gb=h("div",{class:"goalbox"}),rw=h("div",{class:"ringw"},ringEl(todayXP()/state.goal,110,12),h("span",{class:"c"},Math.min(100,Math.round(todayXP()/state.goal*100))+"%"));
   rw.firstChild.style.margin="0";
@@ -5020,7 +5021,7 @@ function wxClick(){
   var c=wxCache()[i];wxLoad(!c||Date.now()-c.at>=30*60000);
 };
 wxLoad();setInterval(wxLoad,10*60000);
-if(window.SalkhiSync)SalkhiSync.boot(toast,function(){renderStrip();if(state.tab==="stats")render();},h,state.mode!=="kid"&&!sget("foreign",0)&&!location.hash);
+if(window.SalkhiSync)SalkhiSync.boot(toast,function(){renderStrip();if(state.tab==="stats")render();},h,!sget("foreign",0)&&!location.hash);
 checkNotif();setInterval(checkNotif,30000);syncNotifMeta();
 if(sget("foreign",0)&&location.hash!=='#daily')openForeign();
 if(location.hash==='#daily'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}openDaily();}
