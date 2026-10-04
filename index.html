@@ -1246,6 +1246,7 @@ function render(){
   if(state.tab==="social"&&state.mode==="kid")state.tab="words";
   if(state.tab==="grammar"&&state.mode==="senior")state.tab="words";
   if(window.Social&&state.tab!=="social")window.Social.detach();
+  if(window.Classes&&!(state.tab==="stats"&&ui.cls))Classes.detach();
   elMain.textContent="";elMain.style.zoom=state.fz===1?"":String(state.fz);
   if(state.tab==="levels"&&state.mode==="kid")state.tab="words";
   if(state.mode==="kid"){if(kidTab!==null&&kidTab!==state.tab&&window.salkhiMarmot)window.salkhiMarmot.tip(state.tab);kidTab=state.tab;}else kidTab=null;
@@ -5322,7 +5323,9 @@ function clsEnv(){
     me:function(lang){var m=this;return {name:m.name(),xp:state.xp,wxp:weekXP(),wk:weekKey(),streak:streak(),words:m.metric("words",lang),lessons:m.metric("lessons",lang)||0};},
     setLists:setClsLists,listProgress:clsListProgress,openList:openClsList,
     setLessons:setClsLessons,lessonDone:clsLessonDone,openLesson:openClsLesson,orderText:orderText,
-    lessonsFor:clsLessonsFor,loadLang:function(l,cb){loadLangs([l],cb);},
+    lessonsFor:clsLessonsFor,
+    quizWords:function(lang){if(!(window.WORDS_LOADED&&WORDS_LOADED[lang]))return null;return WORDS.filter(function(w){return (w[6]||"en")===lang;}).map(function(w){return [w[1],w[2],w[0]];});},
+    loadLang:function(l,cb){loadLangs([l],cb);},
     close:function(){ui.cls=false;render();window.scrollTo(0,0);}};
 }
 function viewStats(){

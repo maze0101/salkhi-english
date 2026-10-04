@@ -143,6 +143,36 @@
           ".validate": "newData.hasChildren(['t','ts']) && newData.child('t').isString() && newData.child('t').val().length <= 60 && (!newData.child('intro').exists() || (newData.child('intro').isString() && newData.child('intro').val().length <= 4000)) && (!newData.child('rule').exists() || (newData.child('rule').isString() && newData.child('rule').val().length <= 200)) && (!newData.child('ex').exists() || (newData.child('ex').isString() && newData.child('ex').val().length <= 5000)) && (!newData.child('q').exists() || (newData.child('q').isString() && newData.child('q').val().length <= 5000)) && (!newData.child('o').exists() || (newData.child('o').isString() && newData.child('o').val().length <= 3000)) && (!newData.child('f').exists() || (newData.child('f').isString() && newData.child('f').val().length <= 3000)) && (!newData.child('ref').exists() || (newData.child('ref').isString() && newData.child('ref').val().length <= 100)) && (!newData.child('lv').exists() || (newData.child('lv').isString() && newData.child('lv').val().length <= 3))"
         }
       }
+    },
+    "live": {
+      "$code": {
+        ".read": "auth != null && (root.child('classes/'+$code+'/teacher').val() === auth.uid || root.child('members/'+$code+'/'+auth.uid).exists())",
+        ".write": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        ".validate": "newData.hasChildren(['st','n','dur','qs']) && newData.child('st').isString() && newData.child('st').val().length <= 5 && newData.child('qs').isString() && newData.child('qs').val().length <= 40000 && newData.child('n').isNumber() && newData.child('n').val() <= 50 && newData.child('dur').isNumber() && newData.child('dur').val() >= 5 && newData.child('dur').val() <= 120 && (!newData.child('top').exists() || (newData.child('top').isString() && newData.child('top').val().length <= 10000))"
+      }
+    },
+    "livekey": {
+      "$code": {
+        ".read": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        ".write": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid"
+      }
+    },
+    "liveans": {
+      "$code": {
+        ".read": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        ".write": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          "name": {
+            ".write": "auth != null && auth.uid === $uid && root.child('members/'+$code+'/'+auth.uid).exists() && root.child('live/'+$code).exists()",
+            ".validate": "newData.isString() && newData.val().length <= 30"
+          },
+          "$k": {
+            ".write": "auth != null && auth.uid === $uid && !data.exists() && root.child('members/'+$code+'/'+auth.uid).exists() && root.child('live/'+$code+'/st').val() === 'q' && now <= root.child('live/'+$code+'/t0').val() + root.child('live/'+$code+'/dur').val() * 1000 + 3000",
+            ".validate": "newData.hasChildren(['a','i','t']) && newData.child('a').isNumber() && newData.child('a').val() >= 0 && newData.child('a').val() <= 3 && newData.child('i').val() === root.child('live/'+$code+'/qi').val() && newData.child('t').val() === now"
+          }
+        }
+      }
     }
   }
 }
