@@ -1832,11 +1832,13 @@ function dailyWord(){
   return ws[hsh%ws.length];
 }
 function openDaily(){
+  if(state.mode!=="kid"&&dueWords().length){startReview();toast("🔁 Өнөөдрийн давталт");return;}
   state.tab="words";ui.vocab.mode="card";ui.vocab.cur=null;ui.vocab.flipped=false;
   renderTabs();render();window.scrollTo(0,0);toast("📚 Өнөөдрийн давтлага");
 }
 function notifBody(){
-  var s=streak(),w=dailyWord();
+  var s=streak(),w=dailyWord(),dn=state.mode==="kid"?0:dueWords().length;
+  if(dn)return (todayXP()===0&&s>0?"🔥 "+s+" өдрийн дараалалаа алдахгүй байя! ":"")+"🔁 "+dn+" үг мартагдахаас өмнө давтах хугацаа боллоо (~"+revMin(Math.min(dn,20))+" мин). Дарж давтаарай!";
   if(w)return (todayXP()===0&&s>0?"🔥 "+s+" өдрийн дараалалаа алдахгүй байя! ":"")+"📚 Өнөөдрийн үг: "+w[1]+(w[7]?" ("+w[7]+")":"")+" — "+w[2]+". Дарж давтаарай!";
   return todayXP()===0&&s>0?"🔥 "+s+" өдрийн дараалалаа алдахгүй байя! Өнөөдөр нэг богино дасгал хийгээрэй.":"Өнөөдөр "+LANGN[state.lang]+" хэл сурах цаг боллоо. Хэдхэн минут дасгалцгаая 🌬️";
 }
@@ -1920,12 +1922,67 @@ function buildQuiz(w){
   var others=shuffle(src.filter(function(x){return x[1]!==w[1]&&x[2]!==w[2];})).slice(0,3).map(function(x){return x[2];});
   return {word:w,opts:shuffle([w[2]].concat(others)),picked:null};
 }
+/* ---------- 🔁 өдрийн давталт: давтах хугацаа нь болсон (өмнө үзсэн) үгс, ~15 сек/үг ---------- */
+function dueWords(until){
+  var t=until||Date.now();
+  return WORDS.filter(function(w){var d=state.due[w[1]];return (w[6]||"en")===state.lang&&d&&d<=t;})
+    .sort(function(a,b){return (state.box[a[1]]||0)-(state.box[b[1]]||0)||state.due[a[1]]-state.due[b[1]];});
+}
+function revMin(n){return Math.max(1,Math.round(n*15/60));}
+function startReview(){
+  var q=dueWords().slice(0,20);if(!q.length){toast("Одоогоор давтах үг алга 👍");return;}
+  ui.rev={q:q,i:0,ok:0,quiz:null};state.tab="words";renderTabs();render();window.scrollTo(0,0);
+}
+function reviewCard(){
+  var n=dueWords().length;if(!n||state.mode==="kid")return null;
+  return h("div",{class:"note",style:"display:flex;gap:12px;align-items:center;margin-bottom:12px"},
+    h("span",{style:"font-size:28px","aria-hidden":"true"},"🔁"),
+    h("div",{style:"flex:1"},h("b",null,"Өнөөдрийн давталт"),h("div",{class:"muted small"},n+" үг мартагдахаас өмнө давтах хугацаа боллоо · ~"+revMin(Math.min(n,20))+" мин")),
+    h("button",{class:"btn primary",style:"flex:none",onclick:startReview},"Давтах"));
+}
+function viewReview(){
+  var r=ui.rev,root=h("div");
+  root.append(h("button",{class:"back",onclick:function(){ui.rev=null;render();}},"‹ Буцах"));
+  if(r.i>=r.q.length){
+    var tm=new Date();tm.setHours(23,59,59,0);tm.setDate(tm.getDate()+1);
+    var left=dueWords().length,tom=dueWords(tm.getTime()).length-left;
+    root.append(h("div",{style:"text-align:center;font-size:56px;margin:10px 0"},r.ok===r.q.length?"🏆":"🎉"),
+      h("h2",{style:"text-align:center"},"Давталт дууслаа"),
+      h("p",{style:"text-align:center;font-size:20px;font-weight:800"},r.ok+" / "+r.q.length+" зөв"),
+      h("p",{class:"muted",style:"text-align:center"},"Зөв хариулсан үгс илүү урт хугацааны дараа дахин гарна (1 → 3 → 7 → 14 хоног). Алдсан үгс 10 минутын дараа дахин гарна."),
+      h("p",{class:"muted small",style:"text-align:center"},left?"Одоо давтах "+left+" үг үлдсэн.":tom>0?"Маргааш дуустал давтах: "+tom+" үг.":"Ойрын хугацаанд давтах үг алга 👍"));
+    root.append(h("div",{class:"row"},left?h("button",{class:"btn primary",onclick:startReview},"🔁 Дахиад "+Math.min(left,20)+" үг"):null,
+      h("button",{class:"btn"+(left?"":" primary"),onclick:function(){ui.rev=null;render();}},"Болсон")));
+    return root;
+  }
+  var w=r.q[r.i];if(!r.quiz)r.quiz=buildQuiz(w);var qz=r.quiz;
+  root.append(h("div",{class:"row",style:"align-items:center;margin:6px 0"},h("b",{style:"flex:1"},"🔁 Давталт"),h("span",{class:"muted small"},(r.i+1)+" / "+r.q.length)),
+    h("div",{class:"bar"},h("i",{style:"width:"+Math.round(r.i/r.q.length*100)+"%"})));
+  root.append(h("div",{class:"en",style:"margin:16px 0 4px"},w[1]));
+  if(w[7])root.append(h("div",{class:"muted"},w[7]));
+  root.append(h("button",{class:"btn ghost",style:"margin:6px 0",onclick:function(){speak(w[1]);}},"🔊 Сонсох"));
+  qz.opts.forEach(function(o){
+    var cls="opt";if(qz.picked!=null){if(o===w[2])cls+=" ok";else if(o===qz.picked)cls+=" bad";}
+    root.append(h("button",{class:cls,disabled:qz.picked!=null,onclick:function(){
+      qz.picked=o;var ok=o===w[2];if(ok)r.ok++;grade(w,ok);speak(w[1]);render();
+    }},o));
+  });
+  if(qz.picked!=null){
+    var ok=qz.picked===w[2];
+    root.append(h("div",{class:"fb "+(ok?"ok":"bad")},ok?"Зөв! +5 XP":wrongPre()+w[2]));
+    if(w[3])root.append(h("p",{class:"muted",style:"margin-top:6px"},w[3]+(w[8]?" — "+w[8]:"")));
+    root.append(h("button",{class:"btn primary",style:"width:100%;margin-top:10px",onclick:function(){r.i++;r.quiz=null;render();window.scrollTo(0,0);}},r.i+1<r.q.length?"Дараагийн үг":"Дүнг харах"));
+  }
+  return root;
+}
 function viewWords(){
+  if(ui.rev)return viewReview();
   var v=ui.vocab,p=pool(),root=h("div");
   if(!p.length){root.append(catChips(),emptyNote(),addPanel());return root;}
   if(!v.cur||p.indexOf(v.cur)<0){v.cur=pickWord();v.flipped=false;v.quiz=null;}
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
   root.append(taskPanel());
+  var rc=reviewCard();if(rc)root.append(rc);
   root.append(h("div",{class:"segrow"},h("div",{class:"seg",role:"group","aria-label":"Горим"},
     h("button",{"aria-pressed":String(v.mode==="card"),onclick:function(){v.mode="card";v.flipped=false;render();}},"Карт"),
     h("button",{"aria-pressed":String(v.mode==="quiz"),onclick:function(){v.mode="quiz";v.quiz=null;render();}},"Тест"),
