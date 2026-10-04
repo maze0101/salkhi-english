@@ -1009,15 +1009,108 @@ function warmAudio(cb){
 }
 /* хятад өгүүлбэрийг зай авсны дараа хэт хурдан сонсогдохгүйн тулд бага зэрэг удаашруулна */
 function langRate(){return state.lang==="zh"?0.85:1;}
+/* ---------- 📥 интернэтгүй аудио: Edge дууг (хэвийн хурдаар) Cache Storage-д татаж, интернэтгүй ч тоглуулна ---------- */
+var AUD_CACHE="salkhi-audio",audDL=null;
+function audKey(lang,t){var ac=accentOn(lang);return TTS_URL+"?l="+lang+(ac?"&a="+ac:"")+"&r=0&t="+encodeURIComponent(t);}
+function audLookup(lang,parts){
+  if(!TTS_URL||!("caches" in window))return Promise.resolve(null);
+  return caches.open(AUD_CACHE).then(function(c){
+    return Promise.all(parts.map(function(p){return c.match(audKey(lang,p));}));
+  }).then(function(rs){return rs.every(Boolean)?Promise.all(rs.map(function(r){return r.blob();})):null;}).catch(function(){return null;});
+}
+function playCached(blobs,id,i,sp,onDone){
+  if(id!==audioQ.id||i>=blobs.length){if(onDone&&id===audioQ.id)onDone();return;}
+  var u=URL.createObjectURL(blobs[i]),a=new Audio(u);audioQ.cur=a;a.playbackRate=sp;
+  function next(){URL.revokeObjectURL(u);if(id===audioQ.id)playCached(blobs,id,i+1,sp,onDone);}
+  a.onended=next;a.onerror=next;
+  var pr;try{pr=a.play();}catch(e){next();return;}
+  if(pr&&pr.catch)pr.catch(next);
+}
+function audTexts(lang,lv,withEx){
+  var out=[],seen={};
+  function add(t){t=speechText(t);if(t&&t.length<=300&&!seen[t]){seen[t]=1;out.push(t);}}
+  WORDS.forEach(function(w){if((w[6]||"en")!==lang||w[0]!==lv)return;add(w[1]);if(withEx&&w[3])splitSpeech([w[3]]).forEach(add);});
+  return out;
+}
+function audPaint(){
+  var d=audDL,el=document.getElementById("audp"),bar=document.getElementById("audb");if(!d)return;
+  if(el)el.textContent=d.done+" / "+d.total+(d.fail?" · алдаа "+d.fail:"")+(d.wait?" · түр хүлээж байна…":"");
+  if(bar)bar.style.width=Math.round(d.done/Math.max(1,d.total)*100)+"%";
+}
+function audDownload(lv,withEx){
+  if(audDL&&!audDL.end)return;
+  if(!TTS_URL||!("caches" in window)){toast("Энэ төхөөрөмж дээр аудио хадгалах боломжгүй байна");return;}
+  if(navigator.onLine===false){toast("Татахын тулд интернэт хэрэгтэй");return;}
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
+  var lang=state.lang,T=audTexts(lang,lv,withEx),k=0;
+  var d=audDL={lang:lang,lv:lv,total:T.length,done:0,fail:0,stop:false,end:false,wait:false};
+  render();
+  caches.open(AUD_CACHE).then(function(c){
+    var running=0;
+    function finish(){
+      if(running||d.end)return;d.end=true;
+      var m=sget("audpk",{})||{};m[lang+":"+lv]={n:d.done,ex:!!withEx,ts:Date.now()};sset("audpk",m);
+      toast(d.stop?"Татахыг зогсоолоо":"📥 "+d.done+" дуу хадгалагдлаа"+(d.fail?" ("+d.fail+" алдаа)":""));
+      if(state.tab==="stats")render();
+    }
+    function one(){
+      if(d.stop||k>=T.length){finish();return;}
+      var t=T[k++],url=audKey(lang,t);running++;
+      c.match(url).then(function(hit){
+        if(hit)return;
+        return (function get(tries){
+          return fetch(url).then(function(r){
+            if(r.status===429&&tries<6){d.wait=true;audPaint();return new Promise(function(ok){setTimeout(ok,15000);}).then(function(){d.wait=false;return get(tries+1);});}
+            if(!r.ok)throw 0;
+            return c.put(url,r);
+          });
+        })(0);
+      }).then(function(){d.done++;},function(){d.fail++;}).then(function(){running--;audPaint();one();});
+    }
+    for(var i=0;i<3;i++)one();
+  }).catch(function(){d.end=true;toast("Аудио хадгалах боломжгүй байна");render();});
+}
+function audPanel(){
+  var wrap=h("div",{style:"margin-top:22px"});
+  if(!TTS_URL||!("caches" in window))return wrap;
+  wrap.append(h("h2",{style:"font-size:18px"},"📥 Интернэтгүй аудио"),
+    h("p",{class:"muted small",style:"margin:0 0 8px"},"Түвшний үгсийн дуудлагыг урьдчилан татвал хөдөө, онгоцонд ч эх хэлтний дуугаар сонсоно (нэг үг ≈ 8 КБ)."));
+  if(!ui.audLv)ui.audLv=state.level==="all"?"a1":state.level;
+  var lvs=["a1","a2","b1","b2","c1","c2"].filter(function(l){return WORDS.some(function(w){return (w[6]||"en")===state.lang&&w[0]===l;});});
+  if(lvs.indexOf(ui.audLv)<0)ui.audLv=lvs[0];
+  wrap.append(h("div",{class:"seg"},lvs.map(function(l){return h("button",{"aria-pressed":String(ui.audLv===l),onclick:function(){ui.audLv=l;render();}},l.toUpperCase());})));
+  var ex=h("input",{type:"checkbox",id:"audex"});ex.checked=!!ui.audEx;ex.addEventListener("change",function(){ui.audEx=ex.checked;render();});
+  wrap.append(h("label",{for:"audex",class:"small",style:"display:flex;gap:8px;align-items:center;margin:6px 0"},ex,"Жишээ өгүүлбэрийг ч бас татах"));
+  var d=audDL,busy=d&&!d.end;
+  if(busy){
+    wrap.append(h("div",{class:"note"},h("div",{class:"small",style:"font-weight:700"},"📥 "+LANGN[d.lang]+" "+d.lv.toUpperCase()+" татаж байна…"),
+      h("div",{class:"bar"},h("i",{id:"audb",style:"width:"+Math.round(d.done/Math.max(1,d.total)*100)+"%"})),h("div",{class:"muted small",id:"audp"},d.done+" / "+d.total),
+      h("button",{class:"btn ghost",style:"margin-top:6px",onclick:function(){d.stop=true;}},"Зогсоох")));
+  }else{
+    var n=audTexts(state.lang,ui.audLv,ui.audEx).length;
+    wrap.append(h("button",{class:"btn primary",onclick:function(){audDownload(ui.audLv,ui.audEx);}},"📥 "+ui.audLv.toUpperCase()+" татах ("+n+" дуу, ≈"+Math.max(1,Math.round(n*8/1024))+" МБ)"));
+  }
+  var pk=sget("audpk",{})||{},ks=Object.keys(pk);
+  if(ks.length){
+    wrap.append(h("p",{class:"muted small",style:"margin:10px 0 4px"},"Хадгалсан: "+ks.map(function(k){var p=k.split(":");return LANGN[p[0]]+" "+p[1].toUpperCase()+" ("+pk[k].n+")";}).join(", ")));
+    wrap.append(h("button",{class:"btn ghost",onclick:function(){
+      caches.delete(AUD_CACHE).then(function(){sset("audpk",{});toast("Хадгалсан аудиог устгалаа");render();});
+    }},"🗑 Хадгалсан аудиог устгах"));
+  }
+  return wrap;
+}
 function speakList(list,onDone,slow){
   try{
     stopVoice();
     var parts=splitSpeech(list);if(!parts.length){if(onDone)onDone();return;}
     var lang=LANG_TTS[state.lang]?state.lang:"en",ac=accentOn(lang),fullLang=ac?ACCENTS[ac][2]:LANG_TTS[lang],gttsLang=ac?ACCENTS[ac][3]:GTTS[lang],id=audioQ.id,rate=langRate()*(slow&&state.rate>=1?0.65:1);
-    warmAudio(function(){
-      if(id!==audioQ.id)return;
-      if(navigator.onLine!==false&&typeof Audio==="function"){playParts(parts,id,0,gttsLang,fullLang,onDone,rate,lang);}
-      else synthParts(parts,fullLang,onDone,rate);
+    audLookup(lang,parts).then(function(blobs){
+      warmAudio(function(){
+        if(id!==audioQ.id)return;
+        if(blobs&&typeof Audio==="function"){playCached(blobs,id,0,state.rate*rate,onDone);return;}
+        if(navigator.onLine!==false&&typeof Audio==="function"){playParts(parts,id,0,gttsLang,fullLang,onDone,rate,lang);}
+        else synthParts(parts,fullLang,onDone,rate);
+      });
     });
   }catch(e){if(onDone)onDone();}
 }
@@ -5662,6 +5755,7 @@ function viewStats(){
   root.append(langProgress());
   root.append(fontPanel());
   root.append(voicePanel());
+  root.append(audPanel());
   root.append(notifPanel());
   root.append(dataPanel());
   root.append(h("div",{style:"margin-top:26px"},
