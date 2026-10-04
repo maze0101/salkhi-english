@@ -180,11 +180,13 @@ function initSalkhiHero(root, opts = {}) {
       ctx.fillRect(p.x, p.y, 2.2, 2.2);
     }
 
-    // Тайлбар
-    ctx.font = `400 14px ${FONT}`;
-    ctx.fillStyle = 'rgba(220,234,232,0.85)';
+    // Тайлбар: доод толгод дээр
+    ctx.font = `500 14px ${FONT}`;
+    ctx.fillStyle = '#FFFFFF';
     ctx.textBaseline = 'alphabetic';
-    LINES.forEach((line, i) => ctx.fillText(line, 24, H * 0.55 + i * 20));
+    ctx.shadowColor = 'rgba(10,30,32,0.55)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 1;
+    LINES.forEach((line, i) => ctx.fillText(line, 24, H - 20 - (LINES.length - 1 - i) * 20));
+    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
     raf = requestAnimationFrame(frame);
   }
