@@ -235,6 +235,25 @@
           ".validate": "newData.hasChildren(['name','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('ts').val() === now"
         }
       }
+    },
+    "comps": {
+      "$cid": {
+        ".read": "auth != null && data.child('t/'+auth.uid).exists()",
+        ".write": "auth != null && ((!data.exists() && newData.child('owner').val() === auth.uid) || (data.exists() && data.child('owner').val() === auth.uid))",
+        ".validate": "$cid.matches(/^[A-Z0-9]{6}$/) && newData.hasChildren(['owner','name','lang','items','dur','n']) && newData.child('items').isString() && newData.child('items').val().length <= 40000 && newData.child('name').isString() && newData.child('name').val().length <= 40",
+        "t": {
+          "$u": {
+            ".write": "auth != null && auth.uid === $u && root.child('comps/'+$cid+'/owner').exists()",
+            ".validate": "newData.val() === true"
+          }
+        },
+        "cls": {
+          "$code": {
+            ".write": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid && root.child('comps/'+$cid+'/t/'+auth.uid).exists()",
+            ".validate": "newData.hasChildren(['name','avg','best','n','ts']) && newData.child('avg').isNumber() && newData.child('avg').val() <= 50000 && newData.child('best').isNumber() && newData.child('best').val() <= 50000 && newData.child('n').isNumber() && newData.child('name').isString() && newData.child('name').val().length <= 40 && (!newData.child('tname').exists() || newData.child('tname').val().length <= 30)"
+          }
+        }
+      }
     }
   }
 }

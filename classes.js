@@ -226,12 +226,12 @@
       return {p:rev?1:0,q:String(ask).slice(0,120),c:opts.map(function(x){return String(x).slice(0,80);}),a:opts.indexOf(right)};
     });
   }
-  function liveStart(code,items,dur){
+  function liveStart(code,items,dur,comp){
     var key={a:JSON.stringify(items.map(function(x){return x.a;})),t0:"[]"};
     var pub=JSON.stringify(items.map(function(x){return [x.p,x.q,x.c];}));
     LV.key={a:items.map(function(x){return x.a;}),t0:[]};
     return db.ref("liveans/"+code).remove().then(function(){return db.ref("livekey/"+code).set(key);})
-      .then(function(){return db.ref("live/"+code).set({st:"lobby",qi:-1,n:items.length,dur:dur,qs:pub,ts:TS()});});
+      .then(function(){var v={st:"lobby",qi:-1,n:items.length,dur:dur,qs:pub,ts:TS()};if(comp)v.comp=comp;return db.ref("live/"+code).set(v);});
   }
   function liveNext(){
     var v=LV.v,qi=v.qi+1;
@@ -307,7 +307,90 @@
           var items=makeQs(pool,parseInt(cnt.value,10));
           if(items.length<1||items[0].c.length<4){env.toast("Дор хаяж 4 өөр үгтэй жагсаалт хэрэгтэй");return;}
           run(liveStart(code,items,parseInt(dur.value,10)),function(){S.form=null;});
-        }},"Эхлүүлэх")));
+        }},"Эхлүүлэх")),
+      h("button",{class:"btn ghost",style:"width:100%;margin-top:8px",disabled:busy,onclick:function(){
+          var s=src.value,pool=s.indexOf("L:")===0?parseList(d.lists[s.slice(2)]):words.filter(function(w){return w[2]===s.slice(2);}).map(function(w){return [w[0],w[1]];});
+          var items=makeQs(pool,parseInt(cnt.value,10));
+          if(items.length<1||items[0].c.length<4){env.toast("Дор хаяж 4 өөр үгтэй жагсаалт хэрэгтэй");return;}
+          var du=parseInt(dur.value,10);
+          run(compCreate(code,d,items,du).then(function(cid){return liveStart(code,items,du,cid).then(function(){return cid;});}),function(cid){S.form=null;CP.loaded=false;env.toast("🏆 Тэмцээн үүслээ · код "+cid,6000);});
+        }},"🏆 Ангиудын тэмцээн болгож эхлүүлэх"));
+  }
+  /* ---------- 🏆 ангиуд хоорондын тэмцээн: ижил асуултыг анги бүр өөрийн цагтаа шууд тестээр хийж, ангийн дунджаар өрсөлдөнө ----------
+     comps/{cid}: {owner,name,lang,items(JSON, зөв хариулттай),dur,n,ts,t:{uid:true},cls:{code:{name,tname,avg,best,n,ts}}} — зөвхөн оролцогч багш нар уншина */
+  var COMP_KEY="comps",CP={data:{},loaded:false};
+  function myComps(){return env.sget(COMP_KEY,[])||[];}
+  function addMyComp(cid){var l=myComps();if(l.indexOf(cid)<0){l.push(cid);env.sset(COMP_KEY,l.slice(-20));}}
+  function compCreate(code,d,items,dur,tries){
+    tries=tries||0;var cid=randCode();
+    return db.ref("comps/"+cid).transaction(function(cur){
+      return cur===null?{owner:uid,name:String(d.c.name+" · тэмцээн").slice(0,40),lang:d.c.lang||"en",items:JSON.stringify(items),dur:dur,n:items.length,ts:now(),t:(function(){var o={};o[uid]=true;return o;})()}:undefined;
+    }).then(function(r){
+      if(!r.committed){if(tries>6)throw new Error("Код үүсгэж чадсангүй");return compCreate(code,d,items,dur,tries+1);}
+      addMyComp(cid);return cid;
+    });
+  }
+  function compStart(code,cid){
+    return db.ref("comps/"+cid).once("value").then(function(s){
+      var c=s.val();if(!c)throw new Error("Тэмцээн олдсонгүй");
+      var items=JSON.parse(c.items||"[]");
+      return liveStart(code,items,c.dur,cid);
+    });
+  }
+  function compJoin(code,d,cid){
+    cid=String(cid||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+    if(cid.length!==6)return Promise.reject(new Error("Тэмцээний код 6 тэмдэгттэй"));
+    return db.ref("comps/"+cid+"/t/"+uid).set(true).then(function(){return db.ref("comps/"+cid).once("value");},function(){throw new Error("Ийм тэмцээн олдсонгүй");}).then(function(s){
+      var c=s.val();if(!c)throw new Error("Ийм тэмцээн олдсонгүй");
+      if((c.lang||"en")!==(d.c.lang||"en"))throw new Error("Энэ тэмцээн "+LANGS[c.lang]+" хэлээр явагдана");
+      if(c.cls&&c.cls[code])throw new Error("Энэ анги тэмцээнд аль хэдийн оролцсон");
+      addMyComp(cid);return compStart(code,cid);
+    });
+  }
+  function compPost(code,d,v){
+    if(!v.comp||LV.posted===v.ts)return;
+    LV.posted=v.ts;
+    var top=liveTop(),sc=top.map(function(r){return r[2];}),avg=sc.length?Math.round(sc.reduce(function(a,b){return a+b;},0)/sc.length):0;
+    db.ref("comps/"+v.comp+"/cls/"+code).set({name:String(d.c.name).slice(0,40),tname:String(d.c.tname||"").slice(0,30),avg:avg,best:sc.length?Math.max.apply(null,sc):0,n:sc.length,ts:TS()})
+      .then(function(){CP.loaded=false;paint();}).catch(function(){LV.posted=null;});
+  }
+  function loadComps(){
+    CP.loaded=true;
+    Promise.all(myComps().map(function(cid){return db.ref("comps/"+cid).once("value").then(function(s){CP.data[cid]=s.val();},function(){CP.data[cid]=null;});})).then(paint);
+  }
+  function compBoard(root,c,mine){
+    var cls=c&&c.cls||{},ks=Object.keys(cls).sort(function(a,b){return cls[b].avg-cls[a].avg;});
+    if(!ks.length){root.append(h("p",{class:"muted small"},"Одоогоор аль ч анги тестээ хийгээгүй байна."));return;}
+    ks.forEach(function(k,i){
+      var x=cls[k];
+      root.append(h("div",{class:"srow",style:k===mine?"font-weight:800;background:var(--line);border-radius:10px;padding-left:8px;padding-right:8px":""},
+        h("span",{style:"flex:1"},(i<3?["🥇","🥈","🥉"][i]:(i+1)+".")+" "+x.name,h("div",{class:"muted small"},(x.tname?"Багш "+x.tname+" · ":"")+x.n+" сурагч · шилдэг "+x.best)),
+        h("b",null,x.avg+" дундаж")));
+    });
+  }
+  function viewComps(root,d){
+    var code=S.code;
+    root.append(h("h3",{style:"margin:20px 0 6px"},"🏆 Ангиуд хоорондын тэмцээн"));
+    root.append(h("p",{class:"muted small"},"Өөр анги, сургуулийн багштай ижил асуултаар өрсөлдөөрэй: анги бүр өөрийн цагтаа шууд тест хийж, ангийн дундаж оноогоор жагсана."));
+    if(!CP.loaded)loadComps();
+    myComps().slice().reverse().forEach(function(cid){
+      var c=CP.data[cid];if(c===undefined){root.append(h("p",{class:"muted small"},"Ачаалж байна…"));return;}if(!c)return;
+      var done=c.cls&&c.cls[code];
+      var box=h("div",{class:"note",style:"margin-top:8px"},
+        h("div",{style:"display:flex;justify-content:space-between;gap:8px"},h("b",null,c.name),h("span",{class:"muted small"},"Код: "+cid)),
+        h("div",{class:"muted small"},c.n+" асуулт · "+Object.keys(c.cls||{}).length+" анги оролцсон"));
+      compBoard(box,c,code);
+      box.append(h("div",{class:"row",style:"flex-wrap:wrap"},
+        done?null:h("button",{class:"btn primary",disabled:busy,onclick:function(){run(compStart(code,cid));}},"▶️ Манай анги эхлүүлэх"),
+        h("button",{class:"btn",onclick:function(){
+          var t="Салхи апп дээрх ангиудын тэмцээнд нэгдээрэй! Анги → 🏆 Тэмцээнд нэгдэх → код: "+cid;
+          if(navigator.share)navigator.share({text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){env.toast("Хуулагдлаа");});
+        }},"📤 Багш урих"),
+        h("button",{class:"btn ghost",onclick:function(){CP.loaded=false;paint();}},"🔄")));
+      root.append(box);
+    });
+    var ci=h("input",{class:"tin",maxlength:"6",autocapitalize:"characters",placeholder:"Тэмцээний код","aria-label":"Тэмцээний код",style:"flex:1;margin:0;text-transform:uppercase"});
+    root.append(h("div",{style:"display:flex;gap:8px;margin-top:8px"},ci,h("button",{class:"btn",style:"flex:none",disabled:busy,onclick:function(){run(compJoin(code,d,ci.value));}},"🏆 Тэмцээнд нэгдэх")));
   }
   function viewLiveTeacher(root,d){
     var v=LV.v,code=S.code,pl=livePlayers(),q=LV.qs&&LV.qs[v.qi];
@@ -337,6 +420,13 @@
       if(top[0])root.append(h("p",{style:"text-align:center;font-size:22px;font-weight:800"},"Ялагч: "+top[0][1]+" — "+top[0][2]+" оноо"));
       podium(root,top,null);
       root.append(h("p",{class:"muted small"},"Зөв хариулт бүр 500–1000 оноо: хурдан хариулах тусам их."));
+      if(v.comp){
+        compPost(code,d,v);
+        var c=CP.data[v.comp];
+        root.append(h("h3",{style:"margin:18px 0 6px"},"🏆 Ангиудын тэмцээний байр"),h("p",{class:"muted small"},"Тэмцээний код: "+v.comp+" — бусад багш нарт өгөөрэй."));
+        if(c===undefined||!CP.loaded){if(!CP.loaded)loadComps();root.append(h("p",{class:"muted small"},"Ачаалж байна…"));}
+        else compBoard(root,c,code);
+      }
     }
     root.append(h("div",{class:"row",style:"margin-top:16px"},h("button",{class:"btn ghost",onclick:function(){
       if(v.st!=="end"&&!S.confirmLive){S.confirmLive=true;env.toast("Дахин дарвал тест дуусна");return;}
@@ -694,6 +784,7 @@
     root.append(h("h3",{style:"margin:20px 0 6px"},"🎯 Шууд тест"));
     if(S.form==="live")liveSetup(root,d);
     else root.append(h("button",{class:"btn primary",style:"width:100%",onclick:function(){S.form="live";paint();}},"🎯 Ангийн шууд тест эхлүүлэх"));
+    viewComps(root,d);
     root.append(h("div",{class:"row",style:"flex-wrap:wrap"},
       h("button",{class:"btn",onclick:function(){S.data=null;paint();}},"🔄 Шинэчлэх"),
       uids.length?h("button",{class:"btn",onclick:function(){exportCsv(d);}},"📥 CSV татах"):null,
