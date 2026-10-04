@@ -38,7 +38,8 @@ function initSalkhiHero(root, opts = {}) {
     oc.font = `800 ${fs}px ${FONT}`;
     oc.fillStyle = '#fff';
     oc.textBaseline = 'middle';
-    oc.fillText(TITLE, 24, H * 0.3);
+    oc.textAlign = 'center';
+    oc.fillText(TITLE, W / 2, H * 0.3);
     const d = oc.getImageData(0, 0, W, H).data;
     P = [];
     const step = 3;

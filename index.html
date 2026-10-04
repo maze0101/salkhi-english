@@ -5720,7 +5720,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20261004-5";
+var BUILD="20261004-6";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
