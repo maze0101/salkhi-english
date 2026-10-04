@@ -28,7 +28,8 @@
 
   function init(){
     if(!cfg()){screen="setup";paint();return;}
-    if(db&&uid){enter();return;}
+    /* аль хэдийн холбогдсон: профайлгүй бол (ж: Google-ээр шинээр нэвтэрсэн) нэр сонгох дэлгэц рүү */
+    if(db&&uid){if(prof)enter();else if(setScreen("name"))paint();return;}
     screen="boot";paint();
     /* sync.js байвал Google-ээр нэвтэрсэн хэрэглэгчийг дахин ашиглана (эс бөгөөс нэргүй) */
     (window.SalkhiFB?window.SalkhiFB.user():loadSDK().then(function(){
@@ -45,6 +46,7 @@
     }).catch(function(e){var m=String(e&&e.message?e.message:e);info=/configuration-not-found|admin-restricted|operation-not-allowed/.test(m)?"Firebase дээр Authentication → Anonymous асаагаагүй байна. ("+m+")":"Холбогдож чадсангүй: "+m;if(setScreen("error"))paint();});
   }
   function enter(){
+    if(!prof){if(setScreen("name"))paint();return;}
     syncProfile();loadFriends();if(setScreen("home"))paint();
   }
   function me(){return env.me();}
@@ -713,6 +715,7 @@
     if(screen==="chat"){root.append(viewChat());return;}
     if(screen==="botchat"&&bc){root.append(viewBotChat());return;}
     if(screen==="quiz"){root.append(viewQuiz());return;}
+    if(!prof){root.append(viewName(),h("div",{style:"margin-top:18px"},h("h3",null,"🤖 AI найзууд"),viewBots()));return;}
     if(screen==="duel"&&duel){if(!duelRef){openDuel(duel.id);return;}root.append(viewDuel());return;}
     var tabs=h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"});
     [["friends","👥 Найз"],["bots","🤖 AI"],["room","🌐 Өрөө"],["xch","🔁 Солилцоо"],["mentor","👵 Ахмад–залуу"],["inbox","🎯 Сорилт"]].filter(function(t){return !((t[0]==="room"||t[0]==="xch")&&(me().mode==="senior"||me().mode==="kid"))&&!(t[0]==="mentor"&&me().mode==="kid");}).forEach(function(t){
