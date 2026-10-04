@@ -21,10 +21,10 @@ window.addEventListener("error",function(e){
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="referrer" content="no-referrer">
-<meta name="theme-color" content="#F7F7F8">
+<meta name="theme-color" content="#132226">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap&subset=cyrillic,cyrillic-ext" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap&subset=cyrillic,cyrillic-ext" rel="stylesheet">
 <style>
 /* Салхи — цэвэр минимал загвар: нэг өнгөний акцент, нимгэн хүрээ, сүүдэргүй. Бүх горимд ижил. */
 :root{
@@ -59,23 +59,25 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .app{max-width:600px;margin:0 auto;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 
 /* толгой хэсэг */
-.hero{display:flex;flex-direction:column;gap:14px;padding:max(16px,env(safe-area-inset-top)) 20px 4px;color:var(--ink)}
-.topbar{display:flex;align-items:center;gap:8px}
-.hero .txt{flex:1;min-width:0}
-.brand{font:700 26px/1.1 var(--font);letter-spacing:-.035em}
-.tag{margin-top:3px;color:var(--ink-2);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tools{display:flex;align-items:center;gap:6px;flex:none}
-.themebtn{flex:none;height:36px;min-width:36px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:4px;transition:background .15s,border-color .15s}
-.themebtn:hover{border-color:color-mix(in srgb,var(--ink) 25%,var(--line))}
+.hero{display:flex;flex-direction:column;gap:14px;padding:0 0 4px;color:var(--ink)}
+/* hero анимаци (hero.js): цэгэн гарчиг, салхин тээрэм, цаасан шувуу; дарахад салхи үлээнэ */
+.salkhi-hero{position:relative;width:100%;height:calc(290px + env(safe-area-inset-top));overflow:hidden;border-radius:0 0 28px 28px;background:#132226}
+.salkhi-hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:manipulation;cursor:pointer}
+.salkhi-hero__overlay{position:absolute;inset:0;pointer-events:none;padding:env(safe-area-inset-top,0px) 16px 0}
+.salkhi-hero__overlay>*{pointer-events:auto}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.tools{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:16px;display:flex;align-items:center;gap:6px}
+.themebtn{flex:none;height:36px;min-width:36px;padding:0 10px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#F4F8F7;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:4px;transition:background .15s,border-color .15s}
+.themebtn:hover{background:rgba(255,255,255,.16)}
 #ratebtn{font-size:13px;font-weight:600;white-space:nowrap}
-.moderow{display:flex;align-items:center;gap:8px}
+.moderow{display:flex;align-items:center;gap:8px;padding:0 20px}
 .modes{flex:1;min-width:0;display:flex;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--ink) 8%,transparent)}
 .modes button{flex:1;padding:8px 6px;border-radius:9px;font-weight:600;font-size:14px;color:var(--ink);white-space:nowrap;transition:background .15s,color .15s}
 .modes button[aria-pressed="true"]{background:var(--sky);color:#fff;box-shadow:0 1px 3px color-mix(in srgb,var(--sky) 45%,transparent)}
 #forbtn{font-size:13px;font-weight:600;white-space:nowrap}
 .kidq,.kfox{display:none!important}
 @media (max-width:440px){#ratebtn .lbl,#forbtn .lbl{display:none}}
-@media (max-width:350px){.modes button{font-size:12.5px;padding:7px 2px}.tag{display:none}}
+@media (max-width:350px){.modes button{font-size:12.5px;padding:7px 2px}}
 
 /* хүүхдийн горимын жижиг үнэг (буланд) */
 .kmini{position:fixed;right:max(14px,calc(50% - 286px));bottom:calc(84px + env(safe-area-inset-bottom));width:76px;height:64px;z-index:4;pointer-events:none;display:none}
@@ -373,13 +375,16 @@ p+p{margin-top:10px}
 
 <div class="app">
   <header class="hero">
-    <div class="topbar">
-      <div class="txt">
-        <div class="brand">Салхи</div>
-        <p class="tag">Англи, япон, солонгос, хятад, орос, герман хэл</p>
-        <p class="tag kidq" id="kidq"></p>
+    <div class="salkhi-hero" id="salkhiHero">
+      <canvas role="img" aria-label="Салхи — дарж салхи үлээлгэх"></canvas>
+      <div class="salkhi-hero__overlay">
+        <div class="tools"><button class="themebtn" id="themebtn" type="button"></button></div>
       </div>
-      <div class="tools"><button class="themebtn" id="themebtn" type="button"></button></div>
+    </div>
+    <div class="txt sr-only">
+      <h1>Салхи</h1>
+      <p>Англи, япон, солонгос, хятад, орос, герман хэлний үг, дүрэм, яриа</p>
+      <p class="kidq" id="kidq"></p>
     </div>
     <div class="moderow"><div class="modes" id="modes" role="group" aria-label="Горим"></div></div>
     <div class="kfox" id="salkhiFox">
@@ -411,6 +416,10 @@ p+p{margin-top:10px}
       <div class="sm-say" aria-live="polite"></div>
     </div>
   </header>
+<script src="hero.js"></script>
+<script>
+window.salkhiHero=initSalkhiHero(document.getElementById("salkhiHero"),{font:"Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif"});
+</script>
 <div class="kmini" id="salkhiMini" aria-hidden="true"><div class="sm-m"><div class="sm-crop"></div></div><div class="sm-say"></div></div>
 <script>
 /* Салхи үнэг — хүүхдийн горимын маскот. Минимал загварт зөвхөн буланд жижиг үнэг гарна.
@@ -1015,6 +1024,7 @@ function toast(t,ms){
   setTimeout(function(){e.remove();},ms||2800);
 }
 function celebrate(big,force){
+  if(window.salkhiHero)window.salkhiHero.gust();
   if(state.mode==="kid"&&window.salkhiMarmot)window.salkhiMarmot.cheer(big);
   if(reduce||(state.mode!=="kid"&&!force))return;
   var em=["⭐","🌟","✨","🎉"],n=big?22:7;
@@ -1142,10 +1152,7 @@ function applyTheme(){
   var r=document.documentElement,b=document.getElementById("themebtn");
   if(state.theme==="auto")r.removeAttribute("data-theme");else r.setAttribute("data-theme",state.theme);
   b.textContent=TICON[state.theme];b.setAttribute("aria-label","Загвар: "+TNAME[state.theme]);
-  var dark=state.theme==="dark"||(state.theme==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches);
-  var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",dark?"#0B0B0D":"#F7F7F8");
 }
-(function(mq){if(mq.addEventListener)mq.addEventListener("change",function(){if(state.theme==="auto")applyTheme();});})(matchMedia("(prefers-color-scheme: dark)"));
 
 var rateBtn=h("button",{class:"themebtn",id:"ratebtn",type:"button"});
 document.getElementById("themebtn").after(rateBtn);
@@ -5713,7 +5720,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20261004-2";
+var BUILD="20261004-3";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){

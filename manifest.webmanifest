@@ -10,7 +10,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#F7F7F8",
-  "theme_color": "#F7F7F8",
+  "theme_color": "#132226",
   "categories": ["education", "kids"],
   "prefer_related_applications": false,
   "icons": [
