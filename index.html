@@ -69,9 +69,9 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .themebtn:hover{border-color:color-mix(in srgb,var(--ink) 25%,var(--line))}
 #ratebtn{font-size:13px;font-weight:600;white-space:nowrap}
 .moderow{display:flex;align-items:center;gap:8px}
-.modes{flex:1;min-width:0;display:flex;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--ink) 6%,transparent)}
-.modes button{flex:1;padding:7px 6px;border-radius:9px;font-weight:600;font-size:13.5px;color:var(--ink-2);white-space:nowrap;transition:background .15s,color .15s}
-.modes button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.modes{flex:1;min-width:0;display:flex;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.modes button{flex:1;padding:8px 6px;border-radius:9px;font-weight:600;font-size:14px;color:var(--ink);white-space:nowrap;transition:background .15s,color .15s}
+.modes button[aria-pressed="true"]{background:var(--sky);color:#fff;box-shadow:0 1px 3px color-mix(in srgb,var(--sky) 45%,transparent)}
 #forbtn{font-size:13px;font-weight:600;white-space:nowrap}
 .kidq,.kfox{display:none!important}
 @media (max-width:440px){#ratebtn .lbl,#forbtn .lbl{display:none}}
@@ -128,9 +128,9 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .auth-logo img{width:48px;height:48px;border-radius:12px}
 .auth-logo span{font-size:30px;font-weight:700;letter-spacing:-.035em;color:var(--ink)}
 .auth-sub{color:var(--ink-2);margin:12px 0 24px;font-size:15.5px;line-height:1.5}
-.auth-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--ink) 6%,transparent);margin-bottom:18px}
-.auth-seg button{border:0;background:none;padding:10px;border-radius:9px;font-weight:600;font-size:15px;color:var(--ink-2)}
-.auth-seg button[aria-selected=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.auth-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--ink) 8%,transparent);margin-bottom:18px}
+.auth-seg button{border:0;background:none;padding:10px;border-radius:9px;font-weight:600;font-size:15px;color:var(--ink)}
+.auth-seg button[aria-selected=true]{background:var(--sky);color:#fff;box-shadow:0 1px 3px color-mix(in srgb,var(--sky) 45%,transparent)}
 .auth-form{display:flex;flex-direction:column}
 .auth-l{color:var(--ink-2);font-size:14px;font-weight:500;margin:12px 0 6px}
 .auth-f{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:16px}
@@ -198,9 +198,9 @@ h3{letter-spacing:-.02em}
 .prow .tg{font-size:20px;font-weight:700;margin:2px 0 6px}
 .row{display:flex;gap:10px;margin-top:12px}
 .row>*{flex:1}
-.seg{display:inline-flex;border-radius:12px;padding:3px;background:color-mix(in srgb,var(--ink) 6%,transparent);margin-bottom:14px}
-.seg button{padding:7px 14px;border-radius:9px;font-weight:600;font-size:13.5px;color:var(--ink-2)}
-.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.seg{display:inline-flex;border-radius:12px;padding:3px;background:color-mix(in srgb,var(--ink) 8%,transparent);margin-bottom:14px}
+.seg button{padding:7px 14px;border-radius:9px;font-weight:600;font-size:13.5px;color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--sky);color:#fff;box-shadow:0 1px 3px color-mix(in srgb,var(--sky) 45%,transparent)}
 .seg.lvseg{max-width:100%;overflow-x:auto}
 .seg.lvseg button{padding:7px 11px;flex:none}
 
@@ -5713,7 +5713,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20261004-1";
+var BUILD="20261004-2";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
