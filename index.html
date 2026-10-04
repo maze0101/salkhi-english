@@ -630,6 +630,7 @@ p+p{margin-top:10px}
 <script src="prondiag.js"></script>
 <script src="voicediary.js"></script>
 <script src="mnholiday.js"></script>
+<script src="phonetics.js"></script>
 <script src="writing.js"></script>
 <script src="classes.js"></script>
 <script src="numbers.js"></script>
@@ -2765,18 +2766,22 @@ function viewAlpha(){
   var a=ui.alpha,root=h("div"),secs=ALPHA[state.lang]||[];
   var cjk=["zh","ja","ko"].indexOf(state.lang)>=0&&!!window.HanziCompare;
   if(a.sec==="hz"&&!cjk)a.sec="abc";
-  var STL={phr:"Хэллэг",hz:"Ханз",qz:"Үсгийн тест",mp:"Авиа ялгах",num:"Тоо",wr:"Бичих"};
+  var STL={phr:"Хэллэг",hz:"Ханз",qz:"Үсгийн тест",mp:"Авиа ялгах",num:"Тоо",wr:"Бичих",ph:"Авиа зүй"};
   var wrOk=!!(window.StrokeWrite&&StrokeWrite.has(state.lang));
   if(a.sec==="wr"&&!wrOk)a.sec="abc";
   root.append(h("h2",null,(STL[a.sec]||"Үсэг")+" · "+LANGN[state.lang]));
   function sb(k,t){return h("button",{"aria-pressed":String(k==="abc"?!STL[a.sec]:a.sec===k),onclick:function(){stopVoice();a.sec=k;render();}},t);}
   var seg=h("div",{class:"seg",style:"flex-wrap:wrap"},sb("abc","Үсэг"),sb("num","🔢 Тоо"),sb("qz","Тест"),sb("mp","Ялгах"),sb("phr","Хэллэг"));
+  var phOk=!!(window.Phonetics&&Phonetics.has(state.lang));
+  if(a.sec==="ph"&&!phOk)a.sec="abc";
+  if(phOk)seg.insertBefore(sb("ph","🔊 Авиа зүй"),seg.children[1]);
   if(wrOk)seg.append(sb("wr","✍️ Бичих"));
   if(cjk)seg.append(sb("hz","Ханз"));
   root.append(seg);
   if(a.sec==="wr"){root.append(StrokeWrite.view({h:h,lang:function(){return state.lang;},render:render,speak:function(t){speak(t);},addXP:addXP,
     celebrate:function(){celebrate(true,true);},sget:sget,sset:sset}));return root;}
   if(a.sec==="phr"){root.append(viewPhrases());return root;}
+  if(a.sec==="ph"){root.append(Phonetics.view({h:h,lang:function(){return state.lang;},render:render,speak:function(t){speak(t);},sget:sget,sset:sset,addXP:addXP,celebrate:function(){celebrate(true,true);}}));return root;}
   if(a.sec==="qz"){root.append(viewAQuiz());return root;}
   if(a.sec==="num"&&window.NumLearn){root.append(window.NumLearn.view({h:h,lang:function(){return state.lang;},render:render,speak:function(t){speak(t);},addXP:addXP}));return root;}
   if(a.sec==="mp"){
