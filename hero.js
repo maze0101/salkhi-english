@@ -186,7 +186,9 @@ function initSalkhiHero(root, opts = {}) {
     ctx.fillStyle = '#FFFFFF';
     ctx.textBaseline = 'alphabetic';
     ctx.shadowColor = 'rgba(10,30,32,0.55)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 1;
-    LINES.forEach((line, i) => ctx.fillText(line, 24, H - 20 - (LINES.length - 1 - i) * 20));
+    ctx.textAlign = 'center';
+    LINES.forEach((line, i) => ctx.fillText(line, W / 2, H - 20 - (LINES.length - 1 - i) * 20));
+    ctx.textAlign = 'left';
     ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
     raf = requestAnimationFrame(frame);
