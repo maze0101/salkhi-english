@@ -23,7 +23,7 @@
 Нэргүй бүртгэлийг Google-тэй холбодог тул найзууд, код хэвээр үлдэнэ. Явц `progress/<uid>`-д хадгалагдана. API түлхүүр, горим, загвар зэрэг төхөөрөмжийн тохиргоо синк хийгдэхгүй.
 
 ## Багш, анги (Профайл → 🏫 Анги)
-Realtime Database → **Rules** табд шинэчлэгдсэн `database.rules.json`-ийг дахин хуулж **Publish** дарна (`classes`, `members`, `tasks`, `cstats`, `mycls`, `wlists`, `board`, `tlessons`, `live`, `livekey`, `liveans`, `duels`, `duelinv`, `goals`, `xch`, `xchin`, `comps`, `mentor` хэсэг нэмэгдсэн).
+Realtime Database → **Rules** табд шинэчлэгдсэн `database.rules.json`-ийг дахин хуулж **Publish** дарна (`classes`, `members`, `tasks`, `cstats`, `mycls`, `wlists`, `board`, `tlessons`, `live`, `livekey`, `liveans`, `duels`, `duelinv`, `goals`, `xch`, `xchin`, `comps`, `mentor`, `smsphones`, `smslog` хэсэг нэмэгдсэн).
 - Ангийн нэр, кодыг нэвтэрсэн хэн ч уншиж болно (кодоор нэгдэхэд хэрэгтэй).
 - Даалгаврыг зөвхөн ангийн гишүүд болон багш уншина. Даалгавар нэмэх, устгахыг зөвхөн багш хийнэ.
 - Сурагчдын явц (`cstats`), гишүүдийн жагсаалтыг зөвхөн тухайн ангийн багш харна. Сурагч зөвхөн өөрийнхөө явцыг бичнэ.

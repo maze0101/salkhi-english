@@ -229,6 +229,74 @@ async function handleVision(req,env,cors){
   return json(tr,200,Object.assign({"cache-control":"no-store"},cors));
 }
 
+/* ---------- /sms: багш ангийнхаа эцэг эхчүүдэд өдрийн үгсийг SMS-ээр илгээнэ ----------
+   POST {code, token, text}. token = багшийн Firebase ID token: Worker түүгээр smsphones/{code}-г уншина (дүрмээр зөвхөн тухайн ангийн багш уншина),
+   тиймээс тусад нь JWT шалгах шаардлагагүй. Өдөрт ангид SMS_DAILY (2) удаа, нэг удаад SMS_MAX_TO (60) дугаар.
+   Үйлчилгээ үзүүлэгч (wrangler secret):
+     SMS_PROVIDER=twilio → TWILIO_SID, TWILIO_TOKEN, TWILIO_FROM (утас эсвэл MG… messaging service)
+     SMS_PROVIDER=http   → SMS_HTTP_URL (ж: https://api.example.mn/send?key={key}&to={to}&text={text}), SMS_HTTP_KEY,
+                           SMS_HTTP_METHOD (GET|POST, анхдагч GET), SMS_HTTP_BODY (POST-ийн JSON загвар, ж: {"to":"{to}","msg":"{text}"})
+     {to} = 8 оронтой дугаар, {to976} = 976XXXXXXXX, {e164} = +976XXXXXXXX */
+const FIREBASE_DB="https://salkhi-english-6922-default-rtdb.firebaseio.com";
+const SMS_MAX_TEXT=320;
+export function parsePhones(s,max){
+  const out=[],seen={};
+  String(s||"").split(/[\s,;]+/).forEach(function(p){
+    p=p.replace(/[^\d]/g,"").replace(/^976/,"");
+    if(/^[6-9]\d{7}$/.test(p)&&!seen[p]){seen[p]=1;out.push(p);}
+  });
+  return out.slice(0,max||60);
+}
+export function smsConfigured(env){
+  const p=env.SMS_PROVIDER;
+  if(p==="twilio")return !!(env.TWILIO_SID&&env.TWILIO_TOKEN&&env.TWILIO_FROM);
+  if(p==="http")return !!env.SMS_HTTP_URL;
+  return false;
+}
+function fillTpl(t,to,text,key,enc){
+  const f=enc?encodeURIComponent:function(x){return JSON.stringify(String(x)).slice(1,-1);};
+  return String(t).replace(/\{to976\}/g,f("976"+to)).replace(/\{e164\}/g,f("+976"+to)).replace(/\{to\}/g,f(to)).replace(/\{text\}/g,f(text)).replace(/\{key\}/g,f(key||""));
+}
+async function sendOne(env,to,text){
+  const F=env.SMS_FETCH||fetch;
+  if(env.SMS_PROVIDER==="twilio"){
+    const body=new URLSearchParams({To:"+976"+to,Body:text});
+    if(/^MG/.test(env.TWILIO_FROM))body.set("MessagingServiceSid",env.TWILIO_FROM);else body.set("From",env.TWILIO_FROM);
+    const r=await F("https://api.twilio.com/2010-04-01/Accounts/"+env.TWILIO_SID+"/Messages.json",{method:"POST",
+      headers:{"authorization":"Basic "+btoa(env.TWILIO_SID+":"+env.TWILIO_TOKEN),"content-type":"application/x-www-form-urlencoded"},body:body.toString()});
+    return r.ok;
+  }
+  const m=(env.SMS_HTTP_METHOD||"GET").toUpperCase(),url=fillTpl(env.SMS_HTTP_URL,to,text,env.SMS_HTTP_KEY,true);
+  const init={method:m};
+  if(m==="POST"){init.headers={"content-type":"application/json"};init.body=fillTpl(env.SMS_HTTP_BODY||'{"to":"{to}","text":"{text}"}',to,text,env.SMS_HTTP_KEY,false);}
+  const r=await F(url,init);
+  return r.ok;
+}
+async function handleSMS(req,env,cors){
+  let b;try{b=await req.json();}catch(e){return json({error:"bad_json"},400,cors);}
+  const code=String(b&&b.code||""),token=String(b&&b.token||""),text=String(b&&b.text||"").replace(/\s+/g," ").trim();
+  if(!/^[A-Z0-9]{6}$/.test(code)||!token||token.length>4000||!text||text.length>SMS_MAX_TEXT)return json({error:"bad_request"},400,cors);
+  if(!smsConfigured(env))return json({error:"sms_not_configured"},501,cors);
+  const F=env.DB_FETCH||fetch,db=env.FIREBASE_DB_URL||FIREBASE_DB,auth="?auth="+encodeURIComponent(token);
+  const pr=await F(db+"/smsphones/"+code+".json"+auth);
+  if(pr.status===401||pr.status===403)return json({error:"forbidden"},403,cors);
+  if(!pr.ok)return json({error:"db_unavailable"},503,cors);
+  const phones=parsePhones(await pr.json(),parseInt(env.SMS_MAX_TO||"60",10));
+  if(!phones.length)return json({error:"no_phones"},400,cors);
+  const day=new Date(Date.now()+8*3600000).toISOString().slice(0,10),lp=db+"/smslog/"+code+"/"+day+".json"+auth;
+  const lr=await F(lp);if(!lr.ok)return json({error:"db_unavailable"},503,cors);
+  const n=(await lr.json())||0,limit=parseInt(env.SMS_DAILY||"2",10);
+  if(n>=limit)return json({error:"daily_limit",limit:limit},429,cors);
+  const wr=await F(lp,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(n+1)});
+  if(!wr.ok)return json({error:"db_unavailable"},503,cors);
+  let sent=0,failed=0;
+  for(let i=0;i<phones.length;i++){
+    let ok=false;try{ok=await sendOne(env,phones[i],text);}catch(e){ok=false;}
+    if(ok)sent++;else failed++;
+  }
+  return json({sent:sent,failed:failed,left:limit-n-1},200,cors);
+}
+
 export default {
   async fetch(req,env,ctx){
     const pre=new URL(req.url);
@@ -245,7 +313,8 @@ export default {
     if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors});
     const url=new URL(req.url);
     if(url.pathname==="/"&&req.method==="GET")return new Response("Salkhi AI is running.",{status:200,headers:cors});
-    if(req.method!=="POST"||(url.pathname!=="/chat"&&url.pathname!=="/vision"))return json({error:"not_found"},404,cors);
+    if(url.pathname==="/sms/status"&&req.method==="GET")return json({configured:smsConfigured(env)},200,cors);
+    if(req.method!=="POST"||(url.pathname!=="/chat"&&url.pathname!=="/vision"&&url.pathname!=="/sms"))return json({error:"not_found"},404,cors);
     if(!okOrigin)return json({error:"forbidden"},403,cors);
 
     if(env.LIMITER){
@@ -254,6 +323,7 @@ export default {
       if(!r.success)return json({error:"rate_limited"},429,cors);
     }
     if(url.pathname==="/vision")return handleVision(req,env,cors);
+    if(url.pathname==="/sms")return handleSMS(req,env,cors);
 
     let body;try{body=await req.json();}catch(e){return json({error:"bad_json"},400,cors);}
     const msgs=sanitizeMessages(body&&body.messages);
