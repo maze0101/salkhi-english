@@ -173,7 +173,7 @@
      livekey/{code}: зөв хариултууд, асуулт бүрийн t0 (зөвхөн багшид)
      liveans/{code}/{uid}: {name, q<i>:{a,i,t}} */
   var LV={code:null,role:null,v:null,gts:null,qs:null,ans:{},key:null,off:0,refs:[],tick:null,joined:false,mine:{},rev:false,dismiss:null,last:0};
-  var LCOL=["#e74c3c","#2f80ed","#e2a400","#27ae60"],LSHP=["▲","◆","●","■"];
+  var LCOL=["#d63a2b","#2a6fd6","#9a6a00","#1e7e45"],LSHP=["▲","◆","●","■"];
   function sNow(){return now()+LV.off;}
   function liveLeft(){var v=LV.v;return v&&v.t0?Math.max(0,v.t0+v.dur*1000-sNow()):0;}
   function liveDetach(){
