@@ -195,7 +195,7 @@
     var f=chatWith,cid=[uid,f.uid].sort().join("_");
     var ref=db.ref("chats/"+cid);
     var box=h("div");
-    box.append(h("button",{class:"btn ghost",style:"padding:6px 12px",onclick:function(){screen="home";sub=f.xch?"xch":"friends";paint();}},"‹ Буцах"),
+    box.append(h("button",{class:"btn ghost",style:"padding:6px 12px",onclick:function(){screen="home";sub=f.mentor?"mentor":f.xch?"xch":"friends";paint();}},"‹ Буцах"),
       h("h3",{style:"margin:8px 0 2px"},"💬 "+f.name),
       h("p",{class:"muted small",style:"margin:0 0 8px"},"Хамтдаа ярьж дасгалла. Эхлэхийн тулд доорх сэдвээс сонго."));
     var ui=chatUI(ref,{max:300,showName:false,reportPath:"chats/"+cid,onSend:f.xch?function(){db.ref("xchin/"+f.uid+"/"+uid).set({name:prof.name,ts:TS()}).catch(function(){});}:null});
@@ -211,7 +211,8 @@
         [p[0],p[1]].forEach(function(t){hints.append(h("button",{class:"chip",style:"font-size:13px",onclick:function(){ui.fill(String(t).replace(/\s*\([^)]*\)/g,""));}},String(t).replace(/\s*\([^)]*\)/g,"")));});
       });
     });
-    box.append(sel,hints,ui);
+    if(f.mentor){MT_HINTS.forEach(function(t){hints.append(h("button",{class:"chip",style:"font-size:13px",onclick:function(){ui.fill(t);}},t));});box.append(hints,ui);}
+    else box.append(sel,hints,ui);
     return box;
   }
   function viewRoom(){
@@ -529,6 +530,49 @@
     box.append(h("button",{class:"btn ghost",style:"width:100%;margin-top:10px",onclick:function(){xch.list=null;paint();}},"⟳ Шинэчлэх"));
     return box;
   }
+  /* ---------- 👵 ахмад–залуу хос: залуу хүн ахмадад гадаад хэлээр тусалж, ахмад нь зүйр үг, түүх хуваалцана ----------
+     mentor/{uid}: {name,role:"elder"|"youth",lang,ts} */
+  var MT={list:null,me:null};
+  var MT_HINTS=["Сайн байна уу! Өнөөдөр хамтдаа хэдэн минут хичээллэх үү?","Танд таалагддаг нэг зүйр үг хэлж өгөөч?","Өнөөдөр нэг өгүүлбэр сурцгаая: «How are you?» — Та сайн байна уу?","Таны бага насны нэг дурсамж ярьж өгөөч?","Энэ үгийг яаж дуудах вэ? Би бичлэг илгээе.","Баярлалаа! Дараагийн удаа уулзъя 🙏"];
+  function myRole(){return me().mode==="senior"?"elder":"youth";}
+  function loadMentor(){
+    MT.list=[];
+    Promise.all([db.ref("mentor").orderByChild("ts").limitToLast(200).once("value"),db.ref("mentor/"+uid).once("value"),db.ref("xchin/"+uid).once("value").catch(function(){return {val:function(){return null;}};})]).then(function(r){
+      var v=r[0].val()||{},want=myRole()==="elder"?"youth":"elder",L=me().lang,old=Date.now()-30*86400000,inb=r[2].val()||{};
+      MT.me=r[1].val();
+      MT.list=Object.keys(v).filter(function(k){var x=v[k];return k!==uid&&x.role===want&&x.lang===L&&(x.ts||0)>old&&!isBlocked(k);})
+        .map(function(k){return {uid:k,name:v[k].name,ts:v[k].ts,xch:true,mentor:true};}).sort(function(a,b){return b.ts-a.ts;});
+      MT.inbox=Object.keys(inb).filter(function(k){return v[k]&&v[k].role===want&&!isBlocked(k);}).map(function(k){return {uid:k,name:inb[k].name,ts:inb[k].ts,xch:true,mentor:true};});
+      if(screen==="home"&&sub==="mentor")paint();
+    }).catch(function(){MT.list=[];MT.err=true;paint();});
+  }
+  function viewMentor(){
+    var box=h("div"),role=myRole(),L=me().lang,LN=XLANG[L].toLowerCase();
+    if(me().mode==="kid"){box.append(h("p",{class:"note"},"Энэ хэсэг томчуудад зориулагдсан."));return box;}
+    box.append(h("div",{class:"note",style:"margin-top:0"},role==="elder"
+      ?"👵 Залуу туслагчтай хосолж, "+LN+" хэлээ хамтдаа давтаарай. Харин та тэдэнд монгол зүйр үг, түүх, ахмадын үгээ хуваалцаарай. Утас, хаяг, банкны мэдээлэл хэзээ ч бүү бич."
+      :"🧑 Ахмад настанд "+LN+" хэл сурахад нь тусалж, оронд нь монгол зүйр үг, түүх сонсоорой. Тэвчээртэй, хүндэтгэлтэй бай. Хувийн мэдээлэл бүү асуу."));
+    if(MT.list===null){loadMentor();box.append(h("p",{class:"muted"},"Ачаалж байна..."));return box;}
+    box.append(h("div",{style:"display:flex;gap:8px;align-items:center;margin:10px 0"},
+      h("div",{style:"flex:1"},h("b",null,MT.me?"✅ Та жагсаалтад байна":(role==="elder"?"Туслагч хайж байна":"Туслагч болох")),h("div",{class:"muted small"},role==="elder"?"Залуу туслагчид таныг олж бичнэ.":"Ахмадууд таныг олж бичнэ.")),
+      h("button",{class:"btn"+(MT.me?"":" primary"),style:"flex:none",onclick:function(){
+        var p=MT.me?db.ref("mentor/"+uid).remove():db.ref("mentor/"+uid).set({name:prof.name,role:role,lang:L,ts:TS()});
+        p.then(function(){MT.me=MT.me?null:{role:role};paint();}).catch(function(){env.toast("Алдаа гарлаа");});
+      }},MT.me?"Нуух":"Нэгдэх")));
+    if(MT.inbox&&MT.inbox.length){
+      box.append(h("div",{style:"font-weight:700;margin:12px 0 6px"},"📨 Танд бичсэн"));
+      MT.inbox.forEach(function(x){box.append(h("div",{class:"note",style:"display:flex;align-items:center;gap:8px;margin-top:8px"},h("div",{style:"flex:1;font-weight:700"},x.name),h("button",{class:"btn primary",style:"padding:8px 14px",onclick:function(){openChat(x);}},"💬 Хариулах")));});
+    }
+    box.append(h("div",{style:"font-weight:700;margin:12px 0 6px"},role==="elder"?"🧑 "+XLANG[L]+" хэл мэддэг залуу туслагчид":"👵 "+XLANG[L]+" хэл сурч буй ахмадууд"));
+    if(!MT.list.length)box.append(h("p",{class:"muted small"},MT.err?"Ачаалж чадсангүй.":"Одоогоор хүн алга. Жагсаалтад нэгдээд хүлээгээрэй."));
+    MT.list.forEach(function(x){
+      box.append(h("div",{class:"note",style:"display:flex;align-items:center;gap:8px;margin-top:8px"},
+        h("div",{style:"flex:1"},h("div",{style:"font-weight:700"},x.name),h("div",{class:"muted small"},role==="elder"?"Туслахад бэлэн":"Хамт сурах хүн хайж байна")),
+        h("button",{class:"btn primary",style:"padding:8px 14px",onclick:function(){openChat(x);}},"💬 Бичих")));
+    });
+    box.append(h("button",{class:"btn ghost",style:"width:100%;margin-top:10px",onclick:function(){MT.list=null;paint();}},"⟳ Шинэчлэх"));
+    return box;
+  }
   function setScreen(n){if(screen==="botchat"){pending=n;return false;}screen=n;return true;}
   function botList(){return BOTS[me().lang]||BOTS.en;}
   function viewBots(){
@@ -670,8 +714,8 @@
     if(screen==="botchat"&&bc){root.append(viewBotChat());return;}
     if(screen==="quiz"){root.append(viewQuiz());return;}
     if(screen==="duel"&&duel){if(!duelRef){openDuel(duel.id);return;}root.append(viewDuel());return;}
-    var tabs=h("div",{style:"display:flex;gap:6px;margin-bottom:12px"});
-    [["friends","👥 Найз"],["bots","🤖 AI"],["room","🌐 Өрөө"],["xch","🔁 Солилцоо"],["inbox","🎯 Сорилт"]].filter(function(t){return !((t[0]==="room"||t[0]==="xch")&&(me().mode==="senior"||me().mode==="kid"));}).forEach(function(t){
+    var tabs=h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"});
+    [["friends","👥 Найз"],["bots","🤖 AI"],["room","🌐 Өрөө"],["xch","🔁 Солилцоо"],["mentor","👵 Ахмад–залуу"],["inbox","🎯 Сорилт"]].filter(function(t){return !((t[0]==="room"||t[0]==="xch")&&(me().mode==="senior"||me().mode==="kid"))&&!(t[0]==="mentor"&&me().mode==="kid");}).forEach(function(t){
       tabs.append(h("button",{class:"chip",style:"flex:1;"+(sub===t[0]?"border-color:var(--accent,#3a7bd5);":""),"aria-current":sub===t[0]?"true":null,onclick:function(){sub=t[0];paint();}},t[1]));
     });
     root.append(tabs);
@@ -679,6 +723,7 @@
     else if(sub==="bots")root.append(viewBots());
     else if(sub==="room")root.append(viewRoom());
     else if(sub==="xch")root.append(viewXch());
+    else if(sub==="mentor")root.append(viewMentor());
     else root.append(viewInbox());
   }
 
@@ -693,6 +738,6 @@
     },
     detach:function(){detach();duelOff();},
     /* нэвтрэлт солигдоход (Google холбох / гарах) */
-    reset:function(){detach();duelOff();duel=null;goals={data:{},loaded:false,form:false};xch={list:null,on:null};db=null;uid=null;prof=null;friendsData=[];chatWith=null;quiz=null;screen="boot";}
+    reset:function(){detach();duelOff();duel=null;MT={list:null,me:null};goals={data:{},loaded:false,form:false};xch={list:null,on:null};db=null;uid=null;prof=null;friendsData=[];chatWith=null;quiz=null;screen="boot";}
   };
 })();
