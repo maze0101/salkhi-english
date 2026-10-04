@@ -1784,8 +1784,76 @@ function addPanel(){
     }},"Нэмэх"));
   return wrap;
 }
+/* ---------- 📺 ном, кино, цувралын үгс: бүтээлийн нэрээр AI гол үг, хэллэгийг гаргаж «Миний үгс»-д нэмнэ ---------- */
+function mediaPrompt(title){
+  var LN=LANG_EN[state.lang],lv=state.level==="all"?"b1":state.level,rd=state.lang==="ja"?"hiragana reading":state.lang==="zh"?"pinyin with tone marks":"";
+  return "A Mongolian learner of "+LN+" (level "+LVDESC[lv]+") is about to watch or read: \""+title+"\".\n"+
+   "List 20 "+LN+" words or short phrases that are frequent or important for understanding this work (its setting, characters' typical speech, key themes). Prefer useful everyday words over names.\n"+
+   "Reply with EXACTLY 20 lines and nothing else, each in this format:\n"+
+   "<"+LN+" word or phrase> || "+(rd?"<"+rd+"> || ":"")+"<Mongolian meaning (Cyrillic)> || <short "+LN+" example sentence in the style of this work> || <Mongolian translation of the example>\n"+
+   "If you do not know this work, still give 20 words that fit its title and genre. No numbering, no markdown.";
+}
+function parseMedia(t){
+  var rd=state.lang==="ja"||state.lang==="zh",seen={};
+  return String(t||"").replace(/\*\*/g,"").split("\n").map(function(l){
+    var p=l.replace(/^[\s\-•*\d.)]+/,"").split("||").map(function(x){return x.trim();});
+    if(rd&&p.length>=5)p={w:p[0],r:p[1],m:p[2],ex:p[3],exm:p[4]};
+    else if(p.length>=4)p={w:p[0],r:"",m:p[1],ex:p[2],exm:p[3]};
+    else return null;
+    if(!p.w||!p.m||p.w.length>60||seen[p.w.toLowerCase()])return null;seen[p.w.toLowerCase()]=1;
+    p.on=!WORDS.some(function(w){return (w[6]||"en")===state.lang&&w[1].toLowerCase()===p.w.toLowerCase();});
+    return p;
+  }).filter(Boolean).slice(0,20);
+}
+function mediaPanel(){
+  var M=ui.media||(ui.media={open:false,title:"",busy:false,list:null,err:""}),wrap=h("div",{class:"note",style:"margin-bottom:12px"});
+  if(!M.open){
+    wrap.append(h("button",{class:"btn",style:"width:100%",onclick:function(){M.open=true;render();}},"📺 Ном, кино, цувралын үгс (AI)"));
+    return wrap;
+  }
+  wrap.append(h("div",{style:"font-weight:700"},"📺 Ном, кино, цувралын үгс"),h("div",{class:"muted small"},"Үзэх гэж буй цуврал, кино эсвэл уншиж буй номынхоо нэрийг бич. AI түүнд гардаг гол 20 үг, хэллэгийг гаргана."));
+  var inp=h("input",{class:"tin",maxlength:"80",placeholder:{ko:"ж: 사랑의 불시착 / Crash Landing on You",ja:"ж: 千と千尋の神隠し / Spirited Away",zh:"ж: 西游记",ru:"ж: Маша и Медведь",de:"ж: Dark (Netflix)",en:"ж: Harry Potter, Friends, The Lion King"}[state.lang]||"",value:M.title,"aria-label":"Бүтээлийн нэр"});
+  inp.addEventListener("input",function(){M.title=inp.value;});
+  wrap.append(inp);
+  if(M.err)wrap.append(h("div",{class:"fb bad"},M.err));
+  if(M.busy)wrap.append(h("div",{class:"fb"},"⏳ AI үгсийг бэлдэж байна..."));
+  wrap.append(h("div",{class:"row"},h("button",{class:"btn",onclick:function(){if(M.ctl)try{M.ctl.abort();}catch(e){}M.open=false;M.list=null;M.busy=false;render();}},"Хаах"),
+    h("button",{class:"btn primary",disabled:M.busy,onclick:function(){
+      var t=String(M.title||"").trim();if(t.length<2){toast("Бүтээлийн нэрээ бичнэ үү");return;}
+      M.busy=true;M.err="";M.list=null;M.ctl=new AbortController();render();
+      writeAI([{role:"user",content:mediaPrompt(t)}],{signal:M.ctl.signal,task:"check",onText:function(){}}).then(function(r){
+        M.busy=false;M.list=parseMedia(r&&r.text);M.src=t;if(M.list.length<5){M.list=null;M.err="AI үг гаргаж чадсангүй. Дахин оролдоно уу.";}
+        if(state.tab==="words")render();
+      }).catch(function(e){
+        M.busy=false;if(e&&(e.code==="cancelled"||e.name==="AbortError"))return;
+        M.err=e&&e.code==="no_ai"?"AI одоогоор ашиглах боломжгүй байна (интернэт шалгана уу).":errCopy(e&&e.code);if(state.tab==="words")render();
+      });
+    }},"✨ Үг гаргах")));
+  if(M.list){
+    var n=M.list.filter(function(x){return x.on;}).length;
+    wrap.append(h("p",{class:"muted small",style:"margin:10px 0 4px"},"«"+M.src+"» · сонгосон үгсээ «Миний үгс»-д нэмнэ (өмнө нь байгаа үгийг сонгоогүй)."));
+    M.list.forEach(function(x){
+      var cb=h("input",{type:"checkbox","aria-label":x.w});cb.checked=x.on;cb.addEventListener("change",function(){x.on=cb.checked;render();});
+      wrap.append(h("label",{class:"srow",style:"gap:10px;align-items:flex-start;cursor:pointer"},cb,
+        h("span",{style:"flex:1"},h("b",null,x.w+(x.r?" ("+x.r+")":"")),h("span",null," — "+x.m),x.ex?h("div",{class:"muted small"},x.ex+(x.exm?" — "+x.exm:"")):null),
+        h("button",{class:"btn ghost",type:"button",style:"padding:4px 8px;flex:none","aria-label":"Сонсох",onclick:function(e){e.preventDefault();speak(x.w);}},"🔊")));
+    });
+    wrap.append(h("button",{class:"btn primary",style:"width:100%;margin-top:8px",disabled:!n,onclick:function(){
+      var k=0;
+      M.list.forEach(function(x){
+        if(!x.on||WORDS.some(function(w){return (w[6]||"en")===state.lang&&w[1].toLowerCase()===x.w.toLowerCase();}))return;
+        var entry=["b1",x.w,x.m,x.ex||"",null,"mine",state.lang,x.r||null,x.exm||null];
+        state.custom.push(entry);WORDS.push(entry);k++;
+      });
+      sset("custom",state.custom);toast("📺 "+k+" үг «Миний үгс»-д нэмэгдлээ");
+      M.list=null;M.open=false;state.cat="mine";ui.vocab.cur=null;ui.vocab.quiz=null;ui.vocab.mode="card";render();window.scrollTo(0,0);
+    }},"➕ "+n+" үгийг нэмж сурах"));
+  }
+  return wrap;
+}
 function viewList(root,p){
   var v=ui.vocab;
+  if(state.mode!=="kid")root.append(mediaPanel());
   root.append(addPanel());
   var inp=h("input",{class:"tin",type:"search",id:"wsearch",placeholder:"Хайх (үг, уншлага эсвэл орчуулга)...","aria-label":"Үг хайх",autocomplete:"off",style:"margin:0 0 10px"});
   inp.value=v.q||"";
