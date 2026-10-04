@@ -4771,6 +4771,7 @@ function viewWrite(root){
       W.res=R;W.busy=false;
       var hs=sget("writes",[]);if(!Array.isArray(hs))hs=[];hs.push({d:dkey(new Date()),lang:state.lang,t:W.topic[0],s:R.score});sset("writes",hs.slice(-30));
       R.mist.forEach(function(x){if(x.bad&&x.good)mbAdd("wr",{t:x.bad,g:x.good,c:x.code,n:0});});
+      errCatAdd(R.mist);
       logAct("wr");addXP(10+(R.score||0));if(R.score>=8)celebrate(true,true);
       if(state.tab==="play")render();window.scrollTo(0,0);
     }).catch(function(e){
@@ -4930,6 +4931,86 @@ function mbWord(t){
 function mbWords(){return mbMine("w").map(function(x){return {x:x,w:mbWord(x.t)};}).filter(function(r){return r.w;});}
 function mbGrammar(){return state.mode==="senior"?0:missCount();}
 function mbCount(){return mbWords().length+mbMine("wr").length+mbMine("c").length+mbMine("p").length+mbGrammar();}
+/* ---------- давтагддаг алдааны төрөл (бичвэр шалгалтаас) + тухайн төрлөөр AI дасгал ---------- */
+var ERREN={TENSE:"verb tenses",AGREEMENT:"subject-verb agreement",PLURAL:"singular and plural forms",ARTICLE:"articles",PREPOSITION:"prepositions",
+  PARTICLE:"particles and case markers",WORD_ORDER:"word order",SPELLING:"spelling of common words",WORD_CHOICE:"choosing the right word (commonly confused words)",
+  FORM:"verb and adjective forms (infinitive, -ing, conjugation)",CASE:"noun case endings",GENDER:"noun gender and matching forms",
+  MISSING:"words learners often leave out (auxiliaries, articles, particles)",EXTRA:"words learners add unnecessarily",PUNCTUATION:"punctuation and capitalisation",STYLE:"natural collocations and phrasing"};
+function errCats(){var a=sget("errcat",{})||{};return a[state.lang]||{};}
+function errCatAdd(list){
+  if(!list||!list.length)return;
+  var a=sget("errcat",{})||{},m=a[state.lang]||(a[state.lang]={});
+  list.forEach(function(x){var c=ERRMN[x.code]?x.code:"STYLE";m[c]=(m[c]||0)+1;});
+  sset("errcat",a);
+}
+function drillPrompt(code){
+  var LN=LANG_EN[state.lang],lv=state.level==="all"?"b1":state.level;
+  return "Create 6 short multiple-choice exercises in "+LN+" for a Mongolian learner at level "+LVDESC[lv]+" who keeps making mistakes with: "+ERREN[code]+".\n"+
+   "Each exercise is one natural sentence with exactly one gap written as ___ . Give the correct answer and two wrong answers that a Mongolian learner would typically choose.\n"+
+   "Reply with EXACTLY 6 lines in this format and nothing else:\n"+
+   "<sentence with ___> || <correct> || <wrong 1> || <wrong 2> || <one short explanation in Mongolian (Cyrillic)>\n"+
+   "Do not number the lines. Do not use markdown.";
+}
+function parseDrill(t){
+  return String(t||"").replace(/\*\*/g,"").split("\n").map(function(l){
+    var p=l.replace(/^[\s\-•*\d.)]+/,"").split("||").map(function(x){return x.trim();});
+    if(p.length<4||p[0].indexOf("___")<0||!p[1]||!p[2]||p[1]===p[2]||p[1]===p[3])return null;
+    return {q:p[0],a:p[1],o:shuffle([p[1],p[2]].concat(p[3]?[p[3]]:[])),why:p[4]||""};
+  }).filter(Boolean).slice(0,6);
+}
+function startDrill(code){
+  var D={code:code,busy:true,qs:[],i:0,score:0,picked:null,err:"",ctl:new AbortController()};ui.play.drill=D;render();window.scrollTo(0,0);
+  writeAI([{role:"user",content:drillPrompt(code)}],{signal:D.ctl.signal,task:"check",onText:function(){}}).then(function(r){
+    D.busy=false;D.qs=parseDrill(r&&r.text);if(D.qs.length<3)D.err="AI дасгал үүсгэж чадсангүй. Дахин оролдоно уу.";
+    if(ui.play.drill===D)render();
+  }).catch(function(e){
+    D.busy=false;if(e&&(e.code==="cancelled"||e.name==="AbortError"))return;
+    D.err=e&&e.code==="no_ai"?"AI одоогоор ашиглах боломжгүй байна (интернэт шалгана уу).":errCopy(e&&e.code);
+    if(ui.play.drill===D)render();
+  });
+}
+function viewDrill(root,D){
+  var E=ERRMN[D.code]||ERRMN.STYLE;
+  root.append(h("button",{class:"back",onclick:function(){try{D.ctl.abort();}catch(e){}ui.play.drill=null;render();}},"‹ Алдааны дэвтэр"));
+  root.append(h("h2",{style:"font-size:19px"},"🎯 "+E[0]+" — дасгал"));
+  if(D.busy){root.append(h("div",{class:"fb"},"⏳ AI таны алдаанд тохирсон дасгал бэлдэж байна..."));return root;}
+  if(D.err){root.append(h("div",{class:"fb bad"},D.err),h("button",{class:"btn primary",onclick:function(){startDrill(D.code);}},"Дахин оролдох"));return root;}
+  if(D.i>=D.qs.length){
+    if(!D.done){D.done=true;addXP(D.score*2);if(D.score===D.qs.length)celebrate(true,true);}
+    root.append(h("div",{class:"note",style:"text-align:center;margin-top:12px"},h("div",{style:"font-size:40px"},D.score===D.qs.length?"🏆":"💪"),
+      h("div",{style:"font-weight:700"},D.score+" / "+D.qs.length+" зөв"),h("div",{class:"muted small"},WTIP[D.code]||E[1])));
+    root.append(h("div",{class:"row"},h("button",{class:"btn",onclick:function(){ui.play.drill=null;render();}},"Дэвтэр рүү"),
+      h("button",{class:"btn primary",onclick:function(){startDrill(D.code);}},"Шинэ 6 дасгал")));
+    return root;
+  }
+  var q=D.qs[D.i];
+  root.append(h("div",{class:"muted small"},(D.i+1)+" / "+D.qs.length+" · Хоосон зайд аль нь тохирох вэ?"));
+  root.append(h("div",{class:"en",style:"font-size:22px;margin:10px 0"},q.q));
+  q.o.forEach(function(o){
+    var cls="opt";if(D.picked!=null){if(o===q.a)cls+=" ok";else if(o===D.picked)cls+=" bad";}
+    root.append(h("button",{class:cls,disabled:D.picked!=null,onclick:function(){D.picked=o;if(o===q.a)D.score++;render();}},o));
+  });
+  if(D.picked!=null){
+    var ok=D.picked===q.a;
+    root.append(h("div",{class:"fb "+(ok?"ok":"bad")},ok?"Зөв!":wrongPre()+q.a));
+    if(q.why)root.append(h("p",{class:"muted small",style:"margin-top:6px"},q.why));
+    root.append(h("button",{class:"btn primary",style:"margin-top:8px",onclick:function(){speak(q.q.replace("___",q.a));D.i++;D.picked=null;render();window.scrollTo(0,0);}},D.i+1<D.qs.length?"Дараагийн":"Дүн харах"));
+  }
+  return root;
+}
+function errCatPanel(root){
+  var m=errCats(),ks=Object.keys(m).sort(function(a,b){return m[b]-m[a];}).slice(0,4);if(!ks.length)return;
+  var max=m[ks[0]],box=h("div",{class:"note",style:"margin:10px 0"},h("div",{style:"font-weight:700"},"📊 Таны давтагддаг алдаа"),
+    h("div",{class:"muted small"},"Бичвэр шалгуулах бүрт AI-ийн олсон алдааг төрлөөр нь тоолно."));
+  ks.forEach(function(k){
+    var E=ERRMN[k]||ERRMN.STYLE;
+    box.append(h("div",{style:"display:flex;gap:10px;align-items:center;margin-top:10px"},
+      h("div",{style:"flex:1;min-width:0"},h("div",{class:"small",style:"font-weight:700"},E[0]+" ×"+m[k]),
+        h("div",{style:"height:8px;border-radius:6px;background:var(--line);overflow:hidden;margin-top:4px"},h("i",{style:"display:block;height:100%;background:var(--danger);width:"+Math.round(m[k]/max*100)+"%"}))),
+      h("button",{class:"btn",style:"flex:none;padding:6px 12px",onclick:function(){startDrill(k);}},"🎯 Дасгал")));
+  });
+  root.append(box);
+}
 function startMBReview(){
   var qs=mbWords().map(function(r){return {k:"w",w:r.w};}).concat(mbMine("wr").map(function(x){return {k:"wr",x:x};}));
   qs=shuffle(qs).slice(0,10);
@@ -4987,9 +5068,11 @@ function viewMBReview(root,R){
   return root;
 }
 function viewMB(root){
+  if(ui.play.drill)return viewDrill(root,ui.play.drill);
   if(ui.play.mbr)return viewMBReview(root,ui.play.mbr);
   var W=mbWords(),WR=mbMine("wr"),C=mbMine("c"),PR=mbMine("p"),G=mbGrammar();
   root.append(h("p",{class:"muted"},"Үг, бичих, яриа, дуудлага, дүрэм дээр гаргасан алдаа чинь энд цуглардаг. Хоёр удаа зөв хариулсан алдаа автоматаар хасагдана."));
+  errCatPanel(root);
   if(!W.length&&!WR.length&&!C.length&&!PR.length&&!G){root.append(h("div",{class:"note"},"🎉 Одоогоор алдаа алга. Дасгал хийгээд эргэж ирээрэй."));return root;}
   var nQ=W.length+WR.length;
   if(nQ)root.append(h("button",{class:"btn primary",type:"button",style:"width:100%;margin:6px 0",onclick:startMBReview},"🔁 Алдаан дээрээ давтах ("+Math.min(10,nQ)+" асуулт)"));
