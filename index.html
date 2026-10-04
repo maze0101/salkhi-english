@@ -627,6 +627,7 @@ p+p{margin-top:10px}
 <script src="idioms.js"></script>
 <script src="culture.js"></script>
 <script src="mncompare.js"></script>
+<script src="prondiag.js"></script>
 <script src="writing.js"></script>
 <script src="classes.js"></script>
 <script src="numbers.js"></script>
@@ -2701,7 +2702,16 @@ function viewAlpha(){
   if(a.sec==="phr"){root.append(viewPhrases());return root;}
   if(a.sec==="qz"){root.append(viewAQuiz());return root;}
   if(a.sec==="num"&&window.NumLearn){root.append(window.NumLearn.view({h:h,lang:function(){return state.lang;},render:render,speak:function(t){speak(t);},addXP:addXP}));return root;}
-  if(a.sec==="mp"){root.append(viewMP());return root;}
+  if(a.sec==="mp"){
+    if(a.diag&&window.PronDiag&&PronDiag.has(state.lang))return PronDiag.view({h:h,lang:function(){return state.lang;},render:render,speak:speak,sget:sget,sset:sset,addXP:addXP,close:function(){a.diag=false;render();window.scrollTo(0,0);}});
+    if(window.PronDiag&&PronDiag.has(state.lang)){
+      var wk=PronDiag.weak({sget:sget,lang:function(){return state.lang;}});
+      root.append(h("button",{class:"lrow",type:"button",style:"margin:4px 0 10px",onclick:function(){a.diag=true;render();window.scrollTo(0,0);}},
+        h("span",{class:"hexb ico"},"🩺"),h("span",{style:"flex:1;text-align:left"},h("div",{class:"t"},"Дуудлагын онош"),
+          h("div",{class:"muted small"},wk?(wk.length?"Гол бэрхшээл: "+wk.join(", "):"Бүх авиаг зөв ялгасан 🏆"):"Монгол хүнд хэцүү авиануудаас аль нь танд хэцүү вэ? ~3 мин")),h("span",{"aria-hidden":"true"},"›")));
+    }
+    root.append(viewMP());return root;
+  }
   if(a.sec==="hz"){
     root.append(window.HanziCompare.view({h:h,rerender:render,speakAs:function(lang,glyph,read){
       var t=lang==="ko"?String(read).split(" ")[0]:glyph,old=state.lang;
