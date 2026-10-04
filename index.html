@@ -628,6 +628,7 @@ p+p{margin-top:10px}
 <script src="culture.js"></script>
 <script src="mncompare.js"></script>
 <script src="prondiag.js"></script>
+<script src="voicediary.js"></script>
 <script src="writing.js"></script>
 <script src="classes.js"></script>
 <script src="numbers.js"></script>
@@ -5704,8 +5705,10 @@ function clsEnv(){
     loadLang:function(l,cb){loadLangs([l],cb);},
     close:function(){ui.cls=false;render();window.scrollTo(0,0);}};
 }
+function vdEnv(){return {h:h,lang:function(){return state.lang;},render:render,speak:speak,addXP:addXP,toast:toast,close:function(){ui.vd=false;render();window.scrollTo(0,0);}};}
 function viewStats(){
   if(ui.cls&&window.Classes)return Classes.view(clsEnv());
+  if(ui.vd&&window.VoiceDiary)return VoiceDiary.view(vdEnv());
   var root=h("div"),p=WORDS;
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
   var done=Object.keys(state.lessons).length;
@@ -5722,6 +5725,7 @@ function viewStats(){
     root.append(h("button",{class:"lrow",type:"button",style:"margin-top:12px",onclick:function(){ui.cls=true;render();window.scrollTo(0,0);}},
       h("span",{class:"hexb ico"},"🏫"),h("span",{style:"flex:1"},h("div",{class:"t"},"Анги"),h("div",{class:"muted small"},nc?nc+" анги · даалгавраа харах":"Багшийн ангид нэгдэх эсвэл анги үүсгэх")),h("span",{"aria-hidden":"true"},"›")));
   }
+  if(window.VoiceDiary&&window.indexedDB)root.append(VoiceDiary.card(vdEnv(),function(){ui.vd=true;render();window.scrollTo(0,0);}));
   root.append(h("h3",{style:"margin:22px 0 10px"},"Миний явц"));
   var gb=h("div",{class:"goalbox"}),rw=h("div",{class:"ringw"},ringEl(todayXP()/state.goal,110,12),h("span",{class:"c"},Math.min(100,Math.round(todayXP()/state.goal*100))+"%"));
   rw.firstChild.style.margin="0";
