@@ -11,6 +11,7 @@ function initSalkhiHero(root, opts = {}) {
     'орос, герман хэлний үг, дүрэм, яриа'
   ];
   const FONT = opts.font || '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif';
+  const TITLE_FONT = opts.titleFont || FONT;
 
   const cv = root.querySelector('canvas');
   const ctx = cv.getContext('2d');
@@ -34,8 +35,10 @@ function initSalkhiHero(root, opts = {}) {
     const o = document.createElement('canvas');
     o.width = W; o.height = H;
     const oc = o.getContext('2d');
-    const fs = Math.min(84, W * 0.2);
-    oc.font = `800 ${fs}px ${FONT}`;
+    let fs = Math.min(84, W * 0.2);
+    oc.font = `700 ${fs}px ${TITLE_FONT}`;
+    const tw = oc.measureText(TITLE).width;
+    if (tw > W - 48) { fs *= (W - 48) / tw; oc.font = `700 ${fs}px ${TITLE_FONT}`; }
     oc.fillStyle = '#fff';
     oc.textBaseline = 'middle';
     oc.fillText(TITLE, 24, H * 0.6);
@@ -207,7 +210,11 @@ function initSalkhiHero(root, opts = {}) {
   const onVis = () => { running = !document.hidden; start(); };
   document.addEventListener('visibilitychange', onVis);
 
-  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => { build(); start(); });
+  // Гарчгийн фонт DOM-д ашиглагдаагүй тул тусад нь ачаална
+  const fontsReady = document.fonts
+    ? Promise.all([document.fonts.load(`700 40px ${TITLE_FONT}`, TITLE), document.fonts.ready]).catch(() => {})
+    : Promise.resolve();
+  fontsReady.then(() => { build(); start(); });
 
   return {
     gust,

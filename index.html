@@ -24,7 +24,7 @@ window.addEventListener("error",function(e){
 <meta name="theme-color" content="#132226">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap&subset=cyrillic,cyrillic-ext" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Unbounded:wght@700&display=swap&subset=cyrillic,cyrillic-ext" rel="stylesheet">
 <style>
 /* Салхи — цэвэр минимал загвар: нэг өнгөний акцент, нимгэн хүрээ, сүүдэргүй. Бүх горимд ижил. */
 :root{
@@ -418,7 +418,7 @@ p+p{margin-top:10px}
   </header>
 <script src="hero.js"></script>
 <script>
-window.salkhiHero=initSalkhiHero(document.getElementById("salkhiHero"),{font:"Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif"});
+window.salkhiHero=initSalkhiHero(document.getElementById("salkhiHero"),{font:"Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",titleFont:"Unbounded, Inter, system-ui, sans-serif"});
 </script>
 <div class="kmini" id="salkhiMini" aria-hidden="true"><div class="sm-m"><div class="sm-crop"></div></div><div class="sm-say"></div></div>
 <script>
@@ -5720,7 +5720,7 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20261004-10";
+var BUILD="20261004-11";
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
