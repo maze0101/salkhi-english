@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Learn Mongolian · Salkhi</title>
-<meta name="description" content="Learn Mongolian: Cyrillic alphabet with audio, everyday phrases, 700+ words and quizzes.">
+<meta name="description" content="Learn Mongolian: Cyrillic alphabet with audio, everyday phrases, 700+ words, quizzes and language exchange with Mongolians.">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#1F5F5B">
@@ -154,11 +154,12 @@ function spk(t){return h("button",{class:"spk",type:"button","aria-label":"Play 
 
 /* ---------- views ---------- */
 var main=document.getElementById("main"),nav=document.getElementById("nav");
-var TABS=[["abc","Alphabet"],["phr","Phrases"],["words","Words"],["quiz","Quiz"]];
+var TABS=[["abc","Alphabet"],["phr","Phrases"],["words","Words"],["quiz","Quiz"],["chat","Chat"]];
 function renderNav(){nav.textContent="";TABS.forEach(function(t){nav.append(h("button",{type:"button","aria-current":S.tab===t[0]?"page":null,onclick:function(){S.tab=t[0];renderNav();render();window.scrollTo(0,0);}},t[1]));});}
 function render(){
   main.textContent="";
-  main.append(S.tab==="abc"?vAbc():S.tab==="phr"?vPhr():S.tab==="words"?vWords():vQuiz());
+  if(S.tab!=="chat")xCloseChat();
+  main.append(S.tab==="abc"?vAbc():S.tab==="phr"?vPhr():S.tab==="words"?vWords():S.tab==="chat"?vChat():vQuiz());
 }
 function vAbc(){
   var r=h("div");
@@ -254,6 +255,111 @@ function vQuiz(){
     }},mnMode?o.en:[h("b",null,o.mn),h("span",{class:"muted small"}," · "+rom(o.mn))]));
   });
   if(q.picked)r.append(h("button",{class:"btn primary",type:"button",style:"width:100%;margin-top:12px",onclick:function(){newQ();render();}},"Next"));
+  return r;
+}
+/* ---------- language exchange: chat with Mongolians who are learning your language (Firebase, anonymous) ----------
+   xch/{uid}: {name,nat,learn:"mn",ts}; xchin/{to}/{from}: who wrote to whom; chats/{a_b}: messages (shared with the Salkhi app) */
+var NATS=[["en","English"],["ja","日本語 Japanese"],["ko","한국어 Korean"],["zh","中文 Chinese"],["ru","Русский Russian"],["de","Deutsch German"]];
+var X={st:"idle",uid:null,db:null,me:sget("xme",null),list:null,inbox:[],on:false,chat:null,ref:null,err:"",last:0};
+function xLoad(src){return new Promise(function(ok,no){var s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=no;document.head.append(s);});}
+function xConnect(){
+  if(X.st==="ready"||X.st==="busy")return;
+  X.st="busy";render();
+  var SDK="https://www.gstatic.com/firebasejs/10.12.2/";
+  (window.SALKHI_FB?Promise.resolve():xLoad("firebase-config.js")).then(function(){
+    if(!window.SALKHI_FB)throw new Error("not configured");
+    if(window.firebase&&firebase.database)return;
+    return xLoad(SDK+"firebase-app-compat.js").then(function(){return xLoad(SDK+"firebase-auth-compat.js");}).then(function(){return xLoad(SDK+"firebase-database-compat.js");});
+  }).then(function(){
+    if(!firebase.apps.length)firebase.initializeApp(window.SALKHI_FB);
+    return firebase.auth().currentUser||new Promise(function(ok){var u=firebase.auth().onAuthStateChanged(function(x){u();ok(x);});}).then(function(u){return u||firebase.auth().signInAnonymously().then(function(c){return c.user;});});
+  }).then(function(u){X.uid=u.uid;X.db=firebase.database();X.st="ready";xRefresh();})
+    .catch(function(e){X.st="error";X.err=String(e&&e.message||e);render();});
+}
+function xRefresh(){
+  if(!X.me){render();return;}
+  var old=Date.now()-30*86400000;X.list=null;render();
+  Promise.all([X.db.ref("xch").orderByChild("ts").limitToLast(200).once("value"),X.db.ref("xch/"+X.uid).once("value"),X.db.ref("xchin/"+X.uid).once("value")]).then(function(r){
+    var v=r[0].val()||{},inb=r[2].val()||{},bl=sget("xblock",[]);
+    X.on=!!r[1].val();
+    X.list=Object.keys(v).filter(function(k){var x=v[k];return k!==X.uid&&x.nat==="mn"&&x.learn===X.me.nat&&(x.ts||0)>old&&bl.indexOf(k)<0;}).map(function(k){return {uid:k,name:v[k].name,ts:v[k].ts};}).sort(function(a,b){return b.ts-a.ts;});
+    X.inbox=Object.keys(inb).filter(function(k){return bl.indexOf(k)<0;}).map(function(k){return {uid:k,name:inb[k].name,ts:inb[k].ts};}).sort(function(a,b){return b.ts-a.ts;});
+    if(X.on)X.db.ref("xch/"+X.uid).set({name:X.me.name,nat:X.me.nat,learn:"mn",ts:firebase.database.ServerValue.TIMESTAMP}).catch(function(){});
+    render();
+  }).catch(function(e){X.err=String(e&&e.message||e);X.list=[];render();});
+}
+function xClean(t){t=String(t||"").replace(/\s+/g," ").trim();if(!t)return null;if(/https?:|www\.|\.com|\.mn/i.test(t))return "link";if(/\d[\d\s\-]{6,}\d/.test(t))return "phone";return t;}
+function xCloseChat(){if(X.ref){X.ref.off();X.ref=null;}X.chat=null;}
+function vChatRoom(r){
+  var p=X.chat,cid=[X.uid,p.uid].sort().join("_");
+  r.append(h("button",{class:"btn",type:"button",onclick:function(){xCloseChat();render();}},"‹ Back"),h("h2",null,"💬 "+p.name));
+  r.append(h("p",{class:"muted small"},"Help each other: you correct their "+(NATS.filter(function(n){return n[0]===X.me.nat;})[0]||["",""])[1].replace(/^\S+\s/,"")+", they help with Mongolian. Tap a message to report or block. Never share phone numbers, addresses or links."));
+  var list=h("div",{class:"card",style:"display:flex;flex-direction:column;gap:6px;min-height:200px;max-height:55vh;overflow:auto"}),seen={};
+  var inp=h("input",{type:"text",maxlength:"300",placeholder:"Write a message…","aria-label":"Message",style:"flex:1;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface)"});
+  function bubble(k,m){
+    if(seen[k])return;seen[k]=1;var mine=m.uid===X.uid;
+    var b=h("div",{style:"align-self:"+(mine?"flex-end":"flex-start")+";max-width:85%;padding:8px 12px;border-radius:14px;background:"+(mine?"var(--brand)":"var(--bg)")+";color:"+(mine?"var(--brand-ink)":"var(--ink)")+";overflow-wrap:anywhere"},String(m.text||""));
+    if(!mine)b.addEventListener("click",function(){
+      var c=prompt("1 = Report this message\n2 = Block this person\n(leave empty to cancel)","");
+      if(c==="1")X.db.ref("reports").push({by:X.uid,offender:m.uid,path:"chats/"+cid+"/"+k,text:String(m.text||"").slice(0,300),ts:firebase.database.ServerValue.TIMESTAMP}).then(function(){toast("Reported. Thank you 🙏");});
+      else if(c==="2"){var bl=sget("xblock",[]);bl.push(m.uid);sset("xblock",bl);xCloseChat();xRefresh();toast("Blocked");}
+    });
+    list.append(b);list.scrollTop=list.scrollHeight;
+  }
+  if(X.ref)X.ref.off();
+  X.ref=X.db.ref("chats/"+cid).limitToLast(50);
+  X.ref.on("child_added",function(s){bubble(s.key,s.val()||{});});
+  function send(){
+    var t=xClean(inp.value);
+    if(t==="link"){toast("Links are not allowed");return;}
+    if(t==="phone"){toast("Please don't share phone numbers or personal details");return;}
+    if(!t)return;
+    if(Date.now()-X.last<2000){toast("Please wait a moment");return;}
+    X.last=Date.now();
+    X.db.ref("chats/"+cid).push({uid:X.uid,text:t.slice(0,300),ts:firebase.database.ServerValue.TIMESTAMP}).then(function(){
+      X.db.ref("xchin/"+p.uid+"/"+X.uid).set({name:X.me.name,ts:firebase.database.ServerValue.TIMESTAMP}).catch(function(){});
+    }).catch(function(){toast("Could not send");});
+    inp.value="";
+  }
+  inp.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();send();}});
+  r.append(list,h("div",{style:"display:flex;gap:8px;margin-top:8px"},inp,h("button",{class:"btn primary",type:"button",style:"flex:none",onclick:send},"➤")));
+}
+function vChat(){
+  var r=h("div");
+  if(X.chat){vChatRoom(r);return r;}
+  r.append(h("h2",null,"🤝 Language exchange"),h("p",{class:"muted"},"Chat with Mongolians who are learning your language. You help them, they help you with Mongolian."));
+  if(!X.me){
+    var nm=h("input",{type:"text",maxlength:"20",placeholder:"Your first name","aria-label":"Your first name",style:"width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);margin-top:8px"});
+    var ln=h("select",{"aria-label":"Your native language",style:"margin-top:8px"});NATS.forEach(function(n){ln.append(h("option",{value:n[0]},"I speak "+n[1]));});
+    r.append(h("div",{class:"card"},h("b",null,"Set up your profile"),nm,ln,
+      h("p",{class:"muted small"},"Be kind and respectful. Don't share phone numbers, addresses or links. Adults only."),
+      h("button",{class:"btn primary",type:"button",style:"width:100%",onclick:function(){
+        var n=nm.value.trim().slice(0,20);if(!n){toast("Please enter your name");return;}
+        X.me={name:n,nat:ln.value};sset("xme",X.me);xConnect();if(X.st==="ready")xRefresh();
+      }},"Continue")));
+    return r;
+  }
+  if(X.st!=="ready"){
+    if(X.st==="idle")setTimeout(xConnect,0);
+    r.append(h("p",{class:"muted"},X.st==="error"?"Could not connect. "+X.err:"Connecting…"));
+    if(X.st==="error")r.append(h("button",{class:"btn",type:"button",onclick:function(){X.st="idle";render();}},"Try again"));
+    return r;
+  }
+  r.append(h("div",{class:"card",style:"display:flex;gap:10px;align-items:center"},
+    h("div",{style:"flex:1"},h("b",null,X.on?"✅ Mongolians can find you":"Show me to Mongolian learners"),h("div",{class:"muted small"},X.me.name+" · "+(NATS.filter(function(n){return n[0]===X.me.nat;})[0]||["",""])[1])),
+    h("button",{class:"btn"+(X.on?"":" primary"),type:"button",style:"flex:none",onclick:function(){
+      var ref=X.db.ref("xch/"+X.uid),pr=X.on?ref.remove():ref.set({name:X.me.name,nat:X.me.nat,learn:"mn",ts:firebase.database.ServerValue.TIMESTAMP});
+      pr.then(function(){X.on=!X.on;render();}).catch(function(){toast("Something went wrong");});
+    }},X.on?"Hide":"Show me")));
+  function row(p,label){return h("div",{class:"list"},h("div",{class:"it"},h("div",null,h("b",null,p.name),h("div",{class:"muted small"},label)),
+    h("button",{class:"btn primary",type:"button",style:"flex:none",onclick:function(){X.chat=p;render();window.scrollTo(0,0);}},"💬 Chat")));}
+  if(X.inbox.length){r.append(h("h2",null,"📨 Messages for you"));X.inbox.forEach(function(p){r.append(row(p,new Date(p.ts).toLocaleString()));});}
+  r.append(h("h2",null,"🇲🇳 Mongolians learning your language"));
+  if(X.list===null)r.append(h("p",{class:"muted"},"Loading…"));
+  else if(!X.list.length)r.append(h("p",{class:"muted small"},"Nobody yet. Turn on «Show me» and check back soon."));
+  else X.list.forEach(function(p){r.append(row(p,"🇲🇳 Mongolian · learning your language"));});
+  r.append(h("div",{class:"row"},h("button",{class:"btn",type:"button",onclick:xRefresh},"⟳ Refresh"),
+    h("button",{class:"btn",type:"button",onclick:function(){if(X.on)X.db.ref("xch/"+X.uid).remove().catch(function(){});X.me=null;X.on=false;sset("xme",null);render();}},"Edit profile")));
   return r;
 }
 function applyTheme(){if(S.theme==="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",S.theme);}

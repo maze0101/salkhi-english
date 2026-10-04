@@ -173,7 +173,7 @@
       lastSend=now;
       var msg={uid:uid,text:t.slice(0,opts.max),ts:firebase.database.ServerValue.TIMESTAMP};
       if(opts.showName)msg.name=prof.name;
-      ref.push(msg).catch(function(){env.toast("Илгээж чадсангүй");});
+      ref.push(msg).then(function(){if(opts.onSend)opts.onSend();}).catch(function(){env.toast("Илгээж чадсангүй");});
       inp.value="";
     }
     inp.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();send();}});
@@ -195,10 +195,10 @@
     var f=chatWith,cid=[uid,f.uid].sort().join("_");
     var ref=db.ref("chats/"+cid);
     var box=h("div");
-    box.append(h("button",{class:"btn ghost",style:"padding:6px 12px",onclick:function(){screen="home";sub="friends";paint();}},"‹ Буцах"),
+    box.append(h("button",{class:"btn ghost",style:"padding:6px 12px",onclick:function(){screen="home";sub=f.xch?"xch":"friends";paint();}},"‹ Буцах"),
       h("h3",{style:"margin:8px 0 2px"},"💬 "+f.name),
       h("p",{class:"muted small",style:"margin:0 0 8px"},"Хамтдаа ярьж дасгалла. Эхлэхийн тулд доорх сэдвээс сонго."));
-    var ui=chatUI(ref,{max:300,showName:false,reportPath:"chats/"+cid});
+    var ui=chatUI(ref,{max:300,showName:false,reportPath:"chats/"+cid,onSend:f.xch?function(){db.ref("xchin/"+f.uid+"/"+uid).set({name:prof.name,ts:TS()}).catch(function(){});}:null});
     var sel=h("select",{class:"tin","aria-label":"Сэдэв",style:"font-size:15px"});
     sel.append(h("option",{value:""},"🎯 Ярианы сэдэв сонгох..."));
     var scripts=env.scripts(me().lang)||{};
@@ -491,11 +491,12 @@
   var XLANG={en:"Англи",ja:"Япон",ko:"Солонгос",zh:"Хятад",ru:"Орос",de:"Герман"};
   function loadXch(){
     xch.list=[];
-    Promise.all([db.ref("xch").orderByChild("ts").limitToLast(200).once("value"),db.ref("xch/"+uid).once("value")]).then(function(r){
-      var v=r[0].val()||{},L=me().lang,old=Date.now()-30*86400000;
+    Promise.all([db.ref("xch").orderByChild("ts").limitToLast(200).once("value"),db.ref("xch/"+uid).once("value"),db.ref("xchin/"+uid).once("value").catch(function(){return {val:function(){return null;}};})]).then(function(r){
+      var v=r[0].val()||{},L=me().lang,old=Date.now()-30*86400000,inb=r[2].val()||{};
       xch.on=!!r[1].val();
+      xch.inbox=Object.keys(inb).filter(function(k){return !isBlocked(k);}).map(function(k){return {uid:k,name:inb[k].name,ts:inb[k].ts,xch:true};}).sort(function(a,b){return b.ts-a.ts;});
       xch.list=Object.keys(v).filter(function(k){var x=v[k];return k!==uid&&x.nat===L&&x.learn==="mn"&&(x.ts||0)>old&&!isBlocked(k);})
-        .map(function(k){return {uid:k,name:v[k].name,ts:v[k].ts};}).sort(function(a,b){return b.ts-a.ts;});
+        .map(function(k){return {uid:k,name:v[k].name,ts:v[k].ts,xch:true};}).sort(function(a,b){return b.ts-a.ts;});
       if(screen==="home"&&sub==="xch")paint();
     }).catch(function(){xch.list=[];xch.err=true;paint();});
   }
@@ -510,6 +511,14 @@
         var p=xch.on?db.ref("xch/"+uid).remove():db.ref("xch/"+uid).set({name:prof.name,nat:"mn",learn:L,ts:TS()});
         p.then(function(){xch.on=!xch.on;paint();}).catch(function(){env.toast("Алдаа гарлаа");});
       }},xch.on?"Нуух":"Харуулах")));
+    if(xch.inbox&&xch.inbox.length){
+      box.append(h("div",{style:"font-weight:700;margin:12px 0 6px"},"📨 Танд бичсэн хүмүүс"));
+      xch.inbox.forEach(function(x){
+        box.append(h("div",{class:"note",style:"display:flex;align-items:center;gap:8px;margin-top:8px"},
+          h("div",{style:"flex:1"},h("div",{style:"font-weight:700"},x.name),h("div",{class:"muted small"},new Date(x.ts).toLocaleString())),
+          h("button",{class:"btn primary",style:"padding:8px 14px",onclick:function(){openChat(x);}},"💬 Хариулах")));
+      });
+    }
     box.append(h("div",{style:"font-weight:700;margin:12px 0 6px"},"🌍 Монгол хэл сурч буй "+XLANG[L]+" хэлтнүүд"));
     if(!xch.list.length)box.append(h("p",{class:"muted small"},xch.err?"Ачаалж чадсангүй.":"Одоогоор хүн алга. Удахгүй нэмэгдэнэ — өөрийгөө жагсаалтад харуулаад хүлээгээрэй."));
     xch.list.forEach(function(x){

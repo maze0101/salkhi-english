@@ -226,6 +226,15 @@
         ".write": "auth != null && auth.uid === $uid",
         ".validate": "newData.hasChildren(['name','nat','learn','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('nat').isString() && newData.child('nat').val().length <= 3 && newData.child('learn').isString() && newData.child('learn').val().length <= 3 && newData.child('ts').val() === now"
       }
+    },
+    "xchin": {
+      "$to": {
+        ".read": "auth != null && auth.uid === $to",
+        "$from": {
+          ".write": "auth != null && (auth.uid === $from || (auth.uid === $to && !newData.exists()))",
+          ".validate": "newData.hasChildren(['name','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('ts').val() === now"
+        }
+      }
     }
   }
 }
