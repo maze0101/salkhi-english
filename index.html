@@ -3025,6 +3025,110 @@ function viewStory(){
     h("button",{class:"btn primary",onclick:function(){s.cur=null;render();}},"Түүхүүд")));
   return root;
 }
+/* ---------- 🎙 давтах (shadowing): эх хэлтэний өгүүлбэрийг сонсоод давтан бичүүлж, хоёр долгионыг зэрэгцүүлнэ ---------- */
+function shCtx(){var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;if(!audioCtx)audioCtx=new AC();if(audioCtx.resume)audioCtx.resume();return audioCtx;}
+function shPick(){
+  var p=pool().filter(function(w){var s=String(w[3]||"");return s.length>=12&&s.length<=110;});
+  if(!p.length)p=WORDS.filter(function(w){var s=String(w[3]||"");return (w[6]||"en")===state.lang&&s.length>=12&&s.length<=110;});
+  if(!p.length)return null;
+  var cur=ui.listen.sh&&ui.listen.sh.w,w;
+  for(var i=0;i<5;i++){w=p[Math.floor(Math.random()*p.length)];if(w!==cur)break;}
+  return w;
+}
+/* дууны хэмжээний бүрхүүл (RMS) — чимээгүй эхлэл, төгсгөлийг хасна */
+function shPeaks(buf){
+  var d=buf.getChannelData(0),n=Math.max(1,Math.floor(buf.sampleRate*0.02)),env=[];
+  for(var i=0;i<d.length;i+=n){var s=0,k=Math.min(d.length,i+n);for(var j=i;j<k;j++)s+=d[j]*d[j];env.push(Math.sqrt(s/(k-i)));}
+  var mx=Math.max.apply(null,env.concat([1e-6])),th=mx*0.08,a=0,b=env.length-1;
+  while(a<b&&env[a]<th)a++;while(b>a&&env[b]<th)b--;
+  env=env.slice(Math.max(0,a-2),b+3).map(function(x){return x/mx;});
+  return {env:env,dur:env.length*n/buf.sampleRate};
+}
+function shResample(e,n){var o=[];for(var i=0;i<n;i++){var a=Math.floor(i*e.length/n),b=Math.max(a+1,Math.floor((i+1)*e.length/n)),s=0;for(var j=a;j<b;j++)s+=e[j]||0;o.push(s/(b-a));}return o;}
+function shScore(A,B){
+  var a=shResample(A.env,60),b=shResample(B.env,60),ma=0,mb=0,i;
+  for(i=0;i<60;i++){ma+=a[i];mb+=b[i];}ma/=60;mb/=60;
+  var c=0,va=0,vb=0;for(i=0;i<60;i++){c+=(a[i]-ma)*(b[i]-mb);va+=(a[i]-ma)*(a[i]-ma);vb+=(b[i]-mb)*(b[i]-mb);}
+  var r=va&&vb?c/Math.sqrt(va*vb):0,ratio=B.dur/A.dur;
+  return {rhythm:Math.max(0,Math.round(r*100)),ratio:ratio};
+}
+function shWave(pk,color,label){
+  var W=600,H=70,cv=h("canvas",{width:String(W),height:String(H),style:"width:100%;height:70px;display:block","aria-label":label,role:"img"});
+  var g=cv.getContext("2d"),e=shResample(pk.env,120),bw=W/120;
+  g.fillStyle=color;
+  e.forEach(function(v,i){var bh=Math.max(2,v*(H-6));g.fillRect(i*bw+1,(H-bh)/2,bw-2,bh);});
+  return cv;
+}
+function shLoadNative(S){
+  var t=speechText(S.w[3]);
+  if(!edgeOK()||!shCtx()){S.nat=false;return;}
+  var lang=LANG_TTS[state.lang]?state.lang:"en",ac=accentOn(lang),url=TTS_URL+"?l="+lang+(ac?"&a="+ac:"")+"&r=0&t="+encodeURIComponent(t);
+  S.nat="loading";
+  fetch(url).then(function(r){if(!r.ok)throw 0;return r.arrayBuffer();}).then(function(ab){return new Promise(function(res,rej){shCtx().decodeAudioData(ab,res,rej);});})
+    .then(function(buf){if(ui.listen.sh!==S)return;S.nat={buf:buf,pk:shPeaks(buf)};S.score=S.me&&S.me.pk?shScore(S.nat.pk,S.me.pk):null;render();})
+    .catch(function(){if(ui.listen.sh!==S)return;S.nat=false;render();});
+}
+function shPlayBuf(buf){
+  stopVoice();var c=shCtx();if(!c||!buf)return;
+  try{var s=c.createBufferSource();s.buffer=buf;s.connect(c.destination);s.start(0);audioQ.cur={pause:function(){try{s.stop();}catch(e){}}};}catch(e){}
+}
+function shNew(){var w=shPick();ui.listen.sh=w?{w:w,nat:null,me:null,rec:null,hide:ui.listen.sh?ui.listen.sh.hide:false,score:null,err:""}:null;}
+function shRecord(S){
+  if(S.rec){S.rec.stop();return;}
+  if(!navigator.mediaDevices||!window.MediaRecorder){S.err="Энэ хөтөч дуу бичихийг дэмжихгүй байна.";render();return;}
+  stopVoice();
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    var mr=new MediaRecorder(stream),chunks=[],max=Math.max(4000,(S.nat&&S.nat.pk?S.nat.pk.dur*1600:4000)+1500);
+    mr.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};
+    mr.onstop=function(){
+      clearTimeout(S.tm);stream.getTracks().forEach(function(t){t.stop();});S.rec=null;
+      var blob=new Blob(chunks,{type:mr.mimeType||"audio/webm"});
+      blob.arrayBuffer().then(function(ab){return new Promise(function(res,rej){shCtx().decodeAudioData(ab,res,rej);});}).then(function(buf){
+        if(ui.listen.sh!==S)return;
+        S.me={buf:buf,pk:shPeaks(buf)};S.score=S.nat&&S.nat.pk?shScore(S.nat.pk,S.me.pk):null;
+        if(S.score&&!S.xp){S.xp=1;addXP(3);}
+        render();
+      }).catch(function(){S.err="Бичлэгийг уншиж чадсангүй. Дахин оролдоно уу.";render();});
+    };
+    S.rec=mr;S.err="";mr.start();S.tm=setTimeout(function(){if(mr.state==="recording")mr.stop();},max);render();
+  },function(){S.err=micSettingsHint();render();});
+}
+function viewShadow(){
+  var l=ui.listen,root=h("div");
+  if(!l.sh||!l.sh.w)shNew();
+  var S=l.sh;
+  if(!S){root.append(h("div",{class:"note"},"Энэ хэлэнд давтах өгүүлбэр олдсонгүй."));return root;}
+  if(S.nat===null)shLoadNative(S);
+  var css=getComputedStyle(document.documentElement),cSky=css.getPropertyValue("--sky").trim()||"#2f80ed",cMe="#E07A2F";
+  root.append(h("p",{class:"muted"},"Эх хэлтний өгүүлбэрийг сонсоод яг адилхан хэмнэл, аялгаар давтан хэл. Хоёр долгион хэр төстэй байгааг хар."));
+  var card=h("div",{class:"note",style:"text-align:center"});
+  if(S.hide)card.append(h("button",{class:"btn ghost",onclick:function(){S.hide=false;render();}},"👁 Текст харах"));
+  else card.append(h("div",{class:"en",style:"font-size:22px;line-height:1.4"},S.w[3]),S.w[8]?h("div",{class:"muted small",style:"margin-top:6px"},S.w[8]):null);
+  root.append(card);
+  root.append(h("div",{class:"row",style:"flex-wrap:wrap"},
+    h("button",{class:"btn primary",onclick:function(){if(S.nat&&S.nat.buf)shPlayBuf(S.nat.buf);else speak(S.w[3]);}},"🔊 Сонсох"),
+    h("button",{class:"btn",onclick:function(){speak(S.w[3],null,true);}},"🐢 Удаан"),
+    h("button",{class:"btn ghost",style:"flex:none","aria-pressed":String(!!S.hide),onclick:function(){S.hide=!S.hide;render();}},S.hide?"Текст харуулах":"🙈 Текст нуух")));
+  root.append(h("div",{style:"margin-top:12px"},h("div",{class:"small",style:"font-weight:700;color:var(--sky)"},"🔵 Эх хэлтэн"),
+    S.nat&&S.nat.pk?shWave(S.nat.pk,cSky,"Эх хэлтний дууны долгион"):h("div",{class:"muted small",style:"height:30px"},S.nat==="loading"?"Долгион ачаалж байна…":"Долгион гаргах боломжгүй (интернэт шаардлагатай). Сонсож, давтаж болно.")));
+  root.append(h("div",{style:"margin-top:8px"},h("div",{class:"small",style:"font-weight:700"},"🟠 Таны бичлэг"),
+    S.me&&S.me.pk?shWave(S.me.pk,cMe,"Таны дууны долгион"):h("div",{class:"muted small",style:"height:30px"},S.rec?"🔴 Бичиж байна… дуусмагц дахин дарна уу":"Одоогоор бичлэг алга.")));
+  root.append(h("div",{class:"row",style:"flex-wrap:wrap;margin-top:10px"},
+    h("button",{class:"btn"+(S.rec?" primary":""),style:S.rec?"background:var(--danger);border-color:var(--danger);color:#fff":"",onclick:function(){shRecord(S);}},S.rec?"⏹ Зогсоох":"🎙 Давтаж бичүүлэх"),
+    S.me&&S.me.buf?h("button",{class:"btn",onclick:function(){shPlayBuf(S.me.buf);}},"▶️ Миний бичлэг"):null,
+    S.me&&S.me.buf&&S.nat&&S.nat.buf?h("button",{class:"btn ghost",onclick:function(){shPlayBuf(S.nat.buf);setTimeout(function(){shPlayBuf(S.me.buf);},S.nat.buf.duration*1000+400);}},"🔁 Харьцуулах"):null));
+  if(S.err)root.append(h("div",{class:"fb bad"},S.err));
+  if(S.score){
+    var r=S.score.ratio,sp=r>1.35?"Арай удаан байна — илүү урсгалтай хэлээрэй.":r<0.75?"Арай хурдан байна — тайван, тод хэлээрэй.":"Хурд тань эх хэлтэнтэй ойролцоо 👍";
+    root.append(h("div",{class:"fb "+(S.score.rhythm>=60?"ok":""),style:"margin-top:10px"},
+      h("div",{style:"font-weight:700"},"Хэмнэлийн төстэй байдал: "+S.score.rhythm+"%"),h("div",{class:"small"},sp),
+      h("div",{class:"muted small"},"Ойролцоо үнэлгээ: дууны чанга, сулын хэмнэл ба уртыг харьцуулна, үг зөв эсэхийг биш.")));
+  }
+  var st=h("div",{class:"fb",style:"display:none","aria-live":"polite"});
+  if(SR)root.append(h("button",{class:"btn ghost",style:"margin-top:8px",onclick:function(){st.style.display="";checkSpeech(S.w[3],st,3);}},"🎤 Үгээ зөв хэлсэн эсэхийг шалгах"),st);
+  root.append(h("button",{class:"btn primary",style:"width:100%;margin-top:12px",onclick:function(){if(S.rec)S.rec.stop();stopVoice();shNew();render();window.scrollTo(0,0);}},"Дараагийн өгүүлбэр"));
+  return root;
+}
 function viewListen(){
   var l=ui.listen,root=h("div");
   root.append(h("h2",null,l.mode==="story"?"Унших":"Сонсох"));
@@ -3032,8 +3136,10 @@ function viewListen(){
     h("button",{"aria-pressed":String(l.mode==="word"),onclick:function(){l.mode="word";render();}},"Үг"),
     h("button",{"aria-pressed":String(l.mode==="dlg"),onclick:function(){l.mode="dlg";render();}},"Яриа"),
     h("button",{"aria-pressed":String(l.mode==="syn"),onclick:function(){l.mode="syn";render();}},"≈ Ижил утга"),
-    h("button",{"aria-pressed":String(l.mode==="story"),onclick:function(){l.mode="story";render();}},"📖 Түүх")));
-  root.append(l.mode==="dlg"?viewDialog():l.mode==="story"?viewStory():l.mode==="syn"?viewSyn():viewListenWords());
+    h("button",{"aria-pressed":String(l.mode==="story"),onclick:function(){l.mode="story";render();}},"📖 Түүх"),
+    h("button",{"aria-pressed":String(l.mode==="sh"),onclick:function(){l.mode="sh";render();}},"🎙 Давтах")));
+  if(l.mode!=="sh"&&l.sh&&l.sh.rec)l.sh.rec.stop();
+  root.append(l.mode==="sh"?viewShadow():l.mode==="dlg"?viewDialog():l.mode==="story"?viewStory():l.mode==="syn"?viewSyn():viewListenWords());
   return root;
 }
 
