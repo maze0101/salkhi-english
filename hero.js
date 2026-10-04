@@ -184,7 +184,7 @@ function initSalkhiHero(root, opts = {}) {
     ctx.font = `400 14px ${FONT}`;
     ctx.fillStyle = 'rgba(220,234,232,0.85)';
     ctx.textBaseline = 'alphabetic';
-    LINES.forEach((line, i) => ctx.fillText(line, 24, H * 0.46 + i * 20));
+    LINES.forEach((line, i) => ctx.fillText(line, 24, H * 0.55 + i * 20));
 
     raf = requestAnimationFrame(frame);
   }
