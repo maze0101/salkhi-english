@@ -173,6 +173,59 @@
           }
         }
       }
+    },
+    "duels": {
+      "$id": {
+        ".read": "auth != null && (data.child('a').val() === auth.uid || data.child('b').val() === auth.uid)",
+        ".write": "auth != null && ((!data.exists() && newData.child('a').val() === auth.uid) || (data.exists() && !newData.exists() && data.child('a').val() === auth.uid))",
+        ".validate": "newData.hasChildren(['a','b','an','bn','qs','st']) && newData.child('qs').isString() && newData.child('qs').val().length <= 8000 && newData.child('an').isString() && newData.child('an').val().length <= 20 && newData.child('bn').isString() && newData.child('bn').val().length <= 20",
+        "st": {
+          ".write": "auth != null && (root.child('duels/'+$id+'/a').val() === auth.uid || root.child('duels/'+$id+'/b').val() === auth.uid)",
+          ".validate": "newData.val() === 'wait' || newData.val() === 'go'"
+        },
+        "t0": {
+          ".write": "auth != null && (root.child('duels/'+$id+'/a').val() === auth.uid || root.child('duels/'+$id+'/b').val() === auth.uid)",
+          ".validate": "newData.val() === now"
+        },
+        "p": {
+          "$u": {
+            ".write": "auth != null && auth.uid === $u && (root.child('duels/'+$id+'/a').val() === auth.uid || root.child('duels/'+$id+'/b').val() === auth.uid)",
+            ".validate": "newData.hasChildren(['i','s']) && newData.child('i').isNumber() && newData.child('i').val() <= 20 && newData.child('s').isNumber() && newData.child('s').val() <= 200 && (!newData.child('d').exists() || newData.child('d').val() === now)"
+          }
+        }
+      }
+    },
+    "duelinv": {
+      "$to": {
+        ".read": "auth != null && auth.uid === $to",
+        "$id": {
+          ".write": "auth != null && ((!data.exists() && newData.child('from').val() === auth.uid) || (data.exists() && !newData.exists() && (auth.uid === $to || data.child('from').val() === auth.uid)))",
+          ".validate": "newData.hasChildren(['from','fromName','ts']) && newData.child('fromName').isString() && newData.child('fromName').val().length <= 20"
+        }
+      }
+    },
+    "goals": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('owner').val() === auth.uid) || (data.exists() && data.child('owner').val() === auth.uid))",
+        ".validate": "$code.matches(/^[A-Z0-9]{6}$/) && newData.hasChildren(['name','owner','target']) && newData.child('name').isString() && newData.child('name').val().length <= 30 && newData.child('target').isNumber() && newData.child('target').val() >= 100 && newData.child('target').val() <= 100000",
+        "m": {
+          "$u": {
+            ".write": "auth != null && auth.uid === $u && (root.child('goals/'+$code+'/owner').exists() || !newData.exists())",
+            ".validate": "newData.hasChildren(['name','wxp','wk']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('wxp').isNumber() && newData.child('wk').isString() && newData.child('wk').val().length <= 12"
+          }
+        }
+      }
+    },
+    "xch": {
+      ".read": "auth != null",
+      ".indexOn": [
+        "ts"
+      ],
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['name','nat','learn','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('nat').isString() && newData.child('nat').val().length <= 3 && newData.child('learn').isString() && newData.child('learn').val().length <= 3 && newData.child('ts').val() === now"
+      }
     }
   }
 }

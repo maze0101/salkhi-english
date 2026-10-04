@@ -128,13 +128,14 @@
       if(!r.self){
         line.append(
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Чат","aria-label":"Чат",onclick:function(){openChat(r);}},"💬"),
+          h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Шууд тулаан","aria-label":"Шууд тулаанд урих",onclick:function(){sendDuel(r);}},"⚔️"),
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Үгийн сорилт","aria-label":"Сорилт илгээх",onclick:function(){sendChallenge(r);}},"🎯"),
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Хасах","aria-label":"Хасах",onclick:function(){removeFriend(r.uid);}},"✖"));
       }
       board.append(line);
     });
     if(!friendsData.length)board.append(h("p",{class:"muted small"},"Найз алга. Дээрх кодоор найзаа нэм."));
-    box.append(codeRow,inp,add,h("button",{class:"btn ghost",style:"margin-top:8px;width:100%",onclick:function(){syncProfile();loadFriends();}},"⟳ Шинэчлэх"),board);
+    box.append(codeRow,inp,add,h("button",{class:"btn ghost",style:"margin-top:8px;width:100%",onclick:function(){syncProfile();loadFriends();goals.loaded=false;paint();}},"⟳ Шинэчлэх"),board,viewGoals());
     return box;
   }
 
@@ -242,8 +243,9 @@
   }
   var inbox={items:[],results:[],loaded:false};
   function loadInbox(){
-    Promise.all([db.ref("challenges/"+uid).once("value"),db.ref("results/"+uid).once("value")]).then(function(r){
-      var a=r[0].val()||{},b=r[1].val()||{};
+    Promise.all([db.ref("challenges/"+uid).once("value"),db.ref("results/"+uid).once("value"),db.ref("duelinv/"+uid).once("value").catch(function(){return {val:function(){return null;}};})]).then(function(r){
+      var a=r[0].val()||{},b=r[1].val()||{},dv=r[2].val()||{};
+      inbox.duels=Object.keys(dv).map(function(k){var v=dv[k];v.id=k;return v;}).filter(function(x){return !isBlocked(x.from)&&Date.now()-(x.ts||0)<86400000;}).sort(function(x,y){return (y.ts||0)-(x.ts||0);});
       inbox.items=Object.keys(a).map(function(k){var v=a[k];v.id=k;return v;}).sort(function(x,y){return (y.ts||0)-(x.ts||0);}).slice(0,20);
       inbox.results=Object.keys(b).map(function(k){return b[k];}).sort(function(x,y){return (y.ts||0)-(x.ts||0);}).slice(0,20);
       inbox.loaded=true;if(screen==="home"&&sub==="inbox")paint();
@@ -253,6 +255,12 @@
     var box=h("div"),done=ls(DONE_KEY,{});
     if(!inbox.loaded){loadInbox();box.append(h("p",{class:"muted"},"Ачаалж байна..."));return box;}
     box.append(h("button",{class:"btn ghost",style:"padding:6px 12px",onclick:function(){inbox.loaded=false;paint();}},"⟳ Шинэчлэх"));
+    (inbox.duels||[]).forEach(function(x){
+      box.append(h("div",{class:"note",style:"display:flex;align-items:center;gap:8px;margin-top:10px;border-color:#E07A2F"},
+        h("div",{style:"flex:1"},h("div",{style:"font-weight:700"},"⚔️ "+x.fromName),h("div",{class:"muted small"},"Шууд тулаанд урьж байна")),
+        h("button",{class:"btn ghost",style:"padding:8px 10px","aria-label":"Татгалзах",onclick:function(){db.ref("duelinv/"+uid+"/"+x.id).remove().catch(function(){});inbox.duels=inbox.duels.filter(function(y){return y!==x;});paint();}},"✖"),
+        h("button",{class:"btn primary",style:"padding:8px 14px",onclick:function(){acceptDuel(x);}},"Тулалдах")));
+    });
     box.append(h("div",{style:"font-weight:700;margin:12px 0 6px"},"🎯 Ирсэн сорилтууд"));
     var pend=inbox.items.filter(function(x){return !done[x.id]&&!isBlocked(x.from);});
     if(!pend.length)box.append(h("p",{class:"muted small"},"Шинэ сорилт алга."));
@@ -323,6 +331,195 @@
     ]
   };
   var bc=null,botBack="home",pending=null;
+  /* ---------- ⚔️ шууд тулаан: хоёулаа ижил асуултад зэрэг хариулж, бие биеийнхээ явцыг шууд харна ----------
+     duels/{id}: {a,an,b,bn,lang,qs(JSON),st:wait|go,t0,ts,p:{uid:{i,s,d}}}; duelinv/{to}/{id}: {from,fromName,ts} */
+  var duel=null,duelRef=null;
+  function TS(){return firebase.database.ServerValue.TIMESTAMP;}
+  function duelOff(){if(duelRef){duelRef.off();duelRef=null;}}
+  function makeDuelQs(){
+    var words=pickWords();if(words.length<4)return null;
+    return words.map(function(w){
+      var others=shuffle(words.filter(function(x){return x[1]!==w[1];})).slice(0,3).map(function(x){return x[1];});
+      return [w[0],shuffle([w[1]].concat(others)),w[1]];
+    });
+  }
+  function sendDuel(f){
+    var qs=makeDuelQs();if(!qs){env.toast("Тулаанд үг хүрэлцэхгүй байна");return;}
+    var ref=db.ref("duels").push();
+    ref.set({a:uid,an:prof.name,b:f.uid,bn:f.name,lang:me().lang,qs:JSON.stringify(qs),st:"wait",ts:TS()}).then(function(){
+      return db.ref("duelinv/"+f.uid+"/"+ref.key).set({from:uid,fromName:prof.name,ts:TS()});
+    }).then(function(){openDuel(ref.key);}).catch(function(){env.toast("Илгээж чадсангүй");});
+  }
+  function openDuel(id){
+    duelOff();if(!duel||duel.id!==id)duel={id:id,v:null,qs:null,i:0,s:0,picked:null};screen="duel";
+    duelRef=db.ref("duels/"+id);
+    duelRef.on("value",function(s){
+      if(!duel||duel.id!==id)return;
+      var v=s.val();duel.v=v;
+      if(v&&!duel.qs){try{duel.qs=JSON.parse(v.qs);}catch(e){duel.qs=[];}var p=v.p&&v.p[uid];if(p){duel.i=p.i||0;duel.s=p.s||0;}}
+      if(screen==="duel")paint();
+    },function(){if(duel&&duel.id===id){duel.v=false;if(screen==="duel")paint();}});
+    paint();
+  }
+  function closeDuel(){duelOff();duel=null;screen="home";sub="inbox";inbox.loaded=false;paint();}
+  function acceptDuel(x){
+    db.ref("duels/"+x.id).update({st:"go",t0:TS()}).then(function(){
+      db.ref("duelinv/"+uid+"/"+x.id).remove().catch(function(){});openDuel(x.id);
+    }).catch(function(){env.toast("Тулаан дууссан эсвэл цуцлагдсан байна");db.ref("duelinv/"+uid+"/"+x.id).remove().catch(function(){});inbox.loaded=false;paint();});
+  }
+  function duelBar(name,p,n,mine){
+    var i=p&&p.i||0;
+    return h("div",{style:"margin:6px 0"},
+      h("div",{style:"display:flex;justify-content:space-between;font-weight:700"},h("span",null,(mine?"🙋 ":"⚔️ ")+name),h("span",null,(p&&p.s||0)+" оноо")),
+      h("div",{style:"height:12px;border-radius:8px;background:var(--line);overflow:hidden;margin-top:4px"},h("i",{style:"display:block;height:100%;width:"+Math.round(i/n*100)+"%;background:"+(mine?"var(--accent,#3a7bd5)":"#E07A2F")})),
+      h("div",{class:"muted small"},(p&&p.d?"✅ Дууссан":i+" / "+n)));
+  }
+  function viewDuel(){
+    var d=duel,v=d.v,box=h("div");
+    box.append(h("button",{class:"btn ghost",style:"padding:6px 12px",onclick:function(){
+      if(v&&v.st==="wait"&&v.a===uid){db.ref("duelinv/"+v.b+"/"+d.id).remove().catch(function(){});db.ref("duels/"+d.id).remove().catch(function(){});}
+      closeDuel();
+    }},v&&v.st==="wait"&&v.a===uid?"✖ Цуцлах":"‹ Буцах"));
+    box.append(h("h3",{style:"margin:8px 0"},"⚔️ Шууд тулаан"));
+    if(v===null){box.append(h("p",{class:"muted"},"Ачаалж байна..."));return box;}
+    if(!v){box.append(h("p",{class:"note"},"Тулаан цуцлагдсан байна."));return box;}
+    var oppId=v.a===uid?v.b:v.a,opp=v.a===uid?v.bn:v.an,n=(d.qs||[]).length,P=v.p||{};
+    if(v.st==="wait"){
+      box.append(h("div",{style:"text-align:center;font-size:48px;margin:12px 0"},"⏳"),h("p",{style:"text-align:center;font-weight:700"},opp+" тулаанд орохыг хүлээж байна…"),
+        h("p",{class:"muted small",style:"text-align:center"},"Найз тань «🎯 Сорилт» хэсгээс урилгаа хүлээж авмагц эхэлнэ."));
+      return box;
+    }
+    box.append(duelBar(prof.name+" (та)",{i:d.i,s:d.s,d:P[uid]&&P[uid].d},n,true),duelBar(opp,P[oppId],n,false));
+    if(d.i>=n){
+      var o=P[oppId]||{},mine=d.s,their=o.s||0,both=o.d;
+      var res=!both?"⏳ "+opp+" дуусгахыг хүлээж байна…":mine>their?"🏆 Та яллаа!":mine<their?"💪 "+opp+" яллаа. Дараагийн удаа!":(P[uid].d<=o.d?"🏆 Тэнцсэн ч та түрүүлж дууссан!":"🤝 Тэнцлээ!");
+      box.append(h("div",{class:"note",style:"text-align:center;font-size:20px;font-weight:800;margin-top:14px"},res));
+      if(both&&!d.rewarded){d.rewarded=true;env.reward&&env.reward();}
+      box.append(h("button",{class:"btn primary",style:"width:100%;margin-top:10px",onclick:function(){var f={uid:oppId,name:opp};closeDuel();sendDuel(f);}},"🔁 Дахин тулалдах"));
+      return box;
+    }
+    var q=d.qs[d.i];
+    box.append(h("p",{class:"muted small",style:"margin-top:12px"},"Асуулт "+(d.i+1)+" / "+n+" · утгыг нь хамгийн түрүүнд ол!"),h("div",{class:"q",style:"font-size:28px;margin:6px 0 10px;font-weight:800"},q[0]));
+    q[1].forEach(function(o){
+      var cls="opt";if(d.picked!=null){if(o===q[2])cls+=" ok";else if(o===d.picked)cls+=" bad";}
+      box.append(h("button",{class:cls,disabled:d.picked!=null,onclick:function(){
+        d.picked=o;if(o===q[2])d.s+=10;paint();
+        setTimeout(function(){
+          d.i++;d.picked=null;var p={i:d.i,s:d.s};if(d.i>=n)p.d=TS();
+          db.ref("duels/"+d.id+"/p/"+uid).set(p).catch(function(){});
+          if(screen==="duel")paint();
+        },o===q[2]?500:1100);
+      }},o));
+    });
+    return box;
+  }
+
+  /* ---------- 🎯 бүлгийн зорилго: найзуудтайгаа нийлж 7 хоногт тодорхой XP цуглуулах ----------
+     goals/{code}: {name,owner,target,ts,m:{uid:{name,wxp,wk}}} */
+  var GOALS_KEY="salkhi:goals",goals={data:{},loaded:false,form:false};
+  function myGoals(){return ls(GOALS_KEY,[]);}
+  function loadGoals(){
+    var ids=myGoals(),m=me();goals.loaded=true;
+    Promise.all(ids.map(function(g){
+      return db.ref("goals/"+g+"/m/"+uid).set({name:prof.name,wxp:m.wxp,wk:m.wk}).catch(function(){}).then(function(){return db.ref("goals/"+g).once("value");}).then(function(s){goals.data[g]=s.val();},function(){goals.data[g]=null;});
+    })).then(function(){if(screen==="home"&&sub==="friends")paint();});
+  }
+  function createGoal(name,target,tries){
+    tries=tries||0;var code=randCode();
+    return db.ref("goals/"+code).transaction(function(cur){return cur===null?{name:name,owner:uid,target:target,ts:Date.now()}:undefined;}).then(function(r){
+      if(!r.committed){if(tries>6)throw new Error("code");return createGoal(name,target,tries+1);}
+      var l=myGoals();l.push(code);lset(GOALS_KEY,l);goals.loaded=false;return code;
+    });
+  }
+  function joinGoal(code){
+    code=String(code||"").trim().toUpperCase();if(code.length!==6){env.toast("Код 6 тэмдэгттэй");return;}
+    db.ref("goals/"+code).once("value").then(function(s){
+      if(!s.val()){env.toast("Ийм бүлэг олдсонгүй");return;}
+      var l=myGoals();if(l.indexOf(code)<0){l.push(code);lset(GOALS_KEY,l);}goals.loaded=false;env.toast("Бүлэгт нэгдлээ 🎯");paint();
+    }).catch(function(){env.toast("Алдаа гарлаа");});
+  }
+  function leaveGoal(code){
+    if(!confirm("Бүлгээс гарах уу?"))return;
+    db.ref("goals/"+code+"/m/"+uid).remove().catch(function(){});
+    lset(GOALS_KEY,myGoals().filter(function(x){return x!==code;}));delete goals.data[code];paint();
+  }
+  function viewGoals(){
+    var box=h("div",{style:"margin-top:18px"}),wk=me().wk;
+    box.append(h("div",{style:"font-weight:700;margin-bottom:6px"},"🎯 Бүлгийн зорилго"));
+    if(!goals.loaded){loadGoals();}
+    myGoals().forEach(function(code){
+      var g=goals.data[code];if(g===undefined){box.append(h("p",{class:"muted small"},"Ачаалж байна..."));return;}
+      if(!g){box.append(h("div",{class:"note"},code+" — бүлэг устгагдсан ",h("button",{class:"btn ghost",style:"padding:4px 10px",onclick:function(){leaveGoal(code);}},"✖")));return;}
+      var ms=g.m||{},ids=Object.keys(ms),sum=0;
+      ids.forEach(function(u){if(ms[u].wk===wk)sum+=ms[u].wxp||0;});
+      var pc=Math.min(100,Math.round(sum/g.target*100));
+      var card=h("div",{class:"note",style:"margin-top:8px"},
+        h("div",{style:"display:flex;justify-content:space-between;gap:8px"},h("b",null,g.name),h("span",{class:"muted small"},"Код: "+code)),
+        h("div",{style:"height:14px;border-radius:8px;background:var(--line);overflow:hidden;margin:8px 0 4px"},h("i",{style:"display:block;height:100%;width:"+pc+"%;background:"+(pc>=100?"var(--ok,#2A8C5A)":"var(--accent,#3a7bd5)")})),
+        h("div",{class:"small"},(pc>=100?"🎉 Зорилгоо биелүүллээ! ":"")+sum+" / "+g.target+" XP энэ 7 хоногт"));
+      ids.sort(function(a,b){return (ms[b].wk===wk?ms[b].wxp:0)-(ms[a].wk===wk?ms[a].wxp:0);}).forEach(function(u){
+        card.append(h("div",{class:"muted small",style:"display:flex;justify-content:space-between"},h("span",null,ms[u].name+(u===uid?" (та)":"")),h("span",null,(ms[u].wk===wk?ms[u].wxp||0:0)+" XP")));
+      });
+      card.append(h("div",{style:"display:flex;gap:8px;margin-top:8px"},
+        h("button",{class:"btn",style:"padding:6px 12px",onclick:function(){
+          var t="Салхи апп дээр «"+g.name+"» бүлэгт нэгдээрэй: 7 хоногт хамтдаа "+g.target+" XP! Найз → Бүлгийн зорилго → код: "+code;
+          if(navigator.share)navigator.share({text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){env.toast("Хуулагдлаа");});
+        }},"📤 Урих"),
+        h("button",{class:"btn ghost",style:"padding:6px 12px",onclick:function(){leaveGoal(code);}},"Гарах")));
+      box.append(card);
+    });
+    if(goals.form){
+      var nm=h("input",{class:"tin",maxlength:"30",placeholder:"Бүлгийн нэр (ж: Англи хэлний найзууд)","aria-label":"Бүлгийн нэр"});
+      var tg=h("select",{class:"tin","aria-label":"Зорилго"});[500,1000,2000,5000].forEach(function(n){var o=h("option",{value:String(n)},"7 хоногт "+n+" XP");if(n===2000)o.selected=true;tg.append(o);});
+      box.append(h("div",{class:"note",style:"margin-top:8px"},h("b",null,"Шинэ бүлэг"),nm,tg,h("div",{style:"display:flex;gap:8px;margin-top:8px"},
+        h("button",{class:"btn",onclick:function(){goals.form=false;paint();}},"Болих"),
+        h("button",{class:"btn primary",onclick:function(){
+          var n=nm.value.trim().slice(0,30);if(!n){env.toast("Нэр бичнэ үү");return;}
+          createGoal(n,parseInt(tg.value,10)).then(function(){goals.form=false;paint();}).catch(function(){env.toast("Алдаа гарлаа");});
+        }},"Үүсгэх"))));
+    }else{
+      var ci=h("input",{class:"tin",maxlength:"6",autocapitalize:"characters",placeholder:"Бүлгийн код","aria-label":"Бүлгийн код",style:"flex:1;margin:0"});
+      box.append(h("div",{style:"display:flex;gap:8px;margin-top:8px"},ci,h("button",{class:"btn",style:"flex:none",onclick:function(){joinGoal(ci.value);}},"Нэгдэх")),
+        h("button",{class:"btn ghost",style:"width:100%;margin-top:8px",onclick:function(){goals.form=true;paint();}},"➕ Бүлгийн зорилго үүсгэх"));
+    }
+    return box;
+  }
+
+  /* ---------- 🔁 хэлний солилцоо: монгол хэл сурч буй гадаад хүнтэй хосолж, бие биедээ туслана ----------
+     xch/{uid}: {name,nat,learn,ts} — nat: эх хэл, learn: сурч буй хэл (mn = монгол) */
+  var xch={list:null,on:null};
+  var XLANG={en:"Англи",ja:"Япон",ko:"Солонгос",zh:"Хятад",ru:"Орос",de:"Герман"};
+  function loadXch(){
+    xch.list=[];
+    Promise.all([db.ref("xch").orderByChild("ts").limitToLast(200).once("value"),db.ref("xch/"+uid).once("value")]).then(function(r){
+      var v=r[0].val()||{},L=me().lang,old=Date.now()-30*86400000;
+      xch.on=!!r[1].val();
+      xch.list=Object.keys(v).filter(function(k){var x=v[k];return k!==uid&&x.nat===L&&x.learn==="mn"&&(x.ts||0)>old&&!isBlocked(k);})
+        .map(function(k){return {uid:k,name:v[k].name,ts:v[k].ts};}).sort(function(a,b){return b.ts-a.ts;});
+      if(screen==="home"&&sub==="xch")paint();
+    }).catch(function(){xch.list=[];xch.err=true;paint();});
+  }
+  function viewXch(){
+    var box=h("div"),L=me().lang;
+    if(me().mode==="kid"||me().mode==="senior"){box.append(h("p",{class:"note"},"Хэлний солилцоо зөвхөн «Том хүн» горимд байна."));return box;}
+    box.append(h("div",{class:"note",style:"margin-top:0"},"🔁 Монгол хэл сурч буй "+XLANG[L]+" хэлтэй хүнтэй чатлаарай: та түүнд монголоор, тэр танд "+XLANG[L].toLowerCase()+" хэлээр тусална. Утас, хаяг, хувийн мэдээлэл бүү бич."));
+    if(xch.list===null){loadXch();box.append(h("p",{class:"muted"},"Ачаалж байна..."));return box;}
+    box.append(h("div",{style:"display:flex;gap:8px;align-items:center;margin:10px 0"},
+      h("div",{style:"flex:1"},h("b",null,xch.on?"✅ Та жагсаалтад харагдаж байна":"Намайг жагсаалтад харуулах"),h("div",{class:"muted small"},"Монгол хэл сурч буй гадаад хүмүүс таныг олж, бичих боломжтой болно.")),
+      h("button",{class:"btn"+(xch.on?"":" primary"),style:"flex:none",onclick:function(){
+        var p=xch.on?db.ref("xch/"+uid).remove():db.ref("xch/"+uid).set({name:prof.name,nat:"mn",learn:L,ts:TS()});
+        p.then(function(){xch.on=!xch.on;paint();}).catch(function(){env.toast("Алдаа гарлаа");});
+      }},xch.on?"Нуух":"Харуулах")));
+    box.append(h("div",{style:"font-weight:700;margin:12px 0 6px"},"🌍 Монгол хэл сурч буй "+XLANG[L]+" хэлтнүүд"));
+    if(!xch.list.length)box.append(h("p",{class:"muted small"},xch.err?"Ачаалж чадсангүй.":"Одоогоор хүн алга. Удахгүй нэмэгдэнэ — өөрийгөө жагсаалтад харуулаад хүлээгээрэй."));
+    xch.list.forEach(function(x){
+      box.append(h("div",{class:"note",style:"display:flex;align-items:center;gap:8px;margin-top:8px"},
+        h("div",{style:"flex:1"},h("div",{style:"font-weight:700"},x.name),h("div",{class:"muted small"},"🗣 "+XLANG[L]+" → 🇲🇳 монгол сурч байна")),
+        h("button",{class:"btn primary",style:"padding:8px 14px",onclick:function(){openChat(x);}},"💬 Бичих")));
+    });
+    box.append(h("button",{class:"btn ghost",style:"width:100%;margin-top:10px",onclick:function(){xch.list=null;paint();}},"⟳ Шинэчлэх"));
+    return box;
+  }
   function setScreen(n){if(screen==="botchat"){pending=n;return false;}screen=n;return true;}
   function botList(){return BOTS[me().lang]||BOTS.en;}
   function viewBots(){
@@ -463,14 +660,16 @@
     if(screen==="chat"){root.append(viewChat());return;}
     if(screen==="botchat"&&bc){root.append(viewBotChat());return;}
     if(screen==="quiz"){root.append(viewQuiz());return;}
+    if(screen==="duel"&&duel){if(!duelRef){openDuel(duel.id);return;}root.append(viewDuel());return;}
     var tabs=h("div",{style:"display:flex;gap:6px;margin-bottom:12px"});
-    [["friends","👥 Найз"],["bots","🤖 AI"],["room","🌐 Өрөө"],["inbox","🎯 Сорилт"]].filter(function(t){return !(t[0]==="room"&&me().mode==="senior");}).forEach(function(t){
+    [["friends","👥 Найз"],["bots","🤖 AI"],["room","🌐 Өрөө"],["xch","🔁 Солилцоо"],["inbox","🎯 Сорилт"]].filter(function(t){return !((t[0]==="room"||t[0]==="xch")&&(me().mode==="senior"||me().mode==="kid"));}).forEach(function(t){
       tabs.append(h("button",{class:"chip",style:"flex:1;"+(sub===t[0]?"border-color:var(--accent,#3a7bd5);":""),"aria-current":sub===t[0]?"true":null,onclick:function(){sub=t[0];paint();}},t[1]));
     });
     root.append(tabs);
     if(sub==="friends")root.append(viewFriends());
     else if(sub==="bots")root.append(viewBots());
     else if(sub==="room")root.append(viewRoom());
+    else if(sub==="xch")root.append(viewXch());
     else root.append(viewInbox());
   }
 
@@ -483,8 +682,8 @@
       setTimeout(init,0);
       return root;
     },
-    detach:function(){detach();},
+    detach:function(){detach();duelOff();},
     /* нэвтрэлт солигдоход (Google холбох / гарах) */
-    reset:function(){detach();db=null;uid=null;prof=null;friendsData=[];chatWith=null;quiz=null;screen="boot";}
+    reset:function(){detach();duelOff();duel=null;goals={data:{},loaded:false,form:false};xch={list:null,on:null};db=null;uid=null;prof=null;friendsData=[];chatWith=null;quiz=null;screen="boot";}
   };
 })();
