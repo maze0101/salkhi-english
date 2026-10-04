@@ -663,6 +663,98 @@
     });
     if(mine){var k=rows.findIndex(function(r){return r.u===uid;});if(k>=10)root.append(h("p",{class:"muted small"},"Таны байр: "+(k+1)+" / "+rows.length));}
   }
+  /* ---------- 📻 интернэтгүй сурагчдад: өдрийн үгсийг SMS, радио/чанга яригчийн MP3 хичээл, хэвлэх эх бичвэр болгоно ----------
+     Апп өөрөө SMS илгээхгүй: багшийн утасны SMS апп нээгдэнэ. MP3 нь Worker-ийн /tts (монгол + зорилтот хэлний neural дуу)-ийн хэсгүүдийг залгана. */
+  var RU={src:null,n:3,busy:false,prog:""};
+  function ruTTS(){return window.SALKHI_AI&&window.SALKHI_AI.url?String(window.SALKHI_AI.url).replace(/\/chat\/?$/,"/tts"):null;}
+  function ruWords(d){
+    var lang=d.c.lang||"en",s=RU.src||(Object.keys(d.lists||{})[0]?"L:"+Object.keys(d.lists)[0]:"V:a1"),pool;
+    if(s.indexOf("L:")===0&&d.lists[s.slice(2)])pool=parseList(d.lists[s.slice(2)]);
+    else{var w=env.quizWords(lang);if(!w)return null;pool=w.filter(function(x){return x[2]===s.slice(2);}).map(function(x){return [x[0],x[1]];});}
+    pool=pool.filter(function(p){return p[0]&&p[1]&&p[0].length<=40;});
+    if(!pool.length)return [];
+    /* өдөр бүр өөр, гэхдээ тухайн өдөрт тогтмол (SMS, аудио, эх бичвэр ижил үгтэй байна) */
+    var day=Math.floor(now()/86400000),out=[],k=(day*RU.n)%pool.length;
+    for(var i=0;i<Math.min(RU.n,pool.length);i++)out.push(pool[(k+i)%pool.length]);
+    return out;
+  }
+  function ruShort(m){return String(m).split(/[,;(]/)[0].trim();}
+  function ruSms(d,ws){
+    var L={en:"англи",ja:"япон",ko:"солонгос",zh:"хятад",ru:"орос",de:"герман"}[d.c.lang||"en"],dt=new Date(),q=ws[ws.length-1];
+    return "Салхи "+(dt.getMonth()+1)+"/"+dt.getDate()+" "+L+": "+ws.map(function(p){return p[0]+" - "+ruShort(p[1]);}).join(", ")+". Асуулт: «"+ruShort(q[1])+"» гэж юу вэ? Хариугаа илгээ.";
+  }
+  function ruScript(d,ws){
+    var L={en:"англи",ja:"япон",ko:"солонгос",zh:"хятад",ru:"орос",de:"герман"}[d.c.lang||"en"],q=ws[ws.length-1],seg=[];
+    seg.push(["mn","Сайн байцгаана уу! Салхи апп-ын "+L+" хэлний богино хичээлд тавтай морил. Өнөөдөр "+ws.length+" шинэ үг сурна."]);
+    ws.forEach(function(p,i){
+      seg.push(["mn",(i+1)+"-р үг. "+ruShort(p[1])+"."]);
+      seg.push(["t",p[0]]);seg.push(["mn","Дахин сонсоорой."]);seg.push(["t",p[0]]);
+      seg.push(["mn","Одоо та чангаар давтаж хэлээрэй."]);seg.push(["t",p[0]]);
+    });
+    seg.push(["mn","Одоо давтъя."]);
+    ws.forEach(function(p){seg.push(["mn",ruShort(p[1])]);seg.push(["t",p[0]]);});
+    seg.push(["mn","Асуулт: "+ruShort(q[1])+" гэдгийг "+L+" хэлээр яаж хэлэх вэ? Бодоод үзээрэй."]);
+    seg.push(["mn","Зөв хариулт нь:"]);seg.push(["t",q[0]]);
+    seg.push(["mn","Баярлалаа! Маргааш дахин уулзъя. Салхи апп."]);
+    return seg;
+  }
+  function ruText(d,ws){
+    var lines=["📻 Салхи — богино хичээл ("+d.c.name+", "+new Date().toLocaleDateString()+")",""];
+    ruScript(d,ws).forEach(function(s){lines.push((s[0]==="mn"?"🎙 Хөтлөгч: ":"🔊 Дуудлага: ")+s[1]);});
+    lines.push("","Үгс:");ws.forEach(function(p){lines.push("• "+p[0]+" — "+p[1]);});
+    return lines.join("\n");
+  }
+  function ruDownload(name,blob){
+    var f=new File([blob],name,{type:blob.type});
+    if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:name}).catch(function(){});return;}
+    var u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},5000);
+  }
+  function ruMp3(d,ws){
+    var T=ruTTS(),lang=d.c.lang||"en";if(!T){env.toast("Аудио үүсгэх үйлчилгээ алга");return;}
+    var seg=ruScript(d,ws),parts=[],i=0;RU.busy=true;RU.prog="0 / "+seg.length;paint();
+    function next(){
+      if(i>=seg.length){
+        RU.busy=false;RU.prog="";paint();
+        ruDownload("salkhi-"+String(d.c.name).replace(/\s+/g,"_")+"-"+new Date().toISOString().slice(0,10)+".mp3",new Blob(parts,{type:"audio/mpeg"}));
+        return;
+      }
+      var s=seg[i],url=T+"?l="+(s[0]==="mn"?"mn":lang)+"&r="+(s[0]==="mn"?"-5":"-15")+"&t="+encodeURIComponent(s[1]);
+      (function get(tries){
+        fetch(url).then(function(r){
+          if(r.status===429&&tries<5)return new Promise(function(ok){setTimeout(ok,12000);}).then(function(){return get(tries+1);});
+          if(!r.ok)throw 0;return r.arrayBuffer().then(function(b){parts.push(b);i++;RU.prog=i+" / "+seg.length;var el=document.getElementById("ruprog");if(el)el.textContent=RU.prog;next();});
+        }).catch(function(){RU.busy=false;RU.prog="";env.toast("Аудио үүсгэж чадсангүй. Интернэтээ шалгаад дахин оролдоно уу.");paint();});
+      })(0);
+    }
+    next();
+  }
+  function viewRural(root,d){
+    root.append(h("h3",{style:"margin:20px 0 6px"},"📻 Интернэтгүй сурагчдад"));
+    root.append(h("p",{class:"muted small"},"Хөдөө, интернэтгүй сурагчдад өдрийн үгсийг SMS-ээр илгээх, радио эсвэл сургуулийн чанга яригчаар цацах богино аудио хичээл бэлтгэнэ."));
+    var lang=d.c.lang||"en",sel=h("select",{class:"tin","aria-label":"Үгийн эх"});
+    Object.keys(d.lists||{}).forEach(function(lid){sel.append(h("option",{value:"L:"+lid},"📝 "+d.lists[lid].name));});
+    Object.keys(LVN).forEach(function(l){sel.append(h("option",{value:"V:"+l},"📚 Аппын "+LVN[l]+" үгс"));});
+    if(RU.src)sel.value=RU.src;
+    sel.addEventListener("change",function(){RU.src=sel.value;paint();});
+    var cnt=h("select",{class:"tin","aria-label":"Үгийн тоо"});[3,5].forEach(function(n){var o=h("option",{value:String(n)},n+" үг");if(n===RU.n)o.selected=true;cnt.append(o);});
+    cnt.addEventListener("change",function(){RU.n=parseInt(cnt.value,10);paint();});
+    var box=h("div",{class:"note"},sel,cnt);root.append(box);
+    var ws=ruWords(d);
+    if(ws===null){box.append(h("p",{class:"muted small"},"Үгсийг ачаалж байна…"));env.loadLang(lang,paint);return;}
+    if(!ws.length){box.append(h("p",{class:"muted small"},"Энэ эх сурвалжид үг алга."));return;}
+    box.append(h("div",{class:"small",style:"margin:8px 0"},h("b",null,"Өнөөдрийн үгс: "),ws.map(function(p){return p[0]+" — "+ruShort(p[1]);}).join(" · ")));
+    var sms=ruSms(d,ws),seg=Math.ceil(sms.length/67);
+    box.append(h("div",{style:"background:var(--line);border-radius:12px;padding:10px;font-size:14px;margin-top:6px"},sms),
+      h("div",{class:"muted small"},sms.length+" тэмдэгт · кирилл SMS ≈ "+seg+" мессеж"));
+    box.append(h("div",{class:"row",style:"flex-wrap:wrap"},
+      h("button",{class:"btn primary",onclick:function(){location.href="sms:?&body="+encodeURIComponent(sms);}},"📱 SMS бичих"),
+      h("button",{class:"btn",onclick:function(){if(navigator.clipboard)navigator.clipboard.writeText(sms).then(function(){env.toast("Хуулагдлаа");});}},"📋 Хуулах")));
+    box.append(h("div",{class:"row",style:"flex-wrap:wrap"},
+      h("button",{class:"btn primary",disabled:RU.busy,onclick:function(){ruMp3(d,ws);}},RU.busy?"⏳ Аудио бэлдэж байна…":"🎧 Аудио хичээл (MP3, ~"+(ws.length>3?2:1.5)+" мин)"),
+      h("button",{class:"btn",onclick:function(){ruDownload("salkhi-radio-"+new Date().toISOString().slice(0,10)+".txt",new Blob([ruText(d,ws)],{type:"text/plain;charset=utf-8"}));}},"📄 Радиогийн эх бичвэр")));
+    if(RU.busy)box.append(h("div",{class:"muted small",id:"ruprog"},RU.prog));
+    box.append(h("p",{class:"muted small",style:"margin-top:8px"},"💡 MP3-ыг радио станцад өгөх, сургуулийн чанга яригчаар тоглуулах, эсвэл мессенжерээр эцэг эхчүүдэд илгээж болно. Өдөр бүр шинэ үгс автоматаар сонгогдоно."));
+  }
   function viewTeacher(root,d){
     var code=S.code,ids=sortedTasks(d),mem=d.members||{},stats=d.stats||{},uids=Object.keys(mem);
     root.append(h("h2",null,"👩‍🏫 "+d.c.name));
@@ -785,6 +877,7 @@
     if(S.form==="live")liveSetup(root,d);
     else root.append(h("button",{class:"btn primary",style:"width:100%",onclick:function(){S.form="live";paint();}},"🎯 Ангийн шууд тест эхлүүлэх"));
     viewComps(root,d);
+    viewRural(root,d);
     root.append(h("div",{class:"row",style:"flex-wrap:wrap"},
       h("button",{class:"btn",onclick:function(){S.data=null;paint();}},"🔄 Шинэчлэх"),
       uids.length?h("button",{class:"btn",onclick:function(){exportCsv(d);}},"📥 CSV татах"):null,
