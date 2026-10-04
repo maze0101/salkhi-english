@@ -27,6 +27,9 @@ let ef=fakeEdge();
 let r=await worker.fetch(U("l=zh&r=-15&t="+encodeURIComponent("我叫<Bat>")),env({EDGE_FETCH:ef}));
 let buf=new Uint8Array(await r.arrayBuffer());
 ck("returns mp3 audio with CORS *",r.status===200&&r.headers.get("content-type")==="audio/mpeg"&&r.headers.get("access-control-allow-origin")==="*"&&buf.join()==="1,2,3,4",r.status);
+ck("parseTTS: accent kept for English",parseTTS(new URL("https://x/tts?l=en&a=gb&t=hi")).a==="gb");
+ck("parseTTS: unknown accent ignored",parseTTS(new URL("https://x/tts?l=en&a=xx&t=hi")).a===undefined&&parseTTS(new URL("https://x/tts?l=ja&a=gb&t=hi")).a===undefined);
+{const e2=fakeEdge();await worker.fetch(U("l=en&a=au&t=hello"),env({EDGE_FETCH:e2}));ck("uses the Australian voice for a=au",e2.ws.sent.some(m=>/en-AU-NatashaNeural/.test(m)));}
 ck("uses the Chinese voice and the requested rate",ef.ws.sent.some(m=>/zh-CN-XiaoxiaoNeural/.test(m)&&/rate='-15%'/.test(m)));
 ck("escapes XML in the text",ef.ws.sent.some(m=>/我叫&lt;Bat&gt;/.test(m)));
 ck("sends a Sec-MS-GEC token and Edge version",/Sec-MS-GEC=[0-9A-F]{64}&Sec-MS-GEC-Version=1-\d+/.test(ef.calls[0].url));

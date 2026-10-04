@@ -73,6 +73,8 @@ const TTS_VOICES={
   zh:["zh-CN","zh-CN-XiaoxiaoNeural"],ru:["ru-RU","ru-RU-SvetlanaNeural"],de:["de-DE","de-DE-KatjaNeural"],
   mn:["mn-MN","mn-MN-YesuiNeural"]
 };
+/* аялга (a=gb|au): англи хэлэнд л */
+const TTS_ACCENTS={en:{gb:["en-GB","en-GB-SoniaNeural"],au:["en-AU","en-AU-NatashaNeural"]}};
 const MAX_TTS_CHARS=300;
 
 async function secMsGec(){
@@ -84,8 +86,8 @@ async function secMsGec(){
 function xmlEsc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");}
 function hex(n){return Array.from(crypto.getRandomValues(new Uint8Array(n)),function(b){return b.toString(16).padStart(2,"0");}).join("");}
 
-export async function edgeTTS(lang,rate,text,fetchImpl){
-  const v=TTS_VOICES[lang],id=hex(16);
+export async function edgeTTS(lang,rate,text,fetchImpl,accent){
+  const v=(accent&&TTS_ACCENTS[lang]&&TTS_ACCENTS[lang][accent])||TTS_VOICES[lang],id=hex(16);
   const url="https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken="+EDGE_TOKEN+
     "&Sec-MS-GEC="+(await secMsGec())+"&Sec-MS-GEC-Version=1-"+EDGE_VER+"&ConnectionId="+id;
   const resp=await (fetchImpl||fetch)(url,{headers:{
@@ -130,6 +132,8 @@ export function parseTTS(url){
   const l=url.searchParams.get("l")||"",t=(url.searchParams.get("t")||"").replace(/\s+/g," ").trim();
   let r=parseInt(url.searchParams.get("r")||"0",10);if(isNaN(r))r=0;r=Math.max(-50,Math.min(50,r));
   if(!TTS_VOICES[l]||!t||t.length>MAX_TTS_CHARS)return null;
+  const a=url.searchParams.get("a")||"";
+  if(a&&TTS_ACCENTS[l]&&TTS_ACCENTS[l][a])return {l:l,r:r,t:t,a:a};
   return {l:l,r:r,t:t};
 }
 async function handleTTS(req,env,ctx,url){
@@ -137,7 +141,7 @@ async function handleTTS(req,env,ctx,url){
   const p=parseTTS(url);
   if(!p)return json({error:"bad_tts"},400,ah);
   const cache=(typeof caches!=="undefined")?caches.default:null;
-  const key=new Request("https://salkhi-tts.cache/v1/"+p.l+"/"+p.r+"/"+encodeURIComponent(p.t));
+  const key=new Request("https://salkhi-tts.cache/v1/"+p.l+(p.a?"-"+p.a:"")+"/"+p.r+"/"+encodeURIComponent(p.t));
   if(cache){const hit=await cache.match(key);if(hit)return hit;}
   const lim=env.TTS_LIMITER||env.LIMITER;
   if(lim){
@@ -146,7 +150,7 @@ async function handleTTS(req,env,ctx,url){
     if(!r.success)return json({error:"rate_limited"},429,ah);
   }
   let audio;
-  try{audio=await edgeTTS(p.l,p.r,p.t,env.EDGE_FETCH);}
+  try{audio=await edgeTTS(p.l,p.r,p.t,env.EDGE_FETCH,p.a);}
   catch(e){console.error("edge tts failed:",e&&e.message?e.message:String(e));return json({error:"tts_unavailable"},503,ah);}
   const res=new Response(audio,{status:200,headers:Object.assign({"content-type":"audio/mpeg","cache-control":"public, max-age=31536000, immutable"},ah)});
   if(cache){const put=cache.put(key,res.clone());if(ctx&&ctx.waitUntil)ctx.waitUntil(put);else await put;}
