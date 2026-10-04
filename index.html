@@ -629,6 +629,7 @@ p+p{margin-top:10px}
 <script src="mncompare.js"></script>
 <script src="prondiag.js"></script>
 <script src="voicediary.js"></script>
+<script src="mnholiday.js"></script>
 <script src="writing.js"></script>
 <script src="classes.js"></script>
 <script src="numbers.js"></script>
@@ -2149,6 +2150,11 @@ function viewWords(){
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
   root.append(taskPanel());
   var rc=reviewCard();if(rc)root.append(rc);
+  var hs=state.mode!=="kid"&&window.MnHoliday&&MnHoliday.has(state.lang)&&MnHoliday.season();
+  if(hs&&sget("holban","")!==hs+new Date().getFullYear())root.append(h("div",{class:"note",style:"display:flex;gap:10px;align-items:center;margin-bottom:12px"},
+    h("div",{style:"flex:1"},h("b",null,"🎉 "+MnHoliday.title(hs)+" болж байна!"),h("div",{class:"muted small"},"Гадаад найздаа "+LANGN[state.lang].toLowerCase()+" хэлээр тайлбарлаж сур.")),
+    h("button",{class:"btn primary",style:"flex:none",onclick:function(){state.tab="grammar";ui.grammar.mod="hol";ui.grammar.holOpen=hs;renderTabs();render();window.scrollTo(0,0);}},"Үзэх"),
+    h("button",{class:"btn ghost",style:"flex:none;padding:6px 10px","aria-label":"Хаах",onclick:function(){sset("holban",hs+new Date().getFullYear());render();}},"✕")));
   root.append(h("div",{class:"segrow"},h("div",{class:"seg",role:"group","aria-label":"Горим"},
     h("button",{"aria-pressed":String(v.mode==="card"),onclick:function(){v.mode="card";v.flipped=false;render();}},"Карт"),
     h("button",{"aria-pressed":String(v.mode==="quiz"),onclick:function(){v.mode="quiz";v.quiz=null;render();}},"Тест"),
@@ -2467,6 +2473,7 @@ function viewGrammar(){
   if(g.mod==="idiom"&&window.Idioms&&Idioms.has(state.lang))return Idioms.view(modEnv());
   if(g.mod==="culture"&&window.Culture&&Culture.has(state.lang))return Culture.view(modEnv());
   if(g.mod==="cmp"&&window.MnCompare&&MnCompare.has(state.lang))return MnCompare.view(modEnv());
+  if(g.mod==="hol"&&window.MnHoliday&&MnHoliday.has(state.lang)){var ho=g.holOpen;g.holOpen=null;return MnHoliday.view(modEnv(),ho);}
   g.mod=null;
   if(g.lesson){
     var L=g.lesson;
@@ -2514,6 +2521,7 @@ function viewGrammar(){
     h("button",{class:"btn",onclick:startExam},"📝 Шалгалтын тест (20)"),
     MN_ERR_OK()?h("button",{class:"btn",onclick:startMnErr},"🎯 Түгээмэл алдаа"):null,
     state.mode!=="kid"&&window.MnCompare&&MnCompare.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("cmp");}},"🇲🇳⇄ Монголтой харьцуулах"):null,
+    state.mode!=="kid"&&window.MnHoliday&&MnHoliday.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("hol");}},"🇲🇳 Ёс заншлаа тайлбарлах"):null,
     state.mode!=="kid"&&window.Idioms&&Idioms.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("idiom");}},"🗣 Хэлц үг"):null,
     state.mode!=="kid"&&window.Culture&&Culture.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("culture");}},"🎎 Соёл, ёс заншил"):null));
   var tks=Object.keys(CLS_LESSONS).filter(function(k){return CLS_LESSONS[k].lang===state.lang;});
