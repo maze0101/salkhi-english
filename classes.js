@@ -132,7 +132,7 @@
     });
   }
   function deleteClass(code){
-    return Promise.all(["tasks/","members/","cstats/","wlists/","board/","tlessons/","live/","livekey/","liveans/","smsphones/"].map(function(p){return db.ref(p+code).remove();})).then(function(){
+    return Promise.all(["tasks/","members/","cstats/","wlists/","board/","tlessons/","live/","livekey/","liveans/"].map(function(p){return db.ref(p+code).remove();})).then(function(){
       return db.ref("classes/"+code).remove();
     }).then(function(){return db.ref("mycls/"+uid+"/"+code).remove();}).then(function(){var m=my();delete m[code];setMy(m);env.setLists(code,{});env.setLessons(code,{});});
   }
@@ -728,59 +728,6 @@
     }
     next();
   }
-  /* апп-аас шууд SMS (Worker /sms) — үйлчилгээ үзүүлэгч тохируулагдсан үед л идэвхжинэ */
-  var SMSX={status:null,phones:null,code:null,edit:false,busy:false,res:""};
-  function smsBase(){return window.SALKHI_AI&&window.SALKHI_AI.url?String(window.SALKHI_AI.url).replace(/\/chat\/?$/,""):null;}
-  function smsLoad(code){
-    SMSX.code=code;SMSX.phones=null;
-    var b=smsBase();
-    if(b&&SMSX.status===null){SMSX.status="…";fetch(b+"/sms/status").then(function(r){return r.json();}).then(function(j){SMSX.status=!!j.configured;paint();},function(){SMSX.status=false;paint();});}
-    db.ref("smsphones/"+code).once("value").then(function(s){SMSX.phones=s.val()||"";paint();},function(){SMSX.phones="";paint();});
-  }
-  function smsList(t){var seen={};return String(t||"").split(/[\s,;]+/).map(function(p){return p.replace(/[^\d]/g,"").replace(/^976/,"");}).filter(function(p){if(!/^[6-9]\d{7}$/.test(p)||seen[p])return false;seen[p]=1;return true;});}
-  function smsSend(code,text){
-    var b=smsBase();if(!b)return;
-    SMSX.busy=true;SMSX.res="";paint();
-    firebase.auth().currentUser.getIdToken().then(function(tok){
-      return fetch(b+"/sms",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:code,token:tok,text:text})});
-    }).then(function(r){return r.json().then(function(j){return [r.status,j];});}).then(function(x){
-      var s=x[0],j=x[1];SMSX.busy=false;
-      SMSX.res=s===200?"✅ "+j.sent+" дугаарт илгээлээ"+(j.failed?" · "+j.failed+" амжилтгүй":"")+" · өнөөдөр дахиад "+j.left+" удаа илгээж болно"
-        :j.error==="daily_limit"?"⏰ Өнөөдрийн хязгаар ("+j.limit+" удаа) дууслаа. Маргааш дахин илгээнэ үү."
-        :j.error==="sms_not_configured"?"SMS үйлчилгээ хараахан холбогдоогүй байна."
-        :j.error==="forbidden"?"Зөвшөөрөлгүй байна (зөвхөн ангийн багш илгээнэ)."
-        :j.error==="no_phones"?"Хүчинтэй утасны дугаар алга.":"Илгээж чадсангүй ("+(j.error||s)+").";
-      paint();
-    }).catch(function(){SMSX.busy=false;SMSX.res="Илгээж чадсангүй. Интернэтээ шалгана уу.";paint();});
-  }
-  function viewSmsDirect(box,code,text){
-    if(SMSX.code!==code)smsLoad(code);
-    if(SMSX.status!==true)return;
-    var list=smsList(SMSX.phones),wrap=h("div",{style:"margin-top:12px;border-top:1px solid var(--line);padding-top:10px"});
-    wrap.append(h("b",null,"📲 Апп-аас шууд SMS илгээх"),h("div",{class:"muted small"},list.length+" эцэг эхийн дугаар бүртгэлтэй · өдөрт 2 удаа хүртэл"));
-    if(SMSX.edit||!list.length){
-      var ta=h("textarea",{class:"tin",rows:"4",placeholder:"Эцэг эхийн утасны дугаарууд (мөр бүрт эсвэл таслалаар): 99112233, 88114455","aria-label":"Утасны дугаарууд",style:"font-family:inherit"});
-      ta.value=SMSX.phones||"";
-      var ok=h("input",{type:"checkbox",id:"smsok"});
-      wrap.append(ta,h("label",{for:"smsok",class:"small",style:"display:flex;gap:8px;align-items:flex-start;margin:6px 0"},ok,"Эцэг эхчүүд SMS хүлээн авахыг зөвшөөрсөн. Дугаарууд зөвхөн надад (багшид) харагдана."),
-        h("div",{class:"row"},list.length?h("button",{class:"btn",onclick:function(){SMSX.edit=false;paint();}},"Болих"):null,
-          h("button",{class:"btn primary",disabled:busy,onclick:function(){
-            var l=smsList(ta.value);if(!ok.checked){env.toast("Эцэг эхийн зөвшөөрлийг баталгаажуулна уу");return;}
-            if(!l.length){env.toast("8 оронтой дугаар оруулна уу");return;}
-            if(l.length>60){env.toast("Дээд тал 60 дугаар");return;}
-            run(db.ref("smsphones/"+code).set(l.join(",")),function(){SMSX.phones=l.join(",");SMSX.edit=false;env.toast("Хадгалагдлаа ✅");});
-          }},"Хадгалах")));
-    }else{
-      wrap.append(h("div",{class:"row",style:"flex-wrap:wrap"},
-        h("button",{class:"btn primary",disabled:SMSX.busy,onclick:function(){
-          if(!S.smsConfirm){S.smsConfirm=true;env.toast("Дахин дарвал "+list.length+" дугаарт илгээнэ");return;}
-          S.smsConfirm=false;smsSend(code,text);
-        }},SMSX.busy?"⏳ Илгээж байна…":"📤 "+list.length+" эцэг эхэд илгээх"),
-        h("button",{class:"btn ghost",onclick:function(){SMSX.edit=true;paint();}},"✏️ Дугаарууд")));
-    }
-    if(SMSX.res)wrap.append(h("div",{class:"fb",style:"margin-top:8px"},SMSX.res));
-    box.append(wrap);
-  }
   function viewRural(root,d){
     root.append(h("h3",{style:"margin:20px 0 6px"},"📻 Интернэтгүй сурагчдад"));
     root.append(h("p",{class:"muted small"},"Хөдөө, интернэтгүй сурагчдад өдрийн үгсийг SMS-ээр илгээх, радио эсвэл сургуулийн чанга яригчаар цацах богино аудио хичээл бэлтгэнэ."));
@@ -802,7 +749,6 @@
     box.append(h("div",{class:"row",style:"flex-wrap:wrap"},
       h("button",{class:"btn primary",onclick:function(){location.href="sms:?&body="+encodeURIComponent(sms);}},"📱 SMS бичих"),
       h("button",{class:"btn",onclick:function(){if(navigator.clipboard)navigator.clipboard.writeText(sms).then(function(){env.toast("Хуулагдлаа");});}},"📋 Хуулах")));
-    viewSmsDirect(box,S.code,sms);
     box.append(h("div",{class:"row",style:"flex-wrap:wrap"},
       h("button",{class:"btn primary",disabled:RU.busy,onclick:function(){ruMp3(d,ws);}},RU.busy?"⏳ Аудио бэлдэж байна…":"🎧 Аудио хичээл (MP3, ~"+(ws.length>3?2:1.5)+" мин)"),
       h("button",{class:"btn",onclick:function(){ruDownload("salkhi-radio-"+new Date().toISOString().slice(0,10)+".txt",new Blob([ruText(d,ws)],{type:"text/plain;charset=utf-8"}));}},"📄 Радиогийн эх бичвэр")));
