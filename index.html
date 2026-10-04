@@ -624,6 +624,7 @@ p+p{margin-top:10px}
 <script src="abroad.js"></script>
 <script src="idioms.js"></script>
 <script src="culture.js"></script>
+<script src="mncompare.js"></script>
 <script src="writing.js"></script>
 <script src="classes.js"></script>
 <script src="numbers.js"></script>
@@ -2300,6 +2301,7 @@ function viewGrammar(){
   var g=ui.grammar,root=h("div");
   if(g.mod==="idiom"&&window.Idioms&&Idioms.has(state.lang))return Idioms.view(modEnv());
   if(g.mod==="culture"&&window.Culture&&Culture.has(state.lang))return Culture.view(modEnv());
+  if(g.mod==="cmp"&&window.MnCompare&&MnCompare.has(state.lang))return MnCompare.view(modEnv());
   g.mod=null;
   if(g.lesson){
     var L=g.lesson;
@@ -2346,6 +2348,7 @@ function viewGrammar(){
     h("button",{class:"btn",disabled:mc===0,onclick:startMissed},"🔁 Алдсанаа давт ("+mc+")"),
     h("button",{class:"btn",onclick:startExam},"📝 Шалгалтын тест (20)"),
     MN_ERR_OK()?h("button",{class:"btn",onclick:startMnErr},"🎯 Түгээмэл алдаа"):null,
+    state.mode!=="kid"&&window.MnCompare&&MnCompare.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("cmp");}},"🇲🇳⇄ Монголтой харьцуулах"):null,
     state.mode!=="kid"&&window.Idioms&&Idioms.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("idiom");}},"🗣 Хэлц үг"):null,
     state.mode!=="kid"&&window.Culture&&Culture.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("culture");}},"🎎 Соёл, ёс заншил"):null));
   var tks=Object.keys(CLS_LESSONS).filter(function(k){return CLS_LESSONS[k].lang===state.lang;});
