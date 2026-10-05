@@ -22,3 +22,9 @@ namespace_id = "1002"
   [ratelimits.simple]
   limit = 120
   period = 60
+
+# ✨ HD дуу (ElevenLabs): үүсгэсэн дууг энд үүрд хадгална + өдрийн тэмдэгтийн тоолуур.
+# Түлхүүрийг: npx wrangler secret put ELEVENLABS_API_KEY  (хүсвэл ELEVENLABS_VOICE, ELEVENLABS_MODEL, ELEVENLABS_DAILY_CHARS)
+[[kv_namespaces]]
+binding = "TTS_KV"
+id = "27ce0c26168b4742916441db21f042bf"

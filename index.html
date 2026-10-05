@@ -703,7 +703,7 @@ var state={
   lessons:sget("lessons",{}), chatCount:sget("chat",0), mode:sget("mode","adult"),
   due:sget("due",{}), saved:sget("saved",[]), custom:sget("custom",[]), tasks:sget("tasks",{}),
   lang:sget("lang","en"), aiopt:sget("aiopt",{}), aimem:sget("aimem",{}), openaiKey:sget("openaikey",""), apiKey:sget("apikey",""), stars:sget("stars",0), listenOk:sget("listenOk",0), goal:sget("goal",20), theme:sget("theme","auto"), cat:"all",
-  rate:sget("rate",1), accent:sget("accent","us"), freeze:sget("freeze",0), frozen:sget("frozen",{}), frzMark:sget("frzMark",0), langxp:sget("langxp",{}), miss:sget("miss",[]),
+  rate:sget("rate",1), accent:sget("accent","us"), hd:sget("hd",false)===true, freeze:sget("freeze",0), frozen:sget("frozen",{}), frzMark:sget("frzMark",0), langxp:sget("langxp",{}), miss:sget("miss",[]),
   stories:sget("stories",{}), speech:sget("speech",{n:0,sum:0}), fz:sget("fz",1), exam:sget("exam",{}),
   act:sget("act",{}), games:sget("games",{}), kidlv:{easy:"a1",hard:"a2"}[sget("kidlv","a2")]||sget("kidlv","a2"), examLog:sget("examLog",[]), certName:sget("certName",""), mbook:sget("mbook",{})
 };
@@ -856,11 +856,15 @@ function synthParts(parts,fullLang,onDone,lr){
 /* Дууны эх үүсвэр: 1) Microsoft Edge neural (манай Worker-ээр) 2) Google 3) утасны өөрийн дуу. Edge унавал 10 минут алгасна. */
 var TTS_URL=window.SALKHI_AI&&window.SALKHI_AI.url?String(window.SALKHI_AI.url).replace(/\/chat\/?$/,"/tts"):null,edgeDownAt=0;
 function edgeOK(){return !!TTS_URL&&Date.now()-edgeDownAt>600000;}
+/* ✨ HD дуу (ElevenLabs, worker дээр түлхүүр тохируулсан үед л): монголоос бусад хэлэнд */
+var ttsHD=false;
+if(TTS_URL)fetch(TTS_URL+"/status").then(function(r){return r.ok?r.json():null;}).then(function(j){ttsHD=!!(j&&j.hd);}).catch(function(){});
+function hdOn(lang){return ttsHD&&state.hd&&lang!=="mn"&&navigator.onLine!==false;}
 function playParts(parts,id,i,gttsLang,fullLang,onDone,lr,lang,useEdge){
   if(id!==audioQ.id||i>=parts.length){if(onDone)onDone();return;}
   if(useEdge===undefined)useEdge=edgeOK();
   var sp=state.rate*(lr||1),src=useEdge
-    ?TTS_URL+"?l="+lang+(accentOn(lang)?"&a="+accentOn(lang):"")+"&r="+Math.round((sp-1)*100)+"&t="+encodeURIComponent(parts[i])
+    ?TTS_URL+"?l="+lang+(accentOn(lang)?"&a="+accentOn(lang):"")+(hdOn(lang)?"&v=hd":"")+"&r="+Math.round((sp-1)*100)+"&t="+encodeURIComponent(parts[i])
     :"https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl="+gttsLang+"&q="+encodeURIComponent(parts[i]);
   var failed=false,a=new Audio(src);
   audioQ.cur=a;a.playbackRate=useEdge?1:sp;
@@ -986,7 +990,7 @@ function speakList(list,onDone,slow){
     var parts=splitSpeech(list);if(!parts.length){if(onDone)onDone();return;}
     var lang=LANG_TTS[state.lang]?state.lang:"en",ac=accentOn(lang),fullLang=ac?ACCENTS[ac][2]:LANG_TTS[lang],gttsLang=ac?ACCENTS[ac][3]:GTTS[lang],id=audioQ.id,rate=langRate()*(slow&&state.rate>=1?0.65:1);
     /* warmAudio нь товч дарсан агшинд (iPhone-ы дууны эрх) шууд дуудагдах ёстой; кэшийг зөвхөн татсан багц байвал зэрэгцээ шалгана */
-    var pk=sget("audpk",{})||{},look=Object.keys(pk).length?audLookup(lang,parts):null;
+    var pk=sget("audpk",{})||{},look=Object.keys(pk).length&&!hdOn(lang)?audLookup(lang,parts):null;
     warmAudio(function(){
       if(id!==audioQ.id)return;
       function go(blobs){
@@ -3953,6 +3957,13 @@ function voicePanel(){
     wrap.append(h("div",{class:"seg"},Object.keys(ACCENTS).map(function(k){
       return h("button",{"aria-pressed":String(state.accent===k),onclick:function(){state.accent=k;sset("accent",k);render();speak(demo.en);}},ACCENTS[k][0]+" "+ACCENTS[k][1]);
     })));
+  }
+  if(ttsHD&&state.lang!=="mn"){
+    wrap.append(h("p",{class:"muted small",style:"margin-top:10px"},"Хоолойны чанар"));
+    wrap.append(h("div",{class:"seg"},[[false,"🔈 Энгийн"],[true,"✨ HD"]].map(function(o){
+      return h("button",{"aria-pressed":String(state.hd===o[0]),onclick:function(){state.hd=o[0];sset("hd",o[0]);render();speak(demo[state.lang]||demo.en);}},o[1]);
+    })));
+    if(state.hd)wrap.append(h("p",{class:"muted small",style:"margin:4px 0 0"},"ElevenLabs-ийн байгалийн хоолой. Интернэт хэрэгтэй"+(state.lang==="en"?"; аялгын сонголт HD-д үйлчлэхгүй":"")+"."));
   }
   wrap.append(h("button",{class:"btn",style:"margin-top:8px",onclick:function(){speak(demo[state.lang]||demo.en);}},"🔊 Сонсож үзэх"));
   return wrap;

@@ -132,19 +132,74 @@ export function parseTTS(url){
   const l=url.searchParams.get("l")||"",t=(url.searchParams.get("t")||"").replace(/\s+/g," ").trim();
   let r=parseInt(url.searchParams.get("r")||"0",10);if(isNaN(r))r=0;r=Math.max(-50,Math.min(50,r));
   if(!TTS_VOICES[l]||!t||t.length>MAX_TTS_CHARS)return null;
-  const a=url.searchParams.get("a")||"";
-  if(a&&TTS_ACCENTS[l]&&TTS_ACCENTS[l][a])return {l:l,r:r,t:t,a:a};
-  return {l:l,r:r,t:t};
+  const a=url.searchParams.get("a")||"",p={l:l,r:r,t:t};
+  if(a&&TTS_ACCENTS[l]&&TTS_ACCENTS[l][a])p.a=a;
+  if(url.searchParams.get("v")==="hd"&&HD_LANGS[l])p.hd=true;
+  return p;
+}
+
+/* ---------- ✨ HD дуу: ElevenLabs (төлбөртэй) ----------
+   /tts?...&v=hd. Secret ELEVENLABS_API_KEY + KV (TTS_KV) хоёулаа байвал л ажиллана.
+   Үүсгэсэн дууг KV-д үүрд хадгална (нэг өгүүлбэрт нэг л удаа төлнө). Өдрийн тэмдэгтийн хязгаар (ELEVENLABS_DAILY_CHARS)
+   хэтэрсэн, эсвэл ElevenLabs алдаа өгвөл Edge-ийн дуугаар хариулна (тэр хариуг HD гэж хадгалахгүй).
+   Монгол хэлийг ElevenLabs дэмждэггүй тул Edge-ээр үлдэнэ. language_code-ийг зөвхөн v2.5 загварууд (flash/turbo) хүлээн авдаг. */
+const HD_LANGS={en:1,ja:1,ko:1,zh:1,ru:1,de:1};
+const EL_VOICE="EXAVITQu4vr4xnSDxMaL",EL_MODEL="eleven_multilingual_v2",EL_DAILY=20000;
+export function hdReady(env){return !!(env.ELEVENLABS_API_KEY&&env.TTS_KV);}
+export function elSpeed(r){return Math.round(Math.max(0.7,Math.min(1.2,1+r/100))*100)/100;}
+export async function elevenTTS(env,lang,rate,text){
+  const voice=env.ELEVENLABS_VOICE||EL_VOICE,model=env.ELEVENLABS_MODEL||EL_MODEL;
+  const r=await (env.EL_FETCH||fetch)("https://api.elevenlabs.io/v1/text-to-speech/"+encodeURIComponent(voice)+"?output_format=mp3_44100_64",{
+    method:"POST",headers:{"xi-api-key":env.ELEVENLABS_API_KEY,"content-type":"application/json","accept":"audio/mpeg"},
+    body:JSON.stringify({text:text,model_id:model,language_code:/v2_5/.test(model)?lang:undefined,
+      voice_settings:{stability:0.5,similarity_boost:0.75,speed:elSpeed(rate)}})});
+  if(!r.ok)throw new Error("elevenlabs "+r.status+" "+(await r.text()).slice(0,200));
+  const b=new Uint8Array(await r.arrayBuffer());
+  if(b.length<100)throw new Error("elevenlabs empty audio");
+  return b;
+}
+function today(){return new Date().toISOString().slice(0,10);}
+/* KV нь шууд тогтвортой биш тул тоолуур ойролцоо — хязгаарыг бага зэрэг давж болно */
+async function hdBudget(env,n){
+  const k="elchars:"+today(),used=parseInt(await env.TTS_KV.get(k)||"0",10)||0;
+  const max=parseInt(env.ELEVENLABS_DAILY_CHARS||EL_DAILY,10);
+  if(used+n>max)return false;
+  await env.TTS_KV.put(k,String(used+n),{expirationTtl:172800});
+  return true;
+}
+async function handleHD(p,env,ctx,ah,cache){
+  const id="hd:"+(env.ELEVENLABS_VOICE||EL_VOICE)+":"+p.l+":"+p.r+":"+p.t;
+  const key=new Request("https://salkhi-tts.cache/hd/"+encodeURIComponent(id));
+  const hit=cache?await cache.match(key):null;if(hit)return hit;
+  const ok=function(audio){return new Response(audio,{status:200,headers:Object.assign({"content-type":"audio/mpeg","cache-control":"public, max-age=31536000, immutable","x-tts":"hd"},ah)});};
+  const stored=await env.TTS_KV.get(id,"arrayBuffer");
+  if(stored){const res=ok(stored);if(cache)ctx.waitUntil(cache.put(key,res.clone()));return res;}
+  if(await hdBudget(env,p.t.length)){
+    try{
+      const audio=await elevenTTS(env,p.l,p.r,p.t),res=ok(audio);
+      ctx.waitUntil(Promise.all([env.TTS_KV.put(id,audio),cache?cache.put(key,res.clone()):null]));
+      return res;
+    }catch(e){console.error("hd tts failed:",e&&e.message?e.message:String(e));}
+  }
+  return null;
 }
 async function handleTTS(req,env,ctx,url){
   const ah={"access-control-allow-origin":"*"};
   const p=parseTTS(url);
   if(!p)return json({error:"bad_tts"},400,ah);
   const cache=(typeof caches!=="undefined")?caches.default:null;
+  ctx=ctx&&ctx.waitUntil?ctx:{waitUntil:function(){}};
+  let hdFell=false;
+  if(p.hd&&hdReady(env)){
+    const lim0=env.TTS_LIMITER||env.LIMITER;
+    if(lim0){const r0=await lim0.limit({key:"tts:"+(req.headers.get("CF-Connecting-IP")||"unknown")});if(!r0.success)return json({error:"rate_limited"},429,ah);}
+    const res=await handleHD(p,env,ctx,ah,cache);if(res)return res;
+    hdFell=true;
+  }
   const key=new Request("https://salkhi-tts.cache/v1/"+p.l+(p.a?"-"+p.a:"")+"/"+p.r+"/"+encodeURIComponent(p.t));
-  if(cache){const hit=await cache.match(key);if(hit)return hit;}
+  if(cache){const hit=await cache.match(key);if(hit)return hdFell?noStore(hit):hit;}
   const lim=env.TTS_LIMITER||env.LIMITER;
-  if(lim){
+  if(lim&&!hdFell){
     const ip=req.headers.get("CF-Connecting-IP")||"unknown";
     const r=await lim.limit({key:"tts:"+ip});
     if(!r.success)return json({error:"rate_limited"},429,ah);
@@ -153,9 +208,11 @@ async function handleTTS(req,env,ctx,url){
   try{audio=await edgeTTS(p.l,p.r,p.t,env.EDGE_FETCH,p.a);}
   catch(e){console.error("edge tts failed:",e&&e.message?e.message:String(e));return json({error:"tts_unavailable"},503,ah);}
   const res=new Response(audio,{status:200,headers:Object.assign({"content-type":"audio/mpeg","cache-control":"public, max-age=31536000, immutable"},ah)});
-  if(cache){const put=cache.put(key,res.clone());if(ctx&&ctx.waitUntil)ctx.waitUntil(put);else await put;}
-  return res;
+  if(cache)ctx.waitUntil(cache.put(key,res.clone()));
+  /* HD хүссэн боловч Edge-ээр хариулсан бол хөтөч/утас үүнийг HD гэж хадгалахгүй — дараа нь HD-г дахин оролдоно */
+  return hdFell?noStore(res):res;
 }
+function noStore(res){const r=new Response(res.body,res);r.headers.set("cache-control","no-store");r.headers.set("x-tts","fallback");return r;}
 
 /* ---------- /vision: зургийн гол эд зүйлийг таниад сонгосон хэлээр нэрлэнэ («Камераар сур») ----------
    POST {image:"<base64 jpeg>", lang:"en"} → {word, reading, mn, emoji, en}. Зураг хадгалагдахгүй.
@@ -301,6 +358,7 @@ export default {
   async fetch(req,env,ctx){
     const pre=new URL(req.url);
     if(pre.pathname==="/tts"&&req.method==="GET")return handleTTS(req,env,ctx,pre);
+    if(pre.pathname==="/tts/status"&&req.method==="GET")return json({hd:hdReady(env)},200,{"access-control-allow-origin":"*","cache-control":"max-age=300"});
     const origin=req.headers.get("Origin")||"";
     const okOrigin=ALLOWED_ORIGINS.indexOf(origin)>=0;
     const cors={
