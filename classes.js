@@ -178,8 +178,67 @@
       return p.then(function(){
         if(!d.c.board&&role==="s")return d;
         return db.ref("board/"+code).once("value").then(function(b){d.board=b.val()||{};return d;},function(){return d;});
+      }).then(function(d){
+        if(!d.c.school)return d;
+        if(role==="t")schoolPush(code,d);
+        return db.ref("schools/"+d.c.school).once("value").then(function(x){d.school=x.val();return d;},function(){return d;});
       });
     });
+  }
+  /* ---------- 🏫 сургуулийн лиг: ангиуд 7 хоногийн нэг сурагчид ногдох дундаж XP-ээр өрсөлдөнө ----------
+     schools/{sc} = {name, owner}, schools/{sc}/cls/{code} = {name,tname,wxp,n,avg,wk,ts} — багш ангиа нээх бүрт шинэчилнэ */
+  function schoolPush(code,d){
+    var wk=env.me(d.c.lang||"en").wk,b=d.board||{},sum=0,n=Object.keys(d.members||{}).length;
+    Object.keys(b).forEach(function(u){if(b[u]&&b[u].wk===wk)sum+=+b[u].wxp||0;});
+    var rec={name:String(d.c.name).slice(0,40),wxp:sum,n:n,avg:Math.round(sum/Math.max(1,n)),wk:wk,ts:TS()};
+    if(d.c.tname)rec.tname=String(d.c.tname).slice(0,30);
+    db.ref("schools/"+d.c.school+"/cls/"+code).set(rec).catch(function(){});
+    if(d.school){d.school.cls=d.school.cls||{};rec.ts=now();d.school.cls[code]=rec;}
+  }
+  function schoolCreate(code,name,tries){
+    var sc=randCode();
+    return db.ref("schools/"+sc).set({name:name,owner:uid,ts:TS()}).then(function(){return db.ref("classes/"+code+"/school").set(sc);}).then(function(){return sc;},function(e){
+      if((tries||0)<3&&/permission/i.test(String(e&&e.message)))return schoolCreate(code,name,(tries||0)+1);throw e;
+    });
+  }
+  function schoolJoin(code,sc){
+    sc=String(sc||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+    if(sc.length!==6)return Promise.reject(new Error("Сургуулийн код 6 тэмдэгттэй"));
+    return db.ref("schools/"+sc).once("value").then(function(x){if(!x.val())throw new Error("Ийм кодтой сургууль олдсонгүй");return db.ref("classes/"+code+"/school").set(sc);});
+  }
+  function schoolBoard(root,d,mine){
+    var sch=d.school,wk=env.me(d.c.lang||"en").wk,cls=sch&&sch.cls||{};
+    var rows=Object.keys(cls).map(function(c){var x=cls[c];return {c:c,name:x.name,t:x.tname,n:x.n||0,avg:x.wk===wk?x.avg||0:0,sum:x.wk===wk?x.wxp||0:0};})
+      .sort(function(a,b){return b.avg-a.avg||b.sum-a.sum;});
+    root.append(h("div",{class:"muted small"},"🏫 "+(sch?sch.name:"")+" · 7 хоногийн нэг сурагчид ногдох дундаж XP"));
+    rows.forEach(function(r,i){
+      var me=r.c===S.code;
+      root.append(h("div",{class:"srow",style:me?"font-weight:700":""},
+        h("span",{style:"width:28px"},i<3?["🥇","🥈","🥉"][i]:String(i+1)),
+        h("span",{style:"flex:1"},r.name+(r.t?" · "+r.t:"")+(me?" (манай анги)":""),h("div",{class:"muted small"},r.n+" сурагч · нийт "+r.sum+" XP")),
+        h("b",null,r.avg+" XP")));
+    });
+    if(rows.length<2)root.append(h("p",{class:"muted small"},"Бусад ангийн багш нар энэ кодоор нэгдэхэд өрсөлдөөн эхэлнэ."));
+  }
+  function schoolView(root,d){
+    root.append(h("h3",{style:"margin:20px 0 6px"},"🏫 Сургуулийн лиг"));
+    if(!d.c.school){
+      root.append(h("p",{class:"muted small"},"Сургуулийнхаа бусад ангитай 7 хоног бүр өрсөлдөөрэй. Нэг багш сургууль үүсгээд кодоо бусад багш нарт өгнө."));
+      var ji=h("input",{class:"tin",maxlength:"6",placeholder:"Сургуулийн код","aria-label":"Сургуулийн код",style:"text-transform:uppercase;letter-spacing:3px"});
+      var ni=h("input",{class:"tin",maxlength:"40",placeholder:"Сургуулийн нэр (ж: 23-р сургууль)","aria-label":"Сургуулийн нэр"});
+      root.append(h("div",{style:"display:flex;gap:8px"},h("div",{style:"flex:1"},ji),h("button",{class:"btn primary",style:"flex:none",disabled:busy,onclick:function(){run(schoolJoin(S.code,ji.value),function(){S.data=null;env.toast("🏫 Сургуулийн лигт нэгдлээ");});}},"Нэгдэх")));
+      root.append(h("div",{style:"display:flex;gap:8px;margin-top:6px"},h("div",{style:"flex:1"},ni),h("button",{class:"btn",style:"flex:none",disabled:busy,onclick:function(){
+        var nm=ni.value.trim().slice(0,40);if(!nm){env.toast("Сургуулийн нэрээ бичнэ үү");return;}
+        run(schoolCreate(S.code,nm),function(sc){S.data=null;env.toast("🏫 Сургууль үүслээ. Код: "+sc,6000);});
+      }},"Үүсгэх")));
+      return;
+    }
+    root.append(h("div",{class:"note",style:"display:flex;align-items:center;gap:10px"},h("div",{style:"flex:1"},h("div",{class:"muted small"},"Сургуулийн код (бусад багш нарт өг)"),h("b",{style:"font-size:22px;letter-spacing:4px"},d.c.school)),
+      h("button",{class:"btn",style:"flex:none",onclick:function(){
+        var t="Салхи аппын сургуулийн лигт ангиараа нэгдээрэй! Профайл → 🏫 Анги → ангиа нээгээд → 🏫 Сургуулийн лиг → код: "+d.c.school;
+        if(navigator.share)navigator.share({text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){env.toast("Хуулагдлаа");});
+      }},"📤")));
+    if(d.school)schoolBoard(root,d,true);
   }
   function run(p,after){busy=true;err="";paint();p.then(function(x){busy=false;if(after)after(x);paint();},fail);}
 
@@ -569,6 +628,7 @@
         t.k==="tlesson"&&d.lessons[t.lid]&&v<t.n?h("button",{class:"btn",style:"margin-top:6px",onclick:function(){env.openLesson(code+":"+t.lid);}},"📘 Хичээл нээх"):null));
     });
     if(d.c.board){root.append(h("h3",{style:"margin:18px 0 6px"},"🏆 7 хоногийн рейтинг"));boardView(root,d,true);}
+    if(d.c.school&&d.school){root.append(h("h3",{style:"margin:18px 0 6px"},"🏫 Сургуулийн лиг"));schoolBoard(root,d,false);}
     root.append(h("div",{class:"row"},
       h("button",{class:"btn",onclick:function(){S.data=null;paint();}},"🔄 Шинэчлэх"),
       h("button",{class:"btn ghost",onclick:function(){
@@ -883,6 +943,8 @@
         run(db.ref("classes/"+code+"/board").set(!d.c.board),function(){S.data=null;env.toast(d.c.board?"Рейтинг унтарлаа":"Рейтинг асаалаа 🏆");});
       }},d.c.board?"Унтраах":"Асаах")));
     if(d.c.board)boardView(root,d,false);
+    if(!d.c.board&&!d.c.school)root.append(h("p",{class:"muted small"},"💡 Сургуулийн лигт оролцохын тулд дээрх рейтингийг асаагаарай (сурагчдын XP-ээс ангийн дундажийг тооцно)."));
+    schoolView(root,d);
     /* сурагчид */
     root.append(h("h3",{style:"margin:20px 0 6px"},"👥 Сурагчдын явц"));
     if(!uids.length)root.append(h("p",{class:"muted small"},"Одоогоор сурагч нэгдээгүй байна. Кодоо сурагчдадаа илгээгээрэй."));

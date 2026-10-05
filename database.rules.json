@@ -73,7 +73,7 @@
       "$code": {
         ".read": "auth != null",
         ".write": "auth != null && ((!data.exists() && newData.child('teacher').val() === auth.uid) || (data.exists() && data.child('teacher').val() === auth.uid))",
-        ".validate": "$code.matches(/^[A-Z0-9]{6}$/) && newData.hasChildren(['name','teacher','lang']) && newData.child('teacher').val() === auth.uid && newData.child('name').isString() && newData.child('name').val().length <= 40 && newData.child('lang').isString() && newData.child('lang').val().length <= 3 && (!newData.child('tname').exists() || (newData.child('tname').isString() && newData.child('tname').val().length <= 30)) && (!newData.child('board').exists() || newData.child('board').isBoolean())"
+        ".validate": "$code.matches(/^[A-Z0-9]{6}$/) && newData.hasChildren(['name','teacher','lang']) && newData.child('teacher').val() === auth.uid && newData.child('name').isString() && newData.child('name').val().length <= 40 && newData.child('lang').isString() && newData.child('lang').val().length <= 3 && (!newData.child('tname').exists() || (newData.child('tname').isString() && newData.child('tname').val().length <= 30)) && (!newData.child('board').exists() || newData.child('board').isBoolean()) && (!newData.child('school').exists() || (newData.child('school').isString() && newData.child('school').val().matches(/^[A-Z0-9]{6}$/)))"
       }
     },
     "members": {
@@ -352,6 +352,22 @@
         "$id": {
           ".write": "auth != null && ((!data.exists() && newData.child('from').val() === auth.uid) || (data.exists() && !newData.exists() && (auth.uid === $to || data.child('from').val() === auth.uid)))",
           ".validate": "!newData.exists() || (newData.hasChildren(['from','name','goal','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('goal').isNumber() && newData.child('ts').val() === now)"
+        }
+      }
+    },
+    "schools": {
+      "$sc": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('owner').val() === auth.uid && !newData.child('cls').exists()) || (data.exists() && !newData.exists() && data.child('owner').val() === auth.uid))",
+        ".validate": "!newData.exists() || ($sc.matches(/^[A-Z0-9]{6}$/) && newData.hasChildren(['name','owner']) && newData.child('name').isString() && newData.child('name').val().length <= 40)",
+        "cls": {
+          "$c": {
+            ".write": "auth != null && root.child('classes/'+$c+'/teacher').val() === auth.uid && root.child('classes/'+$c+'/school').val() === $sc",
+            ".validate": "!newData.exists() || (newData.hasChildren(['name','wxp','n','avg','wk','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 40 && newData.child('wxp').isNumber() && newData.child('wxp').val() >= 0 && newData.child('wxp').val() <= 1000000 && newData.child('n').isNumber() && newData.child('n').val() <= 500 && newData.child('avg').isNumber() && newData.child('wk').isString() && newData.child('wk').val().length <= 12 && newData.child('ts').val() === now && (!newData.child('tname').exists() || (newData.child('tname').isString() && newData.child('tname').val().length <= 30)))"
+          }
+        },
+        "name": {
+          ".write": "auth != null && root.child('schools/'+$sc+'/owner').val() === auth.uid"
         }
       }
     }
