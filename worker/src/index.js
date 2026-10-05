@@ -286,6 +286,81 @@ async function handleVision(req,env,cors){
   return json(tr,200,Object.assign({"cache-control":"no-store"},cors));
 }
 
+/* ---------- /ocr: зургийн бичвэрийг (цэс, тэмдэг, сав баглаа боодол) уншаад монголоор тайлбарлана ----------
+   POST {lang, image(base64 jpeg)} → {text, mn, words:[{w,r,mn}]}. 1) Llama vision бичвэрийг уншина 2) текст загвар орчуулж, үгсийг тайлбарлана */
+const OCR_PROMPT="Read ALL the text in this photo exactly as written (menu, sign, label or packaging), line by line, in the original language and script. Do not translate or explain. If there is no readable text, answer NONE.";
+export function parseOCR(v){
+  let o=v;
+  if(typeof v==="string"){const m=v.match(/\{[\s\S]*\}/);if(!m)return null;try{o=JSON.parse(m[0]);}catch(e){return null;}}
+  if(!o||typeof o!=="object"||typeof o.mn!=="string"||!o.mn.trim())return null;
+  const words=(Array.isArray(o.words)?o.words:[]).filter(function(x){return x&&typeof x.w==="string"&&x.w.trim()&&typeof x.mn==="string";}).slice(0,15)
+    .map(function(x){return {w:x.w.trim().slice(0,60),r:typeof x.r==="string"?x.r.slice(0,60):"",mn:x.mn.trim().slice(0,80)};});
+  return {mn:o.mn.trim().slice(0,1500),words:words};
+}
+async function handleOCR(req,env,cors){
+  let body;try{body=await req.json();}catch(e){return json({error:"bad_json"},400,cors);}
+  const lang=body&&VISION_LANGS[body.lang]?body.lang:null;
+  const img=decodeImage(body&&body.image);
+  if(!lang||!img)return json({error:"bad_image"},400,cors);
+  try{
+    const a=await runAI(env,VISION_MODEL,{prompt:OCR_PROMPT,image:Array.from(img),max_tokens:400,temperature:0});
+    const text=String(a&&a.response||"").trim().slice(0,2000);
+    if(!text||/^none\b/i.test(text))return json({error:"no_text"},422,cors);
+    const L=VISION_LANGS[lang];
+    const q="This text was read from a photo (menu, sign or label) by a Mongolian who is learning "+L+":\n\"\"\"\n"+text+"\n\"\"\"\n"+
+      "1) Translate the whole text into natural Mongolian (Cyrillic). 2) List up to 12 of the most useful words or short phrases that appear in the text, each with "+
+      (lang==="ja"?"romaji":lang==="zh"?"pinyin":lang==="ko"?"romanization":"an empty reading")+" and a short Mongolian meaning. Reply with ONLY JSON: {\"mn\":\"...\",\"words\":[{\"w\":\"...\",\"r\":\"...\",\"mn\":\"...\"}]}";
+    const b=await env.AI.run(env.MODEL||DEFAULT_MODEL,{messages:[{role:"system",content:SAFETY},{role:"user",content:q}],max_tokens:900,temperature:0.1});
+    const tr=parseOCR(b&&b.response);
+    if(!tr){console.error("ocr unparsed:",JSON.stringify(b).slice(0,200));return json({error:"not_found"},422,cors);}
+    tr.text=text;
+    return json(tr,200,Object.assign({"cache-control":"no-store"},cors));
+  }catch(e){console.error("ocr failed:",e&&e.message?e.message:String(e));return json({error:"ai_unavailable"},503,cors);}
+}
+
+/* ---------- /news: өдрийн мэдээний гарчиг (BBC/DW + Монголын тухай Google News), 30 мин кэш ----------
+   GET /news?lang=en → {items:[{t,d,link,src,ts,mn}]} — апп нь гарчиг, товчоос суралцагчийн түвшинд хялбаршуулсан мэдээ бичүүлнэ. */
+const NEWS_FEEDS={
+  en:[["BBC","https://feeds.bbci.co.uk/news/world/rss.xml"]],ja:[["BBC","https://feeds.bbci.co.uk/japanese/rss.xml"]],
+  ko:[["BBC","https://feeds.bbci.co.uk/korean/rss.xml"]],zh:[["BBC","https://feeds.bbci.co.uk/zhongwen/simp/rss.xml"]],
+  ru:[["BBC","https://feeds.bbci.co.uk/russian/rss.xml"]],de:[["DW","https://rss.dw.com/xml/rss-de-top"]]
+};
+const NEWS_MN=["Google News","https://news.google.com/rss/search?q=Mongolia&hl=en-US&gl=US&ceid=US:en"];
+function xmlText(s){
+  return String(s||"").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,"$1").replace(/<[^>]+>/g," ")
+    .replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;|&apos;/g,"'").replace(/&nbsp;/g," ").replace(/&amp;/g,"&")
+    .replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
+}
+export function parseRSS(xml,src,max){
+  const out=[];const items=String(xml||"").split(/<item[\s>]/).slice(1);
+  items.forEach(function(it){
+    if(out.length>=(max||8))return;
+    const g=function(tag){const m=it.match(new RegExp("<"+tag+"[^>]*>([\\s\\S]*?)</"+tag+">"));return m?m[1]:"";};
+    const t=xmlText(g("title")),link=xmlText(g("link")),d=src==="Google News"?"":xmlText(g("description")).slice(0,400);
+    const ts=Date.parse(xmlText(g("pubDate")))||0;
+    if(t&&/^https?:\/\//.test(link))out.push({t:t.slice(0,200),d:d,link:link.slice(0,500),src:src,ts:ts});
+  });
+  return out;
+}
+async function feed(f,max,ctx){
+  const cache=(typeof caches!=="undefined")?caches.default:null,key=new Request("https://salkhi-news.cache/"+encodeURIComponent(f[1]));
+  if(cache){const hit=await cache.match(key);if(hit)return parseRSS(await hit.text(),f[0],max);}
+  const r=await fetch(f[1],{headers:{"user-agent":"Mozilla/5.0 (SalkhiNews)"},cf:{cacheTtl:1800}});
+  if(!r.ok)return [];
+  const xml=await r.text();
+  if(cache&&ctx)ctx.waitUntil(cache.put(key,new Response(xml,{headers:{"cache-control":"max-age=1800"}})));
+  return parseRSS(xml,f[0],max);
+}
+async function handleNews(url,env,ctx){
+  const ah={"access-control-allow-origin":"*","cache-control":"max-age=900"};
+  const lang=NEWS_FEEDS[url.searchParams.get("lang")]?url.searchParams.get("lang"):"en";
+  try{
+    const lists=await Promise.all(NEWS_FEEDS[lang].map(function(f){return feed(f,8,ctx).catch(function(){return [];});}).concat([feed(NEWS_MN,3,ctx).then(function(a){return a.map(function(x){x.mn=true;return x;});}).catch(function(){return [];})]));
+    const mn=lists.pop(),world=[].concat.apply([],lists).sort(function(a,b){return b.ts-a.ts;});
+    return json({items:mn.slice(0,2).concat(world).slice(0,10)},200,ah);
+  }catch(e){return json({error:"news_unavailable"},503,ah);}
+}
+
 /* ---------- /sms: багш ангийнхаа эцэг эхчүүдэд өдрийн үгсийг SMS-ээр илгээнэ ----------
    POST {code, token, text}. token = багшийн Firebase ID token: Worker түүгээр smsphones/{code}-г уншина (дүрмээр зөвхөн тухайн ангийн багш уншина),
    тиймээс тусад нь JWT шалгах шаардлагагүй. Өдөрт ангид SMS_DAILY (2) удаа, нэг удаад SMS_MAX_TO (60) дугаар.
@@ -358,6 +433,7 @@ export default {
   async fetch(req,env,ctx){
     const pre=new URL(req.url);
     if(pre.pathname==="/tts"&&req.method==="GET")return handleTTS(req,env,ctx,pre);
+    if(pre.pathname==="/news"&&req.method==="GET")return handleNews(pre,env,ctx);
     if(pre.pathname==="/tts/status"&&req.method==="GET")return json({hd:hdReady(env)},200,{"access-control-allow-origin":"*","cache-control":"max-age=300"});
     const origin=req.headers.get("Origin")||"";
     const okOrigin=ALLOWED_ORIGINS.indexOf(origin)>=0;
@@ -372,7 +448,7 @@ export default {
     const url=new URL(req.url);
     if(url.pathname==="/"&&req.method==="GET")return new Response("Salkhi AI is running.",{status:200,headers:cors});
     if(url.pathname==="/sms/status"&&req.method==="GET")return json({configured:smsConfigured(env)},200,cors);
-    if(req.method!=="POST"||(url.pathname!=="/chat"&&url.pathname!=="/vision"&&url.pathname!=="/sms"))return json({error:"not_found"},404,cors);
+    if(req.method!=="POST"||(url.pathname!=="/chat"&&url.pathname!=="/vision"&&url.pathname!=="/ocr"&&url.pathname!=="/sms"))return json({error:"not_found"},404,cors);
     if(!okOrigin)return json({error:"forbidden"},403,cors);
 
     if(env.LIMITER){
@@ -381,6 +457,7 @@ export default {
       if(!r.success)return json({error:"rate_limited"},429,cors);
     }
     if(url.pathname==="/vision")return handleVision(req,env,cors);
+    if(url.pathname==="/ocr")return handleOCR(req,env,cors);
     if(url.pathname==="/sms")return handleSMS(req,env,cors);
 
     let body;try{body=await req.json();}catch(e){return json({error:"bad_json"},400,cors);}

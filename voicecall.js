@@ -183,6 +183,8 @@
       return root;
     },
     stop:function(){hang(true);},
+    /* өөр хэсгээс (ж: 🧳 аяллын бэлтгэл) шууд тодорхой сэдвээр залгах */
+    begin:function(e,id){env=e;h=e.h;start(id);},
     active:function(){return !!(C&&C.stage==="call");}
   };
 })();

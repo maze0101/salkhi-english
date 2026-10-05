@@ -810,6 +810,7 @@
       var L=d.lists[lid];
       if(S.form==="list:"+lid)return listEditor(root,d,lid);
       root.append(h("div",{class:"srow"},h("span",{style:"flex:1"},"📝 "+L.name,h("div",{class:"muted small"},(L.n||parseList(L).length)+" үг")),
+        env.printList?h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":"Ажлын хуудас хэвлэх",onclick:function(){env.printList(L.name,parseList(L),d.c.lang||"en");}},"🖨️"):null,
         h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":"Засах",onclick:function(){S.form="list:"+lid;paint();}},"✏️"),
         h("button",{class:"btn ghost",style:"padding:6px 10px;flex:none","aria-label":"Устгах",onclick:function(){
           if(S.rmList!==lid){S.rmList=lid;env.toast("Дахин дарвал «"+L.name+"» устгагдана");return;}
