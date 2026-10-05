@@ -352,6 +352,11 @@ p+p{margin-top:10px}
 .splash b{font-size:22px;font-weight:700;letter-spacing:-.03em;animation:splashpop .5s .08s ease-out both}
 @keyframes splashpop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.splash img,.splash b{animation:none}.splash{transition:none}}
+.vcorb{width:120px;height:120px;margin:14px auto 8px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:56px;background:var(--soft);border:3px solid var(--line);transition:border-color .2s,box-shadow .2s}
+.vcorb.on{border-color:var(--danger);box-shadow:0 0 0 8px color-mix(in srgb,var(--danger) 18%,transparent);animation:vcpulse 1.4s ease-in-out infinite}
+.vcorb.talk{border-color:var(--sky);box-shadow:0 0 0 8px color-mix(in srgb,var(--sky) 18%,transparent)}
+@keyframes vcpulse{50%{box-shadow:0 0 0 16px color-mix(in srgb,var(--danger) 8%,transparent)}}
+@media (prefers-reduced-motion:reduce){.vcorb.on{animation:none}}
 .gamecard{display:flex;align-items:center;gap:14px;width:100%;margin:10px 0;padding:14px 16px;border-radius:var(--rc);border:1px solid var(--line);background:var(--surface);text-align:left;color:inherit}
 .gamecard i{font-style:normal;font-size:24px;line-height:1;width:46px;height:46px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--soft);flex:none}
 .gamecard b{display:block;font-size:15.5px;font-weight:600}
@@ -506,6 +511,9 @@ window.salkhiHero=initSalkhiHero(document.getElementById("salkhiHero"),{font:"In
 <script src="lab.js"></script>
 <script src="writing.js"></script>
 <script src="classes.js"></script>
+<script src="family.js"></script>
+<script src="league.js"></script>
+<script src="voicecall.js"></script>
 <script src="numbers.js"></script>
 <script src="hanzi.js"></script>
 <script src="ai-config.js"></script>
@@ -1061,12 +1069,32 @@ function applyFreeze(){
   }
   if(streak()<7&&state.frzMark){state.frzMark=0;sset("frzMark",0);}
 }
+/* streak сэргээх: өчигдөр алгассан (хамгаалалт үлдээгүй), түүнээс өмнө 3+ өдөр дараалсан бол өнөөдөр 2× зорилго цуглуулж сэргээнэ */
+function repairInfo(){
+  if(state.freeze>0)return null;
+  var y=new Date();y.setDate(y.getDate()-1);
+  if(dayOk(y))return null;
+  var d=new Date(y),n=0;d.setDate(d.getDate()-1);
+  while(dayOk(d)&&n<4000){n++;d.setDate(d.getDate()-1);}
+  return n>=3?{day:dkey(y),prev:n,need:state.goal*2}:null;
+}
+function repairNote(){
+  var r=repairInfo();if(!r)return null;
+  var pct=Math.min(100,Math.round(todayXP()/r.need*100));
+  return h("div",{class:"note",style:"margin-top:12px"},
+    h("div",{style:"font-weight:700"},"💔 "+r.prev+" өдрийн дараалал тасарлаа"),
+    h("div",{class:"muted small",style:"margin:2px 0 6px"},"Өнөөдөр "+r.need+" XP (өдрийн зорилгын 2 дахин) цуглуулбал дараалал чинь сэргэнэ. Одоо: "+todayXP()+" XP"),
+    h("div",{style:"height:8px;border-radius:8px;background:var(--line);overflow:hidden"},h("i",{style:"display:block;height:100%;width:"+pct+"%;background:var(--neon)"})));
+}
 function addXP(n){
   applyFreeze();
   var k=dkey(new Date()),before=state.daily[k]||0;
-  state.xp+=n;state.daily[k]=before+n;if(window.Classes)Classes.touch();
+  state.xp+=n;state.daily[k]=before+n;if(window.Classes)Classes.touch();if(window.Family)Family.touch();
   state.langxp[state.lang]=(state.langxp[state.lang]||0)+n;
+  var rp=repairInfo();
+  if(rp&&state.daily[k]>=rp.need){state.frozen[rp.day]=1;sset("frozen",state.frozen);toast("🔥 Дараалал сэргээгдлээ! "+streak()+" өдөр");celebrate(true,true);}
   sset("xp",state.xp);sset("daily",state.daily);sset("langxp",state.langxp);
+  if(window.League)League.touch();
   var m=Math.floor(streak()/7);
   if(m>state.frzMark){state.frzMark=m;state.freeze=Math.min(2,state.freeze+1);sset("frzMark",m);sset("freeze",state.freeze);toast("🧊 7 өдөр дараалсан! Streak хамгаалалт +1");}
   renderStrip();
@@ -3709,12 +3737,34 @@ function paint(){
   if(inp)inp.disabled=false;
   window.scrollTo(0,document.body.scrollHeight);
 }
+function callEnv(){
+  return {h:h,render:render,toast:toast,
+    visible:function(){return state.tab==="chat"&&!!ui.chat.call;},
+    lang:function(){return state.lang;},langEn:function(){return LANG_EN[state.lang];},langName:function(){return LANGN[state.lang];},
+    level:function(){var el=effLevel();return LVDESC[el==="all"?"b1":el];},
+    ai:function(turns,o){
+      return sampleP.then(function(s){
+        if(s)return s(turns,{modelTier:"quick",cache:false,signal:o.signal,onText:o.onText});
+        if(state.apiKey)return callDirect(turns,o,true);
+        if(freeAI())return callFree(turns,o).catch(function(e){if(e&&e.code==="cancelled")throw e;freeFail();return null;});
+        return null;
+      });
+    },
+    parse:parseAI,errCopy:function(c){return errCopy(c);},
+    speak:function(t,cb,slow){speak(cleanAI(t),cb,slow);},stop:stopVoice,
+    SR:function(){return SR;},srLang:function(){return LANG_TTS[state.lang]||"en-US";},
+    askMic:askMic,micHint:micSettingsHint,
+    reward:function(xp){state.chatCount++;sset("chat",state.chatCount);logAct("p");addXP(xp);},
+    close:function(){ui.chat.call=false;render();window.scrollTo(0,0);}};
+}
 function viewChat(){
   var c=ui.chat,root=h("div");
+  if(c.call&&window.VoiceCall)return VoiceCall.view(callEnv());
   if(c.section==="translate")return viewTranslate();
   if(!c.started){
     root.append(h("h2",null,"Ярианы дасгал"));
     root.append(h("p",{class:"muted"},"Нөхцөлөө сонгоод AI-тай англиар ярилц. Алдаа гаргавал Монголоор засаж өгнө."));
+    if(window.VoiceCall&&(sample||state.apiKey||freeAI()))root.append(h("button",{class:"scn",style:"border-color:var(--sky);font-weight:700",onclick:function(){c.call=true;render();window.scrollTo(0,0);}},"📞 AI багштай дуудлага — дуугаар ярилц"));
     root.append(h("button",{class:"scn",onclick:function(){c.section="translate";render();}},"🎙️ Монгол → "+LANGN[state.lang]+" орчуулагч"));
     var el=effLevel(),lv=el==="all"?"Дунд":LV_NAME[el];
     root.append(h("p",{class:"muted small",style:"margin-top:10px"},"Түвшин: "+lv+(el==="all"?" (дээрээс түвшнээ сонгож болно)":"")));
@@ -5756,6 +5806,7 @@ function clsEnv(){
       return null;
     },
     me:function(lang){var m=this;return {name:m.name(),xp:state.xp,wxp:weekXP(),wk:weekKey(),streak:streak(),words:m.metric("words",lang),lessons:m.metric("lessons",lang)||0};},
+    summary:progSummary,
     setLists:setClsLists,listProgress:clsListProgress,openList:openClsList,
     setLessons:setClsLessons,lessonDone:clsLessonDone,openLesson:openClsLesson,orderText:orderText,
     lessonsFor:clsLessonsFor,
@@ -5763,16 +5814,45 @@ function clsEnv(){
     loadLang:function(l,cb){loadLangs([l],cb);},
     close:function(){ui.cls=false;render();window.scrollTo(0,0);}};
 }
+/* эцэг эхийн самбар (family.js) ба багшийн сурагч бүрийн дэлгэрэнгүйд (classes.js) илгээх товч мэдээ */
+function progSummary(){
+  var d14=[],a7={},i,d,k,a;
+  for(i=13;i>=0;i--){
+    d=new Date();d.setDate(d.getDate()-i);k=dkey(d);d14.push(state.daily[k]||0);
+    if(i<7){a=state.act[k]||{};["w","wn","l","s","r","g","e","p"].forEach(function(x){if(a[x])a7[x]=(a7[x]||0)+a[x];});}
+  }
+  var ec=errCats(),err=Object.keys(ec).filter(function(c){return ERRMN[c];}).sort(function(x,y){return ec[y]-ec[x];}).slice(0,3).map(function(c){return [ERRMN[c][0],ec[c]];});
+  var weak=mbWords().slice(0,6).map(function(r){return r.w[1]+" — "+r.w[2];});
+  return {lang:state.lang,mode:state.mode,xp:state.xp,wxp:weekXP(),today:todayXP(),goal:state.goal,streak:streak(),
+    d14:d14.join(","),a7:a7,known:modeWords().filter(function(w){return (state.box[w[1]]||0)>=2;}).length,
+    lessons:Object.keys(state.lessons).length,speech:state.speech.n?Math.round(state.speech.sum/state.speech.n):-1,
+    err:JSON.stringify(err),weak:JSON.stringify(weak)};
+}
+function lgEnv(){
+  return {h:h,render:render,toast:toast,kid:function(){return state.mode==="kid";},week:weekKey,wxp:weekXP,
+    name:function(){var a=window.SalkhiSync&&SalkhiSync.account();return state.certName||(a&&a.name)||"";},
+    freeze:function(){state.freeze=Math.min(2,state.freeze+1);sset("freeze",state.freeze);renderStrip();},
+    close:function(){ui.lg=false;if(window.League)League.detach();render();window.scrollTo(0,0);}};
+}
+function famEnv(){
+  return {h:h,render:render,toast:toast,summary:progSummary,
+    name:function(){var a=window.SalkhiSync&&SalkhiSync.account();return state.certName||(a&&a.name)||"";},
+    close:function(){ui.fam=false;render();window.scrollTo(0,0);}};
+}
 function vdEnv(){return {h:h,lang:function(){return state.lang;},render:render,speak:speak,addXP:addXP,toast:toast,close:function(){ui.vd=false;render();window.scrollTo(0,0);}};}
 function viewStats(){
   if(ui.cls&&window.Classes)return Classes.view(clsEnv());
   if(ui.vd&&window.VoiceDiary)return VoiceDiary.view(vdEnv());
+  if(ui.fam&&window.Family)return Family.view(famEnv());
+  if(ui.lg&&window.League)return League.view(lgEnv());
   var root=h("div"),p=WORDS;
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
   var done=Object.keys(state.lessons).length;
   var lvl=Math.floor(state.xp/100)+1;
   root.append(h("h2",null,"Профайл"));
   if(window.SalkhiSync)root.append(SalkhiSync.profileCard(h,render,toast,{lvl:lvl,xp:state.xp,streak:streak()},true));
+  var rpn=repairNote();if(rpn)root.append(rpn);
+  if(window.League){var lgc=League.card(lgEnv(),function(){ui.lg=true;render();window.scrollTo(0,0);});if(lgc)root.append(lgc);}
   if(parentReportDue())root.append(h("div",{class:"note",style:"margin-top:12px;display:flex;gap:10px;align-items:center"},
     h("span",{style:"font-size:28px","aria-hidden":"true"},"📬"),
     h("div",{style:"flex:1"},h("b",null,"7 хоногийн тайлан бэлэн боллоо"),h("div",{class:"muted small"},"Ээж аавдаа явцаа илгээгээрэй")),
@@ -5783,6 +5863,7 @@ function viewStats(){
     root.append(h("button",{class:"lrow",type:"button",style:"margin-top:12px",onclick:function(){ui.cls=true;render();window.scrollTo(0,0);}},
       h("span",{class:"hexb ico"},"🏫"),h("span",{style:"flex:1"},h("div",{class:"t"},"Анги"),h("div",{class:"muted small"},nc?nc+" анги · даалгавраа харах":"Багшийн ангид нэгдэх эсвэл анги үүсгэх")),h("span",{"aria-hidden":"true"},"›")));
   }
+  if(window.Family&&window.SALKHI_FB)root.append(Family.card(famEnv(),function(){ui.fam=true;render();window.scrollTo(0,0);}));
   if(window.VoiceDiary&&window.indexedDB)root.append(VoiceDiary.card(vdEnv(),function(){ui.vd=true;render();window.scrollTo(0,0);}));
   root.append(h("h3",{style:"margin:22px 0 10px"},"Миний явц"));
   var gb=h("div",{class:"goalbox"}),rw=h("div",{class:"ringw"},ringEl(todayXP()/state.goal,110,12),h("span",{class:"c"},Math.min(100,Math.round(todayXP()/state.goal*100))+"%"));
@@ -5921,6 +6002,9 @@ function wxClick(){
 wxLoad();setInterval(wxLoad,10*60000);
 if(window.SalkhiSync)SalkhiSync.boot(toast,function(){renderStrip();if(state.tab==="stats")render();},h,!sget("foreign",0)&&!location.hash);
 if(window.Classes&&window.SALKHI_FB)Classes.init(clsEnv());
+if(window.League)League.init(lgEnv());
+if(repairInfo()&&sget("rpshown","")!==dkey(new Date())){sset("rpshown",dkey(new Date()));setTimeout(function(){var r=repairInfo();if(r)toast("💔 Дараалал тасарлаа. Өнөөдөр "+r.need+" XP цуглуулбал "+r.prev+" өдрийн дараалал сэргэнэ!",6000);},2500);}
+if(window.Family&&window.SALKHI_FB){Family.init(famEnv());if(Family.fromHash()){state.tab="stats";ui.fam=true;renderTabs();render();}}
 checkNotif();setInterval(checkNotif,30000);syncNotifMeta();
 if(sget("foreign",0)&&location.hash!=='#daily')openForeign();
 if(location.hash==='#daily'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}openDaily();}

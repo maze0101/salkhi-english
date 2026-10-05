@@ -55,7 +55,9 @@
     Object.keys(tasks||{}).forEach(function(tid){var v=progressFor(code,tid,tasks[tid],lang);if(v!=null)p[tid]=v;});
     var me=env.me(lang),nm=String(my()[code]&&my()[code].name||me.name||"Сурагч").slice(0,30);
     db.ref("board/"+code+"/"+uid).set({name:nm,wxp:me.wxp,wk:me.wk}).catch(function(){});
-    return db.ref("cstats/"+code+"/"+uid).set({name:nm,xp:me.xp,wxp:me.wxp,streak:me.streak,words:me.words==null?-1:me.words,lessons:me.lessons,p:p,ts:TS()});
+    var rec={name:nm,xp:me.xp,wxp:me.wxp,streak:me.streak,words:me.words==null?-1:me.words,lessons:me.lessons,p:p,ts:TS()};
+    if(env.summary)rec.s=env.summary();
+    return db.ref("cstats/"+code+"/"+uid).set(rec);
   }
   function parseList(v){
     return String(v&&v.w||"").split("\n").map(function(l){var p=l.split("|");return [p[0],p.slice(1).join("|")];}).filter(function(p){return p[0]&&p[1];});
@@ -90,10 +92,23 @@
       return Promise.all(codes.map(function(code){
         return Promise.all([db.ref("tasks/"+code).once("value"),db.ref("classes/"+code).once("value"),db.ref("wlists/"+code).once("value"),db.ref("tlessons/"+code).once("value")]).then(function(r){
           var cv=r[1].val()||{};storeLists(code,r[2].val(),cv.lang||"en",cv.name||"");storeLessons(code,r[3].val(),cv.lang||"en",cv.name||"");
+          dueRemind(code,r[0].val()||{},cv);
           return pushStats(code,r[0].val()||{},cv.lang||"en");
         }).catch(function(){});
       }));
     }).catch(function(){});
+  }
+  var reminded={};
+  function dueRemind(code,tasks,cv){
+    if(reminded[code])return;reminded[code]=1;
+    var lang=cv.lang||"en",soon=Object.keys(tasks).filter(function(tid){
+      var t=tasks[tid];if(!t||!t.due)return false;
+      var left=t.due-now(),v=progressFor(code,tid,t,lang);
+      return left>-86400000&&left<2*86400000&&(v==null||v<t.n);
+    });
+    if(!soon.length)return;
+    var t=tasks[soon[0]],left=t.due-now();
+    env.toast("📋 «"+(cv.name||"Анги")+"»: "+(t.t||KINDS[t.k]&&KINDS[t.k][1]||"даалгавар")+" — "+(left<0?"өнөөдөр дуусна!":left<86400000?"маргааш хүртэл":"2 хоногийн дотор")+(soon.length>1?" (+"+(soon.length-1)+")":""),6000);
   }
   function touch(){
     var m=my();if(!Object.keys(m).some(function(c){return m[c].role==="s";}))return;
@@ -755,7 +770,25 @@
     if(RU.busy)box.append(h("div",{class:"muted small",id:"ruprog"},RU.prog));
     box.append(h("p",{class:"muted small",style:"margin-top:8px"},"💡 MP3-ыг радио станцад өгөх, сургуулийн чанга яригчаар тоглуулах, эсвэл мессенжерээр эцэг эхчүүдэд илгээж болно. Өдөр бүр шинэ үгс автоматаар сонгогдоно."));
   }
+  /* багш: нэг сурагчийн дэлгэрэнгүй (Family.detail-ийг ашиглана) */
+  function viewStuDetail(root,d,u){
+    var mem=(d.members||{})[u]||{},s=(d.stats||{})[u]||{},ids=sortedTasks(d),sum=s.s||null;
+    root.append(h("h2",null,"🧑‍🎓 "+(mem.name||s.name||"Сурагч")));
+    root.append(h("p",{class:"muted small",style:"margin:-6px 0 0"},d.c.name));
+    root.append(h("p",{class:"muted"},"Сүүлд идэвхтэй: "+ago(s.ts)+" · Нийт "+(s.xp||0)+" XP"));
+    if(ids.length){
+      root.append(h("h3",{style:"margin:14px 0 6px"},"📋 Даалгавар"));
+      ids.forEach(function(tid){
+        var t=d.tasks[tid],v=s.p&&s.p[tid]!=null?s.p[tid]:null,ok=v!=null&&v>=t.n,late=t.due&&now()>t.due+86400000&&!ok,soon=t.due&&!ok&&!late&&t.due-now()<2*86400000;
+        root.append(h("div",{class:"srow"},h("span",{style:"flex:1"},taskLine(t)),
+          h("b",{style:ok?"color:var(--ok)":late?"color:var(--danger)":""},v==null?"—":ok?"✅":v+"/"+t.n+(late?" ⏰":soon?" ⌛":""))));
+      });
+    }
+    if(sum&&window.Family){root.append(h("h3",{style:"margin:16px 0 0"},"📈 Явц"));root.append(window.Family.detail(h,sum));}
+    else root.append(h("p",{class:"muted small",style:"margin-top:14px"},"Дэлгэрэнгүй мэдээлэл сурагч аппаа шинэчилж нээсний дараа гарна."));
+  }
   function viewTeacher(root,d){
+    if(S.stu&&(d.members||{})[S.stu])return viewStuDetail(root,d,S.stu);
     var code=S.code,ids=sortedTasks(d),mem=d.members||{},stats=d.stats||{},uids=Object.keys(mem);
     root.append(h("h2",null,"👩‍🏫 "+d.c.name));
     root.append(h("p",{class:"muted"},LANGS[d.c.lang||"en"]+" хэл · "+uids.length+" сурагч"));
@@ -861,7 +894,7 @@
       tb.append(hr);
       uids.sort(function(a,b){return ((stats[b]||{}).wxp||0)-((stats[a]||{}).wxp||0);}).forEach(function(u){
         var s=stats[u]||{},td=function(x,st){return h("td",{style:"padding:6px;border-bottom:1px solid var(--line);white-space:nowrap;"+(st||"")},x);};
-        var tr=h("tr",null,td(h("b",null,mem[u].name||s.name||"?")),td(String(s.wxp||0)),td(String(s.streak||0)),td(ago(s.ts)));
+        var tr=h("tr",null,td(h("button",{class:"btn ghost",style:"padding:4px 8px;font-weight:700;text-decoration:underline;text-underline-offset:3px","aria-label":(mem[u].name||"Сурагч")+" — дэлгэрэнгүй",onclick:function(){S.stu=u;paint();window.scrollTo(0,0);}},mem[u].name||s.name||"?")),td(String(s.wxp||0)),td(String(s.streak||0)),td(ago(s.ts)));
         ids.forEach(function(tid){var t=d.tasks[tid],v=s.p&&s.p[tid]!=null?s.p[tid]:null;tr.append(td(v==null?"—":v>=t.n?"✅":v+"/"+t.n,v!=null&&v>=t.n?"color:var(--ok)":""));});
         tr.append(td(h("button",{class:"btn ghost",style:"padding:4px 8px","aria-label":"Ангиас хасах",onclick:function(){
           if(S.rm!==u){S.rm=u;env.toast("Дахин дарвал "+(mem[u].name||"сурагч")+" ангиас хасагдана");return;}
@@ -870,7 +903,7 @@
         tb.append(tr);
       });
       wrap.append(tb);root.append(wrap);
-      root.append(h("p",{class:"muted small"},"«—» = сурагч даалгаврыг хараахан нээгээгүй. Явц нь сурагч аппаа нээх бүрт шинэчлэгдэнэ."));
+      root.append(h("p",{class:"muted small"},"Сурагчийн нэр дээр дарж дэлгэрэнгүй явцыг нь хараарай. «—» = сурагч даалгаврыг хараахан нээгээгүй. Явц нь сурагч аппаа нээх бүрт шинэчлэгдэнэ."));
     }
     /* шууд тест */
     root.append(h("h3",{style:"margin:20px 0 6px"},"🎯 Шууд тест"));
@@ -898,7 +931,7 @@
     var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="salkhi-"+d.c.name.replace(/\s+/g,"_")+".csv";document.body.append(a);a.click();a.remove();
   }
   function viewClass(root){
-    root.append(back(function(){err="";liveDetach();S.scr="home";S.code=null;S.data=null;S.form=null;S.confirm=false;paint();}));
+    root.append(back(function(){if(S.stu){S.stu=null;paint();return;}err="";liveDetach();S.scr="home";S.code=null;S.data=null;S.form=null;S.confirm=false;paint();}));
     if(!S.data){
       if(err){
         /* багш хассан эсвэл анги устгагдсан бол жагсаалтаас хасах боломж өгнө */
