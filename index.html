@@ -494,6 +494,7 @@ window.salkhiHero=initSalkhiHero(document.getElementById("salkhiHero"),{font:"In
 <script src="synonyms.js"></script>
 <script src="mnerr.js"></script>
 <script src="jobprep.js"></script>
+<script src="eesh.js"></script>
 <script src="abroad.js"></script>
 <script src="idioms.js"></script>
 <script src="culture.js"></script>
@@ -4109,6 +4110,8 @@ function viewOrder(root,G){
   return root;
 }
 /* гадаадад ажиллах бэлтгэл (jobprep.js): солонгос, япон, том хүн/ахмадын горимд */
+/* ЭЕШ-ийн бэлтгэл (eesh.js): англи, орос; хүүхдийн горимд биш */
+function eeshOk(){return state.mode!=="kid"&&!!(window.Eesh&&window.Eesh.has(state.lang));}
 function jobOk(){return state.mode!=="kid"&&!!(window.JobPrep&&window.JobPrep.has(state.lang));}
 function viewPlay(){
   var P=ui.play,root=h("div");
@@ -4124,7 +4127,10 @@ function viewPlay(){
     h("button",{"aria-pressed":String(P.sec==="write"),onclick:function(){P.sec="write";render();}},"✍️ Бичих"),
     h("button",{"aria-pressed":String(P.sec==="mb"),onclick:function(){P.sec="mb";render();}},"📒 Алдаа"+(nMB?" "+nMB:"")),
     h("button",{"aria-pressed":String(P.sec==="exam"),onclick:function(){P.sec="exam";render();}},"📝 Шалгалт"),
+    eeshOk()?h("button",{"aria-pressed":String(P.sec==="eesh"),onclick:function(){P.sec="eesh";render();}},"🎓 ЭЕШ"):null,
     jobOk()?h("button",{"aria-pressed":String(P.sec==="job"),onclick:function(){P.sec="job";render();}},"💼 Ажил"):null));
+  if(P.sec==="eesh"&&eeshOk())return root.append(window.Eesh.view({h:h,lang:function(){return state.lang;},render:render,toast:toast,
+    addXP:addXP,celebrate:function(){celebrate(true,true);},sget:sget,sset:sset,startTimer:startTimer,clearTimer:clearPlayTimer,fmtSec:fmtSec})),root;
   if(P.sec==="job"&&jobOk())return root.append(window.JobPrep.view({h:h,lang:function(){return state.lang;},render:render,toast:toast,
     speak:function(t){speak(cleanSpeak(t));},speakBtn:speakBtn,addXP:addXP,celebrate:function(){celebrate(true,true);},
     sget:sget,sset:sset})),root;
