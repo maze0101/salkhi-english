@@ -132,6 +132,7 @@
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Чат","aria-label":"Чат",onclick:function(){openChat(r);}},"💬"),
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Шууд тулаан","aria-label":"Шууд тулаанд урих",onclick:function(){sendDuel(r);}},"⚔️"),
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Үгийн сорилт","aria-label":"Сорилт илгээх",onclick:function(){sendChallenge(r);}},"🎯"),
+          env.pact?h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Хэлний гэрээ","aria-label":"Хэлний гэрээ санал болгох",onclick:function(){env.pact(r);}},"🤝"):null,
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Хасах","aria-label":"Хасах",onclick:function(){removeFriend(r.uid);}},"✖"));
       }
       board.append(line);

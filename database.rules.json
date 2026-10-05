@@ -316,6 +316,44 @@
           }
         }
       }
+    },
+    "pacts": {
+      "$id": {
+        ".read": "auth != null && (data.child('a').val() === auth.uid || data.child('b').val() === auth.uid)",
+        ".write": "auth != null && ((!data.exists() && newData.child('a').val() === auth.uid && newData.child('st').val() === 'wait') || (data.exists() && !newData.exists() && (data.child('a').val() === auth.uid || data.child('b').val() === auth.uid)))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['a','b','an','bn','goal','start','st']) && newData.child('an').isString() && newData.child('an').val().length <= 20 && newData.child('bn').isString() && newData.child('bn').val().length <= 20 && newData.child('goal').isNumber() && newData.child('goal').val() >= 5 && newData.child('goal').val() <= 500)",
+        "st": {
+          ".write": "auth != null && root.child('pacts/'+$id+'/b').val() === auth.uid && data.val() === 'wait'",
+          ".validate": "newData.val() === 'wait' || newData.val() === 'go' || newData.val() === 'no'"
+        },
+        "start": {
+          ".write": "auth != null && root.child('pacts/'+$id+'/b').val() === auth.uid && root.child('pacts/'+$id+'/st').val() === 'wait'",
+          ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)"
+        },
+        "d": {
+          "$u": {
+            ".write": "auth != null && auth.uid === $u && (root.child('pacts/'+$id+'/a').val() === auth.uid || root.child('pacts/'+$id+'/b').val() === auth.uid)",
+            "$day": {
+              ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 5000 && $day.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)"
+            }
+          }
+        },
+        "nz": {
+          "$u": {
+            ".write": "auth != null && auth.uid !== $u && (root.child('pacts/'+$id+'/a').val() === auth.uid || root.child('pacts/'+$id+'/b').val() === auth.uid) && (root.child('pacts/'+$id+'/a').val() === $u || root.child('pacts/'+$id+'/b').val() === $u)",
+            ".validate": "newData.val() === now"
+          }
+        }
+      }
+    },
+    "pactinv": {
+      "$to": {
+        ".read": "auth != null && auth.uid === $to",
+        "$id": {
+          ".write": "auth != null && ((!data.exists() && newData.child('from').val() === auth.uid) || (data.exists() && !newData.exists() && (auth.uid === $to || data.child('from').val() === auth.uid)))",
+          ".validate": "!newData.exists() || (newData.hasChildren(['from','name','goal','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('goal').isNumber() && newData.child('ts').val() === now)"
+        }
+      }
     }
   }
 }
