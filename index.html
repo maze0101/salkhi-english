@@ -4067,7 +4067,7 @@ var GAMES=[
 ];
 /* «Сүүл холбох»: компьютертэй ээлжилнэ, өмнөх үгийн сүүлийн үсгээр эхлэх үг бичнэ (en/de/ru).
    Тухайн үсгээр эхлэх үлдсэн үг толь бичигт байхгүй бол (ь, ъ, ы, x гэх мэт) өмнөх үсгийг авна */
-var CHAIN_WIN=12,CHAIN_LIVES=3;
+var CHAIN_WIN=12,CHAIN_LIVES=3,CHAIN_HINTS=3,CHAIN_SEC=20;
 function chainNorm(c){return state.lang==="ru"&&c==="ё"?"е":c;}
 function chainKey(t){
   var s=String(t||"").trim().toLowerCase().replace(/^(der|die|das|to|the|a|an)\s+/,""),a=ALPH[state.lang];
@@ -4092,7 +4092,13 @@ function chainNeed(G,k){
   for(var i=ch.length-1;i>=0;i--){var c=chainNorm(ch[i]);if(chainFree(G,c).length)return c;}
   return null;
 }
-function chainPlay(G,k,who){G.used[k]=1;G.chain.push({k:k,w:G.d.all[k],who:who});G.need=chainNeed(G,k);}
+function chainPlay(G,k,who){G.used[k]=1;G.chain.push({k:k,w:G.d.all[k],who:who});G.need=chainNeed(G,k);G.hintK=null;G.tEnd=Date.now()+CHAIN_SEC*1000;}
+/* мэдэхгүй эсвэл хугацаа дуусвал: нэг амь хасаад жишээ үгийг харуулж, түүгээр нь үргэлжлүүлнэ */
+function chainPass(G){
+  var k=G.hintK||chainPick(G);
+  G.lives--;G.inp="";G.msg=null;chainPlay(G,k,"hint");speak(cleanSpeak(G.d.all[k][1]));
+  if(G.lives<=0)G.over="lose";else if(!G.need)G.over="win";else chainAI(G);
+}
 function chainAI(G){
   var k=chainPick(G);
   if(!k){G.over="win";return;}
@@ -4103,12 +4109,29 @@ function viewChain(root,G){
   if(!G.over&&!G.need)G.over="win";
   gameHead(root,"🔗 Сүүл холбох",h("span",{class:"big"},Math.min(G.score,CHAIN_WIN)+"/"+CHAIN_WIN));
   if(G.over){
+    clearPlayTimer();
     var won=G.over==="win",rec=!G.done&&gameBest(state.lang+":chain",G.score);
     gameOver(root,G,[won?"🏆 Чи яллаа!":"Амь дууслаа","Холбосон үг: "+G.score,rec?"🏆 Шинэ дээд амжилт!":""],3+G.score+(won?5:0),"chain");
   }else{
     root.append(h("div",{style:"display:flex;align-items:center;gap:12px;margin:8px 0"},
       h("div",{style:"flex:1"},h("div",{class:"muted small"},"Дараагийн үг эхлэх үсэг"),h("div",{style:"font:800 40px/1.1 var(--font);color:var(--sky)"},G.need.toUpperCase())),
       h("div",{style:"font-size:20px",role:"img","aria-label":G.lives+" амь үлдсэн"},"❤️".repeat(G.lives)+"🤍".repeat(CHAIN_LIVES-G.lives))));
+    root.append(h("div",{style:"display:flex;align-items:center;gap:8px;margin-bottom:8px"},
+      h("button",{class:"chip","aria-pressed":String(!!G.timed),style:G.timed?"background:var(--sky);color:#fff;border-color:var(--sky)":"",onclick:function(){
+        G.timed=!G.timed;sset("chaintimed",G.timed);G.tEnd=Date.now()+CHAIN_SEC*1000;if(!G.timed)clearPlayTimer();render();
+      }},"⏱ "+CHAIN_SEC+" сек"),
+      G.timed?h("div",{class:"bar",style:"flex:1;margin:0"},h("i",{id:"gbar",style:"width:"+Math.max(0,(G.tEnd-Date.now())/(CHAIN_SEC*10))+"%"})):h("span",{class:"muted small"},"Цагтай тоглох")));
+    if(G.timed)startTimer(function(){
+      var r=G.tEnd-Date.now(),b=document.getElementById("gbar");
+      if(ui.play.game!==G||G.over){clearPlayTimer();return;}
+      if(r<=0){toast("⏰ Хугацаа дууслаа");chainPass(G);render();return;}
+      if(b)b.style.width=(r/(CHAIN_SEC*10))+"%";
+    });
+    if(G.hintK){
+      var hw=G.d.all[G.hintK],hc=Array.from(G.hintK);
+      root.append(h("div",{class:"note",style:"margin:0 0 8px"},h("span",{class:"muted small"},"Сэжүүр: "),h("b",null,hw[2]),
+        h("div",{style:"font:700 20px/1.4 var(--font);letter-spacing:.12em;margin-top:2px"},hc[0]+" "+hc.slice(1).map(function(){return "_";}).join(" "))));
+    }
     var inp=h("input",{class:"tin",type:"text",maxlength:"30","aria-label":"Чиний үг",placeholder:G.need.toUpperCase()+"... гэж эхлэх үг",spellcheck:"false",autocomplete:"off",autocapitalize:"off",style:"width:100%;font:inherit;font-size:19px"});
     inp.value=G.inp||"";
     inp.addEventListener("input",function(){G.inp=inp.value;});
@@ -4130,20 +4153,16 @@ function viewChain(root,G){
     root.append(inp);
     if(G.msg)root.append(h("div",{class:"fb bad",style:"margin-top:6px"},G.msg));
     root.append(h("div",{class:"row"},
-      h("button",{class:"btn ghost",type:"button",onclick:function(){
-        /* мэдэхгүй бол: нэг амь хасаад жишээ үгийг харуулж, түүгээр нь үргэлжлүүлнэ */
-        var k=chainPick(G);
-        G.lives--;G.inp="";G.msg=null;chainPlay(G,k,"hint");speak(cleanSpeak(G.d.all[k][1]));
-        if(G.lives<=0)G.over="lose";else if(!G.need)G.over="win";else chainAI(G);
-        render();
-      }},"💡 Мэдэхгүй (−❤️)"),
-      h("button",{class:"btn primary",type:"button",onclick:send},"Илгээх")));
+      /* сэжүүр: амь хасахгүй, нэг үгийн монгол утга ба үсгийн тоог харуулна */
+      h("button",{class:"btn ghost",type:"button",style:"white-space:nowrap;padding-inline:8px;flex:1 1 auto",disabled:!!G.hintK||G.hints<=0,onclick:function(){G.hints--;G.hintK=chainPick(G);render();}},"💡 Сэжүүр "+G.hints),
+      h("button",{class:"btn ghost",type:"button",style:"white-space:nowrap;padding-inline:8px;flex:1 1 auto",onclick:function(){chainPass(G);render();}},"Өнжих −❤️"),
+      h("button",{class:"btn primary",type:"button",style:"padding-inline:12px;flex:1 1 auto",onclick:send},"Илгээх")));
     setTimeout(function(){if(inp.isConnected)inp.focus({preventScroll:true});},0);
   }
   var list=h("div",{style:"margin-top:14px;display:flex;flex-direction:column;gap:6px"});
   G.chain.slice().reverse().forEach(function(x){
     list.append(h("div",{class:"note",style:"margin:0;display:flex;align-items:center;gap:10px"+(x.who==="me"?";border-color:var(--sky)":"")},
-      h("span",{"aria-hidden":"true",style:"font-size:18px"},x.who==="me"?"🙂":x.who==="hint"?"💡":"🤖"),
+      h("span",{"aria-hidden":"true",style:"font-size:18px"},x.who==="me"?"🙂":x.who==="hint"?"🏳️":"🤖"),
       h("div",{style:"flex:1;min-width:0"},h("b",null,x.w[1]),h("div",{class:"muted small"},x.w[2])),
       speakBtn(x.w[1])));
   });
@@ -4268,7 +4287,7 @@ function startGame(kind){
     if(G.pool.length<8){toast("Энэ түвшинд тохирох өгүүлбэр цөөн байна");return;}
     nextOrder(G);
   }else if(kind==="chain"){
-    G.d=chainDict();G.used={};G.chain=[];G.lives=CHAIN_LIVES;G.inp="";G.msg=null;G.over=null;
+    G.d=chainDict();G.used={};G.chain=[];G.lives=CHAIN_LIVES;G.hints=CHAIN_HINTS;G.timed=!!sget("chaintimed",false);G.inp="";G.msg=null;G.over=null;
     var lvk=Object.keys(G.d.lv);
     if(Object.keys(G.d.all).length<50||!lvk.length){toast("Энэ хэлэнд тохирох үг цөөн байна");return;}
     var k0=lvk[Math.floor(Math.random()*lvk.length)];chainPlay(G,k0,"ai");
