@@ -16,13 +16,18 @@
     img.onerror=function(){URL.revokeObjectURL(url);cb(null);};
     img.src=url;
   }
+  /* worker-ийн загвар монгол орчуулгад сул тул толь бичигт байгаа үгийн утгыг толь бичгээс авна; үсгэн галиг зөвхөн япон/солонгос/хятадад */
+  function fix(j){
+    var cjk=["ja","ko","zh"].indexOf(env.lang())>=0;
+    (j.words||[]).forEach(function(w){var d=env.dictMn(w.w);if(d){w.mn=d;w.dict=true;}if(!cjk)w.r="";});
+  }
   function send(d){
     O.img=d;O.busy=true;O.err="";O.res=null;env.render();
     fetch(env.ocrURL(),{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({lang:env.lang(),image:d.split(",")[1]})})
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});})
       .then(function(x){
         O.busy=false;
-        if(x.ok&&x.j&&x.j.mn){O.res=x.j;env.addXP(3);}
+        if(x.ok&&x.j&&x.j.mn){fix(x.j);O.res=x.j;env.addXP(3);}
         else O.err=x.j&&x.j.error==="no_text"?"Зурган дээр уншигдах бичвэр олдсонгүй. Ойроос, гэрэлтэй газар дахин аваарай.":x.status===429?"Хэт олон удаа илгээлээ. Түр хүлээгээд дахин оролдоорой.":"Бичвэрийг уншиж чадсангүй. Дахин оролдоорой.";
         env.render();
       }).catch(function(){O.busy=false;O.err="Интернэт холболтоо шалгаарай.";env.render();});
@@ -42,12 +47,13 @@
       var r=O.res;
       root.append(h("div",{class:"note"},h("div",{class:"muted small"},"📄 Бичвэр"),h("div",{style:"white-space:pre-wrap;margin-top:4px;font-size:16px"},r.text),
         h("div",{class:"row",style:"margin-top:6px"},h("button",{class:"btn ghost",onclick:function(){e.speak(r.text);}},"🔊 Уншуулах"))));
-      root.append(h("div",{class:"note"},h("div",{class:"muted small"},"🇲🇳 Орчуулга"),h("div",{style:"white-space:pre-wrap;margin-top:4px"},r.mn)));
+      root.append(h("div",{class:"note"},h("div",{class:"muted small"},"🇲🇳 AI орчуулга (ойролцоо, алдаатай байж болно)"),h("div",{style:"white-space:pre-wrap;margin-top:4px"},r.mn)));
       if(r.words&&r.words.length){
         root.append(h("h3",{style:"margin:14px 0 6px"},"🔑 Үгс"));
+        root.append(h("p",{class:"muted small",style:"margin:0 0 4px"},"📖 = аппын толь бичгийн утга"));
         r.words.forEach(function(w){
           var has=e.hasWord(w.w);
-          root.append(h("div",{class:"srow"},h("span",{style:"flex:1"},h("b",null,w.w),w.r?h("span",{class:"muted"}," ("+w.r+")"):null,h("span",{class:"muted"}," — "+w.mn)),e.speakBtn(w.w),
+          root.append(h("div",{class:"srow"},h("span",{style:"flex:1"},h("b",null,w.w),w.r?h("span",{class:"muted"}," ("+w.r+")"):null,h("span",{class:"muted"}," — "+w.mn),w.dict?h("span",{class:"muted small",title:"Аппын толь бичгээс"}," 📖"):null),e.speakBtn(w.w),
             has?h("span",{class:"muted small"},"✅"):h("button",{class:"btn ghost",style:"padding:4px 10px","aria-label":"Миний үгс-д нэмэх",onclick:function(){e.addWord(w.w,w.mn,"","",w.r||"");e.toast("➕ «Миний үгс»-д нэмэгдлээ");e.render();}},"➕")));
         });
       }

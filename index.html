@@ -5943,6 +5943,7 @@ function xEnv(close){
     SR:function(){return SR;},srLang:function(){return LANG_TTS[state.lang]||"en-US";},askMic:askMic,micHint:micSettingsHint,
     addXP:addXP,logAct:logAct,celebrate:function(){celebrate(true,true);},grade:grade,
     hasWord:hasMyWord,addWord:addMyWord,
+    dictMn:function(t){t=String(t||"").toLowerCase().trim();var f=WORDS.filter(function(w){if((w[6]||"en")!==state.lang)return false;var k=w[1].toLowerCase();return k===t||k.replace(/^(to|the|a|an|der|die|das)\s+/,"")===t;})[0];return f?f[2]:null;},
     newsURL:function(){return workerURL("/news");},ocrURL:function(){return workerURL("/ocr");},
     visible:function(){return true;},
     words:function(n){var d=dueWords().slice(0,n),seen={};d.forEach(function(w){seen[w[1]]=1;});return d.concat(shuffle(gameWords().filter(function(w){return !seen[w[1]]&&w[1].length<=30;})).slice(0,Math.max(0,n-d.length)));},

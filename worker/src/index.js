@@ -293,7 +293,7 @@ export function parseOCR(v){
   let o=v;
   if(typeof v==="string"){const m=v.match(/\{[\s\S]*\}/);if(!m)return null;try{o=JSON.parse(m[0]);}catch(e){return null;}}
   if(!o||typeof o!=="object"||typeof o.mn!=="string"||!o.mn.trim())return null;
-  const words=(Array.isArray(o.words)?o.words:[]).filter(function(x){return x&&typeof x.w==="string"&&x.w.trim()&&typeof x.mn==="string";}).slice(0,15)
+  const words=(Array.isArray(o.words)?o.words:[]).filter(function(x){return x&&typeof x.w==="string"&&/\p{L}{2}/u.test(x.w)&&typeof x.mn==="string"&&/\p{L}/u.test(x.mn);}).slice(0,15)
     .map(function(x){return {w:x.w.trim().slice(0,60),r:typeof x.r==="string"?x.r.slice(0,60):"",mn:x.mn.trim().slice(0,80)};});
   return {mn:o.mn.trim().slice(0,1500),words:words};
 }
@@ -310,7 +310,8 @@ async function handleOCR(req,env,cors){
     const q="This text was read from a photo (menu, sign or label) by a Mongolian who is learning "+L+":\n\"\"\"\n"+text+"\n\"\"\"\n"+
       "1) Translate the whole text into natural Mongolian (Cyrillic). 2) List up to 12 of the most useful words or short phrases that appear in the text, each with "+
       (lang==="ja"?"romaji":lang==="zh"?"pinyin":lang==="ko"?"romanization":"an empty reading")+" and a short Mongolian meaning. Reply with ONLY JSON: {\"mn\":\"...\",\"words\":[{\"w\":\"...\",\"r\":\"...\",\"mn\":\"...\"}]}";
-    const b=await env.AI.run(env.MODEL||DEFAULT_MODEL,{messages:[{role:"system",content:SAFETY},{role:"user",content:q}],max_tokens:900,temperature:0.1});
+    /* монгол орчуулгад 70B загвар илт сайн (24B нь chicken → «тошоо» гэх мэт) */
+    const b=await env.AI.run(env.OCR_MODEL||CHECK_MODELS.llama70,{messages:[{role:"system",content:SAFETY},{role:"user",content:q}],max_tokens:900,temperature:0.1});
     const tr=parseOCR(b&&b.response);
     if(!tr){console.error("ocr unparsed:",JSON.stringify(b).slice(0,200));return json({error:"not_found"},422,cors);}
     tr.text=text;
