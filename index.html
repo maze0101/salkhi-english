@@ -5832,6 +5832,7 @@ function lgEnv(){
   return {h:h,render:render,toast:toast,kid:function(){return state.mode==="kid";},week:weekKey,wxp:weekXP,
     name:function(){var a=window.SalkhiSync&&SalkhiSync.account();return state.certName||(a&&a.name)||"";},
     freeze:function(){state.freeze=Math.min(2,state.freeze+1);sset("freeze",state.freeze);renderStrip();},
+    back:function(){return ui.hub?"Тоглож сурах":"Профайл";},
     close:function(){ui.lg=false;if(window.League)League.detach();render();window.scrollTo(0,0);}};
 }
 function famEnv(){
@@ -5840,11 +5841,61 @@ function famEnv(){
     close:function(){ui.fam=false;render();window.scrollTo(0,0);}};
 }
 function vdEnv(){return {h:h,lang:function(){return state.lang;},render:render,speak:speak,addXP:addXP,toast:toast,close:function(){ui.vd=false;render();window.scrollTo(0,0);}};}
+/* ---------- 🎮 Тоглож сурах: streak, өдрийн зорилго, наадам, шагналыг нэг дор ---------- */
+function badgeList(){
+  var known=WORDS.filter(function(w){return (state.box[w[1]]||0)>=2;}).length,done=Object.keys(state.lessons).length;
+  return [
+    ["🌱","Эхний алхам",state.xp>=10],["⚡","100 XP",state.xp>=100],["🔥","3 өдөр дараалан",streak()>=3],["🏆","7 өдөр дараалан",streak()>=7],
+    ["📚","10 үг мэднэ",known>=10],["🧠","30 үг мэднэ",known>=30],["🎓","Эхний хичээл",done>=1],["🌟","Бүх хичээл",done>=LESSONS.length],
+    ["💬","5 мессеж",state.chatCount>=5],["🎧","Сонсох 10 зөв",state.listenOk>=10],["🎯","Зорилго биелсэн",todayXP()>=state.goal],
+    ["🚀","500 XP",state.xp>=500],["💎","1000 XP",state.xp>=1000],["👑","30 өдөр дараалан",streak()>=30],["📕","100 үг мэднэ",known>=100],
+    ["🧩","25 хичээл",done>=25],["🏅","100 хичээл",done>=100],["📖","3 түүх",Object.keys(state.stories).length>=3],["🗣️","10 удаа хэлж үзсэн",state.speech.n>=10],
+    ["📝","Шалгалт 80%+",Object.keys(state.exam).some(function(k){return state.exam[k]>=80;})],["🦊","Үнэгний медаль",Object.keys(LANGN).some(function(l){return kxMedals(l).length>0;})],["🌍","3 хэл сурсан",Object.keys(state.langxp).filter(function(k){return state.langxp[k]>0;}).length>=3]
+  ];
+}
+function trophyGrid(badges){
+  var tg=h("div",{class:"trophies"});
+  badges.forEach(function(b){tg.append(h("div",{class:"tr"+(b[2]?"":" lock"),title:b[1],"aria-label":b[1]+(b[2]?" — авсан":" — хараахан аваагүй")},h("i",{"aria-hidden":"true"},b[0]),b[1]));});
+  return tg;
+}
+function hubTile(ic,val,lab){return h("div",{style:"flex:1;min-width:0;text-align:center;padding:8px 4px;border-radius:12px;background:var(--soft)"},h("div",{style:"font-size:20px","aria-hidden":"true"},ic),h("div",{style:"font-weight:800;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"},val),h("div",{class:"muted",style:"font-size:11px"},lab));}
+function hubCard(){
+  var b=badgeList(),got=b.filter(function(x){return x[2];}).length,lg=window.League&&League.on(lgEnv())?League.status():null;
+  return h("button",{class:"note",type:"button",style:"display:block;width:100%;text-align:left;margin-top:12px;color:inherit;font:inherit;cursor:pointer",onclick:function(){ui.hub=true;render();window.scrollTo(0,0);}},
+    h("div",{style:"display:flex;align-items:center;margin-bottom:8px"},h("b",{style:"flex:1"},"🎮 Тоглож сурах"),h("span",{class:"muted small"},"Бүгдийг харах ›")),
+    h("div",{style:"display:flex;gap:6px"},
+      hubTile("🔥",String(streak()),"өдөр"+(state.freeze?" · 🧊"+state.freeze:"")),
+      hubTile("🎯",todayXP()+"/"+state.goal,"өнөөдөр"),
+      lg?hubTile(lg.icon,lg.rank?"#"+lg.rank:lg.name,lg.rank?lg.name:"наадам"):null,
+      hubTile("🏅",got+"/"+b.length,"шагнал")));
+}
+function viewHub(){
+  var root=h("div"),b=badgeList(),got=b.filter(function(x){return x[2];}).length;
+  root.append(h("button",{class:"back",onclick:function(){ui.hub=false;render();window.scrollTo(0,0);}},"‹ Профайл"));
+  root.append(h("h2",null,"🎮 Тоглож сурах"));
+  root.append(h("p",{class:"muted"},"Өдөр бүр бага багаар хичээллэж, дараалал, цол, шагналаа цуглуул."));
+  var rpn=repairNote();if(rpn)root.append(rpn);
+  root.append(h("div",{class:"note",style:"margin-top:12px;display:flex;align-items:center;gap:14px"},
+    h("div",{style:"font-size:44px","aria-hidden":"true"},"🔥"),
+    h("div",{style:"flex:1"},h("div",{style:"font-size:26px;font-weight:800"},streak()+" өдөр дараалан"),
+      h("div",{class:"muted small"},"🧊 Хамгаалалт: "+state.freeze+" / 2. Нэг өдөр алгасвал автоматаар хамгаална. 7 өдөр дараалан хичээллэх эсвэл наадамд цол ахих бүрт +1."))));
+  var pct=Math.min(1,todayXP()/state.goal);
+  root.append(h("div",{class:"note",style:"margin-top:12px;display:flex;align-items:center;gap:14px"},ringEl(pct,56,7),
+    h("div",{style:"flex:1"},h("b",null,"🎯 Өдрийн зорилго"),h("div",{class:"muted small"},todayXP()+" / "+state.goal+" XP"+(pct>=1?" — биелсэн ✅":"")),
+      h("div",{class:"seg",style:"margin:8px 0 0"},[10,20,50,100].map(function(n){return h("button",{"aria-pressed":String(state.goal===n),onclick:function(){state.goal=n;sset("goal",n);renderStrip();render();}},String(n));})))));
+  if(window.League){var lgc=League.card(lgEnv(),function(){ui.lg=true;render();window.scrollTo(0,0);});if(lgc)root.append(lgc);}
+  if(state.mode!=="kid"&&window.Social)root.append(h("button",{class:"lrow",type:"button",style:"margin-top:12px",onclick:function(){ui.hub=false;state.tab="social";renderTabs();render();window.scrollTo(0,0);}},
+    h("span",{class:"hexb ico"},"⚔️"),h("span",{style:"flex:1"},h("div",{class:"t"},"Найзтайгаа тулалдах"),h("div",{class:"muted small"},"Үгийн тулаан, бүлгийн XP зорилго")),h("span",{"aria-hidden":"true"},"›")));
+  root.append(h("h3",{style:"margin:20px 0 0"},"🏅 Шагналууд: "+got+" / "+b.length));
+  root.append(trophyGrid(b));
+  return root;
+}
 function viewStats(){
   if(ui.cls&&window.Classes)return Classes.view(clsEnv());
   if(ui.vd&&window.VoiceDiary)return VoiceDiary.view(vdEnv());
   if(ui.fam&&window.Family)return Family.view(famEnv());
   if(ui.lg&&window.League)return League.view(lgEnv());
+  if(ui.hub)return viewHub();
   var root=h("div"),p=WORDS;
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
   var done=Object.keys(state.lessons).length;
@@ -5852,7 +5903,7 @@ function viewStats(){
   root.append(h("h2",null,"Профайл"));
   if(window.SalkhiSync)root.append(SalkhiSync.profileCard(h,render,toast,{lvl:lvl,xp:state.xp,streak:streak()},true));
   var rpn=repairNote();if(rpn)root.append(rpn);
-  if(window.League){var lgc=League.card(lgEnv(),function(){ui.lg=true;render();window.scrollTo(0,0);});if(lgc)root.append(lgc);}
+  root.append(hubCard());
   if(parentReportDue())root.append(h("div",{class:"note",style:"margin-top:12px;display:flex;gap:10px;align-items:center"},
     h("span",{style:"font-size:28px","aria-hidden":"true"},"📬"),
     h("div",{style:"flex:1"},h("b",null,"7 хоногийн тайлан бэлэн боллоо"),h("div",{class:"muted small"},"Ээж аавдаа явцаа илгээгээрэй")),
@@ -5886,18 +5937,6 @@ function viewStats(){
   root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Ярианд илгээсэн мессеж"),h("span",{class:"big"},String(state.chatCount))));
   root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Дуудлагын дундаж оноо"),h("span",{class:"big"},state.speech.n?(Math.round(state.speech.sum/state.speech.n)+"% ("+state.speech.n+")"):"—")));
   root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Уншсан түүх"),h("span",{class:"big"},String(Object.keys(state.stories).length))));
-  var badges=[
-    ["🌱","Эхний алхам",state.xp>=10],["⚡","100 XP",state.xp>=100],["🔥","3 өдөр дараалан",streak()>=3],["🏆","7 өдөр дараалан",streak()>=7],
-    ["📚","10 үг мэднэ",known>=10],["🧠","30 үг мэднэ",known>=30],["🎓","Эхний хичээл",done>=1],["🌟","Бүх хичээл",done>=LESSONS.length],
-    ["💬","5 мессеж",state.chatCount>=5],["🎧","Сонсох 10 зөв",state.listenOk>=10],["🎯","Зорилго биелсэн",todayXP()>=state.goal],
-    ["🚀","500 XP",state.xp>=500],["💎","1000 XP",state.xp>=1000],["👑","30 өдөр дараалан",streak()>=30],["📕","100 үг мэднэ",known>=100],
-    ["🧩","25 хичээл",done>=25],["🏅","100 хичээл",done>=100],["📖","3 түүх",Object.keys(state.stories).length>=3],["🗣️","10 удаа хэлж үзсэн",state.speech.n>=10],
-    ["📝","Шалгалт 80%+",Object.keys(state.exam).some(function(k){return state.exam[k]>=80;})],["🦊","Үнэгний медаль",Object.keys(LANGN).some(function(l){return kxMedals(l).length>0;})],["🌍","3 хэл сурсан",Object.keys(state.langxp).filter(function(k){return state.langxp[k]>0;}).length>=3]
-  ];
-  root.append(h("p",{class:"muted small",style:"margin-top:18px"},"Шагналууд: "+badges.filter(function(b){return b[2];}).length+" / "+badges.length));
-  var tg=h("div",{class:"trophies"});
-  badges.forEach(function(b){tg.append(h("div",{class:"tr"+(b[2]?"":" lock"),title:b[1],"aria-label":b[1]+(b[2]?" — авсан":" — хараахан аваагүй")},h("i",{"aria-hidden":"true"},b[0]),b[1]));});
-  root.append(tg);
   root.append(certPanel());
   root.append(mnCard());
   var names=["Ням","Дав","Мяг","Лха","Пүр","Баа","Бям"],days=[],max=1,i,d;

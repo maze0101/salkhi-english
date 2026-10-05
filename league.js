@@ -1,10 +1,10 @@
-/* Салхи: долоо хоногийн лиг (Duolingo маягийн).
-   Даваа гарагаас эхлэх 7 хоног бүр XP цуглуулсан хүмүүс өөрийн лигийн 20 хүртэлх хүнтэй бүлэгт (анхны XP-ээр) хуваарилагдана.
-   7 хоног дуусахад эхний 5 нь дээд лиг рүү дэвшиж (+1 🧊 streak хамгаалалт), сүүлийн 3 нь (10+ хүнтэй бүлэгт) доод лиг рүү буурна.
+/* Салхи: долоо хоногийн наадам (Duolingo-гийн лиг шиг, бөхийн цолтой).
+   Даваа гарагаас эхлэх 7 хоног бүр XP цуглуулсан хүмүүс өөрийн цолны 20 хүртэлх хүнтэй бүлэгт (анхны XP-ээр) хуваарилагдана.
+   7 хоног дуусахад эхний 5 нь дараагийн цол хүртэж (+1 🧊 streak хамгаалалт), сүүлийн 3 нь (10+ хүнтэй бүлэгт) өмнөх цол руу буурна.
    Firebase: lgn/{wk}/{tier} (бүлгийн тоолуур), lg/{wk}/{tier}/{g}/{uid} = {name, wxp, ts}.
    Хүүхдийн горимд үл таних хүмүүстэй өрсөлдөхгүй тул харагдахгүй. */
 (function(){
-  var TIERS=[["🥉","Хүрэл"],["🥈","Мөнгө"],["🥇","Алт"],["💎","Сапфир"],["👑","Алмаз"]];
+  var TIERS=[["🌱","Шинэ бөх"],["🦅","Начин"],["🪶","Харцага"],["🐘","Заан"],["🦁","Арслан"]];
   var GROUP=20,PROMO=5,DEMO=3,DEMO_MIN=10,KEY="salkhi:league";
   var env=null,h=null,db=null,uid=null,joining=false,pushT=null,lastPush=0,live=null,liveKey="",rows=null,err="";
 
@@ -85,7 +85,7 @@
   }
   function resultNote(s){
     var L=s.last;if(!L||L.seen)return null;
-    var t=TIERS[s.tier],txt=L.move>0?"🎉 "+t[1]+" лиг рүү дэвшлээ! Шагнал: 🧊 streak хамгаалалт +1":L.move<0?"Энэ удаа "+t[1]+" лиг рүү буурлаа. Дахин дэвшицгээе 💪":L.rank?"Өнгөрсөн 7 хоногт "+L.rank+"-р байр эзэлж, "+t[1]+" лигтээ үлдлээ.":null;
+    var t=TIERS[s.tier],txt=L.move>0?"🎉 "+t[1]+" цол хүртлээ! Шагнал: 🧊 streak хамгаалалт +1":L.move<0?"Энэ удаа "+t[1]+" цол руу буурлаа. Дахин ахицгаая 💪":L.rank?"Өнгөрсөн наадамд "+L.rank+"-р байр эзэлж, "+t[1]+" цолоо хамгааллаа.":null;
     if(!txt)return null;
     return h("div",{class:"note",style:"margin:8px 0;display:flex;gap:8px;align-items:center"},h("span",{style:"flex:1;font-weight:600"},txt),
       h("button",{class:"btn ghost",style:"flex:none;padding:6px 10px","aria-label":"Хаах",onclick:function(){var x=st();if(x.last)x.last.seen=true;save(x);paint();}},"✕"));
@@ -103,7 +103,7 @@
         h("b",{style:"width:26px;text-align:center;color:"+(z==="up"?"var(--ok)":z==="down"?"var(--danger)":"var(--ink-2)")},i<3?["🥇","🥈","🥉"][i]:String(i+1)),
         h("span",{style:"flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:"+(r.me?"700":"500")},r.name+(r.me?" (чи)":"")),
         h("b",null,r.x+" XP"),
-        h("span",{"aria-label":z==="up"?"Дэвших бүс":z==="down"?"Буурах бүс":"",style:"width:16px;text-align:center"},z==="up"?"▲":z==="down"?"▼":"")));
+        h("span",{"aria-label":z==="up"?"Цол ахих бүс":z==="down"?"Цол буурах бүс":"",style:"width:16px;text-align:center"},z==="up"?"▲":z==="down"?"▼":"")));
     });
     return box;
   }
@@ -111,17 +111,17 @@
     var s=st(),t=TIERS[s.tier],root=h("div");
     root.append(h("div",{style:"display:flex;align-items:center;gap:12px"},
       h("span",{style:"font-size:40px","aria-hidden":"true"},t[0]),
-      h("div",{style:"flex:1"},h("div",{style:"font-weight:800;font-size:18px"},t[1]+" лиг"),h("div",{class:"muted small"},"Дуусахад "+leftText()+" үлдлээ"))));
+      h("div",{style:"flex:1"},h("div",{style:"font-weight:800;font-size:18px"},t[1]),h("div",{class:"muted small"},"Наадам дуусахад "+leftText()+" үлдлээ"))));
     var rn=resultNote(s);if(rn)root.append(rn);
     if(s.wk!==env.week()){
-      root.append(h("p",{class:"small",style:"margin:10px 0 0"},joining?"Лигт нэгдэж байна…":"Энэ 7 хоногт XP цуглуулаад лигт нэгдээрэй. Эхний "+PROMO+" нь дараагийн лиг рүү дэвшинэ."));
+      root.append(h("p",{class:"small",style:"margin:10px 0 0"},joining?"Наадамд нэгдэж байна…":"Энэ 7 хоногт XP цуглуулаад наадамд барилдаарай. Эхний "+PROMO+" нь дараагийн цол хүртэнэ."));
       if(!joining&&env.wxp()>0)join();
       return root;
     }
     attach();
     if(!rows){root.append(h("p",{class:"muted small"},"Ачаалж байна…"));return root;}
     var me=rows.findIndex(function(r){return r.me;})+1;
-    root.append(h("p",{class:"small",style:"margin:8px 0 0"},"Чи "+(me||"—")+"-р байранд · "+rows.length+" хүн"+(s.tier<TIERS.length-1?" · Эхний "+PROMO+" нь ▲ дэвшинэ":"")+(s.tier>0&&rows.length>=DEMO_MIN?" · Сүүлийн "+DEMO+" нь ▼ буурна":"")));
+    root.append(h("p",{class:"small",style:"margin:8px 0 0"},"Чи "+(me||"—")+"-р байранд · "+rows.length+" хүн"+(s.tier<TIERS.length-1?" · Эхний "+PROMO+" нь ▲ цол ахина":"")+(s.tier>0&&rows.length>=DEMO_MIN?" · Сүүлийн "+DEMO+" нь ▼ цол буурна":"")));
     root.append(table(s,full?0:5));
     if(!full&&rows.length>5)root.append(h("p",{class:"muted small",style:"margin:6px 0 0;text-align:center"},"Бүгдийг харах ›"));
     return root;
@@ -130,17 +130,17 @@
     env=e;h=e.h;
     if(!on())return null;
     return h("button",{class:"note",type:"button",style:"display:block;width:100%;text-align:left;margin-top:12px;color:inherit;font:inherit;cursor:pointer",onclick:open},
-      h("div",{class:"muted small",style:"margin-bottom:6px"},"🏆 Долоо хоногийн лиг"),body(false));
+      h("div",{class:"muted small",style:"margin-bottom:6px"},"🏆 Долоо хоногийн наадам"),body(false));
   }
   function view(e){
     env=e;h=e.h;var root=h("div");
-    root.append(h("button",{class:"back",onclick:function(){e.close();}},"‹ Профайл"));
-    root.append(h("h2",null,"🏆 Долоо хоногийн лиг"));
+    root.append(h("button",{class:"back",onclick:function(){e.close();}},"‹ "+(e.back?e.back():"Профайл")));
+    root.append(h("h2",null,"🏆 Долоо хоногийн наадам"));
     root.append(h("div",{style:"display:flex;justify-content:space-between;margin:4px 0 12px"},TIERS.map(function(t,i){
       var s=st();return h("div",{style:"text-align:center;opacity:"+(i===s.tier?1:i<s.tier?.75:.35)},h("div",{style:"font-size:"+(i===s.tier?32:24)+"px"},t[0]),h("div",{class:"small",style:"font-weight:"+(i===s.tier?800:500)},t[1]));
     })));
     root.append(body(true));
-    root.append(h("p",{class:"muted small",style:"margin-top:14px"},"XP бүх хичээл, тоглоом, давталтаас цуглардаг. Лиг бүр Даваа гарагийн 00:00-д шинэчлэгдэнэ. Дэвшсэн бүрт 🧊 streak хамгаалалт +1 авна."));
+    root.append(h("p",{class:"muted small",style:"margin-top:14px"},"XP бүх хичээл, тоглоом, давталтаас цуглардаг. Наадам Даваа гарагийн 00:00-д шинээр эхэлнэ. Цол ахих бүрт 🧊 streak хамгаалалт +1 авна."));
     if(err)root.append(h("p",{class:"muted small"},err));
     return root;
   }
@@ -148,6 +148,8 @@
     init:function(e){env=e;h=e.h;if(!on())return;setTimeout(function(){rollover().then(function(){if(env.wxp()>0)push();});},5000);},
     touch:function(){if(on())push();},
     card:card,view:view,detach:detach,
-    tier:function(){return TIERS[st().tier];}
+    /* «Тоглож сурах» самбарт: цол ба энэ 7 хоногийн байр (бүлгийг ачаалсан бол) */
+    status:function(){var s=st(),t=TIERS[s.tier],me=rows&&s.wk===(env&&env.week())?rows.findIndex(function(r){return r.me;})+1:0;return {icon:t[0],name:t[1],rank:me,n:rows?rows.length:0};},
+    on:function(e){env=e;h=e.h;return on();}
   };
 })();
