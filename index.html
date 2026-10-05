@@ -361,6 +361,9 @@ p+p{margin-top:10px}
 @media (prefers-reduced-motion:reduce){.vcorb.on{animation:none}}
 .ftsheet{position:fixed;left:12px;right:12px;bottom:calc(80px + env(safe-area-inset-bottom,0px));z-index:60;max-width:460px;margin:0 auto;padding:14px 16px;border-radius:var(--rc);background:var(--surface);border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.18)}
 .ftbreak{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:16px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(4px)}
+.certview{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;background:rgba(10,20,18,.82);backdrop-filter:blur(6px);overflow:auto}
+.certview .row{justify-content:center}
+.certview .row .btn{white-space:nowrap;padding-inline:12px}
 .gamecard{display:flex;align-items:center;gap:14px;width:100%;margin:10px 0;padding:14px 16px;border-radius:var(--rc);border:1px solid var(--line);background:var(--surface);text-align:left;color:inherit}
 .gamecard i{font-style:normal;font-size:24px;line-height:1;width:46px;height:46px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--soft);flex:none}
 .gamecard b{display:block;font-size:15.5px;font-weight:600}
@@ -5780,7 +5783,7 @@ function certPanel(){
     wrap.append(h("div",{class:"srow"},h("span",null,c.ic+" "+c.t,h("div",{class:"muted small"},c.d)),
       h("div",{style:"display:flex;gap:6px;flex:none"},
         h("button",{class:"btn",style:"padding:8px 10px",type:"button","aria-label":"PDF татах",onclick:function(){state.certName=nm.value.trim().slice(0,40);sset("certName",state.certName);makeCert(c,"pdf");}},"📄 PDF"),
-        h("button",{class:"btn",style:"padding:8px 10px",type:"button","aria-label":"Зураг хуваалцах",onclick:function(){state.certName=nm.value.trim().slice(0,40);sset("certName",state.certName);makeCert(c);}},"📤"))));
+        h("button",{class:"btn primary",style:"padding:8px 12px",type:"button","aria-label":"Гэрчилгээг харах",onclick:function(){state.certName=nm.value.trim().slice(0,40);sset("certName",state.certName);makeCert(c);}},"👁 Харах"))));
   });
   var nx=nextLevelCert();if(nx)wrap.append(certProgress(nx));
   wrap.append(h("p",{class:"muted small"},"Эдгээр нь аппын доторх амжилтын гэрчилгээ бөгөөд албан ёсны шалгалтын гэрчилгээ биш."));
@@ -5792,41 +5795,145 @@ function certProgress(c){
     h("div",{class:"muted small"},"Давсан хичээл: "+c.n+" / "+c.need+" (нийт "+c.total+")"),
     h("div",{style:"height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin-top:6px"},h("i",{style:"display:block;height:100%;background:var(--sky);width:"+Math.min(100,Math.round(c.n/c.need*100))+"%"})));
 }
+/* ---------- гэрчилгээ: алхан хээтэй хүрээ, алтан тамга, Unbounded + Playfair Display фонт ---------- */
+var CERT_FONTS=null;
+function certFonts(){
+  if(CERT_FONTS)return CERT_FONTS;
+  if(!document.querySelector("link[data-certfont]")){
+    var l=document.createElement("link");l.rel="stylesheet";l.setAttribute("data-certfont","1");
+    l.href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,700&display=swap&subset=cyrillic";
+    document.head.append(l);
+  }
+  var ld=function(f){return document.fonts&&document.fonts.load?document.fonts.load(f,"АБВ Сараа").catch(function(){}):Promise.resolve();};
+  CERT_FONTS=Promise.race([Promise.all([ld('italic 700 90px "Playfair Display"'),ld('600 40px "Playfair Display"'),ld("700 100px Unbounded")]),new Promise(function(ok){setTimeout(ok,2500);})]);
+  return CERT_FONTS;
+}
+function certDate(){var d=new Date();return d.getFullYear()+" оны "+(d.getMonth()+1)+"-р сарын "+d.getDate();}
+/* алхан хээ: нэг нэгж = s×s дөрвөлжин дотор эргэлддэг шугам; тууз дагуу давтана */
+function alhan(x,len,s){
+  var n=Math.floor(len/s),pad=(len-n*s)/2;x.beginPath();
+  for(var i=0;i<n;i++){
+    var a=pad+i*s,u=s/5;
+    x.moveTo(a,s);x.lineTo(a,0);x.lineTo(a+4*u,0);x.lineTo(a+4*u,3*u);x.lineTo(a+2*u,3*u);x.lineTo(a+2*u,2*u);x.lineTo(a+3*u,2*u);
+    x.moveTo(a+u,s);x.lineTo(a+u,u);x.lineTo(a+3*u,u);x.moveTo(a+u,s);x.lineTo(a+s,s);
+  }
+  x.stroke();
+}
+function certSeal(x,cx,cy,r,txt){
+  x.save();
+  /* тууз */
+  x.fillStyle="#1F5F55";
+  [[-1],[1]].forEach(function(d){x.beginPath();x.moveTo(cx+d[0]*r*0.35,cy+r*0.5);x.lineTo(cx+d[0]*r*0.7,cy+r*1.3);x.lineTo(cx+d[0]*r*0.47,cy+r*1.15);x.lineTo(cx+d[0]*r*0.3,cy+r*1.4);x.lineTo(cx+d[0]*r*0.02,cy+r*0.6);x.closePath();x.fill();});
+  /* шүдтэй алтан тойрог */
+  var g=x.createRadialGradient(cx-r*0.3,cy-r*0.3,r*0.1,cx,cy,r*1.1);g.addColorStop(0,"#F3DC8E");g.addColorStop(0.6,"#D4AF37");g.addColorStop(1,"#A8801E");
+  x.fillStyle=g;x.beginPath();
+  for(var k=0;k<48;k++){var a=k/48*Math.PI*2,rr=k%2?r:r*0.92;x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}
+  x.closePath();x.fill();
+  x.strokeStyle="rgba(255,255,255,.7)";x.lineWidth=3;x.beginPath();x.arc(cx,cy,r*0.78,0,Math.PI*2);x.stroke();
+  x.fillStyle="#16423C";x.beginPath();x.arc(cx,cy,r*0.66,0,Math.PI*2);x.fill();
+  x.strokeStyle="#D4AF37";x.lineWidth=2;x.beginPath();x.arc(cx,cy,r*0.6,0,Math.PI*2);x.stroke();
+  x.fillStyle="#F3DC8E";x.textAlign="center";x.textBaseline="middle";
+  x.font="700 "+Math.round(r*(String(txt).length>2?0.42:0.6))+"px Unbounded, Inter, sans-serif";x.fillText(txt,cx,cy+2);
+  x.font="700 "+Math.round(r*0.13)+"px Inter, sans-serif";x.fillText("САЛХИ",cx,cy-r*0.4);
+  x.fillText("★ ★ ★",cx,cy+r*0.42);
+  x.restore();
+}
+function drawCert(c){
+  var W=2000,H=1414,cv=document.createElement("canvas");cv.width=W;cv.height=H;var x=cv.getContext("2d");
+  var TEAL="#16423C",GOLD="#C9A24A",INK="#22302D";
+  /* дэвсгэр: зааны ясан өнгө + зөөлөн гэрэл */
+  var bg=x.createRadialGradient(W/2,H*0.42,100,W/2,H/2,W*0.75);bg.addColorStop(0,"#FFFEF9");bg.addColorStop(1,"#F2E9D4");
+  x.fillStyle=bg;x.fillRect(0,0,W,H);
+  /* салхины зураас */
+  x.strokeStyle="rgba(31,95,85,.06)";x.lineWidth=5;
+  for(var k=0;k<7;k++){x.beginPath();var y0=230+k*150;x.moveTo(-50,y0);x.bezierCurveTo(W*0.3,y0-120,W*0.6,y0+140,W+50,y0-30);x.stroke();}
+  /* хүрээ: хар ногоон тууз → алтан алхан хээ → нарийн шугам */
+  x.fillStyle=TEAL;x.fillRect(0,0,W,46);x.fillRect(0,H-46,W,46);x.fillRect(0,0,46,H);x.fillRect(W-46,0,46,H);
+  x.strokeStyle=GOLD;x.lineWidth=4;x.strokeRect(62,62,W-124,H-124);x.strokeRect(122,122,W-244,H-244);
+  x.lineWidth=4;x.lineCap="square";
+  var S=44,L=W-2*80;
+  x.save();x.translate(80,70);alhan(x,L,S);x.restore();
+  x.save();x.translate(W-80,H-70);x.rotate(Math.PI);alhan(x,L,S);x.restore();
+  x.save();x.translate(70,H-80);x.rotate(-Math.PI/2);alhan(x,H-160,S);x.restore();
+  x.save();x.translate(W-70,80);x.rotate(Math.PI/2);alhan(x,H-160,S);x.restore();
+  /* булангийн хээ */
+  [[92,92],[W-92,92],[92,H-92],[W-92,H-92]].forEach(function(p){
+    x.save();x.translate(p[0],p[1]);x.rotate(Math.PI/4);x.fillStyle=TEAL;x.fillRect(-30,-30,60,60);
+    x.strokeStyle=GOLD;x.lineWidth=4;x.strokeRect(-22,-22,44,44);x.fillStyle=GOLD;x.fillRect(-8,-8,16,16);x.restore();
+  });
+  x.textAlign="center";x.textBaseline="alphabetic";
+  /* толгой */
+  x.fillStyle=TEAL;x.font="700 40px Unbounded, Inter, sans-serif";
+  if("letterSpacing" in x)x.letterSpacing="14px";
+  x.fillText("САЛХИ",W/2,225);
+  x.font="700 128px Unbounded, Inter, sans-serif";if("letterSpacing" in x)x.letterSpacing="10px";
+  var tg=x.createLinearGradient(0,260,0,385);tg.addColorStop(0,"#1F5F55");tg.addColorStop(1,"#0E2E29");x.fillStyle=tg;
+  x.fillText("ГЭРЧИЛГЭЭ",W/2,375);
+  x.fillStyle=GOLD;x.font="600 30px Inter, sans-serif";if("letterSpacing" in x)x.letterSpacing="12px";
+  x.fillText("CERTIFICATE OF ACHIEVEMENT",W/2,432);
+  if("letterSpacing" in x)x.letterSpacing="0px";
+  /* гоёлын зураас */
+  x.strokeStyle=GOLD;x.lineWidth=3;x.beginPath();x.moveTo(W/2-300,470);x.lineTo(W/2-30,470);x.moveTo(W/2+30,470);x.lineTo(W/2+300,470);x.stroke();
+  x.save();x.translate(W/2,470);x.rotate(Math.PI/4);x.fillStyle=GOLD;x.fillRect(-10,-10,20,20);x.restore();
+  x.fillStyle="#5C6662";x.font="500 38px Inter, sans-serif";x.fillText("Энэхүү гэрчилгээг",W/2,550);
+  /* нэр: Playfair Display налуу, урт бол багасгана */
+  var name=state.certName||"Суралцагч",fs=120;
+  do{x.font="italic 700 "+fs+'px "Playfair Display", Georgia, serif';fs-=6;}while(x.measureText(name).width>W-520&&fs>60);
+  x.fillStyle=TEAL;x.fillText(name,W/2,680);
+  var nw=Math.min(W-480,Math.max(700,x.measureText(name).width+160));
+  var ng=x.createLinearGradient(W/2-nw/2,0,W/2+nw/2,0);ng.addColorStop(0,"rgba(201,162,74,0)");ng.addColorStop(0.5,GOLD);ng.addColorStop(1,"rgba(201,162,74,0)");
+  x.strokeStyle=ng;x.lineWidth=4;x.beginPath();x.moveTo(W/2-nw/2,718);x.lineTo(W/2+nw/2,718);x.stroke();
+  x.fillStyle="#5C6662";x.font="500 38px Inter, sans-serif";x.fillText("дараах амжилтын төлөө олгов",W/2,785);
+  /* амжилт */
+  var t=String(c.t);fs=72;
+  do{x.font='600 '+fs+'px "Playfair Display", Georgia, serif';fs-=4;}while(x.measureText(t).width>W-560&&fs>40);
+  x.fillStyle=INK;x.fillText(t,W/2,878);
+  x.font="500 40px Inter, sans-serif";x.fillStyle="#4A5552";x.fillText(c.d,W/2,940);
+  /* тамга */
+  var lv=(String(c.t).match(/\b(A1|A2|B1|B2|C1|C2)\b/)||[])[1]||(String(c.t).match(/\d+/)||[])[0]||"★";
+  certSeal(x,W/2,1085,108,lv);
+  /* огноо, олгосон */
+  x.textAlign="center";x.fillStyle=INK;x.font="600 36px Inter, sans-serif";
+  x.fillText(certDate(),470,1115);x.fillText("Салхи — хэл сурах апп",W-470,1115);
+  x.strokeStyle="#9AA3A0";x.lineWidth=2;x.beginPath();x.moveTo(270,1140);x.lineTo(670,1140);x.moveTo(W-670,1140);x.lineTo(W-270,1140);x.stroke();
+  x.fillStyle="#8A938F";x.font="500 26px Inter, sans-serif";x.fillText("Огноо",470,1180);x.fillText("Олгосон",W-470,1180);
+  /* салхины тэмдэг (гарын үсэг биш, логоны дүрс) */
+  x.strokeStyle="rgba(31,95,85,.55)";x.lineWidth=5;x.lineCap="round";
+  x.beginPath();x.moveTo(W-560,1050);x.bezierCurveTo(W-510,1010,W-450,1070,W-390,1030);x.stroke();
+  x.beginPath();x.moveTo(W-535,1068);x.bezierCurveTo(W-495,1045,W-455,1080,W-410,1058);x.stroke();
+  x.fillStyle="#9AA3A0";x.font="500 22px Inter, sans-serif";
+  x.fillText("№ "+certId(c)+"  ·  Аппын доторх амжилтын гэрчилгээ, албан ёсны шалгалтын гэрчилгээ биш",W/2,H-140);
+  return cv;
+}
+function certFile(cv,cb){cv.toBlob(function(b){cb(b?new File([b],"salkhi-gerchilgee.png",{type:"image/png"}):null);},"image/png");}
+function certPdf(cv){
+  var du=cv.toDataURL("image/jpeg",0.93),bin=atob(du.split(",")[1]),jpg=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++)jpg[i]=bin.charCodeAt(i);
+  saveBlob(jpegToPdf(jpg,cv.width,cv.height),"salkhi-gerchilgee.pdf");toast("📄 PDF гэрчилгээ татагдлаа");
+}
+/* урьдчилан харах цонх: PDF, хуваалцах, зураг татах */
 function makeCert(c,fmt){
-  try{
-    var W=1600,H=1130,cv=document.createElement("canvas");cv.width=W;cv.height=H;var x=cv.getContext("2d");
-    x.fillStyle="#FFFBF2";x.fillRect(0,0,W,H);
-    x.strokeStyle="#C9A24A";x.lineWidth=14;x.strokeRect(40,40,W-80,H-80);
-    x.strokeStyle="#1F5F55";x.lineWidth=3;x.strokeRect(70,70,W-140,H-140);
-    x.textAlign="center";x.fillStyle="#1F5F55";
-    x.font="700 44px Inter, system-ui, sans-serif";x.fillText("САЛХИ",W/2,180);
-    x.fillStyle="#2B2B2B";x.font="800 104px Inter, system-ui, sans-serif";x.fillText("ГЭРЧИЛГЭЭ",W/2,320);
-    x.font="500 36px Inter, system-ui, sans-serif";x.fillStyle="#555";x.fillText("Энэхүү гэрчилгээг",W/2,420);
-    var name=state.certName||"Суралцагч";
-    x.fillStyle="#1F5F55";x.font="700 84px Inter, system-ui, sans-serif";x.fillText(name,W/2,530);
-    x.strokeStyle="#C9A24A";x.lineWidth=3;x.beginPath();x.moveTo(W/2-360,560);x.lineTo(W/2+360,560);x.stroke();
-    x.fillStyle="#555";x.font="500 36px Inter, system-ui, sans-serif";x.fillText("дараах амжилтын төлөө олгов:",W/2,630);
-    x.fillStyle="#2B2B2B";x.font="700 60px Inter, system-ui, sans-serif";x.fillText(c.ic+" "+c.t,W/2,730);
-    x.font="500 40px Inter, system-ui, sans-serif";x.fillText(c.d,W/2,800);
-    x.fillStyle="#777";x.font="500 30px Inter, system-ui, sans-serif";
-    x.fillText(dkey(new Date()),W/2-420,960);x.fillText("Салхи — хэл сурах апп",W/2+400,960);
-    x.font="400 22px Inter, system-ui, sans-serif";x.fillText("Аппын доторх амжилтын гэрчилгээ · албан ёсны шалгалтын гэрчилгээ биш",W/2,1040);
-    x.beginPath();x.arc(W/2,930,60,0,Math.PI*2);x.fillStyle="#C9A24A";x.fill();
-    x.fillStyle="#fff";x.font="700 64px system-ui, sans-serif";x.fillText("★",W/2,952);
-    x.fillStyle="#999";x.font="500 22px Inter, system-ui, sans-serif";x.fillText("№ "+certId(c),W/2,1075);
-    if(fmt==="pdf"){
-      var du=cv.toDataURL("image/jpeg",0.92),bin=atob(du.split(",")[1]),jpg=new Uint8Array(bin.length);
-      for(var i=0;i<bin.length;i++)jpg[i]=bin.charCodeAt(i);
-      saveBlob(jpegToPdf(jpg,W,H),"salkhi-gerchilgee.pdf");toast("📄 PDF гэрчилгээ татагдлаа");celebrate(true,true);return;
-    }
-    cv.toBlob(function(b){
-      if(!b)return;
-      var f=new File([b],"salkhi-gerchilgee.png",{type:"image/png"});
-      if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f],text:"Салхи аппын гэрчилгээ: "+c.t}).catch(function(){});
-      else{var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="salkhi-gerchilgee.png";document.body.append(a);a.click();a.remove();toast("Гэрчилгээ хадгалагдлаа");}
-    });
+  var ov=h("div",{class:"certview",role:"dialog","aria-modal":"true","aria-label":"Гэрчилгээ"},h("div",{class:"muted",style:"color:#fff"},"🎓 Гэрчилгээ бэлдэж байна…"));
+  document.body.append(ov);
+  certFonts().then(function(){
+    var cv;try{cv=drawCert(c);}catch(e){ov.remove();toast("Гэрчилгээ үүсгэж чадсангүй");return;}
+    if(fmt==="pdf"){ov.remove();certPdf(cv);celebrate(true,true);return;}
+    var img=h("img",{src:cv.toDataURL("image/png"),alt:"Гэрчилгээ: "+c.t,style:"width:100%;max-width:900px;border-radius:10px;box-shadow:0 18px 50px rgba(0,0,0,.45)"});
+    ov.textContent="";
+    var close=function(){ov.remove();document.removeEventListener("keydown",esc);};
+    var esc=function(e){if(e.key==="Escape")close();};document.addEventListener("keydown",esc);
+    ov.addEventListener("click",function(e){if(e.target===ov)close();});
+    ov.append(img,h("div",{class:"row",style:"max-width:900px;width:100%;flex-wrap:wrap"},
+      h("button",{class:"btn primary",onclick:function(){certPdf(cv);}},"📄 PDF"),
+      h("button",{class:"btn",onclick:function(){certFile(cv,function(f){
+        if(!f)return;
+        if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f],text:"Салхи аппын гэрчилгээ: "+c.t}).catch(function(){});
+        else{saveBlob(f,"salkhi-gerchilgee.png");toast("Гэрчилгээ хадгалагдлаа");}
+      });}},"📤 Хуваалцах"),
+      h("button",{class:"btn",onclick:function(){certFile(cv,function(f){if(f){saveBlob(f,"salkhi-gerchilgee.png");toast("🖼 Зураг хадгалагдлаа");}});}},"🖼 Зураг"),
+      h("button",{class:"btn ghost",style:"color:#fff;border-color:rgba(255,255,255,.4)",onclick:close},"Хаах")));
     celebrate(true,true);
-  }catch(e){toast("Гэрчилгээ үүсгэж чадсангүй");}
+  });
 }
 /* гадаад найздаа монгол хэл заах хуудас (англи интерфэйстэй) */
 function mnCard(){
