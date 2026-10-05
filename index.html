@@ -204,6 +204,8 @@ h3{letter-spacing:-.02em}
 .seg button{padding:7px 14px;border-radius:9px;font-weight:600;font-size:13.5px;color:var(--ink)}
 .seg button[aria-pressed="true"]{background:var(--sky);color:#fff;box-shadow:0 1px 3px color-mix(in srgb,var(--sky) 45%,transparent)}
 .seg.lvseg{max-width:100%;overflow-x:auto}
+.seg.segrid{display:grid;gap:3px;width:100%;border-radius:14px}
+.seg.segrid button{padding:9px 4px;white-space:nowrap;text-align:center}
 .seg.lvseg button{padding:7px 11px;flex:none}
 
 /* үгийн карт */
@@ -4288,7 +4290,8 @@ function viewPlay(){
   if(P.ex)return viewMock(root);
   root.append(h("h2",null,"Сорил"));
   var nMB=mbCount();
-  root.append(h("div",{class:"seg",style:"flex-wrap:wrap;border-radius:20px"},
+  var secN=4+(eeshOk()?1:0)+(jobOk()?1:0);
+  root.append(h("div",{class:"seg segrid",style:"grid-template-columns:repeat("+(secN===4?2:3)+",1fr)"},
     h("button",{"aria-pressed":String(P.sec==="games"),onclick:function(){P.sec="games";render();}},"🎮 Тоглоом"),
     h("button",{"aria-pressed":String(P.sec==="write"),onclick:function(){P.sec="write";render();}},"✍️ Бичих"),
     h("button",{"aria-pressed":String(P.sec==="mb"),onclick:function(){P.sec="mb";render();}},"📒 Алдаа"+(nMB?" "+nMB:"")),
