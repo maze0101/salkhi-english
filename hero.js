@@ -7,8 +7,8 @@
 function initSalkhiHero(root, opts = {}) {
   const TITLE = opts.title || 'Салхи';
   const LINES = opts.lines || [
-    'Англи, япон, солонгос, хятад, орос, герман,',
-    'турк, франц, испани хэлний үг, дүрэм, яриа'
+    'Англи, япон, солонгос, хятад,',
+    'орос, герман хэлний үг, дүрэм, яриа'
   ];
   const FONT = opts.font || '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif';
   const TITLE_FONT = opts.titleFont || FONT;

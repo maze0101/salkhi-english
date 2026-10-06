@@ -67,7 +67,7 @@ de:`🔀|Үйл үг 2-р байр, төгсгөлд|Би өнөөдөр Бер�
   function viewTopic(root){
     var r=rows()[S.open];if(!r){S.open=-1;return viewList(root);}
     root.append(h("h3",{style:"margin:6px 0 10px"},r[0]+" "+r[1].replace(/^≈\s*/,"")));
-    root.append(h("div",{style:"display:flex;gap:10px;flex-wrap:wrap"},side("🇲🇳","Монгол",r[2],r[3],false),side("🌍",{en:"Англи",ja:"Япон",ko:"Солонгос",zh:"Хятад",ru:"Орос",de:"Герман",tr:"Турк",fr:"Франц",es:"Испани"}[env.lang()],r[4],r[5],true)));
+    root.append(h("div",{style:"display:flex;gap:10px;flex-wrap:wrap"},side("🇲🇳","Монгол",r[2],r[3],false),side("🌍",{en:"Англи",ja:"Япон",ko:"Солонгос",zh:"Хятад",ru:"Орос",de:"Герман"}[env.lang()],r[4],r[5],true)));
     root.append(h("div",{class:"note",style:"margin-top:10px"},h("div",{style:"font-weight:700"},"💡 Ялгаа"),h("p",{style:"margin:6px 0 0"},r[6])));
     root.append(h("h3",{style:"margin:16px 0 6px"},"✅ Шалгаад үз"),h("p",{style:"font-weight:700"},r[7]));
     if(!S.ans.opts)S.ans.opts=shuffle([r[8],r[9],r[10]].filter(Boolean));

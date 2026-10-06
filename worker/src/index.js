@@ -71,7 +71,6 @@ const EDGE_VER="143.0.3650.75",EDGE_MAJOR="143";
 const TTS_VOICES={
   en:["en-US","en-US-AriaNeural"],ja:["ja-JP","ja-JP-NanamiNeural"],ko:["ko-KR","ko-KR-SunHiNeural"],
   zh:["zh-CN","zh-CN-XiaoxiaoNeural"],ru:["ru-RU","ru-RU-SvetlanaNeural"],de:["de-DE","de-DE-KatjaNeural"],
-  tr:["tr-TR","tr-TR-EmelNeural"],fr:["fr-FR","fr-FR-DeniseNeural"],es:["es-ES","es-ES-ElviraNeural"],
   mn:["mn-MN","mn-MN-YesuiNeural"]
 };
 /* аялга (a=gb|au): англи хэлэнд л */
@@ -144,7 +143,7 @@ export function parseTTS(url){
    Үүсгэсэн дууг KV-д үүрд хадгална (нэг өгүүлбэрт нэг л удаа төлнө). Өдрийн тэмдэгтийн хязгаар (ELEVENLABS_DAILY_CHARS)
    хэтэрсэн, эсвэл ElevenLabs алдаа өгвөл Edge-ийн дуугаар хариулна (тэр хариуг HD гэж хадгалахгүй).
    Монгол хэлийг ElevenLabs дэмждэггүй тул Edge-ээр үлдэнэ. language_code-ийг зөвхөн v2.5 загварууд (flash/turbo) хүлээн авдаг. */
-const HD_LANGS={en:1,ja:1,ko:1,zh:1,ru:1,de:1,tr:1,fr:1,es:1};
+const HD_LANGS={en:1,ja:1,ko:1,zh:1,ru:1,de:1};
 const EL_VOICE="EXAVITQu4vr4xnSDxMaL",EL_MODEL="eleven_multilingual_v2",EL_DAILY=20000;
 export function hdReady(env){return !!(env.ELEVENLABS_API_KEY&&env.TTS_KV);}
 export function elSpeed(r){return Math.round(Math.max(0.7,Math.min(1.2,1+r/100))*100)/100;}
@@ -221,12 +220,11 @@ function noStore(res){const r=new Response(res.body,res);r.headers.set("cache-co
    (vision загвар монгол, япон үгэнд сул). */
 const VISION_MODEL="@cf/meta/llama-3.2-11b-vision-instruct";
 const MAX_IMAGE_BYTES=400000;
-const VISION_LANGS={en:"English",ja:"Japanese",ko:"Korean",zh:"Simplified Chinese",ru:"Russian",de:"German",tr:"Turkish",fr:"French",es:"Spanish"};
+const VISION_LANGS={en:"English",ja:"Japanese",ko:"Korean",zh:"Simplified Chinese",ru:"Russian",de:"German"};
 /* орчуулгын жишээ (dog) — загвар хэлбэрийг нь дуурайна */
 const VISION_EX={
   en:'{"word":"dog","reading":"","mn":"нохой"}',ja:'{"word":"いぬ","reading":"inu","mn":"нохой"}',ko:'{"word":"개","reading":"gae","mn":"нохой"}',
-  zh:'{"word":"狗","reading":"gǒu","mn":"нохой"}',ru:'{"word":"собака","reading":"","mn":"нохой"}',de:'{"word":"der Hund","reading":"","mn":"нохой"}',
-  tr:'{"word":"köpek","reading":"","mn":"нохой"}',fr:'{"word":"le chien","reading":"","mn":"нохой"}',es:'{"word":"el perro","reading":"","mn":"нохой"}'
+  zh:'{"word":"狗","reading":"gǒu","mn":"нохой"}',ru:'{"word":"собака","reading":"","mn":"нохой"}',de:'{"word":"der Hund","reading":"","mn":"нохой"}'
 };
 export function decodeImage(b64){
   if(typeof b64!=="string")return null;
@@ -277,7 +275,7 @@ async function handleVision(req,env,cors){
     if(!seen){console.error("vision unparsed:",JSON.stringify(a).slice(0,200));return json({error:"not_found"},422,cors);}
     const L=VISION_LANGS[lang];
     const q="Translate the English noun \""+seen.en+"\" for a child learning "+L+". Give the everyday "+L+" word"+
-      (lang==="ja"?" (hiragana, or common kanji)":lang==="de"||lang==="fr"||lang==="es"?" with its article":"")+
+      (lang==="ja"?" (hiragana, or common kanji)":lang==="de"?" with its article":"")+
       ", its "+(lang==="ja"?"romaji":lang==="zh"?"pinyin with tone marks":lang==="ko"?"romanization":"reading (empty string)")+
       " and the Mongolian word in Cyrillic. Reply with ONLY JSON like this example for dog: "+VISION_EX[lang];
     const b=await env.AI.run(env.MODEL||DEFAULT_MODEL,{messages:[{role:"system",content:SAFETY},{role:"user",content:q}],max_tokens:80,temperature:0.1});
@@ -326,8 +324,7 @@ async function handleOCR(req,env,cors){
 const NEWS_FEEDS={
   en:[["BBC","https://feeds.bbci.co.uk/news/world/rss.xml"]],ja:[["BBC","https://feeds.bbci.co.uk/japanese/rss.xml"]],
   ko:[["BBC","https://feeds.bbci.co.uk/korean/rss.xml"]],zh:[["BBC","https://feeds.bbci.co.uk/zhongwen/simp/rss.xml"]],
-  ru:[["BBC","https://feeds.bbci.co.uk/russian/rss.xml"]],de:[["DW","https://rss.dw.com/xml/rss-de-top"]],
-  tr:[["BBC","https://feeds.bbci.co.uk/turkce/rss.xml"]],fr:[["RFI","https://www.rfi.fr/fr/rss"]],es:[["BBC","https://feeds.bbci.co.uk/mundo/rss.xml"]]
+  ru:[["BBC","https://feeds.bbci.co.uk/russian/rss.xml"]],de:[["DW","https://rss.dw.com/xml/rss-de-top"]]
 };
 const NEWS_MN=["Google News","https://news.google.com/rss/search?q=Mongolia&hl=en-US&gl=US&ceid=US:en"];
 function xmlText(s){

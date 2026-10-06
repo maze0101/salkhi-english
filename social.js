@@ -492,7 +492,7 @@
   /* ---------- 🔁 хэлний солилцоо: монгол хэл сурч буй гадаад хүнтэй хосолж, бие биедээ туслана ----------
      xch/{uid}: {name,nat,learn,ts} — nat: эх хэл, learn: сурч буй хэл (mn = монгол) */
   var xch={list:null,on:null};
-  var XLANG={en:"Англи",ja:"Япон",ko:"Солонгос",zh:"Хятад",ru:"Орос",de:"Герман",tr:"Турк",fr:"Франц",es:"Испани"};
+  var XLANG={en:"Англи",ja:"Япон",ko:"Солонгос",zh:"Хятад",ru:"Орос",de:"Герман"};
   function loadXch(){
     xch.list=[];
     Promise.all([db.ref("xch").orderByChild("ts").limitToLast(200).once("value"),db.ref("xch/"+uid).once("value"),db.ref("xchin/"+uid).once("value").catch(function(){return {val:function(){return null;}};})]).then(function(r){
