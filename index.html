@@ -409,7 +409,7 @@ p+p{margin-top:10px}
     </div>
     <div class="txt sr-only">
       <h1>Салхи</h1>
-      <p>Англи, япон, солонгос, хятад, орос, герман хэлний үг, дүрэм, яриа</p>
+      <p>Англи, япон, солонгос, хятад, орос, герман, турк, франц, испани хэлний үг, дүрэм, яриа</p>
       <p class="kidq" id="kidq"></p>
     </div>
     <div class="moderow"><div class="modes" id="modes" role="group" aria-label="Горим"></div></div>
@@ -545,18 +545,26 @@ window.salkhiHero=initSalkhiHero(document.getElementById("salkhiHero"),{font:"In
 <script src="placement-more-de.js"></script>
 <script src="placement-more-ja.js"></script>
 <script src="placement-more-ko.js"></script>
+<script src="placement-more-tr.js"></script>
+<script src="placement-more-fr.js"></script>
+<script src="placement-more-es.js"></script>
 <script>
 /* зөвхөн сонгосон хэлний үгсийг эхэлж ачаална; бусад хэлийг хэрэгтэй үед нь loadLangs() татна */
 /* хэл бүрийн дүрмийн хичээлийн багцын тоо: lp-<хэл>-1.js ... lp-<хэл>-N.js */
-window.LESSON_PACKS={en:27,ja:23,ko:26,zh:22,ru:30,de:30};
+/* бүх хэл; tr/fr/es нь «хөнгөн» (бета) хэл: цөөн үг, хичээлтэй, AI функцууд бүрэн ажиллана */
+window.SALKHI_LANGS=["en","ja","ko","zh","ru","de","tr","fr","es"];
+window.LIGHT_LANGS={tr:1,fr:1,es:1};
+window.LESSON_PACKS={en:27,ja:23,ko:26,zh:22,ru:30,de:30,tr:1,fr:1,es:1};
+/* үгийн багцын тоо: words-, words2- ... (анхдагч 9) */
+window.WORDS_PACKS={tr:1,fr:1,es:1};
 window.WORDS_FILES=function(l){
-  var f=["words-","words2-","words3-","words4-","words5-","words6-","words7-","words8-","words9-"].map(function(p){return p+l+".js";});
+  var f=["words-","words2-","words3-","words4-","words5-","words6-","words7-","words8-","words9-"].slice(0,window.WORDS_PACKS[l]||9).map(function(p){return p+l+".js";});
   for(var i=1;i<=(window.LESSON_PACKS[l]||0);i++)f.push("lp-"+l+"-"+i+".js");
   return f;
 };
 (function(){
   var L;try{L=JSON.parse(localStorage.getItem("salkhi:lang"));}catch(e){}
-  if(["en","ja","ko","zh","ru","de"].indexOf(L)<0)L="en";
+  if(window.SALKHI_LANGS.indexOf(L)<0)L="en";
   window.WORDS_LOADED={};window.WORDS_LOADED[L]=1;
   /* үгс эхэнд хэрэгтэй; дүрмийн хичээлийн багцуудыг (lp-*) эхний дэлгэц гарсны дараа loadDeferred() татна */
   window.LP_DEFER=L;
@@ -594,7 +602,10 @@ ja:{a1:"JLPT N5",a2:"JLPT N4",b1:"JLPT N3",b2:"JLPT N2",c1:"JLPT N1",c2:"JLPT N1
 ko:{a1:"TOPIK 1",a2:"TOPIK 2",b1:"TOPIK 3",b2:"TOPIK 4",c1:"TOPIK 5",c2:"TOPIK 6"},
 zh:{a1:"HSK 1",a2:"HSK 2",b1:"HSK 3–4",b2:"HSK 5",c1:"HSK 6",c2:"HSK 7–9"},
 ru:{a1:"ТРКИ A1",a2:"ТРКИ A2",b1:"ТРКИ B1",b2:"ТРКИ B2",c1:"ТРКИ C1",c2:"ТРКИ C2"},
-de:{a1:"Goethe A1",a2:"Goethe A2",b1:"Goethe B1",b2:"Goethe B2",c1:"Goethe C1",c2:"Goethe C2"}
+de:{a1:"Goethe A1",a2:"Goethe A2",b1:"Goethe B1",b2:"Goethe B2",c1:"Goethe C1",c2:"Goethe C2"},
+tr:{a1:"TYS A1",a2:"TYS A2",b1:"TYS B1",b2:"TYS B2",c1:"TYS C1",c2:"TYS C2"},
+fr:{a1:"DELF A1",a2:"DELF A2",b1:"DELF B1",b2:"DELF B2",c1:"DALF C1",c2:"DALF C2"},
+es:{a1:"DELE A1",a2:"DELE A2",b1:"DELE B1",b2:"DELE B2",c1:"DELE C1",c2:"DELE C2"}
 };
 var EXTRA={
 be:{o:["We are good friends"],f:[["He ___ a doctor. (am / is / are)","is"]]},
@@ -743,7 +754,7 @@ if(!isObjS(state.mbook))state.mbook={};
 ["w","wr","c","p"].forEach(function(k){state.mbook[k]=(Array.isArray(state.mbook[k])?state.mbook[k]:[]).filter(function(x){return isObjS(x)&&typeof x.l==="string"&&typeof x.t==="string";});});
 if(typeof state.certName!=="string")state.certName="";
 if(state.mode!=="kid"&&state.mode!=="senior")state.mode="adult";
-if(["en","ja","ko","zh","ru","de"].indexOf(state.lang)<0)state.lang="en";
+if(window.SALKHI_LANGS.indexOf(state.lang)<0)state.lang="en";
 document.documentElement.setAttribute("data-lang",state.lang);
 if(!Array.isArray(state.saved))state.saved=[];
 if([0.65,1,1.25].indexOf(state.rate)<0)state.rate=1;
@@ -811,7 +822,7 @@ function append(el,kid){
 }
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function dkey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
-var LANG_TTS={en:"en-US",ja:"ja-JP",ko:"ko-KR",zh:"zh-CN",ru:"ru-RU",de:"de-DE"},LANGN={en:"Англи",ja:"Япон",ko:"Солонгос",zh:"Хятад",ru:"Орос",de:"Герман"},LANG_EN={en:"English",ja:"Japanese",ko:"Korean",zh:"Chinese",ru:"Russian",de:"German"};
+var LANG_TTS={en:"en-US",ja:"ja-JP",ko:"ko-KR",zh:"zh-CN",ru:"ru-RU",de:"de-DE",tr:"tr-TR",fr:"fr-FR",es:"es-ES"},LANGN={en:"Англи",ja:"Япон",ko:"Солонгос",zh:"Хятад",ru:"Орос",de:"Герман",tr:"Турк",fr:"Франц",es:"Испани"},LANG_EN={en:"English",ja:"Japanese",ko:"Korean",zh:"Chinese",ru:"Russian",de:"German",tr:"Turkish",fr:"French",es:"Spanish"};
 var VOICES=[],voiceHint={};
 function loadVoices(){try{VOICES=speechSynthesis.getVoices()||[];}catch(e){VOICES=[];}}
 try{if("speechSynthesis" in window){loadVoices();speechSynthesis.addEventListener("voiceschanged",function(){loadVoices();voiceHint={};});}}catch(e){}
@@ -841,7 +852,7 @@ function voiceFor(lang){
   }
   return v;
 }
-var GTTS={en:"en",ja:"ja",ko:"ko",zh:"zh-CN",ru:"ru",de:"de"},audioQ={id:0,cur:null};
+var GTTS={en:"en",ja:"ja",ko:"ko",zh:"zh-CN",ru:"ru",de:"de",tr:"tr",fr:"fr",es:"es"},audioQ={id:0,cur:null};
 /* англи аялга: us (анхдагч), gb, au — Edge дуу, Google, төхөөрөмжийн дуунд бүгдэд нь */
 var ACCENTS={us:["🇺🇸","Америк","en-US","en-US"],gb:["🇬🇧","Британи","en-GB","en-GB"],au:["🇦🇺","Австрали","en-AU","en-AU"]};
 function accentOn(lang){return lang==="en"&&state.accent!=="us"&&ACCENTS[state.accent]?state.accent:"";}
@@ -1190,8 +1201,8 @@ function renderModes(){
 }
 function renderLangs(){
   var el=document.getElementById("langs");el.textContent="";
-  [["en","Англи"],["ja","Япон"],["ko","Солонгос"],["zh","Хятад"],["ru","Орос"],["de","Герман"]].forEach(function(l){
-    el.append(h("button",{class:"lv","aria-pressed":String(state.lang===l[0]),onclick:function(){
+  window.SALKHI_LANGS.map(function(c){return [c,LANGN[c]+(window.LIGHT_LANGS[c]?" β":"")];}).forEach(function(l){
+    el.append(h("button",{class:"lv","aria-pressed":String(state.lang===l[0]),title:window.LIGHT_LANGS[l[0]]?"Бета: цөөн үг, хичээлтэй":null,onclick:function(){
       if(state.lang===l[0])return;
       state.lang=l[0];sset("lang",l[0]);document.documentElement.setAttribute("data-lang",l[0]);
       state.cat="all";ui.vocab.cur=null;ui.vocab.quiz=null;ui.vocab.flipped=false;ui.vocab.q="";ui.listen.cur=null;ui.listen.story.cur=null;ui.grammar.lesson=null;
@@ -1817,7 +1828,7 @@ function importData(file){
         else if(key==="custom"){if(!Array.isArray(v)||v.some(function(c){return !Array.isArray(c)||c.length<6||typeof c[1]!=="string"||typeof c[2]!=="string";}))return;}
         else if(key==="level"){if(["all","a1","a2","b1","b2","c1","c2"].indexOf(v)<0)return;}
         else if(key==="mode"){if(["adult","senior","kid"].indexOf(v)<0)return;}
-        else if(key==="lang"){if(["en","ja","ko","zh","ru","de"].indexOf(v)<0)return;}
+        else if(key==="lang"){if(window.SALKHI_LANGS.indexOf(v)<0)return;}
         else if(key==="theme"){if(THEMES.indexOf(v)<0)return;}
         sset(key,v);
       });
@@ -2610,6 +2621,8 @@ ROMA="a i u e o ka ki ku ke ko sa shi su se so ta chi tsu te to na ni nu ne no h
 function kata(c){return String.fromCharCode(c.charCodeAt(0)+96);}
 function wordLetter(a){var t=a[0]==="Ъ"?"твёрдый знак":a[0]==="Ь"?"мягкий знак":a[0];return [a[0]+a[0].toLowerCase(),t,a[2].replace(/_/g," "),a[1]];}
 function plain(a){return [a[0],a[1],a[2],""];}
+/* турк: I → ı, İ → i (toLowerCase() буруу болгодог) */
+function trLetter(a){var lo={"I":"ı","İ":"i"}[a[0]]||a[0].toLowerCase();return [a[0]+lo,a[0],a[2].replace(/_/g," "),a[1]];}
 var ALPHA={
 en:[["Латин үсэг (A–Z)",abuild("A|Apple|алим B|Ball|бөмбөг C|Cat|муур D|Dog|нохой E|Egg|өндөг F|Fish|загас G|Girl|охин H|Hat|малгай I|Ice|мөс J|Juice|шүүс K|Key|түлхүүр L|Lion|арслан M|Moon|сар N|Nose|хамар O|Orange|жүрж P|Pen|үзэг Q|Queen|хатан R|Rain|бороо S|Sun|нар T|Tree|мод U|Umbrella|шүхэр V|Van|фургон W|Water|ус X|Box|хайрцаг Y|Yes|тийм Z|Zoo|хүрээлэн",wordLetter)]],
 ja:[["Хирагана",HIRA.split("").map(function(c,i){return [c,c,ROMA[i],""];})],["Катакана",HIRA.split("").map(function(c,i){return [kata(c),kata(c),ROMA[i],""];})]],
@@ -2618,6 +2631,9 @@ ko:[["Гийгүүлэгч",abuild("ㄱ|가|g/k ㄴ|나|n ㄷ|다|d/t ㄹ|라|r/
 zh:[["Пиньиний эхлэл (声母)",abuild("b|波|bō p|坡|pō m|摸|mō f|佛|fó d|德|dé t|特|tè n|讷|nè l|勒|lè g|哥|gē k|科|kē h|喝|hē j|基|jī q|七|qī x|西|xī zh|知|zhī ch|吃|chī sh|诗|shī r|日|rì z|资|zī c|雌|cí s|思|sī",function(a){return [a[0],a[1],a[2],""];})],
 ["Пиньиний төгсгөл (韵母)",abuild("a|啊|a o|哦|o e|鹅|e i|衣|yi u|乌|wu ü|迂|yu ai|爱|ài ei|诶|ei ao|奥|ào ou|欧|ōu an|安|ān en|恩|ēn ang|昂|áng eng|鞥|ēng ong|轰|hōng",function(a){return [a[0],a[1],a[2],""];})]],
 ru:[["Кирилл үсэг (33)",abuild("А|Арбуз|тарвас Б|Банан|гадил В|Вода|ус Г|Гора|уул Д|Дом|байшин Е|Ель|гацуур Ё|Ёж|зараа Ж|Жук|цох З|Заяц|туулай И|Игра|тоглоом Й|Йогурт|тараг К|Кот|муур Л|Лиса|үнэг М|Мама|ээж Н|Нос|хамар О|Окно|цонх П|Папа|аав Р|Рыба|загас С|Солнце|нар Т|Трава|өвс У|Утка|нугас Ф|Флаг|туг Х|Хлеб|талх Ц|Цветок|цэцэг Ч|Чай|цай Ш|Шапка|малгай Щ|Щётка|сойз Ъ||хатуу_тэмдэг Ы|Сыр|бяслаг Ь||зөөлөн_тэмдэг Э|Этаж|давхар Ю|Юбка|банзал Я|Яблоко|алим",wordLetter)]],
+tr:[["Турк цагаан толгой (29)",abuild("A|Arı|зөгий B|Balık|загас C|Ceket|хүрэм Ç|Çay|цай D|Deniz|далай E|Elma|алим F|Fil|заан G|Gemi|усан_онгоц Ğ|Dağ|уул H|Halı|хивс I|Irmak|гол İ|İnek|үнээ J|Japonya|Япон K|Kedi|муур L|Limon|нимбэг M|Masa|ширээ N|Nar|анар O|Okul|сургууль Ö|Ördek|нугас P|Peynir|бяслаг R|Resim|зураг S|Su|ус Ş|Şeker|чихэр T|Tavşan|туулай U|Uçak|онгоц Ü|Üzüm|усан_үзэм V|Vazo|ваар Y|Yıldız|од Z|Zürafa|анааш",trLetter)]],
+fr:[["Франц цагаан толгой",abuild("A|Avion|онгоц B|Bateau|завь C|Chat|муур D|Dauphin|далайн_гахай E|Éléphant|заан F|Fleur|цэцэг G|Gâteau|бялуу H|Hibou|шар_шувуу I|Île|арал J|Jardin|цэцэрлэг K|Kangourou|имж L|Lune|сар M|Maison|байшин N|Nuage|үүл O|Oiseau|шувуу P|Pomme|алим Q|Quatre|дөрөв R|Robe|даашинз S|Soleil|нар T|Tortue|яст_мэлхий U|Usine|үйлдвэр V|Vélo|дугуй W|Wagon|вагон X|Xylophone|ксилофон Y|Yaourt|тараг Z|Zèbre|зебра",wordLetter)]],
+es:[["Испани цагаан толгой (27)",abuild("A|Agua|ус B|Barco|завь C|Casa|байшин D|Dedo|хуруу E|Estrella|од F|Flor|цэцэг G|Gato|муур H|Huevo|өндөг I|Isla|арал J|Jirafa|анааш K|Kilo|килограмм L|Luna|сар M|Manzana|алим N|Nube|үүл Ñ|Ñandú|нанду_шувуу O|Oso|баавгай P|Perro|нохой Q|Queso|бяслаг R|Ratón|хулгана S|Sol|нар T|Tren|галт_тэрэг U|Uva|усан_үзэм V|Vaca|үнээ W|Web|вэб X|Xilófono|ксилофон Y|Yate|дарвуулт_завь Z|Zapato|гутал",wordLetter)]],
 de:[["Герман цагаан толгой",abuild("A|Apfel|алим B|Buch|ном C|Computer|компьютер D|Dach|дээвэр E|Esel|илжиг F|Fisch|загас G|Garten|цэцэрлэг H|Haus|байшин I|Igel|зараа J|Jacke|хүрэм K|Katze|муур L|Lampe|чийдэн M|Mond|сар N|Nase|хамар O|Ohr|чих P|Pferd|морь Q|Quelle|булаг R|Regen|бороо S|Sonne|нар T|Tisch|ширээ U|Uhr|цаг V|Vogel|шувуу W|Wasser|ус X|Xylophon|ксилофон Y|Yoga|йог Z|Zug|галт_тэрэг Ä|Äpfel|алимнууд Ö|Öl|тос Ü|Übung|дасгал ß|Straße|гудамж",wordLetter)]]
 };
 function kana(s){return abuild(s,function(a){return [a[0],a[0],a[1],""];});}
@@ -2627,7 +2643,9 @@ ALPHA.ko.push(["Давхар гийгүүлэгч",abuild("ㄲ|까|kk ㄸ|따|tt
   ["Нийлмэл эгшиг",abuild("ㅐ|애|ae ㅒ|얘|yae ㅔ|에|e ㅖ|예|ye ㅘ|와|wa ㅙ|왜|wae ㅚ|외|oe ㅝ|워|wo ㅞ|웨|we ㅟ|위|wi ㅢ|의|ui",plain)]);
 ALPHA.zh.push(["Дөрвөн аяс (声调)",abuild("mā|妈|1-р_аяс má|麻|2-р_аяс mǎ|马|3-р_аяс mà|骂|4-р_аяс shū|书|1-р_аяс shú|熟|2-р_аяс shǔ|鼠|3-р_аяс shù|树|4-р_аяс",function(a){return [a[0],a[1],a[2].replace("_"," "),""];})]);
 var PHR="Сайн байна уу|Hello|こんにちは|안녕하세요|你好|Здравствуйте|Guten Tag\nБаяртай|Goodbye|さようなら|안녕히 가세요|再见|До свидания|Auf Wiedersehen\nБаярлалаа|Thank you|ありがとうございます|감사합니다|谢谢|Спасибо|Danke\nУучлаарай|Excuse me|すみません|죄송합니다|对不起|Извините|Entschuldigung\nТийм / Үгүй|Yes, no|はい、いいえ|네, 아니요|是，不是|Да, нет|Ja, nein\nНамайг ... гэдэг|My name is|わたしの なまえは です|제 이름은 입니다|我叫|Меня зовут|Ich heiße\nТанилцсандаа баяртай байна|Nice to meet you|はじめまして|만나서 반갑습니다|很高兴认识你|Очень приятно|Freut mich\nБи ойлгохгүй байна|I don't understand|わかりません|이해 못 해요|我不明白|Я не понимаю|Ich verstehe nicht\nДахин хэлээч|Please say it again|もういちど おねがいします|다시 말씀해 주세요|请再说一遍|Повторите, пожалуйста|Bitte noch einmal\nАнглиар ярьдаг уу?|Do you speak English?|えいごを はなせますか|영어 할 수 있어요?|你会说英语吗？|Вы говорите по-английски?|Sprechen Sie Englisch?\nЭнэ хэд вэ?|How much is this?|これは いくらですか|이거 얼마예요?|这个多少钱？|Сколько это стоит?|Was kostet das?\nЖорлон хаана вэ?|Where is the toilet?|トイレは どこですか|화장실이 어디예요?|洗手间在哪儿？|Где туалет?|Wo ist die Toilette?\nУс өгөөч|Water, please|みずを ください|물 주세요|请给我水|Воды, пожалуйста|Wasser, bitte\nКофе өгөөч|A coffee, please|コーヒーを ください|커피 주세요|我要一杯咖啡|Кофе, пожалуйста|Einen Kaffee, bitte\nТооцоо хийе|The bill, please|おかんじょうを おねがいします|계산해 주세요|请买单|Счёт, пожалуйста|Die Rechnung, bitte\nАмттай байна|It is delicious|おいしいです|맛있어요|很好吃|Очень вкусно|Das schmeckt gut\nБи цагаан хоолтон|I am vegetarian|ベジタリアンです|채식주의자예요|我吃素|Я вегетарианец|Ich bin Vegetarier\nӨрөө захиалсан|I have a reservation|よやくしています|예약했어요|我预订了房间|У меня забронировано|Ich habe reserviert\nБуудал хаана вэ?|Where is the station?|えきは どこですか|역이 어디예요?|火车站在哪儿？|Где вокзал?|Wo ist der Bahnhof?\nБи төөрчихлөө|I am lost|みちに まよいました|길을 잃었어요|我迷路了|Я заблудился|Ich habe mich verirrt\nХэдэн цаг вэ?|What time is it?|いま なんじですか|지금 몇 시예요?|现在几点？|Который час?|Wie spät ist es?\nНадад туслаач|Please help me|たすけてください|도와 주세요|请帮帮我|Помогите, пожалуйста|Bitte helfen Sie mir\nЭмч дуудаарай|Please call a doctor|いしゃを よんでください|의사를 불러 주세요|请叫医生|Вызовите врача|Rufen Sie bitte einen Arzt\nДараа уулзъя|See you later|また あとで|나중에 봐요|回头见|Увидимся|Bis später".split("\n").map(function(r){return r.split("|");});
-var PHR_IDX={en:1,ja:2,ko:3,zh:4,ru:5,de:6};
+/* турк, франц, испани хэллэгүүд (PHR-ийн мөрийн дарааллаар) */
+"Merhaba|Bonjour|Hola\nHoşça kal|Au revoir|Adiós\nTeşekkür ederim|Merci|Gracias\nAffedersiniz|Excusez-moi|Perdón\nEvet, hayır|Oui, non|Sí, no\nBenim adım|Je m'appelle|Me llamo\nTanıştığıma memnun oldum|Enchanté|Mucho gusto\nAnlamıyorum|Je ne comprends pas|No entiendo\nTekrar söyler misiniz?|Pouvez-vous répéter, s'il vous plaît?|¿Puede repetirlo, por favor?\nİngilizce biliyor musunuz?|Parlez-vous anglais?|¿Habla inglés?\nBu ne kadar?|C'est combien?|¿Cuánto cuesta esto?\nTuvalet nerede?|Où sont les toilettes?|¿Dónde está el baño?\nSu, lütfen|De l'eau, s'il vous plaît|Agua, por favor\nBir kahve, lütfen|Un café, s'il vous plaît|Un café, por favor\nHesap, lütfen|L'addition, s'il vous plaît|La cuenta, por favor\nÇok lezzetli|C'est délicieux|Está delicioso\nBen vejetaryenim|Je suis végétarien|Soy vegetariano\nRezervasyonum var|J'ai une réservation|Tengo una reserva\nİstasyon nerede?|Où est la gare?|¿Dónde está la estación?\nKayboldum|Je suis perdu|Estoy perdido\nSaat kaç?|Quelle heure est-il?|¿Qué hora es?\nLütfen bana yardım edin|Aidez-moi, s'il vous plaît|Ayúdeme, por favor\nLütfen doktor çağırın|Appelez un médecin, s'il vous plaît|Llame a un médico, por favor\nSonra görüşürüz|À plus tard|Hasta luego".split("\n").forEach(function(r,i){if(PHR[i])PHR[i].push.apply(PHR[i],r.split("|"));});
+var PHR_IDX={en:1,ja:2,ko:3,zh:4,ru:5,de:6,tr:7,fr:8,es:9};
 function phraseSay(t){return String(t).replace(/\s*[,、，]\s*/g,", ").replace(/[.…]+/g,"").trim();}
 function viewPhrases(){
   var root=h("div"),ix=PHR_IDX[state.lang]||1;
@@ -2758,7 +2776,7 @@ function viewAlpha(){
   return root;
 }
 /* Үсгийн тест: үсгийг хараад уншлагыг нь, эсвэл сонсоод үсгийг нь сонгоно. Алдсан үсгийг amiss:<хэл>-д хадгалж давтуулна. */
-function aqLat(){return ["en","ru","de"].indexOf(state.lang)>=0;}
+function aqLat(){return ["en","ru","de","tr","fr","es"].indexOf(state.lang)>=0;}
 function aqAns(it){return aqLat()?it[3]:it[2];}
 function aqItems(){var out=[];(ALPHA[state.lang]||[]).forEach(function(sec,si){if(/声调/.test(sec[0]))return;sec[1].forEach(function(it){out.push({it:it,s:si});});});return out;}
 function aqKey(q,x){return q.mode==="hear"?x.it[0]:aqAns(x.it);}
@@ -3002,7 +3020,7 @@ function dictFor(lang){
     var k=dictKey(w[1]);if(!k)return;
     add(k,w);
     /* "der Kaffee" → "kaffee", "to live" → "live" */
-    var bare=k.replace(/^(der|die|das|ein|eine|to|the|a|an) /,"");if(bare!==k)add(bare,w);
+    var bare=k.replace(/^(der|die|das|ein|eine|to|the|a|an|le|la|les|un|une|el|los|las|una) /,"").replace(/^l['’]/,"");if(bare!==k)add(bare,w);
     if(lang==="ko"&&/다$/.test(k)&&k.length>=3)add(k.slice(0,-1),w);
   });
   String((window.GLOSS||{})[lang]||"").split("\n").forEach(function(line){
@@ -3025,7 +3043,7 @@ function lookupWord(tok){
   d.list.forEach(function(e){
     var w=e[0];if(w.indexOf(" ")>=0)return;
     if(lang==="ko"){if(w.length>=1&&k.indexOf(w)===0&&w.length>bl&&(w.length>=2||k.length<=2)){best=e[1];bl=w.length;}return;}
-    if(lang==="ru"||lang==="de"){
+    if(lang==="ru"||lang==="de"||lang==="tr"||lang==="fr"||lang==="es"){
       var n=0,m=Math.min(w.length,k.length);while(n<m&&w[n]===k[n])n++;
       if(n>=4&&n>=Math.max(w.length,k.length)-3&&n>bl){best=e[1];bl=n;}
     }
@@ -3327,7 +3345,7 @@ var MN_OTHER={
 free:[["Сайн уу! Сайн байна уу?","Сайн, баярлалаа."],["Чиний нэр хэн бэ?","Миний нэр Бат."],["Юунд дуртай вэ?","Мууранд дуртай."],["Өглөө юу уудаг вэ?","Цай уудаг."],["Амралтын өдөр юу хийдэг вэ?","Найзтайгаа уулздаг."]],
 cafe:[["Тавтай морилно уу! Юу захиалах вэ?","Кофе өгөөч."],["Халуун уу, хүйтэн үү?","Халуун өгөөч."],["Өөр юм хэрэгтэй юу?","Бялуу ч өгөөч."],["Нийт {P} болно.","Аваарай."],["Энд идэх үү, авч явах уу?","Энд идье."]]
 };
-var MN_PRICE={ja:"500 иен",ko:"5000 вон",zh:"20 юань",ru:"200 рубль",de:"5 евро"};
+var MN_PRICE={ja:"500 иен",ko:"5000 вон",zh:"20 юань",ru:"200 рубль",de:"5 евро",tr:"100 лира",fr:"5 евро",es:"5 евро"};
 function mnLine(key,idx){var m=mnDlg(key,idx);return m?m[0]:"";}
 function parseAI(text){
   var t=String(text),fix="",mn="",i=t.indexOf("###");
@@ -3347,7 +3365,10 @@ var LANGPACK={
   ko:{scripts:SCRIPTS_KO,react:["좋아요!","그렇군요!","대단해요!"],tryMsg:"한국어로 말해 봐요! ",tryFix:"Солонгосоор бичиж үзээрэй.",end:"잘했어요! 다른 상황도 연습해 봐요.",fin:"이 대화는 끝났어요. 새 대화를 시작해 보세요."},
   zh:{scripts:SCRIPTS_ZH,react:["好的！","不错！","真棒！"],tryMsg:"我们说中文吧！ ",tryFix:"Хятадаар бичиж үзээрэй.",end:"做得好！选择另一个场景继续练习吧。",fin:"这次对话结束了。请开始新的对话。"},
   ru:{scripts:SCRIPTS_RU,react:["Хорошо!","Отлично!","Понятно."],tryMsg:"Давайте говорить по-русски! ",tryFix:"Оросоор бичиж үзээрэй.",end:"Молодец! Выберите другую ситуацию.",fin:"Разговор окончен. Начните новый."},
-  de:{scripts:SCRIPTS_DE,react:["Gut!","Super!","Ich verstehe."],tryMsg:"Sprechen wir Deutsch! ",tryFix:"Герман хэлээр бичиж үзээрэй.",end:"Gut gemacht! Wähle eine andere Situation.",fin:"Das Gespräch ist zu Ende. Starte ein neues."}
+  de:{scripts:SCRIPTS_DE,react:["Gut!","Super!","Ich verstehe."],tryMsg:"Sprechen wir Deutsch! ",tryFix:"Герман хэлээр бичиж үзээрэй.",end:"Gut gemacht! Wähle eine andere Situation.",fin:"Das Gespräch ist zu Ende. Starte ein neues."},
+  tr:{scripts:{free:[["Merhaba! Nasılsın?","İyiyim, teşekkürler."],["Adın ne?","Benim adım Bat."],["Neyi seversin?","Kedileri severim."],["Sabahları ne içersin?","Çay içerim."],["Hafta sonu ne yaparsın?","Bir arkadaşımla buluşurum."]],cafe:[["Hoş geldiniz! Ne alırsınız?","Bir kahve, lütfen."],["Sıcak mı, soğuk mu?","Sıcak, lütfen."],["Başka bir şey?","Bir dilim kek de, lütfen."],["Toplam yüz lira.","Buyurun."],["Burada mı yiyeceksiniz, paket mi?","Burada, lütfen."]]},react:["Güzel!","Harika!","Anlıyorum."],tryMsg:"Türkçe konuşalım! ",tryFix:"Турк хэлээр бичиж үзээрэй.",end:"Aferin! Başka bir durum seç.",fin:"Konuşma bitti. Yeni bir tane başlat."},
+  fr:{scripts:{free:[["Bonjour ! Comment ça va ?","Bien, merci."],["Comment tu t'appelles ?","Je m'appelle Bat."],["Qu'est-ce que tu aimes ?","J'aime les chats."],["Qu'est-ce que tu bois le matin ?","Je bois du thé."],["Qu'est-ce que tu fais le week-end ?","Je vois un ami."]],cafe:[["Bienvenue ! Qu'est-ce que vous désirez ?","Un café, s'il vous plaît."],["Chaud ou froid ?","Chaud, s'il vous plaît."],["Autre chose ?","Une part de gâteau, s'il vous plaît."],["Ça fait cinq euros.","Voilà."],["Sur place ou à emporter ?","Sur place, s'il vous plaît."]]},react:["Bien !","Super !","Je comprends."],tryMsg:"Parlons français ! ",tryFix:"Франц хэлээр бичиж үзээрэй.",end:"Bravo ! Choisis une autre situation.",fin:"La conversation est terminée. Commence-en une nouvelle."},
+  es:{scripts:{free:[["¡Hola! ¿Qué tal?","Bien, gracias."],["¿Cómo te llamas?","Me llamo Bat."],["¿Qué te gusta?","Me gustan los gatos."],["¿Qué bebes por la mañana?","Bebo té."],["¿Qué haces el fin de semana?","Quedo con un amigo."]],cafe:[["¡Bienvenido! ¿Qué desea?","Un café, por favor."],["¿Caliente o frío?","Caliente, por favor."],["¿Algo más?","Un trozo de pastel, por favor."],["Son cinco euros.","Aquí tiene."],["¿Para tomar aquí o para llevar?","Para tomar aquí, por favor."]]},react:["¡Bien!","¡Genial!","Entiendo."],tryMsg:"¡Hablemos en español! ",tryFix:"Испани хэлээр бичиж үзээрэй.",end:"¡Muy bien! Elige otra situación.",fin:"La conversación ha terminado. Empieza una nueva."}
 };
 (function(){
   var D=window.DLG_MORE;if(!D)return;
@@ -3809,7 +3830,7 @@ function viewChat(){
   if(c.section==="translate")return viewTranslate();
   if(!c.started){
     root.append(h("h2",null,"Ярианы дасгал"));
-    root.append(h("p",{class:"muted"},"Нөхцөлөө сонгоод AI-тай англиар ярилц. Алдаа гаргавал Монголоор засаж өгнө."));
+    root.append(h("p",{class:"muted"},"Нөхцөлөө сонгоод AI-тай "+LANGN[state.lang].toLowerCase()+" хэлээр ярилц. Алдаа гаргавал монголоор засаж өгнө."));
     if(window.VoiceCall&&(sample||state.apiKey||freeAI()))root.append(h("button",{class:"scn",style:"border-color:var(--sky);font-weight:700",onclick:function(){c.call=true;render();window.scrollTo(0,0);}},"📞 AI багштай дуудлага — дуугаар ярилц"));
     if(window.Travel&&state.mode!=="kid"){var trp=Travel.active(xEnv());root.append(h("button",{class:"scn",onclick:function(){c.travel=true;render();window.scrollTo(0,0);}},"🧳 Аяллын бэлтгэл"+(trp?" — "+trp.dest+(trp.left>0?" ("+trp.left+" хоног)":""):" — 7 хоногийн хөтөлбөр")));}
     root.append(h("button",{class:"scn",onclick:function(){c.section="translate";render();}},"🎙️ Монгол → "+LANGN[state.lang]+" орчуулагч"));
@@ -4076,7 +4097,7 @@ function fontPanel(){
 function langProgress(){
   var wrap=h("div",{style:"margin-top:22px"});
   wrap.append(h("h2",{style:"font-size:18px"},"Хэл бүрийн явц"));
-  var ALL=["en","ja","ko","zh","ru","de"];
+  var ALL=window.SALKHI_LANGS;
   if(!ui.allLangTried&&ALL.some(function(l){return !window.WORDS_LOADED[l];}))ui.allLangTried=1,loadLangs(ALL,function(){if(state.tab==="stats")render();});
   ALL.forEach(function(l){
     var ws=WORDS.filter(function(w){return (w[6]||"en")===l;}),kn=ws.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
@@ -4111,7 +4132,7 @@ function shareCard(){
   }catch(e){toast("Карт үүсгэж чадсангүй");}
 }
 /* ---------- Сорил: word games and exam practice ---------- */
-var ALPH={en:"abcdefghijklmnopqrstuvwxyz",de:"abcdefghijklmnopqrstuvwxyzäöüß",ru:"абвгдеёжзийклмнопрстуфхцчшщъыьэюя"};
+var ALPH={en:"abcdefghijklmnopqrstuvwxyz",de:"abcdefghijklmnopqrstuvwxyzäöüß",ru:"абвгдеёжзийклмнопрстуфхцчшщъыьэюя",tr:"abcçdefgğhıijklmnoöprsştuüvyz",fr:"abcdefghijklmnopqrstuvwxyzàâçéèêëîïôûùüÿœ",es:"abcdefghijklmnñopqrstuvwxyzáéíóúü"};
 function gameWords(){
   var ck=clsKey();
   if(ck&&CLS_LISTS[ck]&&CLS_LISTS[ck].lang===state.lang){var cw=clsWords(ck).filter(function(w){return w[1].length<=22&&w[2].length<=30;});if(cw.length>=4)return cw;}
@@ -4993,6 +5014,9 @@ function sendParentReport(){
 function parentReportDue(){var s=sget("prsent",0);return state.mode==="kid"&&Date.now()-s>7*86400000&&Object.keys(state.daily).length>0;}
 /* exam practice: format guide + timed mock test with four sections */
 var EXAM_INFO={
+tr:{n:"TYS (Türkçe Yeterlik Sınavı)",parts:["Okuma — унших","Dinleme — сонсох","Yazma — бичих (захидал, эссэ)","Konuşma — ярих"],tips:["Турк хэлэнд эгшиг зохицох ёс бий (evler, okullar) — монгол хэлтэй төстэй!","-de, -den, -e нөхцөл нь монгол хэлний өгөх-орших, гарахын тийн ялгалтай адил үүрэгтэй.","Үйл үг өгүүлбэрийн төгсгөлд ордог — монгол хэл шиг.","Yazma-д санаагаа догол мөрөөр хувааж бич."]},
+fr:{n:"DELF / DALF",parts:["Compréhension de l'oral — сонсох","Compréhension des écrits — унших","Production écrite — бичих","Production orale — ярих (танилцуулга, дүрд тоглох)"],tips:["Нэр үгийг le/la-тай нь хамт цээжил.","Холбож дуудах (liaison): les amis — «лэз ами».","Хэсэг бүр 25 оноотой: нийт 50-аас дээш, хэсэг бүрд 5-аас дээш авбал тэнцэнэ.","Production écrite-д мэндчилгээ, төгсгөлийн хэллэгийг (Cher..., Cordialement) зөв бич."]},
+es:{n:"DELE / SIELE",parts:["Comprensión de lectura — унших","Comprensión auditiva — сонсох","Expresión e interacción escritas — бичих","Expresión e interacción orales — ярих"],tips:["Нэр үгийг el/la-тай нь хамт цээжил.","ser ба estar хоёулаа «байх» — ялгааг нь сайн ойлго.","Испани үгийг бичигдсэнээр нь бараг яг уншдаг.","Ярианы хэсгийн өмнө бэлтгэх 15–20 минут өгдөг — тэмдэглэл хийж сур."]},
 en:{n:"IELTS / CEFR",parts:["Listening — 4 хэсэг, 40 асуулт, ~30 минут","Reading — 3 урт текст, 40 асуулт, 60 минут","Writing — 2 даалгавар (график тайлбар, эссэ), 60 минут","Speaking — шалгагчтай 11–14 минутын ярилцлага"],tips:["Сонсохдоо асуултаа урьдчилан уншиж, түлхүүр үгийг тэмдэглэ.","Уншлагад эхлээд текстийг гүйлгэж хараад (skimming) дараа нь хариулт хай.","Эссэд санаа бүрээ жишээгээр баталж, холбоос үг (however, therefore) ашигла.","Ярианд богино хариулт биш, шалтгаан, жишээтэй 2–3 өгүүлбэрээр хариул."]},
 ja:{n:"JLPT (N5–N1)",parts:["文字・語彙 — ханз, үгийн сан","文法・読解 — дүрэм, уншлага","聴解 — сонсох","Бүх асуулт сонголттой, ярих, бичих хэсэг байхгүй"],tips:["N5–N4-т ханзын уншлага (音読み/訓読み) их гардаг — үгээ уншлагатай нь цээжил.","Дүрмийн хэсэгт ★ дараалал тогтоох даалгаврыг сайн дасгалжуул.","Сонсохдоо эхний хэдэн өгүүлбэрт асуултын гол санаа байдаг.","Цаг их дутдаг тул уншлагад асуултаа эхэлж унш."]},
 ko:{n:"TOPIK I / II",parts:["TOPIK I (1–2-р түвшин): 듣기 сонсох, 읽기 унших","TOPIK II (3–6-р түвшин): 듣기, 쓰기 бичих, 읽기","Бичих хэсэгт 200–300 болон 600–700 үсгийн эссэ","Оноогоор түвшин тогтоогддог"],tips:["Нөхцөл (은/는, 이/가, 을/를) болон төгсгөлүүдийг сайн давт.","쓰기-д -습니다 биш -다 хэлбэрээр бичдэг.","Сонсохдоо 4 зургийн аль нь тохирохыг сонгох даалгавар их гардаг.","Уншлагад гарчиг, гол санааг олох асуулт олон."]},
@@ -5549,6 +5573,7 @@ function chatSumWords(msgs){
     if(cjk)return Array.from(t).length>=2&&txt.indexOf(t)>=0;
     t=t.toLowerCase();
     if(L==="de")t=t.replace(/^(der|die|das) /,"");
+    if(L==="fr"||L==="es")t=t.replace(/^(le|la|les|el|los|las) /,"").replace(/^l['’]/,"");
     return t.length>=3&&low.indexOf(" "+t+" ")>=0;
   });
   hits.sort(function(a,b){return (LV[b[0]]||0)-(LV[a[0]]||0)||b[1].length-a[1].length;});

@@ -11,7 +11,7 @@
     list:["📝","Жагсаалтын үгсийг цээжлэх","үг"],
     tlesson:["📘","Багшийн хичээлийг давах","хичээл"]
   };
-  var LANGS={en:"Англи",ja:"Япон",ko:"Солонгос",zh:"Хятад",ru:"Орос",de:"Герман"};
+  var LANGS={en:"Англи",ja:"Япон",ko:"Солонгос",zh:"Хятад",ru:"Орос",de:"Герман",tr:"Турк",fr:"Франц",es:"Испани"};
   var env=null,h=null,db=null,uid=null,busy=false,err="",timer=null;
   var S={scr:"home",code:null,data:null,form:null};
   var MY_KEY="classes",BASE_KEY="clsbase";
