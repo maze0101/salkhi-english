@@ -4,7 +4,10 @@
    Firebase: lgn/{wk}/{tier} (бүлгийн тоолуур), lg/{wk}/{tier}/{g}/{uid} = {name, wxp, ts}.
    Хүүхдийн горимд үл таних хүмүүстэй өрсөлдөхгүй тул харагдахгүй. */
 (function(){
-  var TIERS=[["🌱","Сумын начин"],["🦅","Улсын Начин"],["🪶","Улсын Харцага"],["🐘","Улсын Заан"],["🦁","Улсын Арслан"]];
+  /* бөхийн цол: сумын → аймгийн → улсын наадам (индекс нь Firebase-ийн lg/{wk}/{tier}) */
+  var TIERS=[["🌱","Сумын начин"],["🐘","Сумын заан"],["🦅","Аймгийн начин"],["🐘","Аймгийн заан"],["🦁","Аймгийн арслан"],
+    ["🦅","Улсын начин"],["🪶","Улсын харцага"],["🐘","Улсын заан"],["🐉","Улсын гарьд"],["🦁","Улсын арслан"],["👑","Улсын аварга"]];
+  var LEVELS=[["Сумын наадам",0,1],["Аймгийн наадам",2,4],["Улсын наадам",5,10]];
   var GROUP=20,PROMO=5,DEMO=3,DEMO_MIN=10,KEY="salkhi:league";
   var env=null,h=null,db=null,uid=null,joining=false,pushT=null,lastPush=0,live=null,liveKey="",rows=null,err="";
 
@@ -269,7 +272,7 @@
     var s=st(),t=TIERS[s.tier],root=h("div");
     root.append(h("div",{style:"display:flex;align-items:center;gap:12px"},
       h("span",{style:"font-size:40px","aria-hidden":"true"},t[0]),
-      h("div",{style:"flex:1"},h("div",{style:"font-weight:800;font-size:18px"},t[1]),h("div",{class:"muted small"},"Наадам дуусахад "+leftText()+" үлдлээ"))));
+      h("div",{style:"flex:1"},h("div",{style:"font-weight:800;font-size:18px"},t[1]),h("div",{class:"muted small"},lvName(s.tier)+" · "+(s.tier+1)+"/"+TIERS.length+" цол · дуусахад "+leftText()))));
     var rn=resultNote(s);if(rn)root.append(rn);
     if(s.wk!==env.week()){
       root.append(h("p",{class:"small",style:"margin:10px 0 0"},joining?"Наадамд нэгдэж байна…":"Энэ 7 хоногт XP цуглуулаад наадамд барилдаарай. Эхний "+PROMO+" нь дараагийн цол хүртэнэ."));
@@ -292,6 +295,25 @@
       h("div",{class:"muted small",style:"margin-bottom:6px"},"🏆 Долоо хоногийн наадам"),body(false),
       h("div",{class:"muted small",style:"margin-top:8px;font-weight:600"},n?"👥 Найзуудын лиг: "+n+" ›":"👥 Найзуудаараа хувийн лиг үүсгэх ›"));
   }
+  /* цолны шат: сум → аймаг → улсын наадмаар бүлэглэсэн, одоогийн цол тодорсон */
+  function ladder(){
+    var s=st(),box=h("div",{style:"margin-top:16px"});
+    box.append(h("h3",{style:"margin:0 0 6px"},"🤼 Цолны шат"));
+    LEVELS.forEach(function(L){
+      var here=s.tier>=L[1]&&s.tier<=L[2],done=s.tier>L[2];
+      var row=h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"});
+      for(var i=L[1];i<=L[2];i++){
+        var t=TIERS[i],cur=i===s.tier;
+        row.append(h("div",{"aria-current":cur?"true":null,style:"display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;font-size:14px;"+
+          (cur?"border:2px solid var(--sky);background:color-mix(in srgb,var(--sky) 10%,var(--surface));font-weight:800":"border:1px solid var(--line);background:var(--surface);font-weight:500;opacity:"+(i<s.tier?.8:.45))},
+          h("span",{"aria-hidden":"true"},i<s.tier?"✅":t[0]),t[1]+(cur?" · чи":"")));
+      }
+      box.append(h("div",{class:"note",style:"margin:8px 0 0;"+(here?"border-color:var(--sky)":"")},
+        h("div",{class:"muted small",style:"font-weight:700"},(done?"✅ ":here?"📍 ":"🔒 ")+L[0]),row));
+    });
+    return box;
+  }
+  function lvName(i){var L=LEVELS.filter(function(x){return i>=x[1]&&i<=x[2];})[0];return L?L[0]:"";}
   function view(e){
     env=e;h=e.h;var root=h("div");
     if(P.screen&&pcodes().some(function(x){return x.c===P.screen;})){pdetail(root,P.screen);return root;}
@@ -300,10 +322,8 @@
     if(P.pending&&!P.busy){var pc=P.pending;P.pending=null;if(pcodes().some(function(x){return x.c===pc;})){P.screen=pc;setTimeout(paint,0);}else setTimeout(function(){pjoin(pc);},0);}
     root.append(h("button",{class:"back",onclick:function(){e.close();}},"‹ "+(e.back?e.back():"Профайл")));
     root.append(h("h2",null,"🏆 Долоо хоногийн наадам"));
-    root.append(h("div",{style:"display:flex;justify-content:space-between;margin:4px 0 12px"},TIERS.map(function(t,i){
-      var s=st();return h("div",{style:"text-align:center;opacity:"+(i===s.tier?1:i<s.tier?.75:.35)},h("div",{style:"font-size:"+(i===s.tier?32:24)+"px"},t[0]),h("div",{class:"small",style:"font-weight:"+(i===s.tier?800:500)},t[1]));
-    })));
     root.append(body(true));
+    root.append(ladder());
     root.append(h("p",{class:"muted small",style:"margin-top:14px"},"XP бүх хичээл, тоглоом, давталтаас цуглардаг. Наадам Даваа гарагийн 00:00-д шинээр эхэлнэ. Цол ахих бүрт 🧊 streak хамгаалалт +1 авна."));
     if(err)root.append(h("p",{class:"muted small"},err));
     psection(root);

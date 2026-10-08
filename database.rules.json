@@ -300,7 +300,7 @@
         "$tier": {
           ".read": "auth != null",
           ".write": "auth != null",
-          ".validate": "$wk.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && $tier.matches(/^[0-4]$/) && newData.isNumber() && newData.val() === (data.exists() ? data.val() : 0) + 1"
+          ".validate": "$wk.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && $tier.matches(/^([0-9]|10)$/) && newData.isNumber() && newData.val() === (data.exists() ? data.val() : 0) + 1"
         }
       }
     },
@@ -311,7 +311,7 @@
             ".read": "auth != null",
             "$uid": {
               ".write": "auth != null && auth.uid === $uid",
-              ".validate": "$wk.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && $tier.matches(/^[0-4]$/) && newData.hasChildren(['name','wxp','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('wxp').isNumber() && newData.child('wxp').val() >= 0 && newData.child('wxp').val() <= 50000 && newData.child('ts').val() === now"
+              ".validate": "$wk.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && $tier.matches(/^([0-9]|10)$/) && newData.hasChildren(['name','wxp','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('wxp').isNumber() && newData.child('wxp').val() >= 0 && newData.child('wxp').val() <= 50000 && newData.child('ts').val() === now"
             }
           }
         }
