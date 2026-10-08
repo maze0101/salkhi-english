@@ -32,9 +32,9 @@ function initSalkhiHero(root, opts = {}) {
     cv.width = W * dpr; cv.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Тайлбар дээд зүүн буланд (утасны notch-ийн доор); сарыг тайлбараас баруун тийш шилжүүлнэ
+    // Тайлбар дээд зүүн буланд, дээд товчны мөрийн (цаг агаар, theme…) доор; сарыг тайлбараас баруун тийш шилжүүлнэ
     const ov = root.querySelector('.salkhi-hero__overlay');
-    capY = (ov ? parseFloat(getComputedStyle(ov).paddingTop) || 0 : 0) + 44;
+    capY = (ov ? parseFloat(getComputedStyle(ov).paddingTop) || 0 : 0) + 76;
     ctx.font = `500 14px ${FONT}`;
     const cw = Math.max(...LINES.map(l => ctx.measureText(l).width));
     moonX = Math.min(W - 30, Math.max(W * 0.56, 24 + cw + 44));
@@ -126,9 +126,9 @@ function initSalkhiHero(root, opts = {}) {
   function drawKite(k) {
     const ax = kid.hx, ay = kid.hy;
     const base = kid.x - Math.min(70, W * 0.12);
-    if (!kite.init) { kite.x = base; kite.y = H * 0.3; kite.init = true; }
+    if (!kite.init) { kite.x = base; kite.y = capY + 50; kite.init = true; }
     const tx = base + Math.sin(t * 0.8) * 10 + g * 40;
-    const ty = H * 0.32 + Math.sin(t * 1.3) * 8 - g * 30;
+    const ty = capY + 52 + Math.sin(t * 1.3) * 8 - g * 30;
     kite.vx += (tx - kite.x) * 0.02; kite.vy += (ty - kite.y) * 0.02;
     kite.vx *= 0.9; kite.vy *= 0.9;
     kite.x += kite.vx; kite.y += kite.vy;
@@ -184,7 +184,7 @@ function initSalkhiHero(root, opts = {}) {
     ctx.fillStyle = sky[0]; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = sky[1]; ctx.fillRect(0, H * 0.5, W, H);
 
-    const mx = moonX, my = H * 0.16;
+    const mx = moonX, my = capY + 2;
     if (day) {
       // Нар (бүрхэг үед үүлэн цаана бүдэг)
       ctx.globalAlpha = overcast ? 0.35 : 1;
