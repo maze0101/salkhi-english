@@ -19,6 +19,7 @@ function initSalkhiHero(root, opts = {}) {
   let stars = [], flows = [];
   let t = 0, g = 0, sweep = -200, auto = 4;
   let ph = 0, ang1 = 0, ang2 = 1;
+  let capY = 34, moonX = 0;
   let running = true, visible = true, raf = 0;
   const kite = { x: 0, y: 0, vx: 0, vy: 0, init: false };
 
@@ -28,6 +29,13 @@ function initSalkhiHero(root, opts = {}) {
     if (!W || !H) return;
     cv.width = W * dpr; cv.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Тайлбар дээд зүүн буланд (утасны notch-ийн доор); сарыг тайлбараас баруун тийш шилжүүлнэ
+    const ov = root.querySelector('.salkhi-hero__overlay');
+    capY = (ov ? parseFloat(getComputedStyle(ov).paddingTop) || 0 : 0) + 34;
+    ctx.font = `500 14px ${FONT}`;
+    const cw = Math.max(...LINES.map(l => ctx.measureText(l).width));
+    moonX = Math.min(W - 30, Math.max(W * 0.56, 24 + cw + 44));
 
     stars = [];
     for (let i = 0; i < 16; i++)
@@ -117,7 +125,7 @@ function initSalkhiHero(root, opts = {}) {
     ctx.fillStyle = '#18303A'; ctx.fillRect(0, H * 0.5, W, H);
 
     // Сар
-    const mx = W * 0.56, my = H * 0.16;
+    const mx = moonX, my = H * 0.16;
     ctx.fillStyle = 'rgba(255,255,255,0.045)'; ctx.beginPath(); ctx.arc(mx, my, 48, 0, 6.28); ctx.fill();
     ctx.fillStyle = '#E9E4D4'; ctx.beginPath(); ctx.arc(mx, my, 18, 0, 6.28); ctx.fill();
     ctx.fillStyle = '#132226'; ctx.beginPath(); ctx.arc(mx + 8, my - 5, 16, 0, 6.28); ctx.fill();
@@ -147,12 +155,12 @@ function initSalkhiHero(root, opts = {}) {
     hill(H * 0.82, 6, 55, 0.8, '#557A7E');
     hill(H * 0.90, 5, 45, 1.1, '#6E9294');
 
-    // Тайлбар: доод толгод дээр
+    // Тайлбар: дээд зүүн буланд
     ctx.font = `500 14px ${FONT}`;
     ctx.fillStyle = '#FFFFFF';
     ctx.textBaseline = 'alphabetic';
     ctx.shadowColor = 'rgba(10,30,32,0.55)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 1;
-    LINES.forEach((line, i) => ctx.fillText(line, 24, H - 20 - (LINES.length - 1 - i) * 20));
+    LINES.forEach((line, i) => ctx.fillText(line, 24, capY + i * 20));
     ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
     raf = requestAnimationFrame(frame);
