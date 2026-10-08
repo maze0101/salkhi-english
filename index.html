@@ -286,6 +286,8 @@ p+p{margin-top:10px}
 .wxbtn span:last-child{overflow:hidden;text-overflow:ellipsis}
 .wxbtn .ic{font-size:15px;line-height:1}
 .wxbtn[hidden]{display:none}
+.tools .wxbtn{height:36px;padding:0 11px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#F4F8F7;max-width:46vw}
+@media (max-width:440px){.tools .wxbtn span:last-child{display:none}}
 .gameview.mnview,.gameview.mnview iframe{background:var(--bg)}
 .gameview.mnview .bar{background:var(--surface);border-color:var(--line);color:var(--ink)}
 .gameview.mnview .bar button{background:var(--bg);border-color:var(--line);color:var(--ink)}
@@ -2217,7 +2219,7 @@ function viewWords(){
   root.append(h("div",{class:"segrow"},h("div",{class:"seg",role:"group","aria-label":"Горим"},
     h("button",{"aria-pressed":String(v.mode==="card"),onclick:function(){v.mode="card";v.flipped=false;render();}},"Карт"),
     h("button",{"aria-pressed":String(v.mode==="quiz"),onclick:function(){v.mode="quiz";v.quiz=null;render();}},"Тест"),
-    h("button",{"aria-pressed":String(v.mode==="list"),onclick:function(){v.mode="list";render();}},"Жагсаалт")),wxChip()));
+    h("button",{"aria-pressed":String(v.mode==="list"),onclick:function(){v.mode="list";render();}},"Жагсаалт"))));
 
   root.append(catChips());
   var wnote=state.mode==="kid"?null:lvNote(effLevel(),wordLvFor(effLevel()));if(wnote)root.append(wnote);
@@ -6482,6 +6484,8 @@ function wxRender(d,i){
   }
   b.setAttribute("aria-label",b.title);
   b.hidden=false;b.style.opacity="";
+  /* hero анимаци бодит цаг агаарыг дагана (өдөр/шөнө, үүл, бороо/цас, салхины хүч) */
+  if(window.salkhiHero&&window.salkhiHero.setWeather)window.salkhiHero.setWeather(d&&Date.now()-d.at<6*3600000?d:null);
 }
 /* 🌤️ Өнөөдрийн амьдралын үгс: тухайн хотын цаг агаараас (хүйтэн, цас, бороо, салхи…) хамаарч толь бичгээс 5 үг сонгоно.
    Үгийг монгол утгаар нь (бүх хэлэнд нэг дор) таньдаг тул шинэ өгөгдөл шаардлагагүй. Өдөрт нэг удаа солигдоно. */
@@ -6542,7 +6546,11 @@ function wxLoad(force){
 }
 /* Нэг л товч үүсгээд viewWords бүрт дахин ашиглана (render-ээс өмнө ч дуудагдаж болно) */
 function wxChip(){
-  if(!wxChip.el)wxChip.el=h("button",{class:"wxbtn",type:"button",hidden:true,onclick:wxClick});
+  if(!wxChip.el){
+    wxChip.el=h("button",{class:"wxbtn",type:"button",hidden:true,onclick:wxClick});
+    /* hero-ийн баруун дээд буланд, theme товчны өмнө */
+    var tl=document.querySelector(".salkhi-hero .tools");if(tl)tl.prepend(wxChip.el);
+  }
   return wxChip.el;
 }
 function wxClick(){

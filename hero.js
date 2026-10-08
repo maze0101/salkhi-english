@@ -20,6 +20,7 @@ function initSalkhiHero(root, opts = {}) {
   let t = 0, g = 0, sweep = -200, auto = 4;
   let ph = 0, ang1 = 0, ang2 = 1;
   let capY = 34, moonX = 0;
+  let wx = null, flash = 0, clouds = [], drops = [];
   let running = true, visible = true, raf = 0;
   const kite = { x: 0, y: 0, vx: 0, vy: 0, init: false };
   const kid = { mid: 0, amp: 0, x: 0, hx: 0, hy: 0, w: 0 };
@@ -33,7 +34,7 @@ function initSalkhiHero(root, opts = {}) {
 
     // Тайлбар дээд зүүн буланд (утасны notch-ийн доор); сарыг тайлбараас баруун тийш шилжүүлнэ
     const ov = root.querySelector('.salkhi-hero__overlay');
-    capY = (ov ? parseFloat(getComputedStyle(ov).paddingTop) || 0 : 0) + 34;
+    capY = (ov ? parseFloat(getComputedStyle(ov).paddingTop) || 0 : 0) + 44;
     ctx.font = `500 14px ${FONT}`;
     const cw = Math.max(...LINES.map(l => ctx.measureText(l).width));
     moonX = Math.min(W - 30, Math.max(W * 0.56, 24 + cw + 44));
@@ -45,6 +46,13 @@ function initSalkhiHero(root, opts = {}) {
     flows = [];
     for (let i = 0; i < 22; i++)
       flows.push({ x: Math.random() * W, y: H * 0.1 + Math.random() * H * 0.6, l: 30 + Math.random() * 70, s: 0.5 + Math.random() * 1.2, a: 0.07 + Math.random() * 0.15 });
+
+    clouds = [];
+    for (let i = 0; i < 4; i++)
+      clouds.push({ x: Math.random() * W, y: H * (0.1 + i * 0.07), r: 0.7 + Math.random() * 0.6, s: 0.6 + Math.random() * 0.8 });
+    drops = [];
+    for (let i = 0; i < 90; i++)
+      drops.push({ x: Math.random() * W, y: Math.random() * H, s: 0.7 + Math.random() * 0.6, p: Math.random() * 6 });
 
     // Хүүхэд логоны баруун талаас салхин тээрэм хүртэлх зайд алхана
     const x0 = 24 + Math.min(300, W * 0.62) + 18, x1 = W * 0.74;
@@ -157,36 +165,66 @@ function initSalkhiHero(root, opts = {}) {
     const dt = reduceMotion ? 0.004 : 0.016;
     t += dt;
 
-    auto -= dt;
+    // Бодит цаг агаар (setWeather): салхи хүчтэй бол урсгал, сэнс хурдан, шуурга ойр ойрхон
+    const wf = wx ? Math.max(0.4, Math.min(2.5, wx.w / 5)) : 1;
+    const day = !!(wx && wx.day), cl = wx ? wx.c : 0;
+    const overcast = cl >= 3, cloudN = cl === 0 ? 0 : cl <= 2 ? 2 : 4;
+
+    auto -= dt * wf;
     if (auto <= 0) { gust(); auto = 5 + Math.random() * 3; }
     g *= 0.985;
     const k = 0.25 + g * 0.75;
-    ph += dt * (1 + g * 3);
-    ang1 += dt * (1.2 + g * 6);
-    ang2 += dt * (1.5 + g * 6);
+    ph += dt * (1 + g * 3) * (0.6 + wf * 0.4);
+    ang1 += dt * (1.2 * wf + g * 6);
+    ang2 += dt * (1.5 * wf + g * 6);
     if (sweep > -100) { sweep += 6 + g * 4; if (sweep > W + 100) sweep = -200; }
 
-    // Тэнгэр
-    ctx.fillStyle = '#132226'; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#18303A'; ctx.fillRect(0, H * 0.5, W, H);
+    // Тэнгэр: өдөр/шөнө, бүрхэг үед бүдэг
+    const sky = day ? (overcast ? ['#6F8794', '#8FA5B0'] : ['#4F93C4', '#86BEDD']) : (overcast ? ['#1A2629', '#22333A'] : ['#132226', '#18303A']);
+    ctx.fillStyle = sky[0]; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = sky[1]; ctx.fillRect(0, H * 0.5, W, H);
 
-    // Сар
     const mx = moonX, my = H * 0.16;
-    ctx.fillStyle = 'rgba(255,255,255,0.045)'; ctx.beginPath(); ctx.arc(mx, my, 48, 0, 6.28); ctx.fill();
-    ctx.fillStyle = '#E9E4D4'; ctx.beginPath(); ctx.arc(mx, my, 18, 0, 6.28); ctx.fill();
-    ctx.fillStyle = '#132226'; ctx.beginPath(); ctx.arc(mx + 8, my - 5, 16, 0, 6.28); ctx.fill();
-
-    // Од
-    for (const s of stars) {
-      s.x += 0.1 + g * 0.8; if (s.x > W + 3) s.x = -3;
-      ctx.fillStyle = `rgba(210,225,225,${0.3 + 0.35 * Math.sin(t * 2 + s.p)})`;
-      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.28); ctx.fill();
+    if (day) {
+      // Нар (бүрхэг үед үүлэн цаана бүдэг)
+      ctx.globalAlpha = overcast ? 0.35 : 1;
+      ctx.fillStyle = 'rgba(255,236,170,0.25)'; ctx.beginPath(); ctx.arc(mx, my, 34 + Math.sin(t * 1.5) * 2, 0, 6.28); ctx.fill();
+      ctx.fillStyle = '#FFD86B'; ctx.beginPath(); ctx.arc(mx, my, 18, 0, 6.28); ctx.fill();
+      ctx.globalAlpha = 1;
+    } else {
+      // Сар
+      ctx.globalAlpha = overcast ? 0.4 : 1;
+      ctx.fillStyle = 'rgba(255,255,255,0.045)'; ctx.beginPath(); ctx.arc(mx, my, 48, 0, 6.28); ctx.fill();
+      ctx.fillStyle = '#E9E4D4'; ctx.beginPath(); ctx.arc(mx, my, 18, 0, 6.28); ctx.fill();
+      ctx.fillStyle = sky[0]; ctx.beginPath(); ctx.arc(mx + 8, my - 5, 16, 0, 6.28); ctx.fill();
+      ctx.globalAlpha = 1;
+      // Од (бүрхэг үед харагдахгүй)
+      if (!overcast) for (const s of stars) {
+        s.x += 0.1 * wf + g * 0.8; if (s.x > W + 3) s.x = -3;
+        ctx.fillStyle = `rgba(210,225,225,${0.3 + 0.35 * Math.sin(t * 2 + s.p)})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.28); ctx.fill();
+      }
     }
+
+    // Үүл
+    for (let i = 0; i < cloudN; i++) {
+      const c = clouds[i];
+      c.x += (0.15 + g * 0.6) * wf * c.s; if (c.x - 60 * c.r > W) c.x = -60 * c.r;
+      ctx.fillStyle = day ? `rgba(255,255,255,${overcast ? 0.75 : 0.85})` : `rgba(150,170,175,${overcast ? 0.35 : 0.25})`;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 14 * c.r, 0, 6.28); ctx.arc(c.x + 16 * c.r, c.y - 8 * c.r, 17 * c.r, 0, 6.28);
+      ctx.arc(c.x + 34 * c.r, c.y, 13 * c.r, 0, 6.28); ctx.rect(c.x, c.y, 34 * c.r, 13 * c.r);
+      ctx.fill();
+    }
+
+    // Аянга: хааяа гялсхийнэ
+    if (cl >= 95 && Math.random() < 0.004) flash = 1;
+    if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash * 0.5})`; ctx.fillRect(0, 0, W, H); flash -= 0.08; }
 
     // Салхины урсгал
     ctx.lineCap = 'round';
     for (const f of flows) {
-      f.x += f.s * (1 + g * 4);
+      f.x += f.s * (1 + g * 4) * wf;
       if (f.x - f.l > W) { f.x = -10; f.y = H * 0.1 + Math.random() * H * 0.6; }
       const yy = f.y + Math.sin(f.x / 60 + t) * 5;
       ctx.strokeStyle = `rgba(150,215,205,${f.a * (1 + g)})`; ctx.lineWidth = 1.3;
@@ -200,6 +238,30 @@ function initSalkhiHero(root, opts = {}) {
     drawKid(dt);
     drawKite(k);
     hill(H * 0.90, 5, 45, 1.1, '#6E9294');
+
+    // Бороо / цас: салхины чиглэлд хазайж унана
+    const kind = !wx ? 0 : (cl >= 71 && cl <= 77) || cl === 85 || cl === 86 ? 2 : (cl >= 51 && cl <= 67) || (cl >= 80 && cl <= 82) || cl >= 95 ? 1 : 0;
+    if (kind) {
+      const n = cl === 51 || cl === 71 || cl === 80 || cl === 85 ? 40 : drops.length;
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = day ? 'rgba(235,245,255,0.7)' : 'rgba(180,205,215,0.55)';
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      for (let i = 0; i < n; i++) {
+        const p = drops[i];
+        if (kind === 1) {
+          p.y += 7 * p.s; p.x += (1 + g * 3) * wf;
+          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - (1 + g * 3) * wf * 1.5, p.y - 9 * p.s); ctx.stroke();
+        } else {
+          p.y += 1.1 * p.s; p.x += (0.4 + g * 2) * wf + Math.sin(t * 2 + p.p) * 0.4;
+          ctx.beginPath(); ctx.arc(p.x, p.y, 1.2 + p.s, 0, 6.28); ctx.fill();
+        }
+        if (p.y > H) { p.y = -10; p.x = Math.random() * W; }
+        if (p.x > W + 10) p.x = -10;
+      }
+    }
+
+    // Манан
+    if (cl >= 45 && cl <= 48) { ctx.fillStyle = day ? 'rgba(230,235,238,0.35)' : 'rgba(120,135,140,0.3)'; ctx.fillRect(0, H * 0.45, W, H); }
 
     // Тайлбар: дээд зүүн буланд
     ctx.font = `500 14px ${FONT}`;
@@ -233,6 +295,8 @@ function initSalkhiHero(root, opts = {}) {
 
   return {
     gust,
+    // d: {t, c (WMO weather_code), day, w (м/с)} эсвэл null
+    setWeather(d) { wx = d && typeof d.c === 'number' ? d : null; },
     destroy() {
       running = false;
       cancelAnimationFrame(raf);
