@@ -1,16 +1,10 @@
 /* Салхи: нүүрний hero анимаци (canvas). index.html дотор window.salkhiHero = initSalkhiHero(...) гэж эхэлнэ. */
 /**
  * Салхи hero animation
- * Ашиглах: initSalkhiHero(document.getElementById('salkhiHero'), { title, lines })
- * Буцаах утга: { gust(), destroy() }
+ * Ашиглах: initSalkhiHero(document.getElementById('salkhiHero'))
+ * Буцаах утга: { gust(), setWeather(d), destroy() }
  */
-function initSalkhiHero(root, opts = {}) {
-  const LINES = opts.lines || [
-    'Англи, япон, солонгос, хятад,',
-    'орос, герман хэлний үг, дүрэм, яриа'
-  ];
-  const FONT = opts.font || '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif';
-
+function initSalkhiHero(root) {
   const cv = root.querySelector('canvas');
   const ctx = cv.getContext('2d');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -32,12 +26,10 @@ function initSalkhiHero(root, opts = {}) {
     cv.width = W * dpr; cv.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // Тайлбар дээд зүүн буланд, дээд товчны мөрийн (цаг агаар, theme…) доор; сарыг тайлбараас баруун тийш шилжүүлнэ
+    // Нар/сар зүүн дээд буланд, дээд товчны мөрийн (цаг агаар, theme…) доор
     const ov = root.querySelector('.salkhi-hero__overlay');
     capY = (ov ? parseFloat(getComputedStyle(ov).paddingTop) || 0 : 0) + 76;
-    ctx.font = `500 14px ${FONT}`;
-    const cw = Math.max(...LINES.map(l => ctx.measureText(l).width));
-    moonX = Math.min(W - 30, Math.max(W * 0.56, 24 + cw + 44));
+    moonX = Math.max(56, W * 0.12);
 
     stars = [];
     for (let i = 0; i < 16; i++)
@@ -262,14 +254,6 @@ function initSalkhiHero(root, opts = {}) {
 
     // Манан
     if (cl >= 45 && cl <= 48) { ctx.fillStyle = day ? 'rgba(230,235,238,0.35)' : 'rgba(120,135,140,0.3)'; ctx.fillRect(0, H * 0.45, W, H); }
-
-    // Тайлбар: дээд зүүн буланд
-    ctx.font = `500 14px ${FONT}`;
-    ctx.fillStyle = '#FFFFFF';
-    ctx.textBaseline = 'alphabetic';
-    ctx.shadowColor = 'rgba(10,30,32,0.55)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 1;
-    LINES.forEach((line, i) => ctx.fillText(line, 24, capY + i * 20));
-    ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
     raf = requestAnimationFrame(frame);
   }
