@@ -16,7 +16,8 @@
   function st(){var s=ls(KEY,null);return s&&typeof s==="object"?s:{tier:0};}
   function save(s){lset(KEY,s);}
   function TS(){return firebase.database.ServerValue.TIMESTAMP;}
-  function paint(){if(env)env.render();}
+  /* наадмын хэсэг харагдаж байхад л дахин зурна (далд сонсогч бусад дэлгэцийг, бичиж буй талбарыг үймүүлэхгүй) */
+  function paint(){if(env&&(!env.visible||env.visible()))env.render();}
   function on(){return !!(env&&window.SALKHI_FB&&window.SalkhiFB&&!env.kid());}
   function connect(){
     if(db&&uid)return Promise.resolve();
@@ -58,7 +59,7 @@
       var n=r.snapshot.val()||1,g=Math.floor((n-1)/GROUP);
       var ns=st();ns.wk=wk;ns.g=g;save(ns);
       return db.ref(path(ns)+"/"+uid).set({name:name(),wxp:env.wxp(),ts:TS()});
-    }).then(function(){joining=false;lastPush=Date.now();ppush();paint();},function(e){joining=false;err=String(e&&e.message||e);});
+    }).then(function(){joining=false;lastPush=Date.now();ppush();attach();paint();},function(e){joining=false;err=String(e&&e.message||e);});
   }
   function push(){
     var s=st();if(s.wk!==env.week()){join();return;}
@@ -76,11 +77,44 @@
       live.on("value",function(snap){
         var all=snap.val()||{};
         rows=Object.keys(all).map(function(u){return {u:u,name:all[u].name||"?",x:+all[u].wxp||0,me:u===uid};}).sort(function(a,b){return b.x-a.x||(a.me?-1:1);});
+        watch("pub",rows,"Наадам");
         paint();
       },function(){});
     }).catch(function(){});
   }
   function detach(){if(live){try{live.off();}catch(e){}live=null;liveKey="";}}
+  /* ---------- гүйцэж түрүүлсэн мэдэгдэл ----------
+     Жагсаалт өөрчлөгдөх бүрт миний дээр шинээр гарсан хүнийг олно (өмнө нь бүлэгт байсан, надаас доор байсан).
+     Апп харагдаж байвал toast, далд байвал системийн мэдэгдэл (lgEnv.notify). Нэг бүлэгт 20 минутад нэг удаа. */
+  var seen={},lastAlert={};
+  function watch(key,list,label){
+    if(!on())return;
+    var i=list.findIndex(function(r){return r.me;});if(i<0)return;
+    var above={},all={};list.forEach(function(r,k){all[r.u]=1;if(k<i)above[r.u]=r;});
+    var prev=seen[key];seen[key]={above:above,all:all,wk:env.week()};
+    if(!prev||prev.wk!==env.week()||!env.notify)return;
+    var passer=Object.keys(above).filter(function(u){return !prev.above[u]&&prev.all[u];})[0];
+    var passed=Object.keys(prev.above).filter(function(u){return !above[u]&&all[u];})[0];
+    if(passer&&list[i].x>0&&Date.now()-(lastAlert[key]||0)>20*60000){
+      lastAlert[key]=Date.now();
+      env.notify("🤼 "+above[passer].name+" чамайг гүйцэж түрүүллээ! "+label+" · одоо "+(i+1)+"-р байр. XP цуглуулаад байраа буцааж ав 💪",true);
+    }else if(passed){
+      var r=list.filter(function(x){return x.u===passed;})[0];
+      env.notify("🎉 Гүйцэж түрүүллээ! "+(r?r.name+" одоо чамаас хойно. ":"")+label+" · "+(i+1)+"-р байр",false);
+    }
+  }
+  /* өдрийн сануулгад: наадмын байр, дуусахад үлдсэн хугацаа */
+  function nudge(){
+    if(!on())return null;
+    var s=st(),list=rows&&s.wk===env.week()?rows:null,label="Наадамд";
+    if(!list){var c=pcodes()[0],d=c&&P.data[c.c];if(d&&d.mem&&d.x){list=prows(d,env.week());label="«"+c.n+"» лигт";}}
+    if(!list||list.length<2)return null;
+    var i=list.findIndex(function(r){return r.me;});if(i<0)return null;
+    var d=new Date(),last=d.getDay()===0;
+    if(last)return "🤼 Наадам дуусахад "+leftText()+" үлдлээ — "+label+" "+(i+1)+"-р байрт!"+(label==="Наадамд"&&i>=PROMO&&s.tier<TIERS.length-1?" Эхний "+PROMO+"-д орвол "+TIERS[s.tier+1][1]+" цол!":"");
+    if(i===0)return "👑 "+label+" тэргүүлж байна — байраа хамгаал!";
+    return "🤼 "+label+" "+(i+1)+"-р байрт. "+"Дээрх "+list[i-1].name+" хүртэл "+(list[i-1].x-list[i].x+1)+" XP дутуу.";
+  }
 
   /* ---------- 👥 найзуудын хувийн лиг ----------
      Урилгын кодоор нэгддэг, долоо хоног бүр зөвхөн гишүүдийн дунд XP-ээр өрсөлдөнө, долоо хоногийн ялагч 👑.
@@ -149,12 +183,11 @@
         /* эзэн хассан бол жагсаалтаас гаргана */
         if(d.mem&&!d.mem[uid]&&d.meta&&!d.meta.gone){pdetach(c);psave(pcodes().filter(function(y){return y.c!==c;}));if(P.screen===c)P.screen=null;env.toast("Та «"+pname(c)+"» лигээс хасагдсан байна");}
         paint();},function(){});
-      x.on("value",function(s){d.x=s.val()||{};paint();},function(){});
+      x.on("value",function(s){d.x=s.val()||{};if(d.mem)watch("p:"+c,prows(d,env.week()),"«"+pname(c)+"» лиг");paint();},function(){});
       P.refs[c]=[m,x];
     }).catch(function(){delete P.refs[c];});
   }
   function pdetach(c){(P.refs[c]||[]).forEach(function(r){try{r.off();}catch(e){}});delete P.refs[c];}
-  function pdetachAll(){Object.keys(P.refs).forEach(pdetach);}
   /* энэ 7 хоногийн жагсаалт: одоогийн гишүүд (XP-гүй бол 0) */
   function prows(d,wk){
     var mem=d.mem||{},cur=(d.x||{})[wk]||{};
@@ -199,7 +232,7 @@
         h("b",{style:"width:26px;text-align:center"},i===0&&r.x>0?"👑":i<3&&r.x>0?["🥇","🥈","🥉"][i]:String(i+1)),
         h("span",{style:"flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:"+(r.me?"700":"500")},r.name+(r.me?" (чи)":"")+(crowns[r.u]?" · 🏅"+crowns[r.u]:"")),
         h("b",null,r.x+" XP"),
-        owner&&!r.me?h("button",{class:"btn ghost",style:"flex:none;padding:2px 8px","aria-label":r.name+"-г лигээс хасах",onclick:function(){if(confirm(r.name+"-г лигээс хасах уу?"))pkick(c,r.u);}},"✕"):null));
+        owner&&!r.me?h("button",{class:"btn ghost",style:"flex:none;padding:2px 8px","aria-label":"Лигээс хасах: "+r.name,onclick:function(){if(confirm("Лигээс хасах уу: "+r.name+"?"))pkick(c,r.u);}},"✕"):null));
     });
     root.append(box);
     if(wins.length){
@@ -330,9 +363,10 @@
     return root;
   }
   window.League={
-    init:function(e){env=e;h=e.h;if(!on())return;setTimeout(function(){rollover().then(function(){if(env.wxp()>0)push();else ppush();});},5000);},
+    init:function(e){env=e;h=e.h;if(!on())return;setTimeout(function(){rollover().then(function(){if(env.wxp()>0)push();else ppush();attach();pcodes().forEach(function(x){pattach(x.c);});});},5000);},
     touch:function(){if(on())push();},
-    card:card,view:view,detach:function(){detach();pdetachAll();},
+    /* сонсогчид далд үлдэнэ (гүйцэж түрүүлсэн мэдэгдэлд хэрэгтэй, бүлэг бүр 50-аас бага мөр) */
+    card:card,view:view,detach:function(){},nudge:nudge,
     /* #plg=КОД холбоосоор орж ирвэл наадмын хуудсыг нээж, тэр лигт нэгдэнэ */
     fromHash:function(e){
       var m=/[#&]plg=([A-Za-z0-9]{6})/.exec(location.hash||"");if(!m)return false;

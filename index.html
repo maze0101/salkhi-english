@@ -2027,6 +2027,7 @@ function openDaily(){
   renderTabs();render();window.scrollTo(0,0);toast("📚 Өнөөдрийн давтлага");
 }
 function notifBody(){
+  var lg=window.League&&League.nudge&&League.nudge();if(lg)return lg+" Өнөөдөр XP цуглуулаарай!";
   var s=streak(),w=dailyWord(),dn=state.mode==="kid"?0:dueWords().length;
   if(dn)return (todayXP()===0&&s>0?"🔥 "+s+" өдрийн дараалалаа алдахгүй байя! ":"")+"🔁 "+dn+" үг мартагдахаас өмнө давтах хугацаа боллоо (~"+revMin(Math.min(dn,20))+" мин). Дарж давтаарай!";
   if(w)return (todayXP()===0&&s>0?"🔥 "+s+" өдрийн дараалалаа алдахгүй байя! ":"")+"📚 Өнөөдрийн үг: "+w[1]+(w[7]?" ("+w[7]+")":"")+" — "+w[2]+". Дарж давтаарай!";
@@ -2043,6 +2044,8 @@ function syncNotifMeta(){
   try{if("caches" in window)caches.open("salkhi-meta").then(function(c){return c.put("notif",new Response(JSON.stringify(state.notif)));}).catch(function(){});}catch(e){}
 }
 function saveNotif(){sset("notif",state.notif);syncNotifMeta();}
+/* апп далд болоход сануулгын бичвэрийг (наадмын байр г.м.) service worker-т хадгална — арын сануулга түүнийг харуулна */
+document.addEventListener("visibilitychange",function(){if(document.hidden&&state.notif.on){try{state.notif.msg=notifBody();saveNotif();}catch(e){}}});
 function checkNotif(){
   var n=state.notif;if(!n.on||!notifOK())return;
   var now=new Date(),p=n.t.split(":"),due=new Date();due.setHours(+p[0]||19,+p[1]||0,0,0);
@@ -6139,6 +6142,14 @@ function lgEnv(){
     name:function(){var a=window.SalkhiSync&&SalkhiSync.account();return state.certName||(a&&a.name)||"";},
     freeze:function(){state.freeze=Math.min(2,state.freeze+1);sset("freeze",state.freeze);renderStrip();},
     back:function(){return ui.hub?"Тоглож сурах":"Профайл";},
+    visible:function(){return state.tab==="stats"&&!document.hidden;},
+    /* гүйцэж түрүүлсэн тухай: апп харагдаж байвал toast, далд бол (сануулга зөвшөөрсөн үед) системийн мэдэгдэл */
+    notify:function(t,bg){
+      if(!document.hidden){toast(t,4500);return;}
+      if(!bg||!state.notif.on||!notifOK())return;
+      var opt={body:t,icon:"icon.svg",badge:"icon.svg",tag:"salkhi-league",data:{url:"./"}};
+      try{if(swReg&&swReg.showNotification)swReg.showNotification("Салхи · Наадам",opt);else new Notification("Салхи · Наадам",opt);}catch(e){}
+    },
     close:function(){ui.lg=false;if(window.League)League.detach();render();window.scrollTo(0,0);}};
 }
 function backLbl(){return ui.hub?"Тоглож сурах":"Профайл";}
