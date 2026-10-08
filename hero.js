@@ -22,6 +22,7 @@ function initSalkhiHero(root, opts = {}) {
   let capY = 34, moonX = 0;
   let running = true, visible = true, raf = 0;
   const kite = { x: 0, y: 0, vx: 0, vy: 0, init: false };
+  const kid = { mid: 0, amp: 0, x: 0, hx: 0, hy: 0, w: 0 };
 
   function build() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -45,6 +46,11 @@ function initSalkhiHero(root, opts = {}) {
     for (let i = 0; i < 22; i++)
       flows.push({ x: Math.random() * W, y: H * 0.1 + Math.random() * H * 0.6, l: 30 + Math.random() * 70, s: 0.5 + Math.random() * 1.2, a: 0.07 + Math.random() * 0.15 });
 
+    // Хүүхэд логоны баруун талаас салхин тээрэм хүртэлх зайд алхана
+    const x0 = 24 + Math.min(300, W * 0.62) + 18, x1 = W * 0.74;
+    kid.mid = (x0 + x1) / 2;
+    kid.amp = Math.max(0, Math.min(120, (x1 - x0) / 2));
+
     kite.init = false;
   }
 
@@ -63,17 +69,57 @@ function initSalkhiHero(root, opts = {}) {
     ctx.restore();
   }
 
+  function hillY(x, y, amp, len, sp) {
+    return y + Math.sin(x / len + ph * sp) * amp + Math.sin(x / (len * 0.45) - ph * sp * 0.6) * amp * 0.4;
+  }
+
   function hill(y, amp, len, sp, col) {
     ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, H);
-    for (let x = 0; x <= W; x += 6)
-      ctx.lineTo(x, y + Math.sin(x / len + ph * sp) * amp + Math.sin(x / (len * 0.45) - ph * sp * 0.6) * amp * 0.4);
+    for (let x = 0; x <= W; x += 6) ctx.lineTo(x, hillY(x, y, amp, len, sp));
     ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
   }
 
+  // Цаасан шувууны утас барьсан хүүхэд: зүүн тийш (шувуу руу) харж алхана
+  function drawKid(dt) {
+    kid.w += dt * (5 + g * 3);
+    kid.x = kid.mid + Math.sin(t * 0.22) * kid.amp;
+    const x = kid.x;
+    const fy = hillY(x, H * 0.82, 6, 55, 0.8) + 1;
+    const sw = Math.sin(kid.w), bob = Math.abs(Math.cos(kid.w)) * 1.2;
+    const hip = fy - 13 - bob, sh = fy - 25 - bob, head = fy - 31 - bob;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+    // Хөл (гутал хар)
+    ctx.strokeStyle = '#2B3A55'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(x, hip); ctx.lineTo(x + sw * 5, fy); ctx.moveTo(x, hip); ctx.lineTo(x - sw * 5, fy); ctx.stroke();
+    ctx.fillStyle = '#1B1B1F';
+    ctx.beginPath(); ctx.arc(x + sw * 5 - 1, fy, 2, 0, 6.28); ctx.arc(x - sw * 5 - 1, fy, 2, 0, 6.28); ctx.fill();
+
+    // Сул гар (савлана)
+    ctx.strokeStyle = '#F1C9A0'; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.moveTo(x + 1, sh + 2); ctx.lineTo(x + 3 + sw * 3, sh + 11); ctx.stroke();
+
+    // Дээл
+    ctx.fillStyle = '#2F6FD8';
+    ctx.beginPath(); ctx.moveTo(x - 4, sh); ctx.lineTo(x + 4, sh); ctx.lineTo(x + 6, hip + 3); ctx.lineTo(x - 6, hip + 3); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#FAC775'; ctx.fillRect(x - 5, hip - 3, 10, 2); // бүс
+
+    // Утас барьсан гар: шувуу руу өргөнө
+    kid.hx = x - 8; kid.hy = sh - 8 + Math.sin(t * 1.3) * 1;
+    ctx.strokeStyle = '#F1C9A0'; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.moveTo(x - 2, sh + 1); ctx.lineTo(kid.hx, kid.hy); ctx.stroke();
+
+    // Толгой + үс
+    ctx.fillStyle = '#F1C9A0'; ctx.beginPath(); ctx.arc(x, head, 5, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#23180F'; ctx.beginPath(); ctx.arc(x, head - 1, 5.3, 3.3, 6.2); ctx.fill();
+    ctx.fillStyle = '#23180F'; ctx.beginPath(); ctx.arc(x - 2.4, head + 0.5, 0.8, 0, 6.28); ctx.fill(); // нүд
+  }
+
   function drawKite(k) {
-    const ax = W * 0.52, ay = H * 0.78;
-    if (!kite.init) { kite.x = W * 0.68; kite.y = H * 0.3; kite.init = true; }
-    const tx = W * 0.66 + Math.sin(t * 0.8) * 10 + g * 40;
+    const ax = kid.hx, ay = kid.hy;
+    const base = kid.x - Math.min(70, W * 0.12);
+    if (!kite.init) { kite.x = base; kite.y = H * 0.3; kite.init = true; }
+    const tx = base + Math.sin(t * 0.8) * 10 + g * 40;
     const ty = H * 0.32 + Math.sin(t * 1.3) * 8 - g * 30;
     kite.vx += (tx - kite.x) * 0.02; kite.vy += (ty - kite.y) * 0.02;
     kite.vx *= 0.9; kite.vy *= 0.9;
@@ -149,10 +195,10 @@ function initSalkhiHero(root, opts = {}) {
 
     turbine(W * 0.8, H * 0.8, 118, 1, ang1);
     turbine(W * 0.93, H * 0.8, 96, 0.8, ang2);
-    drawKite(k);
-
     hill(H * 0.74, 7, 70, 0.5, '#3E5E63');
     hill(H * 0.82, 6, 55, 0.8, '#557A7E');
+    drawKid(dt);
+    drawKite(k);
     hill(H * 0.90, 5, 45, 1.1, '#6E9294');
 
     // Тайлбар: дээд зүүн буланд
