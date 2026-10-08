@@ -18,8 +18,8 @@ window.addEventListener("error",function(e){
 </script>
 
 <link rel="manifest" href="manifest.webmanifest?v=2">
-<link rel="icon" href="icon.svg?v=2" type="image/svg+xml">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<link rel="icon" href="салхи.png?v=2" type="image/png">
+<link rel="apple-touch-icon" href="салхи.png?v=2">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#132226">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -413,7 +413,7 @@ p+p{margin-top:10px}
 </style>
 </head>
 <body>
-<div class="splash" id="splash" aria-hidden="true"><img src="icon.svg" alt=""><b>Салхи</b></div>
+<div class="splash" id="splash" aria-hidden="true"><img src="салхи.png" alt=""><b>Салхи</b></div>
 <script>setTimeout(function(){var e=document.getElementById("splash");if(e){e.classList.add("hide");setTimeout(function(){e.remove()},600)}},1100);</script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <pattern id="hex" width="28" height="48.5" patternUnits="userSpaceOnUse">
@@ -426,7 +426,7 @@ p+p{margin-top:10px}
     <div class="salkhi-hero" id="salkhiHero">
       <canvas role="img" aria-label="Салхи — дарж салхи үлээлгэх"></canvas>
       <div class="salkhi-hero__overlay">
-        <div class="brand" aria-hidden="true"><img src="icon.svg" alt="" width="34" height="34"><b>Салхи</b></div>
+        <div class="brand" aria-hidden="true"><img src="салхи.png" alt="" width="34" height="34"><b>Салхи</b></div>
         <div class="tools"><button class="themebtn" id="themebtn" type="button"></button></div>
       </div>
     </div>
@@ -2033,7 +2033,7 @@ function notifBody(){
   return todayXP()===0&&s>0?"🔥 "+s+" өдрийн дараалалаа алдахгүй байя! Өнөөдөр нэг богино дасгал хийгээрэй.":"Өнөөдөр "+LANGN[state.lang]+" хэл сурах цаг боллоо. Хэдхэн минут дасгалцгаая 🌬️";
 }
 function showNotif(body){
-  var opt={body:body,icon:"icon.svg",badge:"icon.svg",tag:"salkhi-daily",data:{url:"./#daily"}};
+  var opt={body:body,icon:"салхи.png",badge:"салхи.png",tag:"salkhi-daily",data:{url:"./#daily"}};
   try{
     if(swReg&&swReg.showNotification)return swReg.showNotification("Салхи",opt);
     var nn=new Notification("Салхи",opt);nn.onclick=function(){window.focus();openDaily();nn.close();};
@@ -6156,7 +6156,7 @@ function lgEnv(){
     notify:function(t,bg){
       if(!document.hidden){toast(t,4500);return;}
       if(!bg||!state.notif.on||!notifOK())return;
-      var opt={body:t,icon:"icon.svg",badge:"icon.svg",tag:"salkhi-league",data:{url:"./"}};
+      var opt={body:t,icon:"салхи.png",badge:"салхи.png",tag:"salkhi-league",data:{url:"./"}};
       try{if(swReg&&swReg.showNotification)swReg.showNotification("Салхи · Наадам",opt);else new Notification("Салхи · Наадам",opt);}catch(e){}
     },
     close:function(){ui.lg=false;if(window.League)League.detach();render();window.scrollTo(0,0);}};
