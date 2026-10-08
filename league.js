@@ -2,7 +2,7 @@
    Даваа гарагаас эхлэх 7 хоног бүр XP цуглуулсан хүмүүс өөрийн цолны 20 хүртэлх хүнтэй бүлэгт (анхны XP-ээр) хуваарилагдана.
    7 хоног дуусахад эхний 5 нь дараагийн цол хүртэж (+1 🧊 streak хамгаалалт), сүүлийн 3 нь (10+ хүнтэй бүлэгт) өмнөх цол руу буурна.
    Firebase: lgn/{wk}/{tier} (бүлгийн тоолуур), lg/{wk}/{tier}/{g}/{uid} = {name, wxp, ts}.
-   Хүүхдийн горимд үл таних хүмүүстэй өрсөлдөхгүй тул харагдахгүй. */
+   Бүх горимд (хүүхдийн горимд ч) харагдана. */
 (function(){
   /* бөхийн цол: сумын → аймгийн → улсын наадам (индекс нь Firebase-ийн lg/{wk}/{tier}) */
   var TIERS=[["🌱","Сумын начин"],["🐘","Сумын заан"],["🦅","Аймгийн начин"],["🐘","Аймгийн заан"],["🦁","Аймгийн арслан"],
@@ -18,7 +18,7 @@
   function TS(){return firebase.database.ServerValue.TIMESTAMP;}
   /* наадмын хэсэг харагдаж байхад л дахин зурна (далд сонсогч бусад дэлгэцийг, бичиж буй талбарыг үймүүлэхгүй) */
   function paint(){if(env&&(!env.visible||env.visible()))env.render();}
-  function on(){return !!(env&&window.SALKHI_FB&&window.SalkhiFB&&!env.kid());}
+  function on(){return !!(env&&window.SALKHI_FB&&window.SalkhiFB);}
   function connect(){
     if(db&&uid)return Promise.resolve();
     return window.SalkhiFB.user().then(function(u){db=firebase.database();uid=u.uid;});
