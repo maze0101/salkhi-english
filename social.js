@@ -138,7 +138,7 @@
       board.append(line);
     });
     if(!friendsData.length)board.append(h("p",{class:"muted small"},"Найз алга. Дээрх кодоор найзаа нэм."));
-    box.append(codeRow,inp,add,h("button",{class:"btn ghost",style:"margin-top:8px;width:100%",onclick:function(){syncProfile();loadFriends();goals.loaded=false;paint();}},"⟳ Шинэчлэх"),board,viewGoals());
+    box.append(codeRow,inp,add,h("button",{class:"btn ghost",style:"margin-top:8px;width:100%",onclick:function(){syncProfile();loadFriends();goals.loaded=false;paint();}},"⟳ Шинэчлэх"),board,viewGoals(),viewMyProfile());
     return box;
   }
 
@@ -698,6 +698,34 @@
       h("h3",null,"🤝 Найзуудтай харилцах"),
       h("p",null,"Найзуудтайгаа уралдах, хамт ярьж дасгалжих, сорилт илгээх боломжтой. Үүнд жижиг сервер (Firebase) хэрэгтэй бөгөөд одоохондоо тохируулаагүй байна."),
       h("div",{class:"note"},"Тохируулах заавар: repo доторх ",h("b",null,"FIREBASE_SETUP.md")," файлыг үзнэ үү."));
+  }
+  /* ⚙️ миний профайл: нэр солих, Найз хэсгээс гарах (профайл + найзуудын жагсаалт устна) */
+  var pf={edit:false};
+  function viewMyProfile(){
+    var box=h("div",{style:"margin-top:22px"});
+    box.append(h("div",{style:"font-weight:700;margin-bottom:6px"},"⚙️ Миний профайл"));
+    if(pf.edit){
+      var inp=h("input",{class:"tin",type:"text",maxlength:"16",autocomplete:"off",value:prof.name||"","aria-label":"Шинэ нэр"});
+      box.append(inp,h("div",{style:"display:flex;gap:8px;margin-top:8px"},
+        h("button",{class:"btn",onclick:function(){pf.edit=false;paint();}},"Болих"),
+        h("button",{class:"btn primary",onclick:function(){
+          var n=inp.value.trim();
+          if(n.length<2){env.toast("Нэр хэт богино");return;}
+          if(/https?:|www\.|\d{5,}/i.test(n)){env.toast("Ийм нэр болохгүй");return;}
+          db.ref("users/"+uid+"/name").set(n).then(function(){prof.name=n;pf.edit=false;env.toast("Нэр солигдлоо ✅");paint();},function(){env.toast("Алдаа гарлаа");});
+        }},"Хадгалах")));
+      return box;
+    }
+    box.append(h("div",{class:"note",style:"display:flex;align-items:center;gap:8px"},
+      h("span",{style:"flex:1"},"Нэр: ",h("b",null,prof.name)),
+      h("button",{class:"btn ghost",style:"padding:6px 12px",onclick:function(){pf.edit=true;paint();}},"✏️ Нэр солих")));
+    box.append(h("button",{class:"btn ghost",style:"width:100%;margin-top:8px;color:var(--danger)",onclick:function(){
+      if(!confirm("Найз хэсгээс гарах уу? Таны нэр, найзуудын жагсаалт устна. Дараа нь шинэ нэрээр дахин эхэлж болно."))return;
+      Promise.all([db.ref("friends/"+uid).remove(),db.ref("users/"+uid).remove()]).then(function(){
+        detach();prof=null;friendsData=[];chatWith=null;sub="friends";screen="name";env.toast("Найз хэсгээс гарлаа");paint();
+      },function(){env.toast("Алдаа гарлаа, дахин оролдоно уу");});
+    }},"🚪 Найз хэсгээс гарах"));
+    return box;
   }
   function viewName(){
     var box=h("div"),inp=h("input",{class:"tin",type:"text",maxlength:"16",autocomplete:"off",placeholder:"Нууц нэр (2–16 тэмдэгт)","aria-label":"Нууц нэр"});
