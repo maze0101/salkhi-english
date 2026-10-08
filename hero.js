@@ -18,6 +18,9 @@ function initSalkhiHero(root) {
   let running = true, visible = true, raf = 0;
   const kite = { x: 0, y: 0, vx: 0, vy: 0, init: false };
   const kid = { mid: 0, amp: 0, x: 0, hx: 0, hy: 0, w: 0 };
+  const logoEl = root.querySelector('.brand img');
+  const logoImg = new Image();
+  let LP = [], LPC = [];
 
   function build() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -46,12 +49,40 @@ function initSalkhiHero(root) {
     for (let i = 0; i < 90; i++)
       drops.push({ x: Math.random() * W, y: Math.random() * H, s: 0.7 + Math.random() * 0.6, p: Math.random() * 6 });
 
+    const lr = buildLogo();
+
     // Хүүхэд логоны баруун талаас салхин тээрэм хүртэлх зайд алхана
-    const x0 = 24 + Math.min(300, W * 0.62) + 18, x1 = W * 0.74;
+    const x0 = (lr ? lr : 24 + Math.min(300, W * 0.62)) + 18, x1 = W * 0.74;
     kid.mid = (x0 + x1) / 2;
     kid.amp = Math.max(0, Math.min(120, (x1 - x0) / 2));
 
     kite.init = false;
+  }
+
+  /* Лого: .brand img-ийн яг байрлалд зургийн пикселээс цэгүүд үүсгэнэ (хуучин цэгэн гарчиг шиг салхинд тарна).
+     HTML зураг байрлал, дэлгэц уншигчид үлдэнэ, харин ил тод болно. Буцаах утга: логоны баруун ирмэг. */
+  function buildLogo() {
+    LP = [];
+    if (!logoEl || !logoImg.complete || !logoImg.naturalWidth) return 0;
+    const r = logoEl.getBoundingClientRect(), c = cv.getBoundingClientRect();
+    const lx = Math.round(r.left - c.left), ly = Math.round(r.top - c.top);
+    const lw = Math.round(r.width), lh = Math.round(r.height);
+    if (!lw || !lh) return 0;
+    const o = document.createElement('canvas'); o.width = lw; o.height = lh;
+    const oc = o.getContext('2d'); oc.drawImage(logoImg, 0, 0, lw, lh);
+    let d; try { d = oc.getImageData(0, 0, lw, lh).data; } catch (e) { return 0; }
+    const step = 2, cols = ['#F4F8F7', '#5AA9F0', '#2A7AD6'];
+    for (let y = 0; y < lh; y += step)
+      for (let x = 0; x < lw; x += step) {
+        const i = (y * lw + x) * 4;
+        if (d[i + 3] < 110) continue;
+        const k = d[i + 2] - d[i] > 60 ? (d[i + 1] > 150 ? 1 : 2) : 0;
+        LP.push({ hx: lx + x, hy: ly + y, x: lx + x, y: ly + y, vx: 0, vy: 0, k });
+      }
+    LP.sort((a, b) => a.k - b.k);
+    LPC = cols;
+    logoEl.style.opacity = '0';
+    return lx + lw;
   }
 
   function gust() { g = 1; sweep = -60; }
@@ -255,6 +286,21 @@ function initSalkhiHero(root) {
     // Манан
     if (cl >= 45 && cl <= 48) { ctx.fillStyle = day ? 'rgba(230,235,238,0.35)' : 'rgba(120,135,140,0.3)'; ctx.fillRect(0, H * 0.45, W, H); }
 
+    // Цэгэн лого: салхины давалгаа (sweep) хүрэхэд тарж, буцаж нийлнэ; бодит салхи хүчтэй бол илүү ширүүн
+    let lk = -1;
+    for (const p of LP) {
+      if (sweep > -100) {
+        const dx = p.hx - sweep;
+        if (dx > -50 && dx < 10) { p.vx += (0.5 + Math.random() * g * 1.8) * wf; p.vy += (Math.random() - 0.6) * g * 1.2 * wf; }
+      }
+      p.vx += (p.hx - p.x) * 0.03 + Math.sin(t * 2 + p.hy * 0.05) * 0.015 * wf;
+      p.vy += (p.hy - p.y) * 0.03 + (kind === 2 ? Math.sin(t * 3 + p.hx * 0.1) * 0.01 : 0);
+      p.vx *= 0.87; p.vy *= 0.87;
+      p.x += p.vx; p.y += p.vy;
+      if (p.k !== lk) { lk = p.k; ctx.fillStyle = LPC[lk]; }
+      ctx.fillRect(p.x, p.y, 1.9, 1.9);
+    }
+
     raf = requestAnimationFrame(frame);
   }
 
@@ -267,6 +313,11 @@ function initSalkhiHero(root) {
   // Хэмжээ өөрчлөгдөхөд дахин бүтээх
   const ro = new ResizeObserver(() => build());
   ro.observe(cv);
+  if (logoEl) {
+    ro.observe(logoEl);
+    logoImg.onload = () => { if (W) build(); };
+    logoImg.src = logoEl.currentSrc || logoEl.src;
+  }
 
   // Харагдахгүй үед зогсоох (батарей хэмнэх)
   const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; start(); });
