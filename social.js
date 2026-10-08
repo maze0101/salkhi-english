@@ -221,7 +221,7 @@
   function viewRoom(){
     var lang=me().lang;
     var box=h("div");
-    if(me().mode==="kid"||me().mode==="senior"){box.append(h("p",{class:"note"},"Нээлттэй өрөө зөвхөн «Том хүн» горимд байна."));return box;}
+    if(me().mode==="senior"){box.append(h("p",{class:"note"},"Нээлттэй өрөө «Том хүн», «Хүүхэд» горимд байна."));return box;}
     var ref=db.ref("rooms/"+lang);
     box.append(h("div",{class:"note",style:"margin-top:0"},"🌐 Нээлттэй өрөө ("+lang.toUpperCase()+"). Хүндэтгэлтэй бай. Утас, хаяг, хувийн мэдээлэл бүү бич. Зохисгүй зурвас дээр дарж мэдэгдэх эсвэл тухайн хүнийг хаана уу."));
     box.append(chatUI(ref,{max:200,showName:true,reportPath:"rooms/"+lang}));
@@ -506,7 +506,7 @@
   }
   function viewXch(){
     var box=h("div"),L=me().lang;
-    if(me().mode==="kid"||me().mode==="senior"){box.append(h("p",{class:"note"},"Хэлний солилцоо зөвхөн «Том хүн» горимд байна."));return box;}
+    if(me().mode==="senior"){box.append(h("p",{class:"note"},"Хэлний солилцоо «Том хүн», «Хүүхэд» горимд байна."));return box;}
     box.append(h("div",{class:"note",style:"margin-top:0"},"🔁 Монгол хэл сурч буй "+XLANG[L]+" хэлтэй хүнтэй чатлаарай: та түүнд монголоор, тэр танд "+XLANG[L].toLowerCase()+" хэлээр тусална. Утас, хаяг, хувийн мэдээлэл бүү бич."));
     if(xch.list===null){loadXch();box.append(h("p",{class:"muted"},"Ачаалж байна..."));return box;}
     box.append(h("div",{style:"display:flex;gap:8px;align-items:center;margin:10px 0"},
@@ -551,7 +551,6 @@
   }
   function viewMentor(){
     var box=h("div"),role=myRole(),L=me().lang,LN=XLANG[L].toLowerCase();
-    if(me().mode==="kid"){box.append(h("p",{class:"note"},"Энэ хэсэг томчуудад зориулагдсан."));return box;}
     box.append(h("div",{class:"note",style:"margin-top:0"},role==="elder"
       ?"👵 Залуу туслагчтай хосолж, "+LN+" хэлээ хамтдаа давтаарай. Харин та тэдэнд монгол зүйр үг, түүх, ахмадын үгээ хуваалцаарай. Утас, хаяг, банкны мэдээлэл хэзээ ч бүү бич."
       :"🧑 Ахмад настанд "+LN+" хэл сурахад нь тусалж, оронд нь монгол зүйр үг, түүх сонсоорой. Тэвчээртэй, хүндэтгэлтэй бай. Хувийн мэдээлэл бүү асуу."));
@@ -578,6 +577,7 @@
   }
   function setScreen(n){if(screen==="botchat"){pending=n;return false;}screen=n;return true;}
   function botList(){return BOTS[me().lang]||BOTS.en;}
+  function botsBox(mt){return me().mode==="kid"?null:h("div",{style:"margin-top:"+mt},h("h3",null,"🤖 AI найзууд"),viewBots());}
   function viewBots(){
     var box=h("div");
     if(me().mode==="kid"){box.append(h("p",{class:"note"},"AI найз зөвхөн том хүний горимд байна."));return box;}
@@ -709,17 +709,17 @@
     if(!root)return;
     detach();
     root.textContent="";
-    if(screen==="setup"){root.append(viewSetup(),h("div",{style:"margin-top:16px"},h("h3",null,"🤖 AI найзууд"),viewBots()));return;}
-    if(screen==="boot"){root.append(h("p",{class:"muted"},"Холбогдож байна..."),h("div",{style:"margin-top:18px"},h("h3",null,"🤖 AI найзууд"),viewBots()));return;}
-    if(screen==="error"){root.append(h("p",{class:"note"},info),h("button",{class:"btn",onclick:function(){db=null;uid=null;init();}},"Дахин оролдох"),h("div",{style:"margin-top:16px"},h("h3",null,"🤖 AI найзууд"),viewBots()));return;}
-    if(screen==="name"){root.append(viewName(),h("div",{style:"margin-top:18px"},h("h3",null,"🤖 AI найзууд"),viewBots()));return;}
+    if(screen==="setup"){root.append(viewSetup(),botsBox("16px"));return;}
+    if(screen==="boot"){root.append(h("p",{class:"muted"},"Холбогдож байна..."),botsBox("18px"));return;}
+    if(screen==="error"){root.append(h("p",{class:"note"},info),h("button",{class:"btn",onclick:function(){db=null;uid=null;init();}},"Дахин оролдох"),botsBox("16px"));return;}
+    if(screen==="name"){root.append(viewName(),botsBox("18px"));return;}
     if(screen==="chat"){root.append(viewChat());return;}
     if(screen==="botchat"&&bc){root.append(viewBotChat());return;}
     if(screen==="quiz"){root.append(viewQuiz());return;}
-    if(!prof){root.append(viewName(),h("div",{style:"margin-top:18px"},h("h3",null,"🤖 AI найзууд"),viewBots()));return;}
+    if(!prof){root.append(viewName(),botsBox("18px"));return;}
     if(screen==="duel"&&duel){if(!duelRef){openDuel(duel.id);return;}root.append(viewDuel());return;}
     var tabs=h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"});
-    [["friends","👥 Найз"],["bots","🤖 AI"],["room","🌐 Өрөө"],["xch","🔁 Солилцоо"],["mentor","👵 Ахмад–залуу"],["inbox","🎯 Сорилт"]].filter(function(t){return !((t[0]==="room"||t[0]==="xch")&&(me().mode==="senior"||me().mode==="kid"))&&!(t[0]==="mentor"&&me().mode==="kid");}).forEach(function(t){
+    [["friends","👥 Найз"],["bots","🤖 AI"],["room","🌐 Өрөө"],["xch","🔁 Солилцоо"],["mentor","👵 Ахмад–залуу"],["inbox","🎯 Сорилт"]].filter(function(t){return !((t[0]==="room"||t[0]==="xch")&&me().mode==="senior")&&!(t[0]==="bots"&&me().mode==="kid");}).forEach(function(t){
       tabs.append(h("button",{class:"chip",style:"flex:1;"+(sub===t[0]?"border-color:var(--accent,#3a7bd5);":""),"aria-current":sub===t[0]?"true":null,onclick:function(){sub=t[0];paint();}},t[1]));
     });
     root.append(tabs);

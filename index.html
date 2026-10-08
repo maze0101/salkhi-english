@@ -1303,7 +1303,7 @@ function tabList(){
   var T=[["words","Үгс"],["alpha","Үсэг"]];
   if(state.mode!=="senior")T.push(["grammar","Дүрэм"]);
   T.push(["listen","Сонсох"],["chat","Ярих"],["play","Сорил"]);
-  if(state.mode!=="kid")T.push(["social","Найз"]);
+  T.push(["social","Найз"]);
   T.push(["stats","Профайл"]);
   return T;
 }
@@ -1331,7 +1331,6 @@ function renderTabs(){
 }
 var kidTab=null;
 function render(){
-  if(state.tab==="social"&&state.mode==="kid")state.tab="words";
   if(state.tab==="grammar"&&state.mode==="senior")state.tab="words";
   if(window.Social&&state.tab!=="social")window.Social.detach();
   if(window.Classes&&!(state.tab==="stats"&&ui.cls))Classes.detach();
@@ -1345,7 +1344,7 @@ function render(){
   else if(state.tab==="listen")elMain.append(viewListen());
   else if(state.tab==="chat")elMain.append(viewChat());
   else if(state.tab==="play")elMain.append(viewPlay());
-  else if(state.tab==="social"&&state.mode!=="kid"&&window.Social)elMain.append(viewSocial());
+  else if(state.tab==="social"&&window.Social)elMain.append(viewSocial());
   else elMain.append(viewStats());
 }
 
@@ -6347,7 +6346,7 @@ function viewHub(){
     h("div",{style:"flex:1"},h("b",null,"🎯 Өдрийн зорилго"),h("div",{class:"muted small"},todayXP()+" / "+state.goal+" XP"+(pct>=1?" — биелсэн ✅":"")),
       h("div",{class:"seg",style:"margin:8px 0 0"},[10,20,50,100].map(function(n){return h("button",{"aria-pressed":String(state.goal===n),onclick:function(){state.goal=n;sset("goal",n);renderStrip();render();}},String(n));})))));
   if(window.League){var lgc=League.card(lgEnv(),function(){ui.lg=true;render();window.scrollTo(0,0);});if(lgc)root.append(lgc);}
-  if(state.mode!=="kid"&&window.Social)root.append(h("button",{class:"lrow",type:"button",style:"margin-top:12px",onclick:function(){ui.hub=false;state.tab="social";renderTabs();render();window.scrollTo(0,0);}},
+  if(window.Social)root.append(h("button",{class:"lrow",type:"button",style:"margin-top:12px",onclick:function(){ui.hub=false;state.tab="social";renderTabs();render();window.scrollTo(0,0);}},
     h("span",{class:"hexb ico"},"⚔️"),h("span",{style:"flex:1"},h("div",{class:"t"},"Найзтайгаа тулалдах"),h("div",{class:"muted small"},"Үгийн тулаан, бүлгийн XP зорилго")),h("span",{"aria-hidden":"true"},"›")));
   if(window.Events){var evh=Events.card(xEnv(),true);if(evh)root.append(evh);}
   if(window.Pact){var pc=Pact.card(pactEnv(),function(){ui.pact=true;render();window.scrollTo(0,0);});if(pc)root.append(pc);}
