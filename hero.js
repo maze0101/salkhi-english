@@ -5,20 +5,18 @@
  * Буцаах утга: { gust(), destroy() }
  */
 function initSalkhiHero(root, opts = {}) {
-  const TITLE = opts.title || 'Салхи';
   const LINES = opts.lines || [
     'Англи, япон, солонгос, хятад,',
     'орос, герман хэлний үг, дүрэм, яриа'
   ];
   const FONT = opts.font || '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif';
-  const TITLE_FONT = opts.titleFont || FONT;
 
   const cv = root.querySelector('canvas');
   const ctx = cv.getContext('2d');
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let W = 0, H = 0, dpr = 1;
-  let P = [], stars = [], flows = [];
+  let stars = [], flows = [];
   let t = 0, g = 0, sweep = -200, auto = 4;
   let ph = 0, ang1 = 0, ang2 = 1;
   let running = true, visible = true, raf = 0;
@@ -30,25 +28,6 @@ function initSalkhiHero(root, opts = {}) {
     if (!W || !H) return;
     cv.width = W * dpr; cv.height = H * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    // Гарчгийг цэгүүд болгож задлах
-    const o = document.createElement('canvas');
-    o.width = W; o.height = H;
-    const oc = o.getContext('2d');
-    let fs = Math.min(84, W * 0.2);
-    oc.font = `700 ${fs}px ${TITLE_FONT}`;
-    const tw = oc.measureText(TITLE).width;
-    if (tw > W - 48) { fs *= (W - 48) / tw; oc.font = `700 ${fs}px ${TITLE_FONT}`; }
-    oc.fillStyle = '#fff';
-    oc.textBaseline = 'middle';
-    oc.fillText(TITLE, 24, H * 0.6);
-    const d = oc.getImageData(0, 0, W, H).data;
-    P = [];
-    const step = 3;
-    for (let y = 0; y < H; y += step)
-      for (let x = 0; x < W; x += step)
-        if (d[(y * W + x) * 4 + 3] > 128)
-          P.push({ hx: x, hy: y, x, y, vx: 0, vy: 0, c: Math.random() });
 
     stars = [];
     for (let i = 0; i < 16; i++)
@@ -168,21 +147,6 @@ function initSalkhiHero(root, opts = {}) {
     hill(H * 0.82, 6, 55, 0.8, '#557A7E');
     hill(H * 0.90, 5, 45, 1.1, '#6E9294');
 
-    // Цэгэн гарчиг
-    for (const p of P) {
-      if (sweep > -100) {
-        const dx = p.hx - sweep;
-        if (dx > -50 && dx < 10) { p.vx += 0.5 + Math.random() * g * 1.8; p.vy += (Math.random() - 0.6) * g * 1.2; }
-      }
-      p.vx += (p.hx - p.x) * 0.03 + Math.sin(t * 2 + p.hy * 0.05) * 0.015;
-      p.vy += (p.hy - p.y) * 0.03;
-      p.vx *= 0.87; p.vy *= 0.87;
-      p.x += p.vx; p.y += p.vy;
-      const sp = Math.min(1, Math.abs(p.vx) + Math.abs(p.vy));
-      ctx.fillStyle = sp > 0.3 ? '#9FE1CB' : (p.c > 0.9 ? '#CFEDE4' : '#F4F8F7');
-      ctx.fillRect(p.x, p.y, 2.2, 2.2);
-    }
-
     // Тайлбар: доод толгод дээр
     ctx.font = `500 14px ${FONT}`;
     ctx.fillStyle = '#FFFFFF';
@@ -210,10 +174,7 @@ function initSalkhiHero(root, opts = {}) {
   const onVis = () => { running = !document.hidden; start(); };
   document.addEventListener('visibilitychange', onVis);
 
-  // Гарчгийн фонт DOM-д ашиглагдаагүй тул тусад нь ачаална
-  const fontsReady = document.fonts
-    ? Promise.all([document.fonts.load(`700 40px ${TITLE_FONT}`, TITLE), document.fonts.ready]).catch(() => {})
-    : Promise.resolve();
+  const fontsReady = document.fonts ? document.fonts.ready.catch(() => {}) : Promise.resolve();
   fontsReady.then(() => { build(); start(); });
 
   return {
