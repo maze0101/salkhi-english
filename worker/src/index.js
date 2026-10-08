@@ -431,8 +431,11 @@ async function handleSMS(req,env,cors){
 }
 
 import {handlePush} from "./push.js";
+import {runWeekly} from "./weekly.js";
 
 export default {
+  /* ням гарагийн орой (wrangler.toml [triggers]) — наадмын байрын push, хэсэгчлэн */
+  async scheduled(ev,env,ctx){ctx.waitUntil(runWeekly(env).then(r=>console.log("weekly push",JSON.stringify(r)),e=>console.error("weekly push failed",e&&e.message)));},
   async fetch(req,env,ctx){
     const pre=new URL(req.url);
     if(pre.pathname==="/tts"&&req.method==="GET")return handleTTS(req,env,ctx,pre);

@@ -91,7 +91,7 @@ export async function handlePush(req,env,cors,json){
     }
     const sr=await F(db+"/pushsub/"+t+auth);
     const sub=sr.ok?await sr.json():null;if(!sub)continue;
-    const st=await sendPush(env,sub,{t:"Салхи · Наадам",b:"🤼 "+name+" чамайг гүйцэж түрүүллээ! "+label+" · одоо "+rank(t)+"-р байр. Байраа буцааж ав 💪",u:"./#lg",tag:"salkhi-league"});
+    let st=0;try{st=await sendPush(env,sub,{t:"Салхи · Наадам",b:"🤼 "+name+" чамайг гүйцэж түрүүллээ! "+label+" · одоо "+rank(t)+"-р байр. Байраа буцааж ав 💪",u:"./#lg",tag:"salkhi-league"});}catch(e){st=0;}
     if(st>=200&&st<300)sent++;
   }
   return json({sent},200,cors);

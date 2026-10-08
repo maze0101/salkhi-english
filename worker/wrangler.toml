@@ -28,3 +28,7 @@ namespace_id = "1002"
 [[kv_namespaces]]
 binding = "TTS_KV"
 id = "27ce0c26168b4742916441db21f042bf"
+
+# Ням гарагийн орой Монголын цагаар 19:00–21:50 (UTC 11–13), 10 минут тутам: наадмын байрын push (src/weekly.js)
+[triggers]
+crons = ["*/10 11-13 * * SUN"]
