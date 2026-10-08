@@ -430,6 +430,8 @@ async function handleSMS(req,env,cors){
   return json({sent:sent,failed:failed,left:limit-n-1},200,cors);
 }
 
+import {handlePush} from "./push.js";
+
 export default {
   async fetch(req,env,ctx){
     const pre=new URL(req.url);
@@ -449,7 +451,8 @@ export default {
     const url=new URL(req.url);
     if(url.pathname==="/"&&req.method==="GET")return new Response("Salkhi AI is running.",{status:200,headers:cors});
     if(url.pathname==="/sms/status"&&req.method==="GET")return json({configured:smsConfigured(env)},200,cors);
-    if(req.method!=="POST"||(url.pathname!=="/chat"&&url.pathname!=="/vision"&&url.pathname!=="/ocr"&&url.pathname!=="/sms"))return json({error:"not_found"},404,cors);
+    if(url.pathname==="/push/key"&&req.method==="GET")return json({key:env.VAPID_PUBLIC||null},200,Object.assign({"cache-control":"max-age=3600"},cors));
+    if(req.method!=="POST"||(url.pathname!=="/chat"&&url.pathname!=="/vision"&&url.pathname!=="/ocr"&&url.pathname!=="/sms"&&url.pathname!=="/push"))return json({error:"not_found"},404,cors);
     if(!okOrigin)return json({error:"forbidden"},403,cors);
 
     if(env.LIMITER){
@@ -460,6 +463,7 @@ export default {
     if(url.pathname==="/vision")return handleVision(req,env,cors);
     if(url.pathname==="/ocr")return handleOCR(req,env,cors);
     if(url.pathname==="/sms")return handleSMS(req,env,cors);
+    if(url.pathname==="/push")return handlePush(req,env,cors,json);
 
     let body;try{body=await req.json();}catch(e){return json({error:"bad_json"},400,cors);}
     const msgs=sanitizeMessages(body&&body.messages);

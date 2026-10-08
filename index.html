@@ -2044,6 +2044,14 @@ function syncNotifMeta(){
   try{if("caches" in window)caches.open("salkhi-meta").then(function(c){return c.put("notif",new Response(JSON.stringify(state.notif)));}).catch(function(){});}catch(e){}
 }
 function saveNotif(){sset("notif",state.notif);syncNotifMeta();}
+/* Web Push бүртгэл (worker /push → апп хаалттай үед ч наадмын мэдэгдэл). Сануулга зөвшөөрсөн үед л. */
+var VAPID_PUB="BB3Dmaz-WIDhZqX5ikM1oXCoDkl62J9kc7jkPwOGDC25ht5tDaXiLGminlNoHR6GJf-Mj1PMQKlWNI66Zu4Tnww";
+function pushSub(){
+  if(!swReg||!swReg.pushManager||!notifOK()||!state.notif.on)return Promise.resolve(null);
+  var raw=atob(VAPID_PUB.replace(/-/g,"+").replace(/_/g,"/")),key=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)key[i]=raw.charCodeAt(i);
+  return swReg.pushManager.getSubscription().then(function(s){return s||swReg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});})
+    .then(function(s){var j=s&&s.toJSON();return j&&j.keys?{ep:j.endpoint,p:j.keys.p256dh,a:j.keys.auth}:null;}).catch(function(){return null;});
+}
 /* апп далд болоход сануулгын бичвэрийг (наадмын байр г.м.) service worker-т хадгална — арын сануулга түүнийг харуулна */
 document.addEventListener("visibilitychange",function(){if(document.hidden&&state.notif.on){try{state.notif.msg=notifBody();saveNotif();}catch(e){}}});
 function checkNotif(){
@@ -2057,7 +2065,7 @@ function enableNotif(cb){
   Notification.requestPermission().then(function(r){
     if(r!=="granted"){state.notif.on=false;saveNotif();toast("Мэдэгдэл зөвшөөрөгдсөнгүй. Хөтчийн тохиргооноос нээнэ үү.");}
     else{
-      state.notif.on=true;saveNotif();showNotif("Сануулга идэвхжлээ ✅ Өдөр бүр "+state.notif.t+" цагт сануулна.");
+      state.notif.on=true;saveNotif();showNotif("Сануулга идэвхжлээ ✅ Өдөр бүр "+state.notif.t+" цагт сануулна.");if(window.League&&League.syncPush)League.syncPush();
       if(swReg&&swReg.periodicSync){try{swReg.periodicSync.register("salkhi-remind",{minInterval:12*3600*1000}).catch(function(){});}catch(e){}}
     }
     cb();
@@ -6143,6 +6151,8 @@ function lgEnv(){
     freeze:function(){state.freeze=Math.min(2,state.freeze+1);sset("freeze",state.freeze);renderStrip();},
     back:function(){return ui.hub?"Тоглож сурах":"Профайл";},
     visible:function(){return state.tab==="stats"&&!document.hidden;},
+    pushSub:pushSub,
+    sendPush:function(b){var u=workerURL("/push");if(u)fetch(u,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(b)}).catch(function(){});},
     /* гүйцэж түрүүлсэн тухай: апп харагдаж байвал toast, далд бол (сануулга зөвшөөрсөн үед) системийн мэдэгдэл */
     notify:function(t,bg){
       if(!document.hidden){toast(t,4500);return;}
@@ -6548,7 +6558,9 @@ if(repairInfo()&&sget("rpshown","")!==dkey(new Date())){sset("rpshown",dkey(new 
    Эдгээр модулийг үргэлж window.X-ээр шалгаж ашигладаг тул ачаалагдтал товч нь харагдахгүй, ачаалагдмагц render() */
 var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js"];
 function lazyBoot(){
-  if(window.League){League.init(lgEnv());if(window.SALKHI_FB&&League.fromHash(lgEnv())){state.tab="stats";ui.lg=true;renderTabs();}}
+  if(window.League){League.init(lgEnv());if(window.SALKHI_FB&&League.fromHash(lgEnv())){state.tab="stats";ui.lg=true;renderTabs();}
+    /* наадмын push мэдэгдэл дээр дарж ирсэн (./#lg) */
+    else if(location.hash==="#lg"){try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}state.tab="stats";ui.lg=true;renderTabs();}}
   if(window.Pact&&window.SALKHI_FB)Pact.init(pactEnv());
   if(window.Fatigue)Fatigue.init({h:h,toast:toast,kid:function(){return state.mode==="kid";},
     enabled:function(){return !ui.play.ex&&!ui.play.kx&&!(window.VoiceCall&&VoiceCall.active());},
@@ -6570,7 +6582,7 @@ setTimeout(loadDeferred,0);
 checkNotif();setInterval(checkNotif,30000);syncNotifMeta();
 if(sget("foreign",0)&&location.hash!=='#daily')openForeign();
 if(location.hash==='#daily'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}openDaily();}
-try{navigator.serviceWorker.addEventListener('message',function(e){if(e.data&&e.data.type==='daily')openDaily();});}catch(e){}
+try{navigator.serviceWorker.addEventListener('message',function(e){if(e.data&&e.data.type==='daily')openDaily();else if(e.data&&e.data.type==='lg'){state.tab='stats';ui.lg=true;renderTabs();render();window.scrollTo(0,0);}else if(e.data&&e.data.type==='push'&&e.data.body)toast(String(e.data.body).slice(0,200),4500);});}catch(e){}
 document.addEventListener("visibilitychange",function(){if(!document.hidden){checkUpdate(false);checkNotif();}});
 if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)){try{
   var hadCtl=!!navigator.serviceWorker.controller;
