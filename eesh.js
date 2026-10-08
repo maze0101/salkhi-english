@@ -521,7 +521,8 @@ q:[["Монгол бичгийг хэрхэн бичдэг вэ?","дээрээ�
       var cls="opt";if(done){if(o.ok)cls+=" ok";else if(i===q.pick)cls+=" bad";}
       root.append(h("button",{class:cls,disabled:done,onclick:function(){
         q.pick=i;var S=stats();if(q.it.p){S.seen=S.seen||{};S.seen[q.it.id]=1;}
-        if(record(S,q)){P.score++;env.addXP(1);}
+        var ok=record(S,q);if(env.combo)env.combo(ok);
+        if(ok){P.score++;env.addXP(1);}
         env.sset(skey(),S);env.render();
       }},optLabel(q,i)));
     });

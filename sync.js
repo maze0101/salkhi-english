@@ -4,7 +4,7 @@
    XP, өдрийн XP, хичээлийн оноо гэх мэт → хоёр талын их нь. «Явц тэглэх» (rst)-ээс өмнөх өгөгдөл буцаж сэргэхгүй. */
 (function(){
   var SDK="https://www.gstatic.com/firebasejs/10.12.2/",P="salkhi:",META=P+"_sync";
-  var SYNC=["level","box","due","xp","daily","lessons","chat","stars","listenOk","goal","custom","saved","tasks","lang","freeze","frozen","frzMark",
+  var SYNC=["level","box","due","srs","xp","daily","lessons","chat","stars","listenOk","goal","custom","saved","tasks","lang","freeze","frozen","frzMark",
     "langxp","miss","stories","speech","exam","mbook","act","games","examLog","writes","wex","kxlog","kxopt","aimem","aiopt","certName","wxCity","kidlv","prsent","camlog"];
   var DEEP={xp:1,daily:1,langxp:1,lessons:1,chat:1,listenOk:1,act:1,games:1,stories:1,exam:1};
   function synced(k){return SYNC.indexOf(k)>=0||/^(amiss|jobbest):(en|ja|ko|zh|ru|de)$/.test(k);}

@@ -12,7 +12,22 @@
   ];
   var env=null,h=null,C=null,tick=null;
 
-  function fresh(){return {stage:"pick",topic:null,msgs:[],state:"idle",live:"",t0:0,fixes:[],ctl:null,rec:null,showMn:false,typed:"",err:"",xp:0,mute:false};}
+  function fresh(){return {stage:"pick",topic:null,msgs:[],state:"idle",live:"",t0:0,fixes:[],ctl:null,rec:null,showMn:false,typed:"",err:"",xp:0,mute:false,hint:null};}
+  /* засварын эхний мөр = зассан өгүүлбэр (rules()-д тэгж хүссэн) */
+  function fixLine(f){return String(f||"").split("\n").map(function(s){return s.trim();}).filter(Boolean)[0]||"";}
+  function words(t){return String(t||"").trim().split(/\s+/).filter(Boolean).length;}
+  /* 💡 «Юу хэлэх вэ?» — AI-н сүүлийн асуултад хариулах 2 жишээ (түвшинд тохирсон, монгол орчуулгатай) */
+  function askHint(last){
+    if(!C||!last||C.hint==="load")return;
+    var cur=C,LN=env.langEn();C.hint="load";paint();
+    var t=[{role:"user",content:"A language learner (level: "+env.level()+") must answer this "+LN+" question from their tutor: \""+last.reply+"\"\n"+
+      "Give exactly 2 short, natural example answers the learner could say, at their level, in "+LN+". Format each on its own line as: <"+LN+" answer> || <Mongolian (Cyrillic) translation>. No numbering, no other text."}];
+    Promise.resolve(env.ai(t,{signal:new AbortController().signal,onText:function(){}})).then(function(res){
+      if(C!==cur)return;
+      var L=String(res&&res.text||"").split("\n").map(function(s){var p=s.replace(/^[\s\-*\d.)]+/,"").split("||");return p.length>=2?[p[0].trim(),p[1].trim()]:null;}).filter(function(x){return x&&x[0];}).slice(0,2);
+      C.hint=L.length?{for:last,list:L}:null;if(!L.length)C.err="Санаа олдсонгүй. Дахин оролдоно уу.";paint();
+    },function(){if(C===cur){C.hint=null;paint();}});
+  }
   function paint(){if(env&&visible())env.render();}
   function visible(){return !!(env&&env.visible()&&C);}
   function fmt(ms){var s=Math.max(0,Math.round(ms/1000));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
@@ -97,7 +112,7 @@
   function stopRec(){if(C&&C.rec){try{C.rec.abort();}catch(e){}C.rec=null;}}
   function send(text){
     text=String(text||"").trim();if(!text||!C)return;
-    stopRec();env.stop();C.err="";
+    stopRec();env.stop();C.err="";C.hint=null;
     C.msgs.push({role:"me",text:text});
     aiTurn();
   }
@@ -108,7 +123,11 @@
     var n=C.msgs.filter(function(m){return m.role==="me";}).length;
     if(silent){C=null;return;}
     if(!n){C=null;paint();return;}
-    C.stage="sum";C.dur=Date.now()-C.t0;C.xp=Math.min(30,n*3);env.reward(C.xp);paint();
+    /* нарийвчлал (засваргүй хариултын хувь) өндөр бол бонус XP */
+    C.acc=Math.round((n-C.fixes.length)/n*100);
+    C.stage="sum";C.dur=Date.now()-C.t0;C.xp=Math.min(30,n*3)+(n>=3&&C.acc>=80?5:0);env.reward(C.xp);
+    if(env.mb)C.fixes.forEach(function(f){env.mb(f.said,f.fix);});
+    paint();
   }
 
   /* ---------- дэлгэц ---------- */
@@ -141,7 +160,21 @@
       wrap.append(box);
     }
     if(myLast&&myLast.fix)wrap.append(h("div",{class:"note",style:"text-align:left;border-color:var(--sky)"},
-      h("div",{class:"muted small"},"✏️ Чи: «"+myLast.text+"»"),h("div",{style:"margin-top:4px;white-space:pre-wrap"},myLast.fix)));
+      h("div",{class:"muted small"},"✏️ Чи: «"+myLast.text+"»"),h("div",{style:"margin-top:4px;white-space:pre-wrap"},myLast.fix),
+      fixLine(myLast.fix)?h("button",{class:"btn ghost",style:"margin-top:6px;padding:4px 10px",onclick:function(){stopRec();say(fixLine(myLast.fix),true);}},"🔊 Зөв хувилбарыг сонсох"):null));
+    else if(myLast&&last&&C.msgs.indexOf(last)>C.msgs.indexOf(myLast))
+      wrap.append(h("div",{class:"fb ok",style:"margin:0 0 8px"},"✅ Алдаагүй өгүүлбэр!"));
+    /* 💡 юу хэлэхээ мэдэхгүй бол жишээ хариулт */
+    if(last&&(C.state==="idle"||C.state==="listen")){
+      if(C.hint&&C.hint.for===last){
+        var hb=h("div",{class:"note",style:"text-align:left"},h("div",{class:"muted small",style:"font-weight:700"},"💡 Ингэж хариулж болно — сонсоод өөрөө хэлээрэй:"));
+        C.hint.list.forEach(function(x){
+          hb.append(h("button",{type:"button",class:"opt",style:"margin-top:6px",onclick:function(){stopRec();env.speak(x[0]);}},
+            h("div",{style:"font-weight:700"},"🔊 "+x[0]),h("div",{class:"muted small"},x[1])));
+        });
+        wrap.append(hb);
+      }else wrap.append(h("button",{class:"btn ghost",style:"margin-bottom:8px",disabled:C.hint==="load",onclick:function(){askHint(last);}},C.hint==="load"?"💭 Санаа бодож байна…":"💡 Юу хэлэх вэ? Санаа өг"));
+    }
     if(C.state==="listen")wrap.append(h("div",{id:"vclive",class:"note",style:"min-height:48px;font-size:17px"},C.live||"…"));
     if(C.err)wrap.append(h("div",{class:"fb bad",style:"text-align:left"},C.err));
     var row=h("div",{class:"row"});
@@ -161,15 +194,24 @@
     root.append(wrap);
   }
   function viewSum(root){
-    var n=C.msgs.filter(function(m){return m.role==="me";}).length;
+    var mine=C.msgs.filter(function(m){return m.role==="me";}),n=mine.length;
+    var nw=mine.reduce(function(a,m){return a+words(m.text);},0),avg=n?Math.round(nw/n*10)/10:0;
     root.append(h("h2",null,"📞 Дуудлага дууслаа"));
     root.append(h("div",{class:"note",style:"text-align:center"},
-      h("div",{style:"font-size:40px"},"🎉"),
+      h("div",{style:"font-size:40px"},C.acc>=80?"🏆":"🎉"),
       h("div",{style:"font-weight:700"},fmt(C.dur)+" ярьсан · "+n+" удаа хариулсан"),
-      h("div",{class:"muted"},"+"+C.xp+" XP")));
+      h("div",{style:"display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 6px"},
+        [[C.acc+"%","Нарийвчлал"],[String(nw),"Нийт үг"],[String(avg),"Үг / хариулт"]].map(function(s){
+          return h("div",null,h("div",{style:"font-weight:800;font-size:22px"},s[0]),h("div",{class:"muted small"},s[1]));
+        })),
+      h("div",{class:"muted"},"+"+C.xp+" XP"+(n>=3&&C.acc>=80?" (нарийвчлалын бонус +5)":"")),
+      avg&&avg<5?h("div",{class:"muted small",style:"margin-top:6px"},"💡 Дараагийн удаа арай урт, 2 өгүүлбэрээр хариулж үзээрэй."):null));
     root.append(h("h3",{style:"margin:16px 0 6px"},C.fixes.length?"✏️ Засварууд ("+C.fixes.length+")":"✅ Алдаа олдсонгүй. Гайхалтай!"));
+    if(C.fixes.length&&env.mb)root.append(h("p",{class:"muted small",style:"margin:0 0 6px"},"Засварууд «Алдааны дэвтэр»-т хадгалагдлаа."));
     C.fixes.forEach(function(f){
-      root.append(h("div",{class:"note",style:"margin:8px 0"},h("div",{class:"muted small"},"Чи: «"+f.said+"»"),h("div",{style:"margin-top:4px;white-space:pre-wrap"},f.fix)));
+      var fl=fixLine(f.fix);
+      root.append(h("div",{class:"note",style:"margin:8px 0"},h("div",{class:"muted small"},"Чи: «"+f.said+"»"),h("div",{style:"margin-top:4px;white-space:pre-wrap"},f.fix),
+        fl?h("button",{class:"btn ghost",style:"margin-top:6px;padding:4px 10px",onclick:function(){env.speak(fl,null,true);}},"🔊 Сонсох"):null));
     });
     root.append(h("div",{class:"row"},
       h("button",{class:"btn",onclick:function(){C=null;env.close();}},"Буцах"),
