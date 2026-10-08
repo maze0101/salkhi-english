@@ -10,7 +10,23 @@
       N.items=j&&Array.isArray(j.items)?j.items:[];if(!N.items.length)N.err="Одоогоор мэдээ татаж чадсангүй.";env.render();
     }).catch(function(){N.items=[];N.err="Интернэт холболтоо шалгаарай.";env.render();});
   }
-  function parse(t){var m=String(t||"").match(/\{[\s\S]*\}/);if(!m)return null;try{var j=JSON.parse(m[0]);return j&&j.text?j:null;}catch(e){return null;}}
+  /* AI-н хариу: мөр бүрийн формат (TITLE:/TEXT:/MN:/WORD:/Q:/A:/B:/C:/ANSWER:) — үнэгүй загвар JSON-ийг ихэвчлэн эвддэг тул.
+     Хуучин кэш эсвэл өөр AI JSON буцаавал түүнийг ч уншина. */
+  function parse(t){
+    t=String(t||"").replace(/```[a-z]*\n?/gi,"");
+    var o={words:[],o:[]},abc={A:0,B:1,C:2};
+    t.split(/\r?\n/).forEach(function(l){
+      var m=/^\s*\**\s*(TITLE|TEXT|MN|WORD|Q|A|B|C|ANSWER)\s*\**\s*[:：]\s*(.*)$/i.exec(l);if(!m)return;
+      var k=m[1].toUpperCase(),v=m[2].trim();if(!v)return;
+      if(k==="TITLE")o.title=v;else if(k==="TEXT")o.text=v;else if(k==="MN")o.mn=v;else if(k==="Q")o.q=v;
+      else if(k==="WORD"){var p=v.split(/\s+[=—–-]\s+|\s*=\s*/);if(p[0]&&p[1])o.words.push([p[0].trim(),p.slice(1).join(" ").trim()]);}
+      else if(k in abc)o.o[abc[k]]=v;
+      else if(k==="ANSWER"){var a=/[ABC]/i.exec(v);if(a)o.a=abc[a[0].toUpperCase()];}
+    });
+    if(o.text){if(!(o.o.length===3&&o.o[0]&&o.o[1]&&o.o[2]&&o.a!=null)){delete o.q;o.o=[];delete o.a;}return o;}
+    var m=t.match(/\{[\s\S]*\}/);if(!m)return null;
+    try{var j=JSON.parse(m[0]);return j&&j.text?j:null;}catch(e){return null;}
+  }
   function open(it){
     var key=env.lang()+"|"+env.lvCode()+"|"+it.link,c=cache();
     N.cur={it:it,key:key,art:c[key]||null};N.pick=null;N.showMn=false;env.render();window.scrollTo(0,0);
@@ -19,15 +35,22 @@
     var LN=env.langEn(),cjk=["ja","ko","zh"].indexOf(env.lang())>=0;
     var q="Rewrite this real news item for a Mongolian learner of "+LN+" at level "+env.level()+".\nHeadline: "+it.t+"\nSummary: "+(it.d||"(none)")+"\n"+
       "Rules: write in "+LN+(env.lang()==="zh"?" (Simplified Chinese)":"")+", 4-6 short, clear sentences. Use ONLY facts from the headline and summary; do not invent names, numbers or details. If it is short, explain the background in general words.\n"+
-      "Reply with ONLY JSON: {\"title\":\"<simple "+LN+" title>\",\"text\":\"<the simplified article"+(cjk?" with romanization in parentheses after each sentence":"")+">\",\"mn\":\"<Mongolian (Cyrillic) translation>\","+
-      "\"words\":[[\"<key "+LN+" word>\",\"<Mongolian>\"],[\"...\",\"...\"],[\"...\",\"...\"],[\"...\",\"...\"],[\"...\",\"...\"]],\"q\":\"<one comprehension question in Mongolian>\",\"o\":[\"<answer A in Mongolian>\",\"<B>\",\"<C>\"],\"a\":<index 0-2 of the correct answer>}";
-    var cur=N.cur;
-    Promise.resolve(env.ai([{role:"user",content:q}])).then(function(r){
-      N.busy=false;if(N.cur!==cur)return;
-      var j=parse(r);
-      if(!j){cur.err="AI мэдээг хялбаршуулж чадсангүй.";env.render();return;}
-      cur.art=j;var c2=cache();c2[key]=j;var ks=Object.keys(c2);if(ks.length>30)delete c2[ks[0]];env.sset(CK,c2);env.render();
-    });
+      "Answer in EXACTLY this plain-text format, one item per line, no JSON, no markdown:\n"+
+      "TITLE: <simple "+LN+" title>\nTEXT: <the simplified article on one line"+(cjk?", with romanization in parentheses after each sentence":"")+">\nMN: <natural Mongolian (Cyrillic) translation of TEXT, on one line>\n"+
+      "WORD: <key "+LN+" word> = <Mongolian meaning>\nWORD: ...\nWORD: ...\nWORD: ...\nWORD: ...\n"+
+      "Q: <one comprehension question in Mongolian>\nA: <answer option in Mongolian>\nB: <answer option>\nC: <answer option>\nANSWER: <A, B or C>";
+    var cur=N.cur,tries=0;
+    /* нямбай горим (task:"check" — бага temperature, урт хариу); формат эвдэрвэл нэг удаа дахин оролдоно */
+    (function ask(){
+      Promise.resolve(env.ai([{role:"user",content:q}],{task:"check"})).then(function(r){
+        if(N.cur!==cur){N.busy=false;return;}
+        var j=parse(r);
+        if(!j&&r&&++tries<2){ask();return;}
+        N.busy=false;
+        if(!j){cur.err=r?"AI мэдээг хялбаршуулж чадсангүй.":"AI-тай холбогдож чадсангүй. Түр хүлээгээд дахин оролдоно уу.";env.render();return;}
+        cur.art=j;var c2=cache();c2[key]=j;var ks=Object.keys(c2);if(ks.length>30)delete c2[ks[0]];env.sset(CK,c2);env.render();
+      });
+    })();
   }
   function viewArt(root){
     var cur=N.cur,a=cur.art,it=cur.it;

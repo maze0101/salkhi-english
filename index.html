@@ -6163,8 +6163,9 @@ function lgEnv(){
     close:function(){ui.lg=false;if(window.League)League.detach();render();window.scrollTo(0,0);}};
 }
 function backLbl(){return ui.hub?"Тоглож сурах":"Профайл";}
-function aiText(turns){
-  var ctl=new AbortController(),o={signal:ctl.signal,onText:function(){}};
+/* opts.task:"check" — үнэгүй worker-т нямбай горим (бага temperature, урт хариу); бусад AI-д нөлөөгүй */
+function aiText(turns,opts){
+  var ctl=new AbortController(),o={signal:ctl.signal,onText:function(){},task:opts&&opts.task};
   return sampleP.then(function(s){
     if(s)return s(turns,{modelTier:"quick",cache:false,signal:o.signal,onText:o.onText});
     if(state.apiKey)return callDirect(turns,o,true);
