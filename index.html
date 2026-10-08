@@ -6537,7 +6537,7 @@ if(repairInfo()&&sget("rpshown","")!==dkey(new Date())){sset("rpshown",dkey(new 
    Эдгээр модулийг үргэлж window.X-ээр шалгаж ашигладаг тул ачаалагдтал товч нь харагдахгүй, ачаалагдмагц render() */
 var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js"];
 function lazyBoot(){
-  if(window.League)League.init(lgEnv());
+  if(window.League){League.init(lgEnv());if(window.SALKHI_FB&&League.fromHash(lgEnv())){state.tab="stats";ui.lg=true;renderTabs();}}
   if(window.Pact&&window.SALKHI_FB)Pact.init(pactEnv());
   if(window.Fatigue)Fatigue.init({h:h,toast:toast,kid:function(){return state.mode==="kid";},
     enabled:function(){return !ui.play.ex&&!ui.play.kx&&!(window.VoiceCall&&VoiceCall.active());},
