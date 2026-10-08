@@ -53,6 +53,10 @@ window.addEventListener("error",function(e){
 }
 *{box-sizing:border-box;margin:0}
 body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--font);-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+/* Хуудас хэзээ ч хажуу тийш гүйхгүй: iPhone дэлгэцээс өргөн элемент олбол хуудсыг жижигрүүлж, гараар гулсуулдаг болгодог.
+   clip нь sticky-г эвдэхгүй; хуучин браузерт hidden */
+html,body{overflow-x:hidden}
+@supports (overflow:clip){html,body{overflow-x:clip}}
 button,textarea,input,select{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none;-webkit-tap-highlight-color:transparent}
 button:disabled{opacity:.45;cursor:not-allowed}
@@ -75,8 +79,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .wm-d{display:none}:root:not([data-theme="light"]) .wm-l{display:inline}}
 :root[data-theme="dark"] .wm-d{display:none}:root[data-theme="dark"] .wm-l{display:inline}
 .tools{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:16px;display:flex;align-items:center;gap:6px}
-.themebtn{flex:none;height:36px;min-width:36px;padding:0 10px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#F4F8F7;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:4px;transition:background .15s,border-color .15s}
-.themebtn:hover{background:rgba(255,255,255,.16)}
+.themebtn{flex:none;height:36px;min-width:36px;padding:0 10px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(10,24,28,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#F4F8F7;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:4px;transition:background .15s,border-color .15s}
+.themebtn:hover{background:rgba(10,24,28,.55)}
 #ratebtn{font-size:13px;font-weight:600;white-space:nowrap}
 .moderow{display:flex;align-items:center;gap:8px;padding:0 20px}
 .modes{flex:1;min-width:0;display:flex;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--ink) 8%,transparent)}
@@ -287,7 +291,7 @@ p+p{margin-top:10px}
 .wxbtn span:last-child{overflow:hidden;text-overflow:ellipsis}
 .wxbtn .ic{font-size:15px;line-height:1}
 .wxbtn[hidden]{display:none}
-.tools .wxbtn{height:36px;padding:0 11px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#F4F8F7;max-width:46vw}
+.tools .wxbtn{height:36px;padding:0 11px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(10,24,28,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#F4F8F7;max-width:46vw}
 @media (max-width:440px){.tools .wxbtn{padding:0 9px;gap:4px;font-size:12.5px}}
 .gameview.mnview,.gameview.mnview iframe{background:var(--bg)}
 .gameview.mnview .bar{background:var(--surface);border-color:var(--line);color:var(--ink)}
