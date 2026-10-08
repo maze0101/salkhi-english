@@ -260,7 +260,7 @@
       box.textContent="";
       pw.setAttribute("autocomplete",st.tab==="up"?"new-password":"current-password");
       box.append(h("button",{type:"button",class:"auth-x","aria-label":"Хаах",onclick:function(){closeAuth(true);}},"✕"));
-      var logo=h("div",{class:"auth-logo"},h("img",{src:"icon.svg",alt:"",width:"56",height:"56"}),h("span",null,"САЛХИ"));
+      var logo=h("div",{class:"auth-logo"},h("img",{class:"wm-d",src:"logo.png",alt:"Салхи",width:"600",height:"129"}),h("img",{class:"wm-l",src:"logo-light.png",alt:"Салхи",width:"600",height:"129"}));
       box.append(logo,h("p",{class:"auth-sub"},st.tab==="forgot"?"Бүртгэлтэй и-мэйлээ оруулбал нууц үг сэргээх холбоос илгээнэ.":"Хэл сурах явцаа хадгалж, бүх төхөөрөмж дээрээ үргэлжлүүлээрэй."));
       if(kid()&&st.tab!=="forgot")box.append(h("p",{class:"auth-kid"},"👨‍👩‍👧 Хүүхэд минь, ээж аавдаа туслуулаад тэдний и-мэйлээр бүртгүүлээрэй."));
       if(st.tab!=="forgot")box.append(h("div",{class:"auth-seg",role:"tablist"},

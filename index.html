@@ -17,9 +17,10 @@ window.addEventListener("error",function(e){
 });
 </script>
 
-<link rel="manifest" href="manifest.webmanifest?v=2">
-<link rel="icon" href="салхи.png?v=2" type="image/png">
-<link rel="apple-touch-icon" href="салхи.png?v=2">
+<link rel="manifest" href="manifest.webmanifest?v=3">
+<link rel="icon" href="favicon-48.png?v=3" type="image/png" sizes="48x48">
+<link rel="icon" href="icon-192.png?v=3" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=3">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#132226">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -67,9 +68,11 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .salkhi-hero__overlay>*{pointer-events:auto}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .brand{position:absolute;top:calc(15px + env(safe-area-inset-top,0px));left:16px;display:flex;align-items:center;gap:8px;pointer-events:none}
-.brand img{width:34px;height:34px;border-radius:9px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))}
-.brand b{font:700 15px/1 Unbounded,Inter,system-ui,sans-serif;color:#EAF4F1;letter-spacing:.04em}
-@media (max-width:340px){.brand b{display:none}}
+.brand img{width:auto;height:26px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))}
+/* Бичвэр-лого: цайвар дэвсгэрт бараан (wm-d), бараан дэвсгэрт цагаан (wm-l) хувилбар */
+.wm-l{display:none}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .wm-d{display:none}:root:not([data-theme="light"]) .wm-l{display:inline}}
+:root[data-theme="dark"] .wm-d{display:none}:root[data-theme="dark"] .wm-l{display:inline}
 .tools{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:16px;display:flex;align-items:center;gap:6px}
 .themebtn{flex:none;height:36px;min-width:36px;padding:0 10px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#F4F8F7;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:4px;transition:background .15s,border-color .15s}
 .themebtn:hover{background:rgba(255,255,255,.16)}
@@ -131,7 +134,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .auth-in{position:relative;max-width:420px;margin:0 auto;padding:max(56px,env(safe-area-inset-top)) 24px 32px;min-height:100%;display:flex;flex-direction:column;justify-content:center}
 .auth-x{position:absolute;top:max(14px,env(safe-area-inset-top));right:16px;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);font-size:16px}
 .auth-logo{display:flex;align-items:center;gap:12px}
-.auth-logo img{width:48px;height:48px;border-radius:12px}
+.auth-logo img{width:auto;height:40px}
 .auth-logo span{font-size:30px;font-weight:700;letter-spacing:-.035em;color:var(--ink)}
 .auth-sub{color:var(--ink-2);margin:12px 0 24px;font-size:15.5px;line-height:1.5}
 .auth-seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:3px;border-radius:12px;background:color-mix(in srgb,var(--ink) 8%,transparent);margin-bottom:18px}
@@ -377,7 +380,7 @@ p+p{margin-top:10px}
 .tr.lock{color:var(--ink-2);border-style:dashed}.tr.lock i{opacity:.3;filter:grayscale(1)}
 .splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--bg);transition:opacity .35s ease,visibility .35s}
 .splash.hide{opacity:0;visibility:hidden}
-.splash img{width:88px;height:88px;border-radius:22px;animation:splashpop .5s ease-out both}
+.splash img{width:min(240px,70vw);height:auto;animation:splashpop .5s ease-out both}
 .splash b{font-size:22px;font-weight:700;letter-spacing:-.03em;animation:splashpop .5s .08s ease-out both}
 @keyframes splashpop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.splash img,.splash b{animation:none}.splash{transition:none}}
@@ -413,7 +416,7 @@ p+p{margin-top:10px}
 </style>
 </head>
 <body>
-<div class="splash" id="splash" aria-hidden="true"><img src="салхи.png" alt=""><b>Салхи</b></div>
+<div class="splash" id="splash" aria-hidden="true"><img class="wm-d" src="logo.png" alt="" width="600" height="129"><img class="wm-l" src="logo-light.png" alt="" width="600" height="129"></div>
 <script>setTimeout(function(){var e=document.getElementById("splash");if(e){e.classList.add("hide");setTimeout(function(){e.remove()},600)}},1100);</script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <pattern id="hex" width="28" height="48.5" patternUnits="userSpaceOnUse">
@@ -426,7 +429,7 @@ p+p{margin-top:10px}
     <div class="salkhi-hero" id="salkhiHero">
       <canvas role="img" aria-label="Салхи — дарж салхи үлээлгэх"></canvas>
       <div class="salkhi-hero__overlay">
-        <div class="brand" aria-hidden="true"><img src="салхи.png" alt="" width="34" height="34"><b>Салхи</b></div>
+        <div class="brand" aria-hidden="true"><img src="logo-light.png" alt="" width="600" height="129"></div>
         <div class="tools"><button class="themebtn" id="themebtn" type="button"></button></div>
       </div>
     </div>
@@ -571,7 +574,7 @@ window.salkhiHero=initSalkhiHero(document.getElementById("salkhiHero"),{font:"In
 <script>
 /* зөвхөн сонгосон хэлний үгсийг эхэлж ачаална; бусад хэлийг хэрэгтэй үед нь loadLangs() татна */
 /* хэл бүрийн дүрмийн хичээлийн багцын тоо: lp-<хэл>-1.js ... lp-<хэл>-N.js */
-window.LESSON_PACKS={en:27,ja:23,ko:26,zh:22,ru:30,de:30};
+window.LESSON_PACKS={en:30,ja:23,ko:26,zh:22,ru:30,de:30};
 window.WORDS_FILES=function(l){
   var f=["words-","words2-","words3-","words4-","words5-","words6-","words7-","words8-","words9-"].map(function(p){return p+l+".js";});
   for(var i=1;i<=(window.LESSON_PACKS[l]||0);i++)f.push("lp-"+l+"-"+i+".js");
@@ -2033,7 +2036,7 @@ function notifBody(){
   return todayXP()===0&&s>0?"🔥 "+s+" өдрийн дараалалаа алдахгүй байя! Өнөөдөр нэг богино дасгал хийгээрэй.":"Өнөөдөр "+LANGN[state.lang]+" хэл сурах цаг боллоо. Хэдхэн минут дасгалцгаая 🌬️";
 }
 function showNotif(body){
-  var opt={body:body,icon:"салхи.png",badge:"салхи.png",tag:"salkhi-daily",data:{url:"./#daily"}};
+  var opt={body:body,icon:"icon-192.png",badge:"icon-192.png",tag:"salkhi-daily",data:{url:"./#daily"}};
   try{
     if(swReg&&swReg.showNotification)return swReg.showNotification("Салхи",opt);
     var nn=new Notification("Салхи",opt);nn.onclick=function(){window.focus();openDaily();nn.close();};
@@ -6156,7 +6159,7 @@ function lgEnv(){
     notify:function(t,bg){
       if(!document.hidden){toast(t,4500);return;}
       if(!bg||!state.notif.on||!notifOK())return;
-      var opt={body:t,icon:"салхи.png",badge:"салхи.png",tag:"salkhi-league",data:{url:"./"}};
+      var opt={body:t,icon:"icon-192.png",badge:"icon-192.png",tag:"salkhi-league",data:{url:"./"}};
       try{if(swReg&&swReg.showNotification)swReg.showNotification("Салхи · Наадам",opt);else new Notification("Салхи · Наадам",opt);}catch(e){}
     },
     close:function(){ui.lg=false;if(window.League)League.detach();render();window.scrollTo(0,0);}};

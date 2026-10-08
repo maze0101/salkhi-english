@@ -24,7 +24,7 @@
     var box=h("div",{class:"onbbox"}),n=O.kid?3:4;
     box.append(h("div",{class:"onbtop"},h("span",{class:"muted small"},(O.s+1)+" / "+n),h("button",{class:"btn ghost",style:"padding:4px 10px",onclick:function(){env.sset("onb",{goal:O.goal||"skip",ts:Date.now()});close();}},"Алгасах")));
     if(O.s===0){
-      box.append(h("img",{src:"icon.svg",alt:"",width:"64",height:"64",style:"border-radius:16px;align-self:center"}));
+      box.append(h("img",{src:"icon-192.png",alt:"",width:"64",height:"64",style:"border-radius:16px;align-self:center"}));
       box.append(h("h2",{style:"text-align:center;margin:10px 0 4px"},"Салхид тавтай морил!"),h("p",{class:"muted",style:"text-align:center;margin:0 0 14px"},"Юуны тулд хэл сурч байна вэ?"));
       var g=h("div",{class:"onbgrid"});
       GOALS.forEach(function(x){g.append(h("button",{class:"onbopt",type:"button",onclick:function(){O.goal=x[0];O.kid=x[0]==="kid";O.langs=x[4];O.s=1;if(O.kid)env.setMode("kid");else if(env.mode()==="kid")env.setMode("adult");step();}},
