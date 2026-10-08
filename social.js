@@ -447,6 +447,12 @@
     db.ref("goals/"+code+"/m/"+uid).remove().catch(function(){});
     lset(GOALS_KEY,myGoals().filter(function(x){return x!==code;}));delete goals.data[code];paint();
   }
+  /* эзэн бүлгээ бүхэлд нь устгана (дүрмээр зөвхөн эзэнд зөвшөөрөгдсөн) */
+  function deleteGoal(code,name){
+    if(!confirm("«"+name+"» бүлгийг бүх гишүүдэд нь устгах уу? Буцаах боломжгүй."))return;
+    db.ref("goals/"+code).remove().then(function(){env.toast("Бүлэг устгагдлаа");},function(){env.toast("Устгаж чадсангүй");});
+    lset(GOALS_KEY,myGoals().filter(function(x){return x!==code;}));delete goals.data[code];paint();
+  }
   function viewGoals(){
     var box=h("div",{style:"margin-top:18px"}),wk=me().wk;
     box.append(h("div",{style:"font-weight:700;margin-bottom:6px"},"🎯 Бүлгийн зорилго"));
@@ -469,7 +475,8 @@
           var t="Салхи апп дээр «"+g.name+"» бүлэгт нэгдээрэй: 7 хоногт хамтдаа "+g.target+" XP! Найз → Бүлгийн зорилго → код: "+code;
           if(navigator.share)navigator.share({text:t}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(t).then(function(){env.toast("Хуулагдлаа");});
         }},"📤 Урих"),
-        h("button",{class:"btn ghost",style:"padding:6px 12px",onclick:function(){leaveGoal(code);}},"Гарах")));
+        h("button",{class:"btn ghost",style:"padding:6px 12px;color:var(--danger)",onclick:function(){leaveGoal(code);}},"🚪 Бүлгээс гарах"),
+        g.owner===uid?h("button",{class:"btn ghost",style:"padding:6px 12px;color:var(--danger)",onclick:function(){deleteGoal(code,g.name);}},"🗑️ Устгах"):null));
       box.append(card);
     });
     if(goals.form){
