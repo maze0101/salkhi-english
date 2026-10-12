@@ -875,9 +875,10 @@ function pickVoice(lang){
 }
 function voiceFor(lang){
   var v=pickVoice(lang);
-  if(!v&&!voiceHint[lang]&&VOICES.length){
+  if(!v&&!voiceHint[lang]&&(VOICES.length||window.LIGHT_LANGS[state.lang])){
     voiceHint[lang]=1;
-    toast("Энэ төхөөрөмжид "+LANGN[state.lang]+" хэлний дуу алга. Тохиргоо → Текст-яриа дээрээс дууг нэмнэ үү.");
+    /* бета хэлний дуу зөвхөн серверээс ирдэг — төхөөрөмжийн тохиргоо тус болохгүй */
+    toast(window.LIGHT_LANGS[state.lang]?LANGN[state.lang]+" хэлний дууг серверээс авч чадсангүй. Интернэтээ шалгаад дахин дарна уу.":"Энэ төхөөрөмжид "+LANGN[state.lang]+" хэлний дуу алга. Тохиргоо → Текст-яриа дээрээс дууг нэмнэ үү.");
   }
   return v;
 }
@@ -941,7 +942,8 @@ function playParts(parts,id,i,gttsLang,fullLang,onDone,lr,lang,useEdge){
   function fail(e){
     if(failed||id!==audioQ.id)return;failed=true;audioQ.cur=null;
     var blocked=e&&e.name==="NotAllowedError";
-    if(useEdge&&!blocked){edgeDownAt=Date.now();playParts(parts,id,i,gttsLang,fullLang,onDone,lr,lang,false);return;}
+    /* бета хэлний алдаа бусад хэлний Edge дууг 10 минут хаахгүй */
+    if(useEdge&&!blocked){if(!window.LIGHT_LANGS[lang])edgeDownAt=Date.now();playParts(parts,id,i,gttsLang,fullLang,onDone,lr,lang,false);return;}
     synthParts(parts.slice(i),fullLang,onDone,lr);
   }
   a.onended=function(){if(id===audioQ.id)playParts(parts,id,i+1,gttsLang,fullLang,onDone,lr,lang);};
