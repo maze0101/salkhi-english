@@ -893,6 +893,10 @@ function stopVoice(){
 }
 /* Хичээлийн япон/хятад өгүүлбэр үг бүрийн хооронд зайтай ("これ は ほん です"). Зайтай үед дуу は-г "ha" гэж уншиж, үг бүрийн дараа зогсдог тул зайг авна. */
 var CJK_GAP=/([　-ヿ㐀-鿿＀-￯])[ 　]+(?=[　-ヿ㐀-鿿＀-￯])/g;
+/* кирилл бичигтэй сурах хэл: монгол тайлбарыг «кирилл» гэж шүүхгүй */
+function cyrLang(l){return l==="ru"||l==="ug";}
+/* суралцагч монголоор бичсэн эсэх: оросод ө/ү, уйгурт э/ы/ь/ц зэрэг уйгурт байхгүй үсгээр ялгана */
+function looksMn(t,l){t=String(t);if(l==="ru")return /[өүӨҮ]/.test(t);if(l==="ug")return /[эыьъёцщЭЫЬЪЁЦЩ]/.test(t)&&!/[әғқңһҗӘҒҚҢҺҖ]/.test(t);return /[\u0400-\u04FF]/.test(t);}
 function speechText(t){
   /* "눈 (snow)", "groß (Person)" зэрэг хаалтан дахь тайлбарыг уншихгүй */
   t=String(t||"").replace(/\s*\([^)]*\)/g,"").replace(/\s*（[^）]*）/g,"").trim();
@@ -1081,7 +1085,7 @@ function cleanAI(t){
   t=t.replace(/\*\*|__|`|^#+\s*|^\s*[-*]\s+/gm,"").replace(/\[([^\]]*)\]\([^)]*\)/g,"$1");
   t=t.replace(/\s*\([^)]*\)/g,"").replace(/\s*（[^）]*）/g,"");
   t=t.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,"");
-  if(state.lang!=="ru")t=t.replace(/[\u0400-\u04FF]+/g,"");
+  if(!cyrLang(state.lang))t=t.replace(/[\u0400-\u04FF]+/g,"");
   if(state.lang==="zh")t=t.replace(/[A-Za-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+/g,"");
   return t.replace(/\s+/g," ").trim();
 }
@@ -2301,7 +2305,7 @@ function viewWords(){
 function cleanSpeak(t){
   t=String(t).replace(/\s*\([^)]*\)/g,"").replace(/\s*（[^）]*）/g,"");
   if(state.lang==="zh")t=t.replace(/[A-Za-zāáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜ]+/g,"");
-  if(state.lang!=="ru")t=t.replace(/[\u0400-\u04FF]+/g,"");
+  if(!cyrLang(state.lang))t=t.replace(/[\u0400-\u04FF]+/g,"");
   t=t.replace(/\s*(?:[→·/]|\.{3}|…)/g,",");
   return t.replace(/\s+/g," ").replace(/(,\s*)+/g,", ").replace(/^[,\s]+|[,\s]+$/g,"");
 }
@@ -3547,7 +3551,7 @@ function offlineReply(turns){
   if(turns.length===1){c.step=0;return {text:sc[0][0],mn:mnLine(key,0)};}
   if(c.step>=sc.length)return {text:pk.fin};
   var t=turns[turns.length-1].content;
-  if(/[\u0400-\u04FF]/.test(t)){
+  if(looksMn(t,state.lang)){
     return {text:pk.tryMsg+sc[c.step][0]+"\n###\n"+pk.tryFix+" Жишээ хариулт: "+sc[c.step][1],mn:mnLine(key,c.step)};
   }
   var fix=state.lang==="en"?offlineFix(t):"",out;
@@ -5794,7 +5798,7 @@ function exGen(w){
     var list=[];
     String(r&&r.text||"").replace(/\*\*/g,"").split("\n").forEach(function(l){
       var s=l.replace(/^[\s\-•*\d.)]+/,"").split("||")[0].trim().replace(/^["«“]|["»”]$/g,"");
-      if(s&&list.length<3&&(state.lang==="ru"||!/[Ѐ-ӿ]/.test(s)))list.push([s]);
+      if(s&&list.length<3&&(cyrLang(state.lang)||!/[Ѐ-ӿ]/.test(s)))list.push([s]);
     });
     if(!list.length)throw {code:"empty_completion"};
     var all=wexAll();delete all[key];all[key]=list;

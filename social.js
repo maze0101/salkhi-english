@@ -615,7 +615,7 @@
     var last=bc.msgs.filter(function(m){return m.role==="me";}).pop();
     if(!last){bc.step=0;return {text:sc[0]?sc[0][0]:"...",mn:env.mn(bc.bot.scene,0)};}
     if(bc.step>=sc.length-1)return {text:pk.end||pk.fin};
-    if(/[\u0400-\u04FF]/.test(last.text)&&me().lang!=="ru"){return {text:pk.tryMsg+sc[bc.step][0]+"\n###\n"+pk.tryFix+" Жишээ хариулт: "+sc[bc.step][1],mn:env.mn(bc.bot.scene,bc.step)};}
+    if(window.looksMn?window.looksMn(last.text,me().lang):/[\u0400-\u04FF]/.test(last.text)&&me().lang!=="ru"){return {text:pk.tryMsg+sc[bc.step][0]+"\n###\n"+pk.tryFix+" Жишээ хариулт: "+sc[bc.step][1],mn:env.mn(bc.bot.scene,bc.step)};}
     var uc=bc.msgs.filter(function(m){return m.role==="me";}).length,tc=env.touch(last.text,uc);
     bc.step++;
     return {text:(tc.react||pk.react[Math.floor(Math.random()*pk.react.length)])+" "+sc[bc.step][0]+(tc.extra?" "+tc.extra:""),mn:(tc.reactMn?tc.reactMn+" ":"")+env.mn(bc.bot.scene,bc.step)+(tc.extraMn?" "+tc.extraMn:"")};
