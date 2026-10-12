@@ -584,9 +584,9 @@ window.salkhiHero=initSalkhiHero(document.getElementById("salkhiHero"));
 /* бүх хэл; ug нь «хөнгөн» (бета) хэл: цөөн үг, хичээлтэй, AI функцууд ажиллана */
 window.SALKHI_LANGS=["en","ja","ko","zh","ru","de","ug"];
 window.LIGHT_LANGS={ug:1};
-window.LESSON_PACKS={en:30,ja:23,ko:26,zh:22,ru:30,de:30,ug:1};
+window.LESSON_PACKS={en:30,ja:23,ko:26,zh:22,ru:30,de:30,ug:2};
 /* үгийн багцын тоо: words-, words2- ... (анхдагч 9) */
-window.WORDS_PACKS={ug:1};
+window.WORDS_PACKS={ug:2};
 window.WORDS_FILES=function(l){
   var f=["words-","words2-","words3-","words4-","words5-","words6-","words7-","words8-","words9-"].slice(0,window.WORDS_PACKS[l]||9).map(function(p){return p+l+".js";});
   for(var i=1;i<=(window.LESSON_PACKS[l]||0);i++)f.push("lp-"+l+"-"+i+".js");

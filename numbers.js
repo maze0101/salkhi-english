@@ -100,6 +100,21 @@
     if(o)w.push(MN1[o]);
     return w.join(" ");
   }
+  /* уйгур (кирилл): 125 = бир йүз йигирмә бәш, 2345 = икки миң үч йүз қириқ бәш; r нь араб бичиг */
+  var UG1="нөл бир икки үч төрт бәш алтә йәттә сәккиз тоққуз".split(" "),
+      UG10=",он,йигирмә,оттуз,қириқ,әллик,атмиш,йәтмиш,сәксән,тохсан".split(",");
+  function ug99(n){var w=[];if(n>=10)w.push(UG10[Math.floor(n/10)]);if(n%10)w.push(UG1[n%10]);return w.join(" ");}
+  function ug(n){
+    if(!n)return UG1[0];
+    var w=[],t=Math.floor(n/1000),hh=Math.floor(n%1000/100),r=n%100;
+    if(t)w.push(ug99(t)+" миң");
+    if(hh)w.push(UG1[hh]+" йүз");
+    if(r)w.push(ug99(r));
+    return w.join(" ");
+  }
+  var UGV={"а":"ا","ә":"ە","о":"و","у":"ۇ","ө":"ۆ","ү":"ۈ","е":"ې","и":"ى"},
+      UGC={"б":"ب","п":"پ","т":"ت","җ":"ج","ч":"چ","х":"خ","д":"د","р":"ر","з":"ز","ж":"ژ","с":"س","ш":"ش","ғ":"غ","ф":"ف","қ":"ق","к":"ك","г":"گ","ң":"ڭ","л":"ل","м":"م","н":"ن","һ":"ھ","в":"ۋ","й":"ي"};
+  function ugArab(t){return t.replace(/я/g,"йа").replace(/ю/g,"йу").split(" ").map(function(x){var o="",pv=true;for(var i=0;i<x.length;i++){var c=x[i];if(UGV[c]){o+=(pv?"ئ":"")+UGV[c];pv=true;}else{o+=UGC[c]||c;pv=false;}}return o;}).join(" ");}
   /* {w: үндсэн уншлага (дуудах), r: нэмэлт мөр, m: монгол} */
   function word(lang,n){var x=word0(lang,n);x.m=mn(n);return x;}
   function word0(lang,n){
@@ -109,6 +124,7 @@
     if(lang==="ja")return {w:ja(n),r:jaK(n)};
     if(lang==="ko"){var nn=koN(n);return {w:ko(n),r:nn?"уугуул: "+nn:""};}
     if(lang==="zh"){var z=zh(n);return {w:z,r:zhPy(z)};}
+    if(lang==="ug"){var u=ug(n);return {w:u,r:ugArab(u)};}
     return {w:String(n)};
   }
 
