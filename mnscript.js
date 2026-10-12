@@ -151,11 +151,11 @@
   }
   function mn(txt,size,extra){return h("span",{lang:"mn-Mong",style:"font-family:"+FONT+";writing-mode:vertical-lr;text-orientation:sideways;font-size:"+(size||32)+"px;line-height:1.3;display:inline-block;"+(extra||"")},txt);}
 
-  var env=null,h=null,S={tab:"abc",sel:null,q:null,conv:""};
+  var env=null,h=null,S={tab:"les",sel:null,q:null,conv:"",li:null,lq:null};
   function tabs(root){
-    var T=[["abc","🔤 Үсэг"],["word","📖 Үг"],["quiz","✅ Тест"],["conv","🔄 Хөрвүүлэх"],["draw","✍️ Бичих"]];
+    var T=[["les","🎓 Хичээл"],["abc","🔤 Үсэг"],["word","📖 Үг"],["quiz","✅ Тест"],["conv","🔄 Хөрвүүлэх"],["draw","✍️ Бичих"]];
     root.append(h("div",{class:"row",style:"flex-wrap:wrap;gap:6px;margin:8px 0 12px"},T.map(function(t){
-      return h("button",{class:"btn"+(S.tab===t[0]?" primary":""),onclick:function(){S.tab=t[0];S.sel=null;if(t[0]==="quiz")S.q=null;env.render();}},t[1]);})));
+      return h("button",{class:"btn"+(S.tab===t[0]?" primary":""),onclick:function(){S.tab=t[0];S.sel=null;if(t[0]==="quiz")S.q=null;if(t[0]==="les"){S.li=null;S.lq=null;}env.render();}},t[1]);})));
   }
   function forms(ch){return [["Ганцаар",ch],["Эхэнд",ch+ZWJ],["Дунд",ZWJ+ch+ZWJ],["Сүүлд",ZWJ+ch]];}
   function viewAbc(root){
@@ -191,16 +191,106 @@
     });
     return {qs:shuffle(qs),i:0,ok:0,p:null};
   }
+
+  /* Дараалсан хичээл: үсгээ бүлгээр нь сурч, 6 асуулттай тестэд 5+ авбал дараагийнх нээгдэж цол ахина */
+  var LES=[{t:"Эгшиг 1: а, э, и",L:"ᠠᠡᠢ"},{t:"Эгшиг 2: о, у, ө, ү",L:"ᠣᠤᠥᠦ"},{t:"н, б, х, г",L:"ᠨᠪᠬᠭ"},{t:"м, л, с, ш",L:"ᠮᠯᠰᠱ"},
+    {t:"т, д, ч, ж",L:"ᠲᠳᠴᠵ"},{t:"й, р, нг",L:"ᠶᠷᠩ"},{t:"Харь үгийн үсэг: п, в, ф, к, ц, з, һ",L:"ᠫᠸᠹᠺᠼᠽᠾ"},{t:"Нөхцөл залгах (-ын, -ыг, -д…)",suf:1}];
+  var RANKS=[[0,"🌱 Шинэ сурагч"],[1,"👀 Бичиг танигч"],[3,"✒️ Бичээч"],[5,"📜 Түшмэл"],[7,"🦉 Бичгийн мэргэн"],[8,"🏆 Их бичээч"]];
+  function lesSt(){var o=env.sget("mnscript",{})||{};o.les=o.les||{};return o;}
+  function passedN(o){return LES.filter(function(_,i){return (o.les[i]||0)>=5;}).length;}
+  function rankOf(n){var r=RANKS[0];RANKS.forEach(function(x){if(n>=x[0])r=x;});return r;}
+  function nextRank(n){return RANKS.filter(function(x){return x[0]>n;})[0]||null;}
+  function letterRow(ch){return LETTERS.filter(function(L){return L[0]===ch;})[0];}
+  function known(i){var k="";for(var j=0;j<=i&&j<LES.length;j++)k+=LES[j].L||"";return k;}
+  function lesWords(i){
+    var k=known(i),cur=LES[i].L||"";
+    return Object.keys(DICT).filter(function(c){var w=DICT[c];return c.indexOf(" ")<0&&Array.from(w).every(function(ch){return k.indexOf(ch)>=0;})&&Array.from(cur).some(function(ch){return w.indexOf(ch)>=0;});}).map(function(c){return [DICT[c],c];});
+  }
+  var SUFEX=["монголын","ээжийн","морийг","гэрт","хотод","уулаас","найзтай","гараар","улсын","номыг"];
+  function sufQ(){
+    return shuffle(SUFEX).slice(0,6).map(function(c){
+      var r=toMn(c)[0],st=stemOf(c),base=DICT[st[0]];
+      var wrong=shuffle(["gen","acc","dat","abl","com","ins"].filter(function(t){return t!==st[1];})).slice(0,3).map(function(t){return base+NNBSP+sufMn(t,base);});
+      return {c:c,a:r.s,o:shuffle([r.s].concat(wrong)),mn:1};
+    });
+  }
+  function letterQ(L,pool){return {s:L[0],a:L[1],o:shuffle([L[1]].concat(pick(pool,3,L).map(function(x){return x[1];})))};}
+  function lesQuiz(i){
+    if(LES[i].suf)return {qs:sufQ(),i:0,ok:0,p:null};
+    var k=known(i),pool=LETTERS.filter(function(L){return k.indexOf(L[0])>=0;}),qs=[];
+    Array.from(LES[i].L).forEach(function(ch){qs.push(letterQ(letterRow(ch),pool));});
+    var ws=lesWords(i);
+    if(ws.length>=4)shuffle(ws).slice(0,3).forEach(function(w){qs.push({s:w[0],a:w[1],o:shuffle([w[1]].concat(shuffle(ws.filter(function(x){return x!==w;})).slice(0,3).map(function(x){return x[1];})))});});
+    var rest=shuffle(pool.filter(function(L){return !qs.some(function(q){return q.s===L[0];});}));
+    while(qs.length<6)qs.push(letterQ(rest.length?rest.pop():pool[Math.floor(Math.random()*pool.length)],pool));
+    return {qs:shuffle(qs).slice(0,6),i:0,ok:0,p:null};
+  }
+  function rankCard(n){
+    var r=rankOf(n),nx=nextRank(n);
+    return h("div",{class:"note",style:"margin:4px 0 12px"},h("b",null,"🏅 Цол: "+r[1]),
+      h("div",{style:"height:6px;border-radius:3px;background:var(--line,#e5e7eb);margin:8px 0 4px;overflow:hidden"},h("div",{style:"height:100%;width:"+Math.round(n/LES.length*100)+"%;background:var(--accent,#2563eb)"})),
+      h("div",{class:"muted small"},n+" / "+LES.length+" хичээл"+(nx?" · дараагийн цол "+nx[1]+" хүртэл "+(nx[0]-n)+" хичээл":" · Бүх хичээлээ давлаа!")));
+  }
+  function viewLes(root){
+    var o=lesSt(),n=passedN(o);
+    if(S.li==null){
+      root.append(rankCard(n));
+      LES.forEach(function(L,i){
+        var sc=o.les[i],pass=(sc||0)>=5,open=i===0||(o.les[i-1]||0)>=5;
+        root.append(h("button",{class:"lrow",type:"button",disabled:!open,style:open?"":"opacity:.5",onclick:function(){S.li=i;S.lq=null;env.render();window.scrollTo(0,0);}},
+          h("span",{class:"hexb ico"},pass?"✅":open?String(i+1):"🔒"),
+          h("span",{style:"flex:1;text-align:left"},h("div",{class:"t"},(i+1)+". "+L.t),h("div",{class:"muted small"},sc!=null?"Хамгийн сайн: "+sc+" / 6":open?"6 асуулт · 5+ авбал давна":"Өмнөх хичээлээ дав")),h("span",{"aria-hidden":"true"},"›")));
+      });
+      return;
+    }
+    var i=S.li,L=LES[i];
+    root.append(h("button",{class:"back",onclick:function(){S.li=null;S.lq=null;env.render();}},"‹ Хичээлүүд"));
+    root.append(h("h3",{style:"margin:6px 0"},(i+1)+". "+L.t));
+    if(!S.lq){
+      if(L.suf){
+        root.append(h("p",null,"Монгол бичигт тийн ялгалын нөхцлийг үгнээс тусад нь, нарийн зайгаар (NNBSP) залгаж бичдэг. Эр үгэнд эр эгшигтэй (u, a), эм үгэнд эм эгшигтэй (ü, e) хувилбарыг нь залгана. Эгшгээр төгссөн үгэнд өөр хувилбар бий."));
+        [["Харьяалах (-ын)","ᠤᠨ ᠦᠨ ᠶᠢᠨ"],["Заах (-ыг)","ᠢ ᠶᠢ"],["Өгөх оршихын (-д)","ᠳᠤ ᠳᠦ ᠲᠤ ᠲᠦ"],["Гарахын (-аас)","ᠠᠴᠠ ᠡᠴᠡ"],["Хамтрахын (-тай)","ᠲᠠᠢ ᠲᠡᠢ"],["Үйлдэхийн (-аар)","ᠪᠠᠷ ᠪᠡᠷ ᠢᠶᠠᠷ ᠢᠶᠡᠷ"]].forEach(function(r){
+          root.append(h("div",{style:"display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line,#e5e7eb)"},h("span",{style:"flex:1"},r[0]),h("span",{style:"display:flex;gap:12px;align-items:flex-start"},r[1].split(" ").map(function(x){return mn(x,24);}))));});
+        root.append(h("p",{class:"muted small",style:"margin-top:10px"},"Жишээ"));
+        root.append(h("div",{style:"display:flex;flex-wrap:wrap;gap:12px"},SUFEX.slice(0,6).map(function(c){return h("div",{style:"text-align:center"},mn(toMn(c)[0].s,26,"min-height:90px"),h("div",{class:"small"},c));})));
+      }else{
+        Array.from(L.L).forEach(function(ch){var R=letterRow(ch);
+          root.append(h("div",{class:"note",style:"margin-bottom:8px"},h("div",{style:"display:flex;align-items:center;gap:10px"},mn(R[0],40),h("div",null,h("b",{style:"font-size:18px"},R[1]+" · "+R[2]),R[3]?h("div",{class:"muted small"},R[3]):null)),
+            h("div",{style:"display:flex;justify-content:space-around;text-align:center;margin-top:6px"},forms(R[0]).map(function(f){return h("div",null,mn(f[1],32,"min-height:48px"),h("div",{class:"muted small"},f[0]));}))));});
+        var ws=lesWords(i).slice(0,8);
+        if(ws.length){root.append(h("p",{class:"muted small"},"Эдгээр үсгээр бичих үгс"));
+          root.append(h("div",{style:"display:flex;flex-wrap:wrap;gap:12px"},ws.map(function(w){return h("div",{style:"text-align:center"},mn(w[0],26,"min-height:80px"),h("div",{class:"small"},w[1]));})));}
+      }
+      root.append(h("button",{class:"btn primary",style:"margin-top:14px",onclick:function(){S.lq=lesQuiz(i);env.render();window.scrollTo(0,0);}},"Тест өгөх (6)"));
+      return;
+    }
+    var Q=S.lq;
+    if(Q.i>=Q.qs.length){
+      if(!Q.saved){
+        Q.saved=1;var before=passedN(o);o.les[i]=Math.max(o.les[i]||0,Q.ok);env.sset("mnscript",o);env.addXP(Q.ok*3);
+        Q.rank=rankOf(passedN(o));Q.up=rankOf(before)!==Q.rank;if(Q.up||Q.ok===Q.qs.length)env.celebrate();
+      }
+      root.append(h("h2",null,Q.ok+" / "+Q.qs.length),h("p",null,Q.ok>=5?"Давлаа! 🎉":"5-аас дээш оноо авбал давна. Дахиад оролдоорой."),h("p",{class:"muted"},"+"+(Q.ok*3)+" XP"));
+      if(Q.up)root.append(h("div",{class:"note",style:"text-align:center;font-size:18px;font-weight:700"},"🏅 Шинэ цол: "+Q.rank[1]));
+      root.append(h("div",{class:"row",style:"margin-top:10px"},h("button",{class:"btn",onclick:function(){S.lq=null;env.render();}},"Дахин унших"),
+        Q.ok>=5&&i+1<LES.length?h("button",{class:"btn primary",onclick:function(){S.li=i+1;S.lq=null;env.render();window.scrollTo(0,0);}},"Дараагийн хичээл ›"):h("button",{class:"btn primary",onclick:function(){S.li=null;S.lq=null;env.render();}},"Жагсаалт")));
+      return;
+    }
+    quizStep(root,Q);
+  }
   function viewQuiz(root){
     if(!S.q)S.q=newQuiz();
     var Q=S.q;
     if(Q.i>=Q.qs.length){
       var best=Math.max((env.sget("mnscript",{})||{}).best||0,Q.ok);
-      if(!Q.saved){Q.saved=1;env.sset("mnscript",{best:best});env.addXP(Q.ok*2);if(Q.ok===Q.qs.length)env.celebrate();}
+      if(!Q.saved){Q.saved=1;var st0=env.sget("mnscript",{})||{};st0.best=best;env.sset("mnscript",st0);env.addXP(Q.ok*2);if(Q.ok===Q.qs.length)env.celebrate();}
       root.append(h("h2",null,Q.ok+" / "+Q.qs.length),h("p",{class:"muted"},"+"+(Q.ok*2)+" XP · Хамгийн сайн: "+best),
         h("button",{class:"btn primary",onclick:function(){S.q=null;env.render();}},"Дахин"));
       return;
     }
+    quizStep(root,Q);
+  }
+  function quizStep(root,Q){
     var q=Q.qs[Q.i];
     root.append(h("p",{class:"muted small"},(Q.i+1)+" / "+Q.qs.length+(q.mn?" · Монгол бичгээр нь сонго":" · Кириллээр юу вэ?")));
     root.append(h("div",{style:"text-align:center;margin:10px 0"},q.mn?h("div",{style:"font-size:26px;font-weight:700"},q.c):mn(q.s,48,"min-height:80px")));
@@ -275,7 +365,7 @@
       root.append(h("button",{class:"back",onclick:function(){S.sel=null;env.close();}},"‹ Дүрэм"));
       root.append(h("h2",{style:"display:flex;align-items:center;gap:10px"},mn("ᠮᠣᠩᠭᠣᠯ ᠪᠢᠴᠢᠭ",22,"max-height:120px"),"Монгол бичиг"));
       tabs(root);
-      ({abc:viewAbc,word:viewWords,quiz:viewQuiz,conv:viewConv,draw:viewDraw})[S.tab](root);
+      ({les:viewLes,abc:viewAbc,word:viewWords,quiz:viewQuiz,conv:viewConv,draw:viewDraw})[S.tab](root);
       return root;
     }
   };

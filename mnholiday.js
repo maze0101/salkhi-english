@@ -1,11 +1,12 @@
-/* Салхи: 🇲🇳 Монгол баяр, ёс заншлаа гадаад хүнд тайлбарлах — Цагаан сар, Наадам, гэрт зочлох.
+/* Салхи: 🇲🇳 Монгол баяр, ёс заншлаа гадаад хүнд тайлбарлах — Цагаан сар, Наадам, гэрт зочлох, наадмын цол.
    Сэдэв бүрт: хэллэгүүд (хэллэг|галиг|монгол утга), гадаад найздаа хэлэх богино тайлбар, шалгах асуулт.
    Баярын үеэр (Цагаан сар ≈ 1–2-р сар, Наадам 7-р сар) нүүр хуудсанд санал болгоно. */
 (function(){
   var T={
     ts:{i:"🌙",t:"Цагаан сар",when:[0,1],mn:"Сар шинийн баяр: битүүн, золгох ёс, бууз, ул боов, хадаг."},
     nd:{i:"🏹",t:"Наадам",when:[6],mn:"Эрийн гурван наадам: бөх, морь, сур харваа. 7-р сарын 11–15."},
-    ger:{i:"🛖",t:"Гэрт зочлох",when:[],mn:"Монгол гэрт зочлох ёс: босгон дээр гишгэхгүй, баруун гараар авах, цай, айраг."}
+    ger:{i:"🛖",t:"Гэрт зочлох",when:[],mn:"Монгол гэрт зочлох ёс: босгон дээр гишгэхгүй, баруун гараар авах, цай, айраг."},
+    tsol:{i:"🏅",t:"Наадмын цол",when:[],mn:"Бөхийн цол: начин, харцага, заан, гарьд, арслан, аварга; морь: түмний эх; сур: мэргэн."}
   };
   var D={
 en:{
@@ -108,6 +109,38 @@ Trink bitte Milchtee.||Сүүтэй цай уугаарай.
 Nimm es mit der rechten Hand oder mit beiden Händen.||Баруун эсвэл хоёр гараараа аваарай.
 Das ist Airag, gegorene Stutenmilch.||Энэ бол айраг, гүүний исгэлэн сүү.`,ex:"Bevor du dich einer Jurte näherst, ruf \"Haltet die Hunde fest!\". Geh hinein, ohne auf die Schwelle zu treten, und nimm den Tee mit der rechten Hand oder mit beiden Händen.|Гэрт ойртохоосоо өмнө «Нохой хорио!» гэж дуудна. Босгон дээр гишгэлгүй орж, цайг баруун эсвэл хоёр гараараа авна.",q:["Worauf darf man beim Betreten der Jurte nicht treten?","Auf die Schwelle","Auf den Teppich","Auf den Stuhl"]}}
   };
+  /* 🏅 Наадмын цол — бөх, морь, сурын цолыг гадаад хэлээр тайлбарлах */
+  var TSOL_MN="Наадмын бөхөд давах тусам цол ахина: начин (шонхор), харцага, заан, гарьд, арслан. Анх түрүүлсэн бөх арслан, арслан цолтой бөх дахин түрүүлбэл аварга болно. Түрүүлсэн морийг түмний эх, сурын шилдэг харваачийг мэргэн гэдэг.";
+  D.en.tsol={p:`Wrestlers earn titles at Naadam.||Наадамд бөхчүүд цол авдаг.
+The first title is Nachin, which means falcon.||Анхны цол бол шонхор гэсэн утгатай начин.
+Zaan means elephant and Arslan means lion.||Заан нь заан, арслан нь арслан гэсэн утгатай.
+The winning horse is called the Leader of Ten Thousand.||Түрүүлсэн морийг түмний эх гэдэг.
+A skilled archer gets the title Mergen.||Сурын мэргэн харваач мэргэн цол авдаг.`,ex:"In Naadam wrestling, titles rise with each win: Nachin (falcon), Khartsaga (hawk), Zaan (elephant), Garid (garuda) and Arslan (lion). The champion becomes an Arslan, and an Arslan who wins again becomes Avarga, the titan.|"+TSOL_MN,q:["What is an Arslan who wins Naadam again called?","Avarga","Nachin","Zaan"]};
+  D.ja.tsol={p:`ナーダムで力士は称号をもらいます。|なーだむで りきしは しょうごうを もらいます|Наадамд бөхчүүд цол авдаг.
+最初の称号はナチン、ハヤブサという意味です。|さいしょの しょうごうは なちん、はやぶさという いみです|Анхны цол бол шонхор гэсэн утгатай начин.
+ザーンは象、アルスランはライオンです。|ざーんは ぞう、あるすらんは らいおんです|Заан нь заан, арслан нь арслан гэсэн утгатай.
+優勝した馬は「一万の先頭」と呼ばれます。|ゆうしょうした うまは「いちまんの せんとう」と よばれます|Түрүүлсэн морийг түмний эх гэдэг.
+弓の名人はメルゲンの称号をもらいます。|ゆみの めいじんは めるげんの しょうごうを もらいます|Сурын мэргэн харваач мэргэн цол авдаг.`,ex:"ナーダムの相撲では、勝ち進むと称号が上がります。ナチン（ハヤブサ）、ハルツガ（タカ）、ザーン（象）、ガリド（ガルーダ）、アルスラン（ライオン）です。優勝するとアルスラン、アルスランがもう一度優勝するとアワルガになります。|"+TSOL_MN,q:["もう一度優勝したアルスランは何と呼ばれますか。","アワルガ","ナチン","ザーン"]};
+  D.ko.tsol={p:`나담에서 씨름 선수들은 칭호를 받아요.|nadameseo ssireum seonsudeureun chinghoreul badayo|Наадамд бөхчүүд цол авдаг.
+첫 칭호는 매를 뜻하는 나친이에요.|cheot chinghoneun maereul tteutaneun nachinieyo|Анхны цол бол шонхор гэсэн утгатай начин.
+자안은 코끼리, 아르슬란은 사자예요.|jaaneun kokkiri, areuseullaneun sajayeyo|Заан нь заан, арслан нь арслан гэсэн утгатай.
+우승한 말은 '만 마리의 선두'라고 불려요.|useunghan mareun 'man mariui seondu'rago bullyeoyo|Түрүүлсэн морийг түмний эх гэдэг.
+활 명수는 메르겐 칭호를 받아요.|hwal myeongsuneun mereugen chinghoreul badayo|Сурын мэргэн харваач мэргэн цол авдаг.`,ex:"나담 씨름에서는 이길수록 칭호가 올라가요. 나친(매), 하르착(새매), 자안(코끼리), 가리드(가루다), 아르슬란(사자) 순서예요. 우승하면 아르슬란이 되고, 아르슬란이 한 번 더 우승하면 아바르가가 돼요.|"+TSOL_MN,q:["한 번 더 우승한 아르슬란을 뭐라고 해요?","아바르가","나친","자안"]};
+  D.zh.tsol={p:`那达慕上摔跤手会获得称号。|Nàdámù shàng shuāijiāoshǒu huì huòdé chēnghào|Наадамд бөхчүүд цол авдаг.
+第一个称号是纳钦，意思是隼。|Dì yī gè chēnghào shì Nàqīn, yìsi shì sǔn|Анхны цол бол шонхор гэсэн утгатай начин.
+扎安是大象，阿尔斯兰是狮子。|Zhā'ān shì dàxiàng, Ā'ěrsīlán shì shīzi|Заан нь заан, арслан нь арслан гэсэн утгатай.
+冠军马被称为“万马之首”。|Guànjūn mǎ bèi chēngwéi “wàn mǎ zhī shǒu”|Түрүүлсэн морийг түмний эх гэдэг.
+射箭高手会获得“莫尔根”称号。|Shèjiàn gāoshǒu huì huòdé “Mò'ěrgēn” chēnghào|Сурын мэргэн харваач мэргэн цол авдаг.`,ex:"那达慕摔跤中，赢得越多，称号越高：纳钦（隼）、哈尔查嘎（鹰）、扎安（大象）、嘎日迪（大鹏）、阿尔斯兰（狮子）。第一次夺冠成为阿尔斯兰，阿尔斯兰再次夺冠就成为阿瓦尔嘎。|"+TSOL_MN,q:["再次夺冠的阿尔斯兰叫什么？","阿瓦尔嘎","纳钦","扎安"]};
+  D.ru.tsol={p:`На Наадаме борцы получают звания.||Наадамд бөхчүүд цол авдаг.
+Первое звание — начин, что значит «сокол».||Анхны цол бол шонхор гэсэн утгатай начин.
+Заан — это «слон», а арслан — «лев».||Заан нь заан, арслан нь арслан гэсэн утгатай.
+Победившего коня называют «первым из десяти тысяч».||Түрүүлсэн морийг түмний эх гэдэг.
+Меткий лучник получает звание мэргэн.||Сурын мэргэн харваач мэргэн цол авдаг.`,ex:"В борьбе на Наадаме звания растут с каждой победой: начин (сокол), харцага (ястреб), заан (слон), гарьд (гаруда), арслан (лев). Чемпион становится арсланом, а арслан, победивший ещё раз, становится аваргой — титаном.|"+TSOL_MN,q:["Как называют арслана, который победил ещё раз?","Аварга","Начин","Заан"]};
+  D.de.tsol={p:`Beim Naadam bekommen Ringer Titel.||Наадамд бөхчүүд цол авдаг.
+Der erste Titel ist Nachin, das heißt Falke.||Анхны цол бол шонхор гэсэн утгатай начин.
+Zaan bedeutet Elefant und Arslan bedeutet Löwe.||Заан нь заан, арслан нь арслан гэсэн утгатай.
+Das Siegerpferd heißt „Erster von Zehntausend“.||Түрүүлсэн морийг түмний эх гэдэг.
+Ein guter Bogenschütze bekommt den Titel Mergen.||Сурын мэргэн харваач мэргэн цол авдаг.`,ex:"Beim Naadam-Ringen steigen die Titel mit jedem Sieg: Nachin (Falke), Khartsaga (Habicht), Zaan (Elefant), Garid (Garuda) und Arslan (Löwe). Der Sieger wird Arslan, und ein Arslan, der noch einmal gewinnt, wird Avarga, der Titan.|"+TSOL_MN,q:["Wie heißt ein Arslan, der noch einmal gewinnt?","Avarga","Nachin","Zaan"]};
   var env=null,h=null,S={lang:null,t:null,pick:null,opts:null};
   function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),x=a[i];a[i]=a[j];a[j]=x;}return a;}
   function rows(p){return String(p).split("\n").map(function(l){var x=l.split("|");return x.length>=3?[x[0],x[1],x[2]]:[x[0],"",x[x.length-1]];}).filter(function(r){return r[0];});}

@@ -2454,6 +2454,17 @@ ru:[
 ["adv","Книга ___ моим братом.",["написана","написал","писала"],0,"Номыг миний ах бичсэн."]]
 };
 Object.keys(window.PLACE_MORE||{}).forEach(function(l){PLACE_BANK[l]=(PLACE_BANK[l]||[]).concat(window.PLACE_MORE[l]);});
+/* Дүрмийн хичээлийн цол: тухайн хэлээр дуусгасан хичээлийн тоогоор ахина */
+var LS_RANKS=[[1,"🥚 Шавь"],[5,"📗 Сурагч"],[15,"✏️ Хичээнгүй"],[30,"📚 Мэдлэгтэн"],[50,"🎯 Мэргэн"],[80,"🧑‍🏫 Багш"],[120,"🏆 Их мэргэн"]];
+function lsDoneN(){return LESSONS.filter(function(x){return (x.lang||"en")===state.lang&&state.lessons[x.id]!=null;}).length;}
+function lsRank(n){var cur=null,next=null;LS_RANKS.forEach(function(r){if(n>=r[0])cur=r;else if(!next)next=r;});return {cur:cur,next:next};}
+function lsRankCard(){
+  var n=lsDoneN(),r=lsRank(n),prev=r.cur?r.cur[0]:0,pct=r.next?Math.round((n-prev)/(r.next[0]-prev)*100):100;
+  return h("div",{class:"note",style:"margin:4px 0 10px"},
+    h("div",{style:"display:flex;justify-content:space-between;gap:8px;align-items:baseline"},h("b",null,"🏅 Цол: "+(r.cur?r.cur[1]:"— (эхний хичээлээ дуусга)")),h("span",{class:"muted small"},n+" хичээл")),
+    h("div",{style:"height:6px;border-radius:3px;background:var(--line,#e5e7eb);margin:8px 0 4px;overflow:hidden"},h("div",{style:"height:100%;width:"+pct+"%;background:var(--accent,#2563eb)"})),
+    h("div",{class:"muted small"},r.next?"Дараагийн цол "+r.next[1]+" хүртэл "+(r.next[0]-n)+" хичээл":"Хамгийн дээд цолтой боллоо!"));
+}
 function startPlacement(){
   var bank=PLACE_BANK[state.lang]||[];
   function pickQ(lv,n){
@@ -2573,7 +2584,7 @@ function viewGrammar(){
       viewQuestion(root,g,L);
     }else{
       var total=g.qs.length,best=Math.max(state.lessons[L.id]||0,g.score);
-      if(!g.saved){g.saved=true;if(g.score===total)celebrate(true,true);if(!g.custom){taskInc("l");state.lessons[L.id]=best;sset("lessons",state.lessons);}addXP(g.score*10);renderStrip();}
+      if(!g.saved){g.saved=true;if(g.score===total)celebrate(true,true);if(!g.custom){taskInc("l");var rk0=lsRank(lsDoneN()).cur;state.lessons[L.id]=best;sset("lessons",state.lessons);var rk1=lsRank(lsDoneN()).cur;if(rk1&&rk1!==rk0){toast("🏅 Шинэ цол: "+rk1[1]+"!");celebrate(true,true);}}addXP(g.score*10);renderStrip();}
       root.append(h("h2",null,g.score+" / "+total));
       root.append(h("p",null,g.score===total?"Гайхалтай! Энэ хичээлийг сайн эзэмшлээ.":"Дүрмийг дахин уншаад тестийг давтаж үзээрэй."));
       root.append(h("p",{class:"muted"},"+"+(g.score*10)+" XP"));
@@ -2586,6 +2597,7 @@ function viewGrammar(){
     return root;
   }
   root.append(h("h2",null,"Дүрмийн хичээл"));
+  root.append(lsRankCard());
   root.append(h("p",{class:"muted"},"Монгол тайлбартай богино хичээл, дараа нь 5 асуулттай тест (сонголт, өгүүлбэр бүтээх, нөхөх)."));
   var mc=missCount();
   root.append(h("div",{class:"row",style:"flex-wrap:wrap"},
