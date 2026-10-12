@@ -71,6 +71,7 @@ const EDGE_VER="143.0.3650.75",EDGE_MAJOR="143";
 const TTS_VOICES={
   en:["en-US","en-US-AriaNeural"],ja:["ja-JP","ja-JP-NanamiNeural"],ko:["ko-KR","ko-KR-SunHiNeural"],
   zh:["zh-CN","zh-CN-XiaoxiaoNeural"],ru:["ru-RU","ru-RU-SvetlanaNeural"],de:["de-DE","de-DE-KatjaNeural"],
+  ug:["kk-KZ","kk-KZ-AigulNeural"],
   mn:["mn-MN","mn-MN-YesuiNeural"]
 };
 /* аялга (a=gb|au): англи хэлэнд л */
@@ -87,6 +88,8 @@ function xmlEsc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/
 function hex(n){return Array.from(crypto.getRandomValues(new Uint8Array(n)),function(b){return b.toString(16).padStart(2,"0");}).join("");}
 
 export async function edgeTTS(lang,rate,text,fetchImpl,accent){
+  /* уйгур: казах дуугаар уншина; казах кирилл үсэгт җ байхгүй тул ж болгоно */
+  if(lang==="ug")text=String(text).replace(/җ/g,"ж").replace(/Җ/g,"Ж");
   const v=(accent&&TTS_ACCENTS[lang]&&TTS_ACCENTS[lang][accent])||TTS_VOICES[lang],id=hex(16);
   const url="https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken="+EDGE_TOKEN+
     "&Sec-MS-GEC="+(await secMsGec())+"&Sec-MS-GEC-Version=1-"+EDGE_VER+"&ConnectionId="+id;
@@ -220,11 +223,12 @@ function noStore(res){const r=new Response(res.body,res);r.headers.set("cache-co
    (vision загвар монгол, япон үгэнд сул). */
 const VISION_MODEL="@cf/meta/llama-3.2-11b-vision-instruct";
 const MAX_IMAGE_BYTES=400000;
-const VISION_LANGS={en:"English",ja:"Japanese",ko:"Korean",zh:"Simplified Chinese",ru:"Russian",de:"German"};
+const VISION_LANGS={en:"English",ja:"Japanese",ko:"Korean",zh:"Simplified Chinese",ru:"Russian",de:"German",ug:"Uyghur (Cyrillic script)"};
 /* орчуулгын жишээ (dog) — загвар хэлбэрийг нь дуурайна */
 const VISION_EX={
   en:'{"word":"dog","reading":"","mn":"нохой"}',ja:'{"word":"いぬ","reading":"inu","mn":"нохой"}',ko:'{"word":"개","reading":"gae","mn":"нохой"}',
-  zh:'{"word":"狗","reading":"gǒu","mn":"нохой"}',ru:'{"word":"собака","reading":"","mn":"нохой"}',de:'{"word":"der Hund","reading":"","mn":"нохой"}'
+  zh:'{"word":"狗","reading":"gǒu","mn":"нохой"}',ru:'{"word":"собака","reading":"","mn":"нохой"}',de:'{"word":"der Hund","reading":"","mn":"нохой"}',
+  ug:'{"word":"ит","reading":"","mn":"нохой"}'
 };
 export function decodeImage(b64){
   if(typeof b64!=="string")return null;
