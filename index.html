@@ -555,6 +555,7 @@ window.salkhiHero=initSalkhiHero(document.getElementById("salkhiHero"));
 <script src="prondiag.js"></script>
 <script src="voicediary.js"></script>
 <script src="mnholiday.js"></script>
+<script src="mnscript.js"></script>
 <script src="phonetics.js"></script>
 <script src="lab.js"></script>
 <script src="writing.js"></script>
@@ -2536,6 +2537,7 @@ function viewGrammar(){
   if(g.mod==="culture"&&window.Culture&&Culture.has(state.lang))return Culture.view(modEnv());
   if(g.mod==="cmp"&&window.MnCompare&&MnCompare.has(state.lang))return MnCompare.view(modEnv());
   if(g.mod==="lab"&&window.LangLab&&LangLab.has(state.lang))return LangLab.view(modEnv());
+  if(g.mod==="mns"&&window.MnScript)return MnScript.view(modEnv());
   if(g.mod==="hol"&&window.MnHoliday&&MnHoliday.has(state.lang)){var ho=g.holOpen;g.holOpen=null;return MnHoliday.view(modEnv(),ho);}
   g.mod=null;
   if(g.lesson){
@@ -2585,6 +2587,7 @@ function viewGrammar(){
     MN_ERR_OK()?h("button",{class:"btn",onclick:startMnErr},"🎯 Түгээмэл алдаа"):null,
     state.mode!=="kid"&&window.LangLab&&LangLab.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("lab");}},"🧩 Хэлний сэдвүүд"):null,
     state.mode!=="kid"&&window.MnCompare&&MnCompare.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("cmp");}},"🇲🇳⇄ Монголтой харьцуулах"):null,
+    window.MnScript?h("button",{class:"btn",onclick:function(){openMod("mns");}},"📜 Монгол бичиг"):null,
     state.mode!=="kid"&&window.MnHoliday&&MnHoliday.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("hol");}},"🇲🇳 Ёс заншлаа тайлбарлах"):null,
     state.mode!=="kid"&&window.Idioms&&Idioms.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("idiom");}},"🗣 Хэлц үг"):null,
     state.mode!=="kid"&&window.Culture&&Culture.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("culture");}},"🎎 Соёл, ёс заншил"):null));
