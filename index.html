@@ -428,6 +428,21 @@ p+p{margin-top:10px}
 .gameview .bar button{min-height:40px;padding:8px 14px;border-radius:10px;border:1px solid #46311c;background:#251808;color:#d9c9a3;font-weight:600}
 .gameview .bar span{font-weight:600;font-size:14px;margin-left:auto;color:#c9a24a;letter-spacing:.04em}
 .gameview iframe{flex:1;width:100%;border:0;background:#170f08}
+
+/* ---- 2026-10-13 цэвэрлэгээ: дээд хэсгийг намсгаж, хэрэгслийн товчнуудыг нэг мөр бичигтэй 2 баганын жагсаалт болгоно ---- */
+.salkhi-hero{height:calc(210px + env(safe-area-inset-top));border-radius:0 0 24px 24px}
+.brand{bottom:12px;left:18px;gap:4px}
+.brand img{width:min(230px,54vw)}
+/* тайлбар бичиг цаасан шувуутай давхцдаг — хэлнүүд доорх чипэнд харагддаг тул зөвхөн дэлгэц уншигчид үлдээнэ */
+.brand .tag{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.hero{gap:10px}
+.strip{padding-top:8px}
+.langs{padding-top:10px}
+.levels{padding-top:6px}
+.lv{padding:6px 12px;font-size:13px}
+.toolgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.toolgrid .btn{display:flex;align-items:center;justify-content:flex-start;gap:8px;text-align:left;padding:10px 12px;font-size:14px;line-height:1.25;min-height:46px;border-radius:12px}
+.toolgrid .btn:not(:disabled):hover{border-color:color-mix(in srgb,var(--sky) 45%,var(--line));background:var(--soft)}
 </style>
 </head>
 <body>
@@ -2274,10 +2289,10 @@ function viewWords(){
   root.append(taskPanel());
   var rc=reviewCard();if(rc)root.append(rc);
   var wxc=wxWordsCard();if(wxc)root.append(wxc);
-  root.append(h("div",{style:"display:flex;gap:8px;margin-bottom:12px"},
-    state.mode!=="kid"&&window.ScreenLang?h("button",{class:"btn",style:"flex:1;padding:9px 8px",onclick:function(){ui.wtool="screen";render();window.scrollTo(0,0);}},"📺 Дэлгэцийн хэл"):null,
-    window.Worksheet?h("button",{class:"btn",style:"flex:1;padding:9px 8px",onclick:function(){ui.wtool="ws";render();window.scrollTo(0,0);}},"🖨️ Ажлын хуудас"):null,
-    state.mode!=="kid"&&window.Reader?h("button",{class:"btn",style:"flex:1;padding:9px 8px",onclick:function(){ui.wtool="read";render();window.scrollTo(0,0);}},"📄 Өөрийн бичвэр"):null));
+  root.append(h("div",{class:"toolgrid"},
+    state.mode!=="kid"&&window.ScreenLang?h("button",{class:"btn",onclick:function(){ui.wtool="screen";render();window.scrollTo(0,0);}},"📺 Дэлгэцийн хэл"):null,
+    window.Worksheet?h("button",{class:"btn",onclick:function(){ui.wtool="ws";render();window.scrollTo(0,0);}},"🖨️ Ажлын хуудас"):null,
+    state.mode!=="kid"&&window.Reader?h("button",{class:"btn",onclick:function(){ui.wtool="read";render();window.scrollTo(0,0);}},"📄 Өөрийн бичвэр"):null));
   var hs=state.mode!=="kid"&&window.MnHoliday&&MnHoliday.has(state.lang)&&MnHoliday.season();
   if(hs&&sget("holban","")!==hs+new Date().getFullYear())root.append(h("div",{class:"note",style:"display:flex;gap:10px;align-items:center;margin-bottom:12px"},
     h("div",{style:"flex:1"},h("b",null,"🎉 "+MnHoliday.title(hs)+" болж байна!"),h("div",{class:"muted small"},"Гадаад найздаа "+LANGN[state.lang].toLowerCase()+" хэлээр тайлбарлаж сур.")),
@@ -2660,7 +2675,7 @@ function viewGrammar(){
   root.append(lsRankCard());
   root.append(h("p",{class:"muted"},"Монгол тайлбартай богино хичээл, дараа нь 5 асуулттай тест (сонголт, өгүүлбэр бүтээх, нөхөх)."));
   var mc=missCount();
-  root.append(h("div",{class:"row",style:"flex-wrap:wrap"},
+  root.append(h("div",{class:"toolgrid"},
     h("button",{class:"btn",onclick:startPlacement},"🎯 Түвшин тогтоох (10)"),
     h("button",{class:"btn",disabled:mc===0,onclick:startMissed},"🔁 Алдсанаа давт ("+mc+")"),
     h("button",{class:"btn",onclick:startExam},"📝 Шалгалтын тест (20)"),
@@ -6583,7 +6598,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261013-7";
+var BUILD="20261013-8";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
