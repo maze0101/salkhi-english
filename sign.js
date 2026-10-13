@@ -66,6 +66,7 @@
     S.ix=d.ug.split("\n").map(function(s){return {n:parseInt(s,10),s:s,t:s.replace(/^\d+-/,"").replace(/-\d+$/,"").replace(/-/g," ")};});
     return S.ix;
   }
+  function lurl(L){return MSL+"khuruu-useg/"+encodeURIComponent(L)+"/";}
   function ugURL(e){return MSL+"ug/"+encodeURIComponent(e.s)+"/";}
   function byNum(n){var a=ix();for(var i=0;i<a.length;i++)if(a[i].n===n)return a[i];return null;}
   function seen(k){var s=env.sget("signSeen",{})||{};if(!s[k]){s[k]=1;env.sset("signSeen",s);env.addXP(1);}}
@@ -87,7 +88,7 @@
       h("div",{class:"muted small",style:"margin-top:4px"},"Видео, зураг: «Монгол дохионы хэл» цахим толь (mnsl.mn) — тэдний хуудас апп дотор нээгдэж байна. Доош гүйлгэж гарын хэлбэр, ижил утгатай дохиог үзээрэй."));
     return w;
   }
-  function toggle(url,key,from){S.open=S.open===url&&S.from===(from||"")?null:url;S.from=from||"";if(S.open)seen(key);env.render();}
+  function toggle(url,key,from){S.open=S.open===url&&S.from===(from||"")?null:url;S.from=from||"";S.spellI=0;if(S.open)seen(key);env.render();}
   /* from: аль хэсгээс нээсэн (search / basic) — ижил дохио хоёр газар байвал карт зөвхөн дарсан газарт гарна */
   function row(url,key,main,sub,icon,from){
     var open=S.open===url&&S.from===from;
@@ -117,10 +118,22 @@
     WORDS.forEach(function(w){
       if(w[0]!==cat){cat=w[0];put(root,h("div",{class:"muted small",style:"font-weight:700;margin:10px 0 4px"},cat));}
       var e=typeof w[4]==="number"?byNum(w[4]):typeof w[4]==="string"?{n:w[4],path:w[4]}:null;
-      /* тольд яг ийм дохио алга (ус, нэр, маргааш…): mnsl.mn-ийн үгээр хайх толийг апп дотор нээнэ */
-      if(!e){var du=MSL+"ugw/",df="dict:"+w[1];
-        put(root,row(du,"d"+w[1],h("b",null,w[1]),"🔎 Тольд яг ийм дохио алга — толийг энд нээж хайна уу",null,df));
-        if(S.open===du&&S.from===df)put(root,card(du,w[1]+" — толь бичиг"));
+      /* тольд тусдаа дохио алга (ус, жорлон — сайтын бүх хэсгээс хайж баталсан): дохионы хэлний жам ёсоор хуруугаар үсэглэнэ.
+         Үсэг бүрийн гарын хэлбэрийг mnsl.mn-ийн хурууны үсгийн хуудсаар, «Дараах ›»-ээр дараалуулан харуулна. */
+      if(!e){
+        var lets=String(w[1]).toLowerCase().split("").filter(function(c){return msl().letters.indexOf(c)>=0;}),sf="spell:"+w[1],su="spell://"+w[1],son=S.open===su&&S.from===sf;
+        put(root,row(su,"s"+w[1],h("b",null,w[1]),"✋ Тольд тусдаа дохио алга — хуруугаар үсэглэнэ: "+lets.map(function(c){return c.toUpperCase();}).join(" · "),null,sf));
+        if(son){
+          var i=Math.max(0,Math.min(lets.length-1,S.spellI||0)),box=h("div",{class:"note",style:"margin:6px 0 10px;padding:8px"});
+          var chips=h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"});
+          lets.forEach(function(c,k){put(chips,h("button",{class:"chip",type:"button","aria-pressed":String(k===i),style:"font-weight:800"+(k===i?";border-color:var(--sky);background:color-mix(in srgb,var(--sky) 14%,var(--surface))":""),onclick:function(){S.spellI=k;env.render();}},(k+1)+". "+c.toUpperCase()));});
+          put(box,h("div",{class:"small",style:"margin-bottom:6px"},"«"+w[1]+"» үгийг үсэг үсгээр нь хуруугаар үсэглэнэ — "+(i+1)+" / "+lets.length+" үсэг"),chips,
+            card(lurl(lets[i]),"«"+lets[i].toUpperCase()+"» үсэг"),
+            h("div",{class:"row"},
+              h("button",{class:"btn",disabled:i===0,onclick:function(){S.spellI=i-1;env.render();}},"‹ Өмнөх"),
+              h("button",{class:"btn primary",disabled:i>=lets.length-1,onclick:function(){S.spellI=i+1;env.render();}},"Дараах ›")));
+          put(root,box);
+        }
         return;}
       var u=e.path?MSL+e.path.split("/").map(encodeURIComponent).join("/")+"/":ugURL(e);
       put(root,row(u,"m"+e.n,h("b",null,w[1]),w[5]||null,null,"basic"));
@@ -129,7 +142,6 @@
     /* хурууны цагаан толгой */
     put(root,h("h3",{style:"margin:18px 0 6px"},"🔤 Хурууны цагаан толгой (дактиль)"),
       h("p",{class:"muted small",style:"margin:0 0 6px"},"Нэр, газрын нэр зэрэг дохиогүй үгийг үсэг үсгээр нь хуруугаар үсэглэдэг. Үсэг дээр дарж гарын хэлбэрийг үзээрэй."));
-    var lurl=function(L){return MSL+"khuruu-useg/"+encodeURIComponent(L)+"/";};
     var g=h("div",{style:"display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px"}),openL=null;
     msl().letters.forEach(function(L){var u=lurl(L),on=S.open===u&&S.from==="grid";if(on)openL=L;
       put(g,h("button",{class:"btn"+(on?" primary":""),type:"button","aria-pressed":String(on),style:"margin:0;padding:8px 0;text-align:center;font-weight:800;font-size:18px",onclick:function(){toggle(u,"l"+L,"grid");}},L.toUpperCase()));});
