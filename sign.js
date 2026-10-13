@@ -73,14 +73,18 @@
   function translit(s){return String(s||"").toLowerCase().split("").map(function(c){return TR[c]!=null?TR[c]:c;}).join("").replace(/[^a-z]/g,"");}
   function img(c,size){return h("img",{src:"sign/asl/"+c+".svg",alt:"ASL үсэг "+c.toUpperCase(),width:String(size||64),height:String(size||64),loading:"lazy",style:"width:"+(size||64)+"px;height:"+(size||64)+"px;object-fit:contain;background:#fff;border-radius:10px;border:1px solid var(--line)"});}
   /* ---------- 🇲🇳 МДХ ---------- */
-  /* mnsl.mn-ийн тухайн дохионы хуудсыг апп дотор цонх болгон (iframe) бүтнээр нь харуулна — видео (автоматаар, дуугүй),
+  /* mnsl.mn-ийн тухайн дохионы хуудсыг апп дотор цонх болгон (iframe) бүтнээр нь харуулна — видео,
      хурд, гарын хэлбэр/байрлал/хөдөлгөөний зураг тэдний сайт дээр, тэдний брэнд, холбоостойгоо тоглоно. Видео файлыг шууд
      (<video src=…mp4>) тоглуулахгүй — зохиогчийн эрх эзэмшигчийн зөвшөөрөлгүй. Сайт iframe-ийг хориглоогүй (X-Frame-Options байхгүй).
-     Нэг удаад нэг л цонх (S.open), дарсан үед л ачаална. */
+     Нэг удаад нэг л цонх (S.open), дарсан үед л ачаална.
+     ⚠️ sandbox-д allow-scripts БАЙХГҮЙ: тэдний pagelink.js нь хуудсан дээр хажуу тийш шудрах (Hammer swipe) ба ←/→ товчоор
+     дараагийн/өмнөх дохио руу шилждэг — хурдны гулсуур чирэх, видео гүйлгэхэд санамсаргүй шилжиж байсан (хэрэглэгчийн мэдэгдсэн алдаа).
+     Скриптгүй үед видео хөтчийн өөрийн удирдлагаар тоглоно (хурд: ⋮ цэс); тэдний «Видеоны хурд» гулсуур ажиллахгүй. */
   function card(url,label){
-    var w=h("div",{class:"note",style:"margin:6px 0 10px;padding:8px"});
+    var w=h("div",{class:"note",style:"margin:6px 0 10px;padding:8px"}),letter=url.indexOf("/khuruu-useg/")>0;
+    if(!letter)put(w,h("div",{class:"small",style:"margin:0 0 6px"},"▶ дарж тоглуулна. Хурдыг видеоны ",h("b",null,"⋮ → Тоглуулах хурд (Playback speed)"),"-аас тохируулна — доорх «Видеоны хурд» гулсуур энд ажиллахгүй."));
     put(w,h("iframe",{src:url,title:"Монгол дохионы хэл: "+label,allow:"autoplay; fullscreen",allowfullscreen:true,
-        sandbox:"allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox",referrerpolicy:"strict-origin-when-cross-origin",
+        sandbox:"allow-same-origin allow-popups allow-popups-to-escape-sandbox",referrerpolicy:"strict-origin-when-cross-origin",
         style:"display:block;width:100%;height:560px;border:0;border-radius:10px;background:#1b1f22"}),
       h("div",{class:"row",style:"margin-top:6px"},
         h("button",{class:"btn ghost",onclick:function(){S.open=null;env.render();}},"✕ Хаах"),
