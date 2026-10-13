@@ -82,17 +82,21 @@
      Скриптгүй үед видео хөтчийн өөрийн удирдлагаар тоглоно (хурд: ⋮ цэс); тэдний «Видеоны хурд» гулсуур ажиллахгүй. */
   function card(url,label){
     var w=h("div",{class:"note",style:"margin:6px 0 10px;padding:8px"}),letter=url.indexOf("/khuruu-useg/")>0;
-    /* хурууны үсэг: 📷 зураг (сайтын албан ёсны embed карт — зөвхөн гарын хэлбэрийн зураг) ба 🎥 видео (бүтэн хуудас) тусдаа таб */
-    var pic=letter&&S.lview!=="vid";
-    if(letter){
-      var seg=h("div",{class:"seg",role:"group","aria-label":"Зураг эсвэл видео",style:"margin:0 0 6px"});
-      [["img","📷 Зураг"],["vid","🎥 Видео"]].forEach(function(t){put(seg,h("button",{type:"button","aria-pressed":String((t[0]==="img")===pic),onclick:function(){S.lview=t[0];env.render();}},t[1]));});
-      put(w,seg);
-    }
-    if(!pic)put(w,h("div",{class:"small",style:"margin:0 0 6px"},"▶ дарж тоглуулна"+(letter?" (видео нь хуудасны доод хэсэгт — доош гүйлгэнэ)":"")+". Хурдыг видеоны ",h("b",null,"⋮ → Тоглуулах хурд (Playback speed)"),"-аас тохируулна — «Видеоны хурд» гулсуур энд ажиллахгүй."));
-    put(w,h("iframe",{src:pic?url+"embed/":url,title:"Монгол дохионы хэл: "+label+(pic?" (зураг)":""),allow:"autoplay; fullscreen",allowfullscreen:true,
+    var frame=function(src,title,hgt,bg){return h("iframe",{src:src,title:title,allow:"autoplay; fullscreen",allowfullscreen:true,
         sandbox:"allow-same-origin allow-popups allow-popups-to-escape-sandbox",referrerpolicy:"strict-origin-when-cross-origin",
-        style:"display:block;width:100%;height:"+(pic?"300px":"560px")+";border:0;border-radius:10px;background:"+(pic?"#fff":"#1b1f22")}),
+        style:"display:block;width:100%;height:"+hgt+";border:0;border-radius:10px;background:"+bg});};
+    var hint="Хурдыг видеоны ⋮ → Тоглуулах хурд (Playback speed)-аас тохируулна — «Видеоны хурд» гулсуур энд ажиллахгүй.";
+    if(letter){
+      /* хурууны үсэг: 📷 зураг (албан ёсны embed карт — зөвхөн гарын хэлбэр) ба 🎥 видео (үсгийн хуудас) зэрэгцээ.
+         Өргөн дэлгэцэд хажуу хажуугаар, утсанд (картын өргөн 448px-ээс бага) дээр доор нь — хэт жижиг болохоос сэргийлнэ. */
+      var grid=h("div",{style:"display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;align-items:start"});
+      put(grid,h("div",null,h("div",{class:"small",style:"font-weight:700;margin:0 0 4px"},"📷 Гарын хэлбэр"),frame(url+"embed/","Монгол дохионы хэл: "+label+" (зураг)","300px","#fff")),
+        h("div",null,h("div",{class:"small",style:"font-weight:700;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"},"🎥 Видео (▶ дарна)"),frame(url,"Монгол дохионы хэл: "+label+" (видео)","560px","#1b1f22")));
+      put(w,grid,h("div",{class:"muted small",style:"margin-top:4px"},"Видео нь хуудасны зурагны доор байрлана — цонх дотроо доош гүйлгэнэ. "+hint));
+    }else{
+      put(w,h("div",{class:"small",style:"margin:0 0 6px"},"▶ дарж тоглуулна. "+hint),frame(url,"Монгол дохионы хэл: "+label,"560px","#1b1f22"));
+    }
+    put(w,
       h("div",{class:"row",style:"margin-top:6px"},
         h("button",{class:"btn ghost",onclick:function(){S.open=null;env.render();}},"✕ Хаах"),
         h("a",{class:"btn ghost",href:url,target:"_blank",rel:"noopener",style:"text-decoration:none"},"↗ Шинэ цонхонд")),
