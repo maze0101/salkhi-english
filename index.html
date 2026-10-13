@@ -81,6 +81,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .brand .tag{font:500 13px/1.35 var(--font);color:#fff;text-shadow:0 1px 6px rgba(10,30,32,.75);padding-left:4px}
 .mnsbtn{pointer-events:auto;margin-top:2px;height:32px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#F4F8F7;font:600 13px/1 var(--font);cursor:pointer}
 .mnsbtn:hover{background:rgba(255,255,255,.2)}
+.herobtns{display:flex;flex-wrap:wrap;gap:6px;pointer-events:none}
 /* Бичвэр-лого: цайвар дэвсгэрт бараан (wm-d), бараан дэвсгэрт цагаан (wm-l) хувилбар */
 .wm-l{display:none}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .wm-d{display:none}:root:not([data-theme="light"]) .wm-l{display:inline}}
@@ -443,7 +444,7 @@ p+p{margin-top:10px}
     <div class="salkhi-hero" id="salkhiHero">
       <canvas role="img" aria-label="Салхи — дарж салхи үлээлгэх"></canvas>
       <div class="salkhi-hero__overlay">
-        <div class="brand"><img src="logo-light.png" alt="Салхи" width="600" height="129"><span class="tag">Англи, япон, солонгос, хятад,<br>орос, герман, уйгур хэлний үг, дүрэм, яриа</span><button class="mnsbtn" id="mnsbtn" type="button">📜 Монгол бичиг</button></div>
+        <div class="brand"><img src="logo-light.png" alt="Салхи" width="600" height="129"><span class="tag">Англи, япон, солонгос, хятад,<br>орос, герман, уйгур хэлний үг, дүрэм, яриа</span><div class="herobtns"><button class="mnsbtn" id="mnsbtn" type="button">📜 Монгол бичиг</button><button class="mnsbtn" id="signbtn" type="button">🤟 Дохионы хэл</button></div></div>
         <div class="tools"><button class="themebtn" id="themebtn" type="button"></button></div>
       </div>
     </div>
@@ -1332,11 +1333,14 @@ function applyTheme(){
 var rateBtn=h("button",{class:"themebtn",id:"ratebtn",type:"button"});
 document.getElementById("themebtn").after(rateBtn);
 /* hero > 📜 Монгол бичиг: Дүрэм таб дахь mnscript.js модулийг шууд нээнэ (том хүний горимд ч) */
-document.getElementById("mnsbtn").addEventListener("click",function(){
+function heroMod(mod){
   if(state.tab==="chat")stopTransRec();
-  var fromLv=state.tab==="levels";ui.grammar.lesson=null;ui.grammar.mod="mns";state.tab="grammar";
+  var fromLv=state.tab==="levels";ui.grammar.lesson=null;ui.grammar.mod=mod;state.tab="grammar";
   renderTabs();if(fromLv)renderLevels();render();elMain.scrollIntoView({behavior:"smooth",block:"start"});
-});
+}
+document.getElementById("mnsbtn").addEventListener("click",function(){heroMod("mns");});
+/* 🤟 дохионы хэл (sign.js хойно ачаалагддаг — ачаалагдмагц lazyBoot-ийн render() харуулна) */
+document.getElementById("signbtn").addEventListener("click",function(){heroMod("sign");});
 var RATES=[[0.65,"🐢","Удаан"],[1,"🐇","Хэвийн"],[1.25,"⚡","Хурдан"]];
 function rateInfo(){return RATES.filter(function(r){return r[0]===state.rate;})[0]||RATES[1];}
 function setRate(v){state.rate=v;sset("rate",v);paintRate();}
