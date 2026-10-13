@@ -2609,6 +2609,7 @@ function viewGrammar(){
   if(g.mod==="idiom"&&window.Idioms&&Idioms.has(state.lang))return Idioms.view(modEnv());
   if(g.mod==="culture"&&window.Culture&&Culture.has(state.lang))return Culture.view(modEnv());
   if(g.mod==="gesture"&&window.Gesture&&Gesture.has(state.lang))return Gesture.view(modEnv());
+  if(g.mod==="sign"&&window.Sign){var sge=modEnv();sge.toast=toast;sge.logAct=logAct;return Sign.view(sge);}
   if(g.mod==="cmp"&&window.MnCompare&&MnCompare.has(state.lang))return MnCompare.view(modEnv());
   if(g.mod==="lab"&&window.LangLab&&LangLab.has(state.lang))return LangLab.view(modEnv());
   if(g.mod==="mns"&&window.MnScript)return MnScript.view(modEnv());
@@ -2666,7 +2667,8 @@ function viewGrammar(){
     state.mode!=="kid"&&window.MnHoliday&&MnHoliday.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("hol");}},"🇲🇳 Ёс заншлаа тайлбарлах"):null,
     state.mode!=="kid"&&window.Idioms&&Idioms.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("idiom");}},"🗣 Хэлц үг"):null,
     state.mode!=="kid"&&window.Culture&&Culture.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("culture");}},"🎎 Соёл, ёс заншил"):null,
-    state.mode!=="kid"&&window.Gesture&&Gesture.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("gesture");}},"🙌 Дохио зангаа"):null));
+    state.mode!=="kid"&&window.Gesture&&Gesture.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("gesture");}},"🙌 Дохио зангаа"):null,
+    window.Sign?h("button",{class:"btn",onclick:function(){openMod("sign");}},"🤟 Дохионы хэл"):null));
   var tks=Object.keys(CLS_LESSONS).filter(function(k){return CLS_LESSONS[k].lang===state.lang;});
   if(tks.length){
     root.append(h("h3",{style:"margin:16px 0 6px"},"📘 Багшийн хичээл"));
@@ -6698,7 +6700,7 @@ if(window.Onboard&&!location.hash&&!sget("foreign",0))setTimeout(function(){Onbo
 if(repairInfo()&&sget("rpshown","")!==dkey(new Date())){sset("rpshown",dkey(new Date()));setTimeout(function(){var r=repairInfo();if(r)toast("💔 Дараалал тасарлаа. Өнөөдөр "+r.need+" XP цуглуулбал "+r.prev+" өдрийн дараалал сэргэнэ!",6000);},2500);}
 /* ---------- хойшлуулсан ачаалал: эхний дэлгэц гарсны дараа дүрмийн багц ба нэмэлт модулиуд ----------
    Эдгээр модулийг үргэлж window.X-ээр шалгаж ашигладаг тул ачаалагдтал товч нь харагдахгүй, ачаалагдмагц render() */
-var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js","reels.js","podcast.js","reader.js","mnemo.js","goal.js","focus.js","pairs.js","typing.js","anki.js","gesture.js","escape.js","debate.js"];
+var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js","reels.js","podcast.js","reader.js","mnemo.js","goal.js","focus.js","pairs.js","typing.js","anki.js","gesture.js","escape.js","debate.js","sign.js"];
 function lazyBoot(){
   if(window.League){League.init(lgEnv());if(window.SALKHI_FB&&League.fromHash(lgEnv())){state.tab="stats";ui.lg=true;renderTabs();}
     /* наадмын push мэдэгдэл дээр дарж ирсэн (./#lg) */
