@@ -29,8 +29,9 @@
   var ABC="abcdefghijklmnopqrstuvwxyz".split(""),MSL="https://mnsl.mn/";
   /* ASL үгийн видео: Dr. Bill Vicars, ASL University (lifeprint.com) — YouTube (embed зөвшөөрсөн, oEmbed-ээр шалгасан).
      Lifeprint-ийн хуудаснаас видеог авч, гарчиг нь тухайн үгээр эхэлдгийг л сонгосон (хажуугийн ерөнхий ба өгүүлбэрийн видеог хассан).
-     signasl.org нь iframe-ийг хориглодог (X-Frame-Options: SAMEORIGIN) тул үлдсэн 12 үг тийшээ холбоосоор. */
-  var YT={"thank-you":"2W0BDFUjsG0","please":"rnb9FxPO7is","yes":"0usayvOXzHo","no":"QJXKaOSyl4o","goodbye":"4e14uNAn2Ao","name":"GbeC9TFuSX4","understand":"5N10dIavSYc",
+     hello → «Hi», toilet → «BATHROOM / toilet / restroom», good → «GOOD-[well]» гараар сонгосон. food, eat, help, money, sick-д зөвхөн өгүүлбэрийн видео
+     байсан тул оруулаагүй. signasl.org нь iframe-ийг хориглодог (X-Frame-Options: SAMEORIGIN) тул үлдсэн 9 үг тийшээ холбоосоор. */
+  var YT={"hello":"rhfJGeMDMzQ","toilet":"2xdhyJEgXdI","good":"tTDXplV6TKA","thank-you":"2W0BDFUjsG0","please":"rnb9FxPO7is","yes":"0usayvOXzHo","no":"QJXKaOSyl4o","goodbye":"4e14uNAn2Ao","name":"GbeC9TFuSX4","understand":"5N10dIavSYc",
     "mother":"8yzUd0Md_uY","father":"30H8W5kBGB8","brother":"G0fzmn3pQng","sister":"0z2_gcB5OJ8","family":"SxrxUgeTt00","child":"32hgy9NSs7k","friend":"6RRmIyhkMx0","teacher":"CrUCwJklAUA",
     "water":"-SdOfxGhb0A","drink":"537MWOtCl78","home":"WSHD1XX7kWk","school":"vuE3RN10AGA","work":"mJrUYRjvrew","doctor":"IEVgcJA3JWk",
     "happy":"ZXHHO_DY6_A","sad":"zfkQYQhrZ6Q","love":"DAZB0eVf5t0","tired":"iZ6EeQqzZl0","bad":"prwtXZ1o2As",
