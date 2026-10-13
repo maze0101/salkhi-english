@@ -57,8 +57,29 @@
   function msl(){return window.MSL_DATA||null;}
   function loadMsl(){
     if(msl()||S.loading)return;S.loading=true;
-    var s=document.createElement("script");s.src="sign/msl-data.js"+(window.SALKHI_BUILD?"?v="+window.SALKHI_BUILD:"");s.onload=function(){S.loading=false;S.ix=null;env.render();};
+    var v=window.SALKHI_BUILD?"?v="+window.SALKHI_BUILD:"";
+    /* видеоны жагсаалт (msl-video.js) зэрэг ачаална; олдохгүй бол хуудсаар нь харуулна */
+    var sv=document.createElement("script");sv.src="sign/msl-video.js"+v;document.head.appendChild(sv);
+    var s=document.createElement("script");s.src="sign/msl-data.js"+v;s.onload=function(){S.loading=false;S.ix=null;env.render();};
     s.onerror=function(){S.loading=false;S.err=true;env.render();};document.head.appendChild(s);
+  }
+  /* тухайн хуудасны гол видео (msl-video.js): https://mnsl.mn/<зам>/ → wp-content/uploads/<файл> */
+  function vidFor(url){
+    var m=window.MSL_VIDEO;if(!m)return null;
+    var k=decodeURIComponent(url).replace(MSL,"").replace(/\/$/,"");
+    return m[k]?MSL+"wp-content/uploads/"+m[k].split("/").map(encodeURIComponent).join("/"):null;
+  }
+  /* зөвхөн видео: апп өөрөө удирдана — хурдны товч, давталт; татаж авахыг хаасан (тэдний nodownload-ыг хүндэтгэнэ) */
+  function videoBox(src,label){
+    var v=h("video",{src:src,controls:true,playsinline:true,muted:true,autoplay:true,loop:true,preload:"metadata",controlslist:"nodownload",disablepictureinpicture:true,
+      "aria-label":"Монгол дохионы хэл: "+label,style:"display:block;width:100%;aspect-ratio:4/3;border-radius:10px;background:#000"});
+    v.addEventListener("contextmenu",function(e){e.preventDefault();});
+    var rates=h("div",{class:"seg",role:"group","aria-label":"Видеоны хурд",style:"margin-top:6px"});
+    [[0.5,"🐢 0.5×"],[0.75,"0.75×"],[1,"1×"]].forEach(function(r){
+      var b=h("button",{type:"button","aria-pressed":String(r[0]===(S.rate||1)),onclick:function(){S.rate=r[0];v.playbackRate=r[0];
+        Array.prototype.forEach.call(rates.children,function(x){x.setAttribute("aria-pressed",String(x===b));});}},r[1]);put(rates,b);});
+    v.addEventListener("loadedmetadata",function(){v.playbackRate=S.rate||1;});
+    return h("div",null,v,rates);
   }
   /* МДХ индекс: {n, slug, t (гарчиг)} */
   function ix(){
@@ -81,26 +102,30 @@
      дараагийн/өмнөх дохио руу шилждэг — хурдны гулсуур чирэх, видео гүйлгэхэд санамсаргүй шилжиж байсан (хэрэглэгчийн мэдэгдсэн алдаа).
      Скриптгүй үед видео хөтчийн өөрийн удирдлагаар тоглоно (хурд: ⋮ цэс); тэдний «Видеоны хурд» гулсуур ажиллахгүй. */
   function card(url,label){
-    var w=h("div",{class:"note",style:"margin:6px 0 10px;padding:8px"}),letter=url.indexOf("/khuruu-useg/")>0;
+    var w=h("div",{class:"note",style:"margin:6px 0 10px;padding:8px"}),letter=url.indexOf("/khuruu-useg/")>0,vsrc=vidFor(url);
     var frame=function(src,title,hgt,bg){return h("iframe",{src:src,title:title,allow:"autoplay; fullscreen",allowfullscreen:true,
         sandbox:"allow-same-origin allow-popups allow-popups-to-escape-sandbox",referrerpolicy:"strict-origin-when-cross-origin",
         style:"display:block;width:100%;height:"+hgt+";border:0;border-radius:10px;background:"+bg});};
     var hint="Хурдыг видеоны ⋮ → Тоглуулах хурд (Playback speed)-аас тохируулна — «Видеоны хурд» гулсуур энд ажиллахгүй.";
+    /* видео: msl-video.js-д байвал зөвхөн видео (апп удирдана), үгүй бол тэдний хуудсыг бүтнээр (хайлтын бусад дохио) */
+    var vid=vsrc?videoBox(vsrc,label):frame(url,"Монгол дохионы хэл: "+label+(letter?" (видео)":""),"560px","#1b1f22");
     if(letter){
-      /* хурууны үсэг: 📷 зураг (албан ёсны embed карт — зөвхөн гарын хэлбэр) ба 🎥 видео (үсгийн хуудас) зэрэгцээ.
+      /* хурууны үсэг: 📷 зураг (албан ёсны embed карт — гарын хэлбэр) ба 🎥 видео зэрэгцээ.
          Өргөн дэлгэцэд хажуу хажуугаар, утсанд (картын өргөн 448px-ээс бага) дээр доор нь — хэт жижиг болохоос сэргийлнэ. */
       var grid=h("div",{style:"display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;align-items:start"});
       put(grid,h("div",null,h("div",{class:"small",style:"font-weight:700;margin:0 0 4px"},"📷 Гарын хэлбэр"),frame(url+"embed/","Монгол дохионы хэл: "+label+" (зураг)","300px","#fff")),
-        h("div",null,h("div",{class:"small",style:"font-weight:700;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"},"🎥 Видео (▶ дарна)"),frame(url,"Монгол дохионы хэл: "+label+" (видео)","560px","#1b1f22")));
-      put(w,grid,h("div",{class:"muted small",style:"margin-top:4px"},"Видео нь хуудасны зурагны доор байрлана — цонх дотроо доош гүйлгэнэ. "+hint));
+        h("div",null,h("div",{class:"small",style:"font-weight:700;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"},"🎥 Видео"),vid));
+      put(w,grid);
+      if(!vsrc)put(w,h("div",{class:"muted small",style:"margin-top:4px"},"Видео нь хуудасны зурагны доор байрлана — цонх дотроо доош гүйлгэнэ. "+hint));
     }else{
-      put(w,h("div",{class:"small",style:"margin:0 0 6px"},"▶ дарж тоглуулна. "+hint),frame(url,"Монгол дохионы хэл: "+label,"560px","#1b1f22"));
+      if(!vsrc)put(w,h("div",{class:"small",style:"margin:0 0 6px"},"▶ дарж тоглуулна. "+hint));
+      put(w,vid);
     }
     put(w,
       h("div",{class:"row",style:"margin-top:6px"},
         h("button",{class:"btn ghost",onclick:function(){S.open=null;env.render();}},"✕ Хаах"),
-        h("a",{class:"btn ghost",href:url,target:"_blank",rel:"noopener",style:"text-decoration:none"},"↗ Шинэ цонхонд")),
-      h("div",{class:"muted small",style:"margin-top:4px"},"Видео, зураг: «Монгол дохионы хэл» цахим толь (mnsl.mn) — тэдний хуудас апп дотор нээгдэж байна. Доош гүйлгэж гарын хэлбэр, ижил утгатай дохиог үзээрэй."));
+        h("a",{class:"btn ghost",href:url,target:"_blank",rel:"noopener",style:"text-decoration:none"},"↗ mnsl.mn дээр")),
+      h("div",{class:"muted small",style:"margin-top:4px"},"Видео, зураг: «Монгол дохионы хэл» цахим толь (",h("a",{href:url,target:"_blank",rel:"noopener"},"mnsl.mn"),")"+(vsrc?". Гарын хэлбэр, ижил утгатай дохиог тэдний хуудаснаас үзнэ.":" — тэдний хуудас апп дотор нээгдэж байна.")));
     return w;
   }
   function toggle(url,key,from){S.open=S.open===url&&S.from===(from||"")?null:url;S.from=from||"";S.spellI=0;if(S.open)seen(key);env.render();}
