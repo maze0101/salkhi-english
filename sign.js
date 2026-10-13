@@ -1,6 +1,6 @@
 /* Салхи: 🤟 дохионы хэл — Монгол дохионы хэл (МДХ) ба Америкийн дохионы хэл (ASL).
-   МДХ: https://mnsl.mn (© Монгол дохионы хэл) — 1398 дохио, 35 хурууны үсэг, тоо. Зураг, видеог хуулахгүй (лицензгүй): дарсан үед
-        сайтын албан ёсны WordPress embed картыг (<url>/embed/, oEmbed-ээр нийтэлсэн) iframe-ээр нэг нэгээр харуулж, видеог тэдний сайт руу холбоно; индекс (гарчиг + хаяг) sign/msl-data.js-д sitemap-аас авсан, энэ хэсгийг нээхэд ачаална.
+   МДХ: https://mnsl.mn (© Монгол дохионы хэл) — 1398 дохио, 35 хурууны үсэг, тоо. Зураг, видео файлыг хуулахгүй, шууд тоглуулахгүй (лицензгүй):
+        дарсан үед тэдний дохионы хуудсыг апп дотор iframe-ээр нэг нэгээр нээж, видео тэнд тоглоно; индекс (гарчиг + хаяг) sign/msl-data.js-д sitemap-аас авсан, энэ хэсгийг нээхэд ачаална.
    ASL: хурууны цагаан толгойн A–Z зураг — нийтийн өмч (wpclipart.com, Wikimedia Commons «Sign language A–Z.svg»), sign/asl/*.svg.
         Үгсийн видео — signasl.org (холбоос). Дасгал: үсэг таах, үг үсэглэх, нэрээ ASL-ээр.
    Үндсэн 48 үг: [ангилал, монгол, англи, signasl slug, МДХ дохионы дугаар|null (зөв дохио олдоогүй бол mnsl.mn-ээс хайна)]. */
@@ -49,18 +49,19 @@
   function translit(s){return String(s||"").toLowerCase().split("").map(function(c){return TR[c]!=null?TR[c]:c;}).join("").replace(/[^a-z]/g,"");}
   function img(c,size){return h("img",{src:"sign/asl/"+c+".svg",alt:"ASL үсэг "+c.toUpperCase(),width:String(size||64),height:String(size||64),loading:"lazy",style:"width:"+(size||64)+"px;height:"+(size||64)+"px;object-fit:contain;background:#fff;border-radius:10px;border:1px solid var(--line)"});}
   /* ---------- 🇲🇳 МДХ ---------- */
-  /* mnsl.mn-ийн албан ёсны embed карт (дохионы зураг + гарчиг): тухайн сайтаас, тэдний нэрээр харагдана.
-     Нэг удаад нэг л карт (S.open) — сайтын ачааллыг бага байлгана. */
+  /* mnsl.mn-ийн тухайн дохионы хуудсыг апп дотор цонх болгон (iframe) бүтнээр нь харуулна — видео (автоматаар, дуугүй),
+     хурд, гарын хэлбэр/байрлал/хөдөлгөөний зураг тэдний сайт дээр, тэдний брэнд, холбоостойгоо тоглоно. Видео файлыг шууд
+     (<video src=…mp4>) тоглуулахгүй — зохиогчийн эрх эзэмшигчийн зөвшөөрөлгүй. Сайт iframe-ийг хориглоогүй (X-Frame-Options байхгүй).
+     Нэг удаад нэг л цонх (S.open), дарсан үед л ачаална. */
   function card(url,label){
-    var w=h("div",{class:"note",style:"margin:6px 0 10px;padding:8px"}),letter=url.indexOf("/khuruu-useg/")>0;
-    put(w,h("iframe",{src:url+"embed/",title:"Монгол дохионы хэл: "+label,loading:"lazy",sandbox:"allow-scripts allow-popups allow-popups-to-escape-sandbox",
-        referrerpolicy:"strict-origin-when-cross-origin",style:"display:block;width:100%;height:300px;border:0;border-radius:10px;background:#fff"}),
-      /* үг, тооны карт дээрх зураг нь видеоны эхний кадр — гарын хөдөлгөөнийг видеогоор харна; хурууны үсгийн зураг нь гарын хэлбэр өөрөө */
-      letter?null:h("div",{class:"small",style:"margin-top:6px"},"ℹ️ Зураг нь видеоны эхлэл. Дохионы хөдөлгөөнийг видеогоор нь үзээрэй 👇"),
+    var w=h("div",{class:"note",style:"margin:6px 0 10px;padding:8px"});
+    put(w,h("iframe",{src:url,title:"Монгол дохионы хэл: "+label,allow:"autoplay; fullscreen",allowfullscreen:true,
+        sandbox:"allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox",referrerpolicy:"strict-origin-when-cross-origin",
+        style:"display:block;width:100%;height:560px;border:0;border-radius:10px;background:#1b1f22"}),
       h("div",{class:"row",style:"margin-top:6px"},
-        h("a",{class:"btn primary",href:url,target:"_blank",rel:"noopener",style:"text-decoration:none"},"▶️ Видеог mnsl.mn дээр үзэх"),
-        h("button",{class:"btn ghost",onclick:function(){S.open=null;env.render();}},"Хаах")),
-      h("div",{class:"muted small",style:"margin-top:4px"},"Зураг, видео: «Монгол дохионы хэл» цахим толь (mnsl.mn)"));
+        h("button",{class:"btn ghost",onclick:function(){S.open=null;env.render();}},"✕ Хаах"),
+        h("a",{class:"btn ghost",href:url,target:"_blank",rel:"noopener",style:"text-decoration:none"},"↗ Шинэ цонхонд")),
+      h("div",{class:"muted small",style:"margin-top:4px"},"Видео, зураг: «Монгол дохионы хэл» цахим толь (mnsl.mn) — тэдний хуудас апп дотор нээгдэж байна. Доош гүйлгэж гарын хэлбэр, ижил утгатай дохиог үзээрэй."));
     return w;
   }
   function toggle(url,key,from){S.open=S.open===url&&S.from===(from||"")?null:url;S.from=from||"";if(S.open)seen(key);env.render();}
@@ -68,10 +69,10 @@
   function row(url,key,main,sub,icon,from){
     var open=S.open===url&&S.from===from;
     return h("button",{class:"lrow",type:"button","aria-expanded":String(open),style:"width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer"+(open?";border-color:var(--sky)":""),onclick:function(){toggle(url,key,from);}},
-      icon?h("span",{class:"hexb ico"},icon):null,h("span",{style:"flex:1"},main,sub?h("div",{class:"muted small"},sub):null),h("span",{"aria-hidden":"true"},open?"▾":"🖼️"));
+      icon?h("span",{class:"hexb ico"},icon):null,h("span",{style:"flex:1"},main,sub?h("div",{class:"muted small"},sub):null),h("span",{"aria-hidden":"true"},open?"▾":"▶️"));
   }
   function viewMsl(root){
-    put(root,h("p",{class:"muted"},"Монголд 9–15 мянган сонсголгүй иргэн амьдардаг. Үг, үсэг дээр дарахад дохионы зураг гарна; видеог албан ёсны «Монгол дохионы хэл» цахим толь (mnsl.mn) дээр үзнэ."));
+    put(root,h("p",{class:"muted"},"Монголд 9–15 мянган сонсголгүй иргэн амьдардаг. Үг, үсэг дээр дарахад дохионы видео энд, апп дотор тоглоно — албан ёсны «Монгол дохионы хэл» цахим толь (mnsl.mn)-ийн хуудсаар."));
     if(!msl()){put(root,h("p",{class:"muted"},S.err?"Индексийг ачаалж чадсангүй. Интернэтээ шалгана уу.":"Ачаалж байна…"));loadMsl();return;}
     /* хайлт */
     var inp=h("input",{class:"tin",type:"search",placeholder:"🔎 Үгээр хайх (ж: баярлалаа, ээж, сургууль)","aria-label":"Дохио хайх",value:S.q});
@@ -125,7 +126,7 @@
     put(root,tg);
     if(openT)put(root,card(openT[0],openT[1]));
     put(root,h("p",{class:"muted small"},"Бусад тоо: ",h("a",{href:MSL+"too/",target:"_blank",rel:"noopener"},"mnsl.mn/too ↗")));
-    put(root,h("p",{class:"muted small",style:"margin-top:16px"},"Эх сурвалж: «Монгол дохионы хэл» цахим толь — ",h("a",{href:MSL,target:"_blank",rel:"noopener"},"mnsl.mn"),". Зураг, видео, дохионы зохиогчийн эрх тэдэнд хамаарна; Салхи тэдний албан ёсны embed картыг харуулж, сайт руу нь холбоно."));
+    put(root,h("p",{class:"muted small",style:"margin-top:16px"},"Эх сурвалж: «Монгол дохионы хэл» цахим толь — ",h("a",{href:MSL,target:"_blank",rel:"noopener"},"mnsl.mn"),". Зураг, видео, дохионы зохиогчийн эрх тэдэнд хамаарна; Салхи тэдний хуудсыг апп дотор харуулж байна."));
   }
   /* ---------- 🇺🇸 ASL ---------- */
   function quizView(root){
