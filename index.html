@@ -2128,7 +2128,24 @@ function notifPanel(){
     }},on?"🔔 Идэвхтэй":"🔕 Сануулга асаах"),
     h("input",{type:"time",value:n.t,"aria-label":"Сануулах цаг",style:"flex:none;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit",onchange:function(){if(this.value){n.t=this.value;n.last="";saveNotif();toast("Сануулах цаг: "+n.t);}}})));
   wrap.append(h("p",{class:"muted small",style:"margin-top:10px"},denied?"Мэдэгдэл хөтчид хаалттай байна. Хөтчийн сайтын тохиргооноос зөвшөөрнө үү.":"Тогтоосон цагт өдрийн зорилго биелээгүй бол сануулна. Апп нээлттэй эсвэл суулгасан үед хамгийн найдвартай ажиллана."));
+  var tg=tgBot();
+  if(tg)wrap.append(h("a",{class:"gamecard",href:"https://t.me/"+encodeURIComponent(tg),target:"_blank",rel:"noopener",style:"margin:10px 0 0;text-decoration:none;color:inherit"},
+    h("i",{"aria-hidden":"true"},"💬"),h("div",null,h("b",null,"Telegram-аар өдрийн үг авах"),h("span",null,"Өглөө бүр нэг үг, нэг асуулт — апп нээхгүйгээр"))));
   return wrap;
+}
+/* 💬 Telegram бот (worker /tg/status): тохируулсан бол ботын нэр, 12 цаг кэшлэнэ */
+var TG_BOT=sget("tgbot",null);
+function tgBot(){
+  var c=TG_BOT,u=workerURL("/tg/status");
+  if(u&&(!c||Date.now()-c.at>12*3600000)&&!tgBot.busy){
+    tgBot.busy=true;
+    fetch(u).then(function(r){return r.ok?r.json():null;}).then(function(j){
+      tgBot.busy=false;if(!j)return;var was=TG_BOT&&TG_BOT.bot;
+      TG_BOT={bot:j.configured&&/^[A-Za-z0-9_]{5,32}$/.test(j.bot||"")?j.bot:null,at:Date.now()};sset("tgbot",TG_BOT);
+      if(TG_BOT.bot!==was&&state.tab==="stats")render();
+    },function(){tgBot.busy=false;});
+  }
+  return c&&c.bot;
 }
 function modeWords(){
   var kid=state.mode==="kid";
@@ -2245,6 +2262,7 @@ function viewWords(){
   if(!v.cur||p.indexOf(v.cur)<0){v.cur=pickWord();v.flipped=false;v.quiz=null;}
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
   if(window.Daily5)root.append(Daily5.card(d5Env(),startDaily5));
+  if(window.Reels)root.append(Reels.card(reelsEnv()));
   if(window.Onboard){var fy=Onboard.forYou(onbEnv());if(fy)root.append(fy);}
   if(window.Events){var evc=Events.card(xEnv());if(evc)root.append(evc);}
   root.append(taskPanel());
@@ -3452,7 +3470,8 @@ function viewListen(){
     window.HandsFree?h("button",{"aria-pressed":String(l.mode==="hf"),onclick:function(){l.mode="hf";render();}},"🎧 Гар чөлөө"):null,
     window.Songs&&state.mode!=="kid"?h("button",{"aria-pressed":String(l.mode==="song"),onclick:function(){l.mode="song";render();}},"🎵 Дуу"):null,
     window.News&&state.mode!=="kid"?h("button",{"aria-pressed":String(l.mode==="news"),onclick:function(){l.mode="news";render();}},"📰 Мэдээ"):null,
-    window.AiStory&&state.mode!=="kid"?h("button",{"aria-pressed":String(l.mode==="adv"),onclick:function(){l.mode="adv";render();}},"🧩 AI түүх"):null);
+    window.AiStory&&state.mode!=="kid"?h("button",{"aria-pressed":String(l.mode==="adv"),onclick:function(){l.mode="adv";render();}},"🧩 AI түүх"):null,
+    window.Podcast&&state.mode!=="kid"?h("button",{"aria-pressed":String(l.mode==="pod"),onclick:function(){l.mode="pod";render();}},"🎙️ Подкаст"):null);
   lseg.style.gridTemplateColumns="repeat("+(lseg.children.length>6?4:3)+",1fr)";
   root.append(lseg);
   if(l.mode!=="sh"&&l.sh&&l.sh.rec)l.sh.rec.stop();
@@ -3460,6 +3479,8 @@ function viewListen(){
   if(l.mode==="song"&&window.Songs){root.append(Songs.view(xEnv()));return root;}
   if(l.mode==="news"&&window.News){root.append(News.view(xEnv()));return root;}
   if(l.mode==="adv"&&window.AiStory){root.append(AiStory.view(xEnv()));return root;}
+  if(l.mode==="pod"&&window.Podcast&&state.mode!=="kid"){root.append(Podcast.view(xEnv()));return root;}
+  if(window.Podcast)Podcast.stop();
   root.append(l.mode==="sh"?viewShadow():l.mode==="dlg"?viewDialog():l.mode==="story"?viewStory():l.mode==="syn"?viewSyn():viewListenWords());
   return root;
 }
@@ -6327,6 +6348,15 @@ function d5Env(close){
   e.listen=listenWord;
   return e;
 }
+/* 🎬 богино хичээл (reels.js): d5Env + дүрмийн хичээл, хадгалах */
+function reelsEnv(){
+  var e=d5Env();
+  e.lessons=function(){var top=LVO[effLevel()];return LESSONS.filter(function(l){return (l.lang||"en")===state.lang&&l.rule&&l.ex&&l.ex.length&&(top==null||LVO[l.lv]<=top);});};
+  e.isSaved=function(w){return state.saved.indexOf(w[1])>=0;};
+  e.toggleSave=toggleSave;
+  e.speakList=function(l){speakList(l);};
+  return e;
+}
 function startDaily5(){
   if(!window.Daily5)return;
   if(Daily5.done(d5Env())){toast("✅ Өнөөдрийн хичээл дууссан. Маргааш дахин!");return;}
@@ -6628,7 +6658,7 @@ if(window.Onboard&&!location.hash&&!sget("foreign",0))setTimeout(function(){Onbo
 if(repairInfo()&&sget("rpshown","")!==dkey(new Date())){sset("rpshown",dkey(new Date()));setTimeout(function(){var r=repairInfo();if(r)toast("💔 Дараалал тасарлаа. Өнөөдөр "+r.need+" XP цуглуулбал "+r.prev+" өдрийн дараалал сэргэнэ!",6000);},2500);}
 /* ---------- хойшлуулсан ачаалал: эхний дэлгэц гарсны дараа дүрмийн багц ба нэмэлт модулиуд ----------
    Эдгээр модулийг үргэлж window.X-ээр шалгаж ашигладаг тул ачаалагдтал товч нь харагдахгүй, ачаалагдмагц render() */
-var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js"];
+var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js","reels.js","podcast.js"];
 function lazyBoot(){
   if(window.League){League.init(lgEnv());if(window.SALKHI_FB&&League.fromHash(lgEnv())){state.tab="stats";ui.lg=true;renderTabs();}
     /* наадмын push мэдэгдэл дээр дарж ирсэн (./#lg) */

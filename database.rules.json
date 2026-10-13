@@ -404,6 +404,15 @@
         ".write": "auth != null && auth.uid === $uid",
         ".validate": "!newData.exists() || (newData.hasChildren(['ep','p','a','ts']) && newData.child('ep').isString() && newData.child('ep').val().beginsWith('https://') && newData.child('ep').val().length <= 800 && newData.child('p').isString() && newData.child('p').val().length <= 120 && newData.child('a').isString() && newData.child('a').val().length <= 40 && newData.child('ts').val() === now)"
       }
+    },
+    "aim": {
+      "$wk": {
+        ".read": "auth != null",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "$wk.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && newData.hasChildren(['a','name','wxp','ts']) && newData.child('a').isString() && newData.child('a').val().matches(/^(ub|arh|bol|bh|bul|ga|gs|du|dg|dor|dun|zav|orh|oh|og|sb|sel|tov|uvs|hovd|hov|hen|abr)$/) && newData.child('name').isString() && newData.child('name').val().length >= 1 && newData.child('name').val().length <= 20 && newData.child('wxp').isNumber() && newData.child('wxp').val() >= 0 && newData.child('wxp').val() <= 50000 && newData.child('ts').val() === now"
+        }
+      }
     }
   }
 }

@@ -436,14 +436,24 @@ async function handleSMS(req,env,cors){
 
 import {handlePush} from "./push.js";
 import {runWeekly} from "./weekly.js";
+import {handleTelegram,handleTgSetup,runTgDaily,tgConfigured} from "./telegram.js";
+const TG_CRON="*/10 1-2 * * *";
 
 export default {
   /* ням гарагийн орой (wrangler.toml [triggers]) — наадмын байрын push, хэсэгчлэн */
-  async scheduled(ev,env,ctx){ctx.waitUntil(runWeekly(env).then(r=>console.log("weekly push",JSON.stringify(r)),e=>console.error("weekly push failed",e&&e.message)));},
+  async scheduled(ev,env,ctx){
+    /* өдөр бүр өглөө (Монголын 09–11): Telegram өдрийн үг */
+    if(ev&&ev.cron===TG_CRON){ctx.waitUntil(runTgDaily(env).then(r=>console.log("tg daily",JSON.stringify(r)),e=>console.error("tg daily failed",e&&e.message)));return;}
+    ctx.waitUntil(runWeekly(env).then(r=>console.log("weekly push",JSON.stringify(r)),e=>console.error("weekly push failed",e&&e.message)));
+  },
   async fetch(req,env,ctx){
     const pre=new URL(req.url);
     if(pre.pathname==="/tts"&&req.method==="GET")return handleTTS(req,env,ctx,pre);
     if(pre.pathname==="/news"&&req.method==="GET")return handleNews(pre,env,ctx);
+    /* 💬 Telegram бот (src/telegram.js): Telegram-ийн хүсэлтэд Origin байхгүй тул CORS-оос өмнө */
+    if(pre.pathname==="/tg"&&req.method==="POST")return handleTelegram(req,env);
+    if(pre.pathname==="/tg/setup"&&req.method==="GET"){const r=await handleTgSetup(pre,env);return json(r.body,r.status,{});}
+    if(pre.pathname==="/tg/status"&&req.method==="GET")return json({configured:tgConfigured(env),bot:tgConfigured(env)&&env.TG_BOT||null},200,{"access-control-allow-origin":"*","cache-control":"max-age=300"});
     if(pre.pathname==="/tts/status"&&req.method==="GET")return json({hd:hdReady(env)},200,{"access-control-allow-origin":"*","cache-control":"max-age=300"});
     const origin=req.headers.get("Origin")||"";
     const okOrigin=ALLOWED_ORIGINS.indexOf(origin)>=0;

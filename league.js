@@ -2,7 +2,7 @@
    Даваа гарагаас эхлэх 7 хоног бүр XP цуглуулсан хүмүүс өөрийн цолны 20 хүртэлх хүнтэй бүлэгт (анхны XP-ээр) хуваарилагдана.
    7 хоног дуусахад эхний 5 нь дараагийн цол хүртэж (+1 🧊 streak хамгаалалт), сүүлийн 3 нь (10+ хүнтэй бүлэгт) өмнөх цол руу буурна.
    Firebase: lgn/{wk}/{tier} (бүлгийн тоолуур), lg/{wk}/{tier}/{g}/{uid} = {name, wxp, ts}.
-   Бүх горимд (хүүхдийн горимд ч) харагдана. */
+   Бүх горимд (хүүхдийн горимд ч) харагдана. Мөн 🏔️ аймгуудын тэмцээн (aim/) ба 👥 найзуудын хувийн лиг (plg*). */
 (function(){
   /* бөхийн цол: сумын → аймгийн → улсын наадам (индекс нь Firebase-ийн lg/{wk}/{tier}) */
   var TIERS=[["🌱","Сумын начин"],["🐘","Сумын заан"],["🦅","Аймгийн начин"],["🐘","Аймгийн заан"],["🦁","Аймгийн арслан"],
@@ -187,6 +187,7 @@
   function pkick(c,u){connect().then(function(){return db.ref("plgm/"+c+"/"+u).remove();}).catch(function(){env.toast("Хасаж чадсангүй");});}
   /* энэ 7 хоногийн XP-г бүх хувийн лиг рүү илгээнэ (push()-ийн 1 минутын хязгаар дотор) */
   function ppush(){
+    apush();
     var a=pcodes();if(!a.length)return;
     var wk=env.week();
     connect().then(function(){var v={name:name(),wxp:env.wxp(),ts:TS()};a.forEach(function(x){db.ref("plgx/"+x.c+"/"+wk+"/"+uid).set(v).catch(function(){});});}).catch(function(){});
@@ -291,6 +292,85 @@
     if(P.err)root.append(h("div",{class:"fb bad"},P.err));
   }
 
+  /* ---------- 🏔️ аймгуудын тэмцээн ----------
+     Хэрэглэгч аймгаа сонгоно; аймаг бүрийн оноо = энэ 7 хоногийн шилдэг AIM_TOP суралцагчийн XP-ийн нийлбэр
+     (олон хүнтэй Улаанбаатар зөвхөн тоогоор давамгайлахгүй). Firebase: aim/{wk}/{uid} = {a, name, wxp, ts} —
+     uid-аар түлхүүрлэсэн тул нэг хүн 7 хоногт нэг л аймагт тоологдоно. Жагсаалтыг нээх үед нэг удаа уншина (5 мин кэш). */
+  var AIMAGS=[["ub","Улаанбаатар"],["arh","Архангай"],["bol","Баян-Өлгий"],["bh","Баянхонгор"],["bul","Булган"],["ga","Говь-Алтай"],
+    ["gs","Говьсүмбэр"],["du","Дархан-Уул"],["dg","Дорноговь"],["dor","Дорнод"],["dun","Дундговь"],["zav","Завхан"],["orh","Орхон"],
+    ["oh","Өвөрхангай"],["og","Өмнөговь"],["sb","Сүхбаатар"],["sel","Сэлэнгэ"],["tov","Төв"],["uvs","Увс"],["hovd","Ховд"],
+    ["hov","Хөвсгөл"],["hen","Хэнтий"],["abr","Гадаадад 🌏"]];
+  var AKEY="salkhi:aimag",AIM_TOP=10,A={pick:false,data:{},at:{},busy:false};
+  function aimag(){var a=ls(AKEY,"");return AIMAGS.some(function(x){return x[0]===a;})?a:"";}
+  function aname(c){var x=AIMAGS.filter(function(y){return y[0]===c;})[0];return x?x[1]:"";}
+  function prevWeek(wk){var d=new Date(wk+"T00:00:00");d.setDate(d.getDate()-7);return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
+  function apush(){
+    var a=aimag();if(!a||env.wxp()<=0)return;
+    var wk=env.week();
+    connect().then(function(){return db.ref("aim/"+wk+"/"+uid).set({a:a,name:name(),wxp:env.wxp(),ts:TS()});}).then(function(){if(A.data[wk])A.at[wk]=0;}).catch(function(){});
+  }
+  function aload(wk,force){
+    if(A.data[wk]&&!force&&Date.now()-(A.at[wk]||0)<5*60000)return;
+    A.at[wk]=Date.now();
+    connect().then(function(){return db.ref("aim/"+wk).once("value");}).then(function(s){A.data[wk]=s.val()||{};paint();},function(){A.at[wk]=0;});
+  }
+  /* аймгуудын жагсаалт: {c, name, pts, n (оролцогчид), top: [{u,name,x}]} оноогоор эрэмбэлсэн */
+  function arank(wk){
+    var all=A.data[wk];if(!all)return null;
+    var by={};
+    Object.keys(all).forEach(function(u){var r=all[u];if(!r||!aname(r.a))return;(by[r.a]=by[r.a]||[]).push({u:u,name:r.name||"?",x:+r.wxp||0});});
+    return Object.keys(by).map(function(c){
+      var l=by[c].sort(function(p,q){return q.x-p.x;}),top=l.slice(0,AIM_TOP);
+      return {c:c,name:aname(c),pts:top.reduce(function(s,r){return s+r.x;},0),n:l.length,top:top,all:l};
+    }).filter(function(r){return r.pts>0;}).sort(function(p,q){return q.pts-p.pts;});
+  }
+  function asetAimag(c){
+    var old=aimag();lset(AKEY,c);A.pick=false;
+    if(c!==old)apush();
+    paint();
+  }
+  function apicker(root){
+    var cur=aimag(),grid=h("div",{style:"display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-top:8px"});
+    AIMAGS.forEach(function(x){
+      grid.append(h("button",{class:"btn"+(x[0]===cur?" primary":""),type:"button","aria-pressed":String(x[0]===cur),style:"margin:0;padding:8px 6px;font-size:14px",onclick:function(){asetAimag(x[0]);}},x[1]));
+    });
+    root.append(h("p",{class:"small",style:"margin:6px 0 0"},cur?"Аймгаа солих (энэ 7 хоногийн XP чинь шинэ аймагт шилжинэ):":"Аль аймгийн төлөө өрсөлдөх вэ? Одоо амьдарч буй эсвэл төрсөн нутгаа сонго:"),grid);
+    if(cur)root.append(h("button",{class:"btn ghost",style:"margin-top:6px",onclick:function(){A.pick=false;paint();}},"Болих"));
+  }
+  function asection(root){
+    var cur=aimag(),wk=env.week();
+    root.append(h("h3",{style:"margin:22px 0 4px"},"🏔️ Аймгуудын тэмцээн"));
+    root.append(h("p",{class:"muted small",style:"margin:0 0 8px"},"Нутгийнхаа төлөө XP цуглуул! Аймаг бүрийн шилдэг "+AIM_TOP+" суралцагчийн энэ 7 хоногийн XP нийлж аймгийн оноо болно."));
+    if(!cur||A.pick){apicker(root);return;}
+    aload(wk);aload(prevWeek(wk));
+    var list=arank(wk),me=list?list.findIndex(function(r){return r.c===cur;}):-1,mine=me>=0?list[me]:null;
+    root.append(h("div",{class:"note",style:"display:flex;align-items:center;gap:10px"},
+      h("span",{style:"font-size:30px","aria-hidden":"true"},"🏔️"),
+      h("div",{style:"flex:1"},h("div",{style:"font-weight:800"},aname(cur)),
+        h("div",{class:"muted small"},!list?"Ачаалж байна…":mine?(me+1)+"-р байр · "+mine.pts+" оноо · "+mine.n+" суралцагч":"Энэ 7 хоногт XP цуглуулаад аймгаа самбарт гаргаарай")),
+      h("button",{class:"btn ghost",style:"flex:none;padding:6px 10px",onclick:function(){A.pick=true;paint();}},"Солих")));
+    if(mine){
+      var myx=env.wxp(),inTop=mine.top.some(function(r){return r.u===uid;}),last=mine.top[mine.top.length-1];
+      root.append(h("p",{class:"small",style:"margin:8px 0 0;font-weight:600"},
+        inTop?"💪 Чи "+aname(cur)+"-ийн шилдэг "+AIM_TOP+"-т орж, аймагтаа "+myx+" оноо нэмж байна!":
+        mine.top.length>=AIM_TOP&&last?"Аймгийнхаа шилдэг "+AIM_TOP+"-т орохын тулд "+(last.x-myx+1)+" XP дутуу байна.":"Чиний XP шууд аймгийн оноонд нэмэгдэнэ."));
+      if(me>0)root.append(h("p",{class:"muted small",style:"margin:2px 0 0"},"Дээрх "+list[me-1].name+" аймгийг гүйцэхэд "+(list[me-1].pts-mine.pts+1)+" оноо дутуу."));
+    }
+    if(list&&list.length){
+      var box=h("div",{style:"display:flex;flex-direction:column;gap:4px;margin-top:8px"});
+      list.forEach(function(r,i){
+        var mineRow=r.c===cur;
+        box.append(h("div",{style:"display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;border:1px solid "+(mineRow?"var(--sky)":"var(--line)")+";background:"+(mineRow?"color-mix(in srgb,var(--sky) 8%,var(--surface))":"var(--surface)")},
+          h("b",{style:"width:26px;text-align:center"},i<3?["🥇","🥈","🥉"][i]:String(i+1)),
+          h("span",{style:"flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:"+(mineRow?"700":"500")},r.name),
+          h("span",{class:"muted small",style:"flex:none"},r.n+" хүн"),
+          h("b",{style:"flex:none"},r.pts)));
+      });
+      root.append(box);
+    }else if(list)root.append(h("p",{class:"muted small",style:"margin-top:8px"},"Энэ 7 хоногт аль ч аймаг оноо аваагүй байна. Чи л эхлүүлээрэй!"));
+    var prev=arank(prevWeek(wk));
+    if(prev&&prev.length)root.append(h("p",{class:"small",style:"margin:10px 0 0"},"🏆 Өнгөрсөн 7 хоногийн аварга: ",h("b",null,prev[0].name)," ("+prev[0].pts+" оноо)"+(prev[0].c===cur?" — чиний аймаг! 🎉":"")));
+  }
   function zone(i,n,tier){
     if(i<PROMO&&n>1&&tier<TIERS.length-1)return "up";
     if(tier>0&&n>=DEMO_MIN&&i>=n-DEMO)return "down";
@@ -345,7 +425,8 @@
     var n=pcodes().length;
     return h("button",{class:"note",type:"button",style:"display:block;width:100%;text-align:left;margin-top:12px;color:inherit;font:inherit;cursor:pointer",onclick:open},
       h("div",{class:"muted small",style:"margin-bottom:6px"},"🏆 Долоо хоногийн наадам"),body(false),
-      h("div",{class:"muted small",style:"margin-top:8px;font-weight:600"},n?"👥 Найзуудын лиг: "+n+" ›":"👥 Найзуудаараа хувийн лиг үүсгэх ›"));
+      h("div",{class:"muted small",style:"margin-top:8px;font-weight:600"},n?"👥 Найзуудын лиг: "+n+" ›":"👥 Найзуудаараа хувийн лиг үүсгэх ›"),
+      h("div",{class:"muted small",style:"margin-top:4px;font-weight:600"},aimag()?"🏔️ Аймгуудын тэмцээн: "+aname(aimag())+" ›":"🏔️ Аймгийнхаа төлөө өрсөлдөх ›"));
   }
   /* цолны шат: сум → аймаг → улсын наадмаар бүлэглэсэн, одоогийн цол тодорсон */
   function ladder(){
@@ -378,6 +459,7 @@
     root.append(ladder());
     root.append(h("p",{class:"muted small",style:"margin-top:14px"},"XP бүх хичээл, тоглоом, давталтаас цуглардаг. Наадам Даваа гарагийн 00:00-д шинээр эхэлнэ. Цол ахих бүрт 🧊 streak хамгаалалт +1 авна."));
     if(err)root.append(h("p",{class:"muted small"},err));
+    asection(root);
     psection(root);
     return root;
   }
