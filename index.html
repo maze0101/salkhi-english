@@ -760,7 +760,7 @@ function loadLangs(langs,cb){
     LANG_WAIT[l]=[done];
     var files=window.WORDS_FILES(l),n=files.length,bad=0;
     files.forEach(function(f){
-      var s=document.createElement("script");s.src=f;s.async=false;
+      var s=document.createElement("script");s.src=vq(f);s.async=false;
       s.onerror=function(){bad=1;s.onload();};
       s.onload=function(){if(--n)return;if(!bad)window.WORDS_LOADED[l]=1;mergeWords();mergeLessons();ZH_PY=null;JA_RD=null;var q=LANG_WAIT[l];delete LANG_WAIT[l];q.forEach(function(fn){fn();});};
       document.head.appendChild(s);
@@ -6581,7 +6581,11 @@ function viewStats(){
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
-var BUILD="20261004-11";
+/* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
+   хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
+var BUILD="20261013-1";
+window.SALKHI_BUILD=BUILD;
+function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
   if(!/^https?:$/.test(location.protocol))return;
   fetch(location.href.split("#")[0],{cache:"no-store"}).then(function(x){return x.text();}).then(function(t){
@@ -6719,7 +6723,7 @@ function lazyBoot(){
 }
 function loadScripts(list,done){
   var left=list.length;if(!left){done();return;}
-  list.forEach(function(f){var x=document.createElement("script");x.src=f;x.async=false;x.onload=x.onerror=function(){if(!--left)done();};document.head.appendChild(x);});
+  list.forEach(function(f){var x=document.createElement("script");x.src=vq(f);x.async=false;x.onload=x.onerror=function(){if(!--left)done();};document.head.appendChild(x);});
 }
 function loadDeferred(){
   var L=window.LP_DEFER,packs=L?WORDS_FILES(L).filter(IS_DEFERRED):[];window.LP_DEFER=null;

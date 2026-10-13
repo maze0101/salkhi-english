@@ -56,7 +56,7 @@
   function msl(){return window.MSL_DATA||null;}
   function loadMsl(){
     if(msl()||S.loading)return;S.loading=true;
-    var s=document.createElement("script");s.src="sign/msl-data.js";s.onload=function(){S.loading=false;S.ix=null;env.render();};
+    var s=document.createElement("script");s.src="sign/msl-data.js"+(window.SALKHI_BUILD?"?v="+window.SALKHI_BUILD:"");s.onload=function(){S.loading=false;S.ix=null;env.render();};
     s.onerror=function(){S.loading=false;S.err=true;env.render();};document.head.appendChild(s);
   }
   /* МДХ индекс: {n, slug, t (гарчиг)} */
