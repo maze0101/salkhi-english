@@ -13,35 +13,40 @@
     Object.keys(s).forEach(function(x){if(x.indexOf(today()+":")===0)keep[x]=s[x];});
     keep[k()]=ep;env.sset(KEY,keep);
   }
-  function parse(t){
+  /* AI зөвхөн яриаг бичнэ; гарчиг, оршил, төгсгөл, үгсийн тоймыг апп өөрөө нөхнө (Workers AI монгол бичвэрт сул,
+     урт JSON нь энгийн чатын 450 токенд тасардаг). ws: [түвшин, үг, монгол утга, ...] — утгыг толь бичгээс авна. */
+  function parse(t,ws){
     var m=String(t||"").match(/\{[\s\S]*\}/);if(!m)return null;
     try{var j=JSON.parse(m[0]);}catch(e){return null;}
     if(!j||!Array.isArray(j.lines))return null;
-    j.lines=j.lines.filter(function(l){return Array.isArray(l)&&l[1]&&l[2];}).slice(0,14).map(function(l){return [l[0]==="B"?"B":"A",String(l[1]),String(l[2]),l[3]?String(l[3]):""];});
-    if(j.lines.length<4)return null;
-    j.words=(Array.isArray(j.words)?j.words:[]).filter(function(w){return Array.isArray(w)&&w[0]&&w[1];}).slice(0,8).map(function(w){return [String(w[0]),String(w[1])];});
-    j.title=String(j.title||"Өнөөдрийн анги").slice(0,80);
-    j.intro=String(j.intro||"");j.outro=String(j.outro||"");
-    return j;
+    var lines=j.lines.filter(function(l){return Array.isArray(l)&&l[1]&&l[2];}).slice(0,14).map(function(l){return [l[0]==="B"?"B":"A",String(l[1]),String(l[2]),l[3]?String(l[3]):""];});
+    if(lines.length<4)return null;
+    var names=(ws||[]).map(function(w){return w[1];});
+    return {lines:lines,words:(ws||[]).map(function(w){return [String(w[1]),String(w[2])];}),
+      title:"Өнөөдрийн үгс: "+names.slice(0,3).join(", ")+(names.length>3?"…":""),
+      intro:"Сайн байна уу! Салхи подкастад тавтай морил. Өнөөдөр Сараа, Бат хоёр "+env.langName()+" хэлээр ярилцана. Анхааралтай сонсоорой.",
+      outro:"Өнөөдрийн анги ингээд өндөрлөлөө. Маргааш шинэ ангиар уулзъя!"};
   }
   function prompt(ws){
     var LN=env.langEn(),cjk=["ja","ko","zh"].indexOf(env.lang())>=0;
-    return "You write a short, warm language-learning podcast episode for a Mongolian learner of "+LN+". Level: "+env.level()+".\n"+
-      "Two hosts, A (Saraa, female) and B (Bat, male), have a natural everyday conversation in "+LN+" that uses ALL of these words: "+ws.map(function(w){return w[1];}).join(", ")+".\n"+
-      "Rules: 10-12 short lines, alternating A and B, simple sentences right for the level, friendly and positive, a small funny or surprising moment. Each line has a natural Mongolian (Cyrillic) translation.\n"+
-      "Reply with ONLY one JSON object:\n"+
-      "{\"title\":\"<catchy Mongolian episode title>\",\"intro\":\"<2 Mongolian sentences: welcome to Salkhi podcast and today's topic>\","+
-      "\"lines\":[[\"A\",\"<"+LN+" line>\",\"<Mongolian>\""+(cjk?",\"<romanization>\"":"")+"],[\"B\",\"...\",\"...\""+(cjk?",\"...\"":"")+"]],"+
-      "\"words\":[[\"<word from the list>\",\"<Mongolian meaning>\"]],\"outro\":\"<1-2 Mongolian sentences: short recap and encouragement>\"}";
+    return "Write a short podcast dialogue for a Mongolian learner of "+LN+". Level: "+env.level()+".\n"+
+      "Two hosts, A (Saraa, female) and B (Bat, male), have a natural everyday conversation in "+LN+" that uses ALL of these words: "+ws.map(function(w){return w[1]+" ("+w[2]+")";}).join(", ")+".\n"+
+      "Rules: exactly 8 short lines, alternating A and B, simple sentences right for the level, friendly, with a small funny moment. "+
+      "Each line has an accurate, natural Mongolian Cyrillic translation"+(cjk?" and a romanization":"")+".\n"+
+      "Reply with ONLY this JSON, no markdown:\n"+
+      "{\"lines\":[[\"A\",\"<"+LN+" line>\",\"<Mongolian>\""+(cjk?",\"<romanization>\"":"")+"],[\"B\",\"...\",\"...\""+(cjk?",\"...\"":"")+"]]}";
   }
   function make(){
     var ws=env.words(6);
     if(ws.length<3){P.err="Подкаст гаргахад үг хүрэлцэхгүй байна.";env.render();return;}
     P.busy=true;P.err="";stop();env.render();
     var run=++P.run;
-    Promise.resolve(env.ai([{role:"user",content:prompt(ws)}])).then(function(r){
+    /* task:"check": илүү хүчтэй загвар, 900 токен, бага temperature (8 мөр + орчуулга багтана).
+       AI заримдаа JSON-ийг эвддэг тул нэг удаа дахин оролдоно (AI огт хариулаагүй бол дахин оролдохгүй). */
+    var ask=function(){return Promise.resolve(env.ai([{role:"user",content:prompt(ws)}],{task:"check"}));};
+    ask().then(function(r){return r!=null&&!parse(r,ws)&&run===P.run?ask():r;}).then(function(r){
       if(run!==P.run)return;P.busy=false;
-      var ep=parse(r);
+      var ep=parse(r,ws);
       if(!ep){P.err=r==null?"AI одоогоор ажиллахгүй байна. Интернэтээ шалгаад дахин оролдоно уу.":"AI анги бичиж чадсангүй. Дахин оролдоно уу.";env.render();return;}
       ep.n=(saved()&&saved().n||0)+1;ep.done=false;
       P.ep=ep;P.key=k();save(ep);env.render();
@@ -120,6 +125,7 @@
     }
     if(ep.outro)box.append(line(-3,"🎙️ Төгсгөл",ep.outro));
     root.append(box);
+    root.append(h("p",{class:"muted small",style:"margin:8px 0 0"},"ℹ️ Мөрүүдийн монгол орчуулгыг AI хийсэн тул алдаатай байж болно. Үгсийн утга нь Салхины толь бичгээс."));
     root.append(h("button",{class:"btn ghost",style:"margin-top:12px",onclick:function(){if(confirm("Шинэ анги бичүүлэх үү? Одоогийн анги солигдоно."))make();}},"🔄 Шинэ анги"));
     setTimeout(paintLine,0);
     return root;
