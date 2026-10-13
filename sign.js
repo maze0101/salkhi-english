@@ -20,11 +20,11 @@
     ["🏠 Өдөр тутам","эмч","doctor","doctor",1058],["🏠 Өдөр тутам","мөнгө","money","money",1180],["🏠 Өдөр тутам","унтах","sleep","sleep",19],
     ["❤️ Мэдрэмж","баяртай (баярласан)","happy","happy",161],["❤️ Мэдрэмж","гунигтай","sad","sad",null],["❤️ Мэдрэмж","хайртай","love","love",136],
     ["❤️ Мэдрэмж","ядрах","tired","tired",814],["❤️ Мэдрэмж","өлсөх","hungry","hungry",200],["❤️ Мэдрэмж","өвдөх","sick","sick",517],
-    ["❤️ Мэдрэмж","сайн","good","good",665],["❤️ Мэдрэмж","муу","bad","bad",null],
+    ["❤️ Мэдрэмж","сайн","good","good",665],["❤️ Мэдрэмж","муу","bad","bad",1397],
     ["❓ Асуулт","юу","what","what",1208],["❓ Асуулт","хэн","who","who",679],["❓ Асуулт","хаана","where","where",96],
-    ["❓ Асуулт","хэзээ","when","when",null],["❓ Асуулт","яагаад","why","why",970],["❓ Асуулт","яаж","how","how",823],
+    ["❓ Асуулт","хэзээ","when","when",880],["❓ Асуулт","яагаад","why","why",970],["❓ Асуулт","яаж","how","how",823],
     ["🕒 Цаг","өнөөдөр","today","today",957],["🕒 Цаг","маргааш","tomorrow","tomorrow",null],["🕒 Цаг","өчигдөр","yesterday","yesterday",null],
-    ["🕒 Цаг","одоо","now","now",958],["🕒 Цаг","цаг","time","time",null]
+    ["🕒 Цаг","одоо","now","now",958],["🕒 Цаг","цаг","time","time",1025]
   ];
   var ABC="abcdefghijklmnopqrstuvwxyz".split(""),MSL="https://mnsl.mn/";
   /* ASL үгийн видео: Dr. Bill Vicars, ASL University (lifeprint.com) — YouTube (embed зөвшөөрсөн, oEmbed-ээр шалгасан).
@@ -116,8 +116,11 @@
     WORDS.forEach(function(w){
       if(w[0]!==cat){cat=w[0];put(root,h("div",{class:"muted small",style:"font-weight:700;margin:10px 0 4px"},cat));}
       var e=w[4]!=null?byNum(w[4]):null;
-      if(!e){put(root,h("a",{class:"lrow",href:MSL+"ugw/",target:"_blank",rel:"noopener",style:"text-decoration:none;color:inherit"},
-        h("span",{style:"flex:1;font-weight:600"},w[1]),h("span",{class:"muted small"},"🔎 тольд хайх ↗")));return;}
+      /* тольд яг ийм дохио алга (ус, нэр, маргааш…): mnsl.mn-ийн үгээр хайх толийг апп дотор нээнэ */
+      if(!e){var du=MSL+"ugw/",df="dict:"+w[1];
+        put(root,row(du,"d"+w[1],h("b",null,w[1]),"🔎 Тольд яг ийм дохио алга — толийг энд нээж хайна уу",null,df));
+        if(S.open===du&&S.from===df)put(root,card(du,w[1]+" — толь бичиг"));
+        return;}
       var u=ugURL(e);
       put(root,row(u,"m"+e.n,h("b",null,w[1]),null,null,"basic"));
       if(S.open===u&&S.from==="basic")put(root,card(u,w[1]));
