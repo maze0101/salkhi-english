@@ -27,6 +27,27 @@
     ["🕒 Цаг","одоо","now","now",958],["🕒 Цаг","цаг","time","time",null]
   ];
   var ABC="abcdefghijklmnopqrstuvwxyz".split(""),MSL="https://mnsl.mn/";
+  /* ASL үгийн видео: Dr. Bill Vicars, ASL University (lifeprint.com) — YouTube (embed зөвшөөрсөн, oEmbed-ээр шалгасан).
+     Lifeprint-ийн хуудаснаас видеог авч, гарчиг нь тухайн үгээр эхэлдгийг л сонгосон (хажуугийн ерөнхий ба өгүүлбэрийн видеог хассан).
+     signasl.org нь iframe-ийг хориглодог (X-Frame-Options: SAMEORIGIN) тул үлдсэн 12 үг тийшээ холбоосоор. */
+  var YT={"thank-you":"2W0BDFUjsG0","please":"rnb9FxPO7is","yes":"0usayvOXzHo","no":"QJXKaOSyl4o","goodbye":"4e14uNAn2Ao","name":"GbeC9TFuSX4","understand":"5N10dIavSYc",
+    "mother":"8yzUd0Md_uY","father":"30H8W5kBGB8","brother":"G0fzmn3pQng","sister":"0z2_gcB5OJ8","family":"SxrxUgeTt00","child":"32hgy9NSs7k","friend":"6RRmIyhkMx0","teacher":"CrUCwJklAUA",
+    "water":"-SdOfxGhb0A","drink":"537MWOtCl78","home":"WSHD1XX7kWk","school":"vuE3RN10AGA","work":"mJrUYRjvrew","doctor":"IEVgcJA3JWk",
+    "happy":"ZXHHO_DY6_A","sad":"zfkQYQhrZ6Q","love":"DAZB0eVf5t0","tired":"iZ6EeQqzZl0","bad":"prwtXZ1o2As",
+    "what":"bnnE_k7BYOI","who":"wKl26BsEAoc","where":"HS0SXS-GHYY","when":"YWxvqP__qos","why":"K0yp2v6Atxs","how":"BaPzB4Xsq9Y",
+    "today":"3BxRfKvfnpU","tomorrow":"6gFOZMDptIk","yesterday":"BrSb83b9kbY","now":"g2j70neQ_lI"};
+  /* YouTube-ийн албан ёсны embed (youtube-nocookie), апп дотор тоглоно */
+  function ytCard(id,en,slug){
+    var w=h("div",{class:"note",style:"margin:6px 0 10px;padding:8px"});
+    put(w,h("iframe",{src:"https://www.youtube-nocookie.com/embed/"+id+"?rel=0&playsinline=1&modestbranding=1&autoplay=1&mute=1",title:"ASL: "+en,
+        allow:"autoplay; encrypted-media; picture-in-picture; fullscreen",allowfullscreen:true,referrerpolicy:"strict-origin-when-cross-origin",
+        style:"display:block;width:100%;aspect-ratio:16/9;height:auto;border:0;border-radius:10px;background:#000"}),
+      h("div",{class:"row",style:"margin-top:6px"},
+        h("button",{class:"btn ghost",onclick:function(){S.open=null;env.render();}},"✕ Хаах"),
+        h("a",{class:"btn ghost",href:"https://www.signasl.org/sign/"+slug,target:"_blank",rel:"noopener",style:"text-decoration:none"},"Өөр хувилбарууд ↗")),
+      h("div",{class:"muted small",style:"margin-top:4px"},"Видео: Dr. Bill Vicars — ASL University (Lifeprint.com), YouTube"));
+    return w;
+  }
   var TR={"а":"a","б":"b","в":"v","г":"g","д":"d","е":"ye","ё":"yo","ж":"j","з":"z","и":"i","й":"i","к":"k","л":"l","м":"m","н":"n","о":"o","ө":"o","п":"p","р":"r","с":"s","т":"t","у":"u","ү":"u","ф":"f","х":"kh","ц":"ts","ч":"ch","ш":"sh","щ":"sh","ъ":"","ы":"y","ь":"i","э":"e","ю":"yu","я":"ya"};
   var env=null,h=null,S={tab:"msl",q:"",name:"",nameA:"",quiz:null,spell:null,loading:false,open:null,from:""};
   function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
@@ -195,10 +216,16 @@
     var cat="";
     WORDS.forEach(function(w){
       if(w[0]!==cat){cat=w[0];put(root,h("div",{class:"muted small",style:"font-weight:700;margin:10px 0 4px"},cat));}
-      put(root,h("a",{class:"lrow",href:"https://www.signasl.org/sign/"+w[3],target:"_blank",rel:"noopener",style:"text-decoration:none;color:inherit",onclick:function(){seen("a"+w[3]);}},
-        h("span",{style:"flex:1"},h("b",null,w[2]),h("span",{class:"muted"}," — "+w[1])),h("span",{class:"muted small"},"🎥 ↗")));
+      var yt=YT[w[3]],u="yt:"+yt;
+      if(!yt){put(root,h("a",{class:"lrow",href:"https://www.signasl.org/sign/"+w[3],target:"_blank",rel:"noopener",style:"text-decoration:none;color:inherit",onclick:function(){seen("a"+w[3]);}},
+        h("span",{style:"flex:1"},h("b",null,w[2]),h("span",{class:"muted"}," — "+w[1])),h("span",{class:"muted small"},"🎥 signasl ↗")));return;}
+      var on=S.open===u&&S.from==="asl";
+      put(root,h("button",{class:"lrow",type:"button","aria-expanded":String(on),style:"width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer"+(on?";border-color:var(--sky)":""),onclick:function(){toggle(u,"a"+w[3],"asl");}},
+        h("span",{style:"flex:1"},h("b",null,w[2]),h("span",{class:"muted"}," — "+w[1])),h("span",{"aria-hidden":"true"},on?"▾":"▶️")));
+      if(on)put(root,ytCard(yt,w[2],w[3]));
     });
-    put(root,h("p",{class:"muted small",style:"margin-top:16px"},"Хурууны цагаан толгойн зураг: нийтийн өмч (wpclipart.com, Wikimedia Commons). Үгийн видео: ",h("a",{href:"https://www.signasl.org",target:"_blank",rel:"noopener"},"signasl.org"),"."));
+    put(root,h("p",{class:"muted small",style:"margin-top:16px"},"Хурууны цагаан толгойн зураг: нийтийн өмч (wpclipart.com, Wikimedia Commons). ▶️ видео: Dr. Bill Vicars — ",
+      h("a",{href:"https://www.lifeprint.com",target:"_blank",rel:"noopener"},"ASL University (Lifeprint.com)"),", YouTube-ээр. Бусад үг: ",h("a",{href:"https://www.signasl.org",target:"_blank",rel:"noopener"},"signasl.org"),"."));
   }
   function view(e){
     env=e;h=e.h;var root=h("div");
