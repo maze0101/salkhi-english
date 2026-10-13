@@ -2608,6 +2608,7 @@ function viewGrammar(){
   var g=ui.grammar,root=h("div");
   if(g.mod==="idiom"&&window.Idioms&&Idioms.has(state.lang))return Idioms.view(modEnv());
   if(g.mod==="culture"&&window.Culture&&Culture.has(state.lang))return Culture.view(modEnv());
+  if(g.mod==="gesture"&&window.Gesture&&Gesture.has(state.lang))return Gesture.view(modEnv());
   if(g.mod==="cmp"&&window.MnCompare&&MnCompare.has(state.lang))return MnCompare.view(modEnv());
   if(g.mod==="lab"&&window.LangLab&&LangLab.has(state.lang))return LangLab.view(modEnv());
   if(g.mod==="mns"&&window.MnScript)return MnScript.view(modEnv());
@@ -2664,7 +2665,8 @@ function viewGrammar(){
     window.MnScript?h("button",{class:"btn",onclick:function(){openMod("mns");}},"📜 Монгол бичиг"):null,
     state.mode!=="kid"&&window.MnHoliday&&MnHoliday.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("hol");}},"🇲🇳 Ёс заншлаа тайлбарлах"):null,
     state.mode!=="kid"&&window.Idioms&&Idioms.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("idiom");}},"🗣 Хэлц үг"):null,
-    state.mode!=="kid"&&window.Culture&&Culture.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("culture");}},"🎎 Соёл, ёс заншил"):null));
+    state.mode!=="kid"&&window.Culture&&Culture.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("culture");}},"🎎 Соёл, ёс заншил"):null,
+    state.mode!=="kid"&&window.Gesture&&Gesture.has(state.lang)?h("button",{class:"btn",onclick:function(){openMod("gesture");}},"🙌 Дохио зангаа"):null));
   var tks=Object.keys(CLS_LESSONS).filter(function(k){return CLS_LESSONS[k].lang===state.lang;});
   if(tks.length){
     root.append(h("h3",{style:"margin:16px 0 6px"},"📘 Багшийн хичээл"));
@@ -4039,12 +4041,14 @@ function viewChat(){
   if(c.call&&window.VoiceCall)return VoiceCall.view(callEnv());
   if(c.travel&&window.Travel)return Travel.view(xEnv(function(){ui.chat.travel=false;render();window.scrollTo(0,0);}));
   if(c.section==="translate")return viewTranslate();
+  if(c.section==="debate"&&window.Debate)return Debate.view(xEnv(function(){c.section=null;render();window.scrollTo(0,0);}));
   if(!c.started){
     root.append(h("h2",null,"Ярианы дасгал"));
     root.append(h("p",{class:"muted"},"Нөхцөлөө сонгоод AI-тай "+LANGN[state.lang].toLowerCase()+" хэлээр ярилц. Алдаа гаргавал монголоор засаж өгнө."));
     if(window.VoiceCall&&(sample||state.apiKey||freeAI()))root.append(h("button",{class:"scn",style:"border-color:var(--sky);font-weight:700",onclick:function(){c.call=true;render();window.scrollTo(0,0);}},"📞 AI багштай дуудлага — дуугаар ярилц"));
     if(window.Travel&&state.mode!=="kid"){var trp=Travel.active(xEnv());root.append(h("button",{class:"scn",onclick:function(){c.travel=true;render();window.scrollTo(0,0);}},"🧳 Аяллын бэлтгэл"+(trp?" — "+trp.dest+(trp.left>0?" ("+trp.left+" хоног)":""):" — 7 хоногийн хөтөлбөр")));}
     root.append(h("button",{class:"scn",onclick:function(){c.section="translate";render();}},"🎙️ Монгол → "+LANGN[state.lang]+" орчуулагч"));
+    if(window.Debate&&Debate.has(state.lang)&&state.mode!=="kid"&&(sample||state.apiKey||freeAI()))root.append(h("button",{class:"scn",onclick:function(){c.section="debate";render();window.scrollTo(0,0);}},"🗣️ AI-тай мэтгэлцэх — байр сууриа хамгаал"));
     var el=effLevel(),lv=el==="all"?"Дунд":LV_NAME[el];
     root.append(h("p",{class:"muted small",style:"margin-top:10px"},"Түвшин: "+lv+(el==="all"?" (дээрээс түвшнээ сонгож болно)":"")));
     var cl=el==="all"?null:el;
@@ -4576,6 +4580,7 @@ function viewPlay(){
   if(P.game)return viewGame(root);
   if(P.cam)return viewCam(root);
   if(P.pairs&&window.Pairs)return Pairs.view(toolEnv(function(){P.pairs=false;render();window.scrollTo(0,0);}));
+  if(P.esc&&window.Escape)return Escape.view(toolEnv(function(){P.esc=false;render();window.scrollTo(0,0);}));
   if(P.typ&&window.Typing)return Typing.view(toolEnv(function(){P.typ=false;render();window.scrollTo(0,0);}));
   if(P.ocr&&window.Ocr)return Ocr.view(xEnv(function(){P.ocr=false;render();window.scrollTo(0,0);}));
   if(P.ex)return viewMock(root);
@@ -4615,6 +4620,8 @@ function viewPlay(){
     h("i",{"aria-hidden":"true"},"📷"),h("div",null,h("b",null,"Камераар сур"),h("span",null,"Эд зүйлийн зургийг ав, AI нэрийг нь хэлнэ"))));
   if(window.Pairs&&Pairs.has(state.lang))root.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.pairs=true;render();window.scrollTo(0,0);}},
     h("i",{"aria-hidden":"true"},"👂"),h("div",null,h("b",null,"Ойролцоо дуудлага"),h("span",null,"ship / sheep гэх мэт хэцүү хосуудыг сонсож ялга"))));
+  if(window.Escape)root.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.esc=true;render();window.scrollTo(0,0);}},
+    h("i",{"aria-hidden":"true"},"🔐"),h("div",null,h("b",null,"Хэлний оньсого өрөө"),h("span",null,"Тэмдэг уншиж, зарлал сонсож 5 минутад гараарай"))));
   if(window.Typing)root.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.typ=true;render();window.scrollTo(0,0);}},
     h("i",{"aria-hidden":"true"},"⌨️"),h("div",null,h("b",null,"Бичих хурд"),h("span",null,"60 секундэд "+LANGN[state.lang].toLowerCase()+" гараар хэдэн үг бичих вэ?"))));
   root.append(h("div",{style:"margin-top:10px"},gameCard()));
@@ -6691,7 +6698,7 @@ if(window.Onboard&&!location.hash&&!sget("foreign",0))setTimeout(function(){Onbo
 if(repairInfo()&&sget("rpshown","")!==dkey(new Date())){sset("rpshown",dkey(new Date()));setTimeout(function(){var r=repairInfo();if(r)toast("💔 Дараалал тасарлаа. Өнөөдөр "+r.need+" XP цуглуулбал "+r.prev+" өдрийн дараалал сэргэнэ!",6000);},2500);}
 /* ---------- хойшлуулсан ачаалал: эхний дэлгэц гарсны дараа дүрмийн багц ба нэмэлт модулиуд ----------
    Эдгээр модулийг үргэлж window.X-ээр шалгаж ашигладаг тул ачаалагдтал товч нь харагдахгүй, ачаалагдмагц render() */
-var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js","reels.js","podcast.js","reader.js","mnemo.js","goal.js","focus.js","pairs.js","typing.js","anki.js"];
+var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js","reels.js","podcast.js","reader.js","mnemo.js","goal.js","focus.js","pairs.js","typing.js","anki.js","gesture.js","escape.js","debate.js"];
 function lazyBoot(){
   if(window.League){League.init(lgEnv());if(window.SALKHI_FB&&League.fromHash(lgEnv())){state.tab="stats";ui.lg=true;renderTabs();}
     /* наадмын push мэдэгдэл дээр дарж ирсэн (./#lg) */
