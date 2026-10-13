@@ -550,7 +550,6 @@ window.salkhiHero=initSalkhiHero(document.getElementById("salkhiHero"));
   <main id="main"></main>
 </div>
 
-<script src="lessons-more.js"></script>
 <script src="lessons-levels.js"></script>
 <script src="stories-more.js"></script>
 <script src="stories-levels.js"></script>
@@ -596,8 +595,11 @@ window.LIGHT_LANGS={ug:1};
 window.LESSON_PACKS={en:34,ja:24,ko:27,zh:23,ru:31,de:31,ug:3};
 /* үгийн багцын тоо: words-, words2- ... (анхдагч 9) */
 window.WORDS_PACKS={ug:2};
+/* нэмэлт 50 дүрмийн хичээлтэй хэлнүүд: lm-<хэл>.js (хуучин lessons-more.js) */
+window.LM_LANGS={en:1,ja:1,ko:1,zh:1,ru:1,de:1};
 window.WORDS_FILES=function(l){
   var f=["words-","words2-","words3-","words4-","words5-","words6-","words7-","words8-","words9-"].slice(0,window.WORDS_PACKS[l]||9).map(function(p){return p+l+".js";});
+  if(window.LM_LANGS[l])f.push("lm-"+l+".js");
   for(var i=1;i<=(window.LESSON_PACKS[l]||0);i++)f.push("lp-"+l+"-"+i+".js");
   return f;
 };
@@ -605,9 +607,10 @@ window.WORDS_FILES=function(l){
   var L;try{L=JSON.parse(localStorage.getItem("salkhi:lang"));}catch(e){}
   if(window.SALKHI_LANGS.indexOf(L)<0)L="en";
   window.WORDS_LOADED={};window.WORDS_LOADED[L]=1;
-  /* үгс эхэнд хэрэгтэй; дүрмийн хичээлийн багцуудыг (lp-*) эхний дэлгэц гарсны дараа loadDeferred() татна */
+  /* үгс эхэнд хэрэгтэй; дүрмийн хичээлүүдийг (lm-*, lp-*) эхний дэлгэц гарсны дараа loadDeferred() татна */
   window.LP_DEFER=L;
-  WORDS_FILES(L).filter(function(f){return f.indexOf("lp-")!==0;}).forEach(function(f){document.write('<script src="'+f+'"><\/script>');});
+  window.IS_DEFERRED=function(f){return f.indexOf("lp-")===0||f.indexOf("lm-")===0;};
+  WORDS_FILES(L).filter(function(f){return !IS_DEFERRED(f);}).forEach(function(f){document.write('<script src="'+f+'"><\/script>');});
 })();
 </script>
 <script src="data-core.js"></script>
@@ -655,8 +658,9 @@ cond23:{o:["If I were rich I would travel the world"],f:[["If I won the lottery,
 passive:{o:["The letter was written yesterday"],f:[["The window ___ (break) by the boy. (past)","was broken"]]},
 relative:{o:["The man who called you is my teacher"],f:[["This is the book ___ I told you about. (who / which)","which"]]}
 };
+/* lm-*.js хойно ачаалагдах ч хуучин дараалал (үндсэн, lm, lessons-levels, lp) хадгалагдахаар энэ байрлалд оруулна */
+var LM_AT=LESSONS.length;
 if(window.LESSONS_MORE)window.LESSONS_MORE.forEach(function(l){LESSONS.push(l);});
-LESSONS.forEach(function(l){var e=EXTRA[l.id];if(e){l.o=e.o;l.f=e.f;}});
 /* 6 түвшний ангилал: a1/b1/b2 гэж тэмдэглэгдсэн хичээлүүдээс A2, C1, C2 руу шилжүүлэх нь */
 var LV_FIX={
 a2:"pastsimple en-adv en-conj enx-irreg enx-wasthere enx-howq enx-tooeither enx-timeclause enx-presentfuture enx-countable enx-adjorder enx-makedo compare future modal en-haveto "+
@@ -669,16 +673,22 @@ c1:"enx-mixedcond enx-partclause enx-passrep en-futperf enx-pastperfcont en-moda
  "zhx-jingran zhx-yuqi zhx-cai2 rux-particip rux-deeprich rux-kratkie de-konj1 dex-passivmodal dex-partikel de-partizip",
 c2:"enx-inversion enx-subjv enx-cleft ja-keigo zhx-chengyu dex-erwpart dex-nominal dex-funktionsverb"
 };
-(function(){
-  var m={};Object.keys(LV_FIX).forEach(function(lv){LV_FIX[lv].split(" ").forEach(function(id){m[id]=lv;});});
-  LESSONS.forEach(function(l){if(m[l.id])l.lv=m[l.id];});
-})();
+var LV_MAP={};Object.keys(LV_FIX).forEach(function(lv){LV_FIX[lv].split(" ").forEach(function(id){LV_MAP[id]=lv;});});
+function fixLesson(l){var e=EXTRA[l.id];if(e){l.o=e.o;l.f=e.f;}if(LV_MAP[l.id])l.lv=LV_MAP[l.id];}
+LESSONS.forEach(fixLesson);
 /* нягт хичээлийн багц (lp-<хэл>-<n>.js). Мөр бүр:
    түвшин|гарчиг|тайлбар (¶ догол мөр)|дүрэм|жишээ1|орчуулга1|...|жишээ4|орчуулга4|асуулт1|зөв~буруу~буруу|асуулт2|...|асуулт3|...
    Өгүүлбэр бүтээх дасгал нь эхний жишээнээс үүснэ. id нь багц доторх дараалал тул мөрийг зөвхөн төгсгөлд нэмнэ. */
 var LP_SEEN={};
 function orderText(t){return String(t).replace(/[.,!?;:«»"“”„。、，！？；：「」『』…()（）]/g," ").replace(/\s—\s/g," ").replace(/\s+/g," ").trim();}
+var LM_SEEN={};
 function mergeLessons(){
+  var lm=window.LM||[];window.LM=[];
+  lm.forEach(function(pk){
+    if(LM_SEEN[pk[0]])return;LM_SEEN[pk[0]]=1;
+    pk[1].forEach(fixLesson);
+    LESSONS.splice.apply(LESSONS,[LM_AT,0].concat(pk[1]));LM_AT+=pk[1].length;
+  });
   var q=window.LP||[];window.LP=[];
   q.forEach(function(pk){
     var lang=pk[0],no=pk[1],n=0;
@@ -6635,8 +6645,7 @@ function loadScripts(list,done){
   list.forEach(function(f){var x=document.createElement("script");x.src=f;x.async=false;x.onload=x.onerror=function(){if(!--left)done();};document.head.appendChild(x);});
 }
 function loadDeferred(){
-  var L=window.LP_DEFER,packs=[];window.LP_DEFER=null;
-  if(L)for(var i=1;i<=(window.LESSON_PACKS[L]||0);i++)packs.push("lp-"+L+"-"+i+".js");
+  var L=window.LP_DEFER,packs=L?WORDS_FILES(L).filter(IS_DEFERRED):[];window.LP_DEFER=null;
   /* эхлээд модулиуд (товчнууд гарна), дараа нь хичээлийн багц */
   loadScripts(LAZY_JS,function(){lazyBoot();loadScripts(packs,function(){mergeLessons();render();});});
 }

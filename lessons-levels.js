@@ -1,4 +1,4 @@
-/* Салхи: C1, C2 түвшний нэмэлт дүрмийн хичээлүүд (6 хэл). lessons-more.js-ийн дараа ачаална. */
+/* Салхи: C1, C2 түвшний нэмэлт дүрмийн хичээлүүд (6 хэл). index.html-ийн LESSONS_MORE-д нэмэгдэнэ (lm-*.js хойно ачаалагдаж өмнө нь орно). */
 (function(){
 var L=window.LESSONS_MORE=window.LESSONS_MORE||[];
 L.push(
