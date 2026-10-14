@@ -2,6 +2,7 @@
    МДХ: https://mnsl.mn (© Монгол дохионы хэл) — 1398 дохио, 35 хурууны үсэг, тоо. Зураг, видео файлыг хуулахгүй, шууд тоглуулахгүй (лицензгүй):
         дарсан үед тэдний дохионы хуудсыг апп дотор iframe-ээр нэг нэгээр нээж, видео тэнд тоглоно; индекс (гарчиг + хаяг) sign/msl-data.js-д sitemap-аас авсан, энэ хэсгийг нээхэд ачаална.
         Бүх дохионы видеоны зам (sign/msl-video.js), сэдэвчилсэн ангилал (sign/msl-topics.js) — REST /wp-json/wp/v2/ug-ээс; видео тэдний серверээс тоглоно.
+        Нэмэлт: «Сонсголгүйн боловсрол / Mongolian Deaf Education» YouTube — дохионы сан, видео цуврал (sign/mde-data.js), албан ёсны embed-ээр.
    ASL: хурууны цагаан толгойн A–Z зураг — нийтийн өмч (wpclipart.com, Wikimedia Commons «Sign language A–Z.svg»), sign/asl/*.svg.
         Үгсийн видео — signasl.org (холбоос). Дасгал: үсэг таах, үг үсэглэх, нэрээ ASL-ээр.
    Үндсэн 48 үг: [ангилал, монгол, англи, signasl slug, МДХ дохионы дугаар | "too/<slug>" (цаг/тооны хэсэг) | null (тольд алга → толийг нээнэ),
@@ -52,7 +53,7 @@
     return w;
   }
   var TR={"а":"a","б":"b","в":"v","г":"g","д":"d","е":"ye","ё":"yo","ж":"j","з":"z","и":"i","й":"i","к":"k","л":"l","м":"m","н":"n","о":"o","ө":"o","п":"p","р":"r","с":"s","т":"t","у":"u","ү":"u","ф":"f","х":"kh","ц":"ts","ч":"ch","ш":"sh","щ":"sh","ъ":"","ы":"y","ь":"i","э":"e","ю":"yu","я":"ya"};
-  var env=null,h=null,S={tab:"les",les:null,topic:null,q:"",name:"",nameA:"",quiz:null,spell:null,loading:false,open:null,from:""};
+  var env=null,h=null,S={tab:"les",les:null,topic:null,series:null,q:"",name:"",nameA:"",quiz:null,spell:null,loading:false,open:null,from:""};
   function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
   function link(href,label,extra){return h("a",{class:"btn",href:href,target:"_blank",rel:"noopener",style:"text-decoration:none;"+(extra||"")},label);}
   function msl(){return window.MSL_DATA||null;}
@@ -63,6 +64,8 @@
     var sv=document.createElement("script");sv.src="sign/msl-video.js"+v;document.head.appendChild(sv);
     /* сэдвүүд (msl-topics.js) — ачаалагдмагц сэдвийн хичээл, «Сэдвээр» хэсэг гарна */
     var st=document.createElement("script");st.src="sign/msl-topics.js"+v;st.onload=function(){env.render();};document.head.appendChild(st);
+    /* Сонсголгүйн боловсрол (YouTube) — дохионы сан, видео цуврал */
+    var sm=document.createElement("script");sm.src="sign/mde-data.js"+v;sm.onload=function(){env.render();};document.head.appendChild(sm);
     var s=document.createElement("script");s.src="sign/msl-data.js"+v;s.onload=function(){S.loading=false;S.ix=null;env.render();};
     s.onerror=function(){S.loading=false;S.err=true;env.render();};document.head.appendChild(s);
   }
@@ -185,14 +188,42 @@
       (grp[n]=grp[n]||[]).push(o);return o;});
     TOPICS.forEach(function(o){
       var pool=null;if(o.items.length<4){pool=[];grp[o.n].forEach(function(x){pool=pool.concat(x.items);});if(pool.length<4)pool=pool.concat(TOPICS[0].items);}
-      var np=Math.ceil(o.items.length/10),sz=Math.ceil(o.items.length/np);
-      for(var p=0;p<np;p++)o.parts.push({id:"t"+o.id+"-"+(p+1),t:o.ico+" "+o.t+(np>1?" ("+(p+1)+"/"+np+")":""),items:o.items.slice(p*sz,(p+1)*sz),pool:pool||o.items,topic:o,
-        tip:"«"+o.g+"» бүлгийн «"+o.t+"» сэдвийн дохио. Видеог 0.5× хурдаар үзэж гарын хэлбэр, байрлал, хөдөлгөөнийг ажиглаад өөрөө давтаарай."});
-      o.parts.forEach(function(l,k){l.nx=o.parts[k+1]||null;});
+      mkParts(o,"t",pool,"«"+o.g+"» бүлгийн «"+o.t+"» сэдвийн дохио. Видеог 0.5× хурдаар үзэж гарын хэлбэр, байрлал, хөдөлгөөнийг ажиглаад өөрөө давтаарай.");
     });
     return TOPICS;
   }
-  function topicById(id){var T=topics()||[];for(var i=0;i<T.length;i++)if(T[i].id===id)return T[i];return null;}
+  /* сэдвийг ≤10 дохиотой хэсэг (хичээл) болгоно; хэсэг бүр nx-ээр дараагийнхтай холбогдоно */
+  function mkParts(o,pre,pool,tip){
+    var np=Math.ceil(o.items.length/10),sz=Math.ceil(o.items.length/np);o.parts=[];
+    for(var p=0;p<np;p++)o.parts.push({id:pre+o.id+"-"+(p+1),t:o.ico+" "+o.t+(np>1?" ("+(p+1)+"/"+np+")":""),items:o.items.slice(p*sz,(p+1)*sz),pool:pool||o.items,topic:o,ar:o.ar,tip:tip});
+    o.parts.forEach(function(l,k){l.nx=o.parts[k+1]||null;});
+  }
+  /* «Mongolian Deaf Education / Сонсголгүйн боловсрол» YouTube (mde-data.js): vocab — нэг видео = нэг дохио; series — урт хичээл */
+  var MDE=null,MDE_URL="https://www.youtube.com/@MongolianDeafEducation";
+  function mde(){
+    if(MDE)return MDE;var D=window.MDE_DATA;if(!D)return null;
+    MDE={vocab:D.vocab.map(function(v,k){
+        var o={id:"d"+k,n:0,ico:v.ico,t:v.t,g:"Сонсголгүйн боловсрол",ar:v.ar,pl:v.pl,
+          items:v.s.split("\n").map(function(l){var b=l.indexOf("|");return [l.slice(b+1),"yt:"+l.slice(0,b),"yt:"+l.slice(0,b)];})};
+        mkParts(o,"",null,"«"+v.t+"» — Сонсголгүйн боловсрол (Mongolian Deaf Education) сувгийн дохионы сан. «Хувилбар» гэдэг нь нэг үгийг дохиолох өөр арга.");
+        return o;}),
+      series:D.series.map(function(v,k){return {k:k,ico:v.ico,t:v.t,pl:v.pl,items:v.s.split("\n").map(function(l){var a=l.split("|");return {id:a[0],t:a[1],len:a[2]};})};})};
+    return MDE;
+  }
+  function topicById(id){var T=(topics()||[]).concat(mde()?mde().vocab:[]);for(var i=0;i<T.length;i++)if(T[i].id===id)return T[i];return null;}
+  /* YouTube embed: autoplay (дуугүй), давталттай. quiz=true бол дээд талын гарчгийг (хариуг) далдална */
+  function ytSign(id,label,ar,quiz){
+    var w=h("div",{style:"position:relative;margin:0 auto;max-width:"+(ar==="4/5"?"340px":"520px")});
+    put(w,h("iframe",{src:"https://www.youtube-nocookie.com/embed/"+id+"?autoplay=1&mute=1&loop=1&playlist="+id+"&rel=0&playsinline=1&modestbranding=1&iv_load_policy=3",title:"Дохионы хэл: "+label,
+        allow:"autoplay; encrypted-media; picture-in-picture; fullscreen",allowfullscreen:true,referrerpolicy:"strict-origin-when-cross-origin",
+        style:"display:block;width:100%;aspect-ratio:"+(ar||"16/9")+";height:auto;border:0;border-radius:10px;background:#000"}),
+      quiz?h("div",{"aria-hidden":"true",style:"position:absolute;left:0;right:0;top:0;height:64px;background:#000;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:22px"},"?"):null);
+    return w;
+  }
+  function media(it,ar,quiz){
+    if(it[1].indexOf("yt:")===0)return ytSign(it[1].slice(3),quiz?"?":it[0],ar,quiz);
+    var u=pathURL(it[1]),src=vidFor(u);return src?videoBox(src,quiz?"?":it[0]):card(u,quiz?"?":it[0]);
+  }
   function pathURL(p){return MSL+p.split("/").map(encodeURIComponent).join("/")+"/";}
   function lprog(){return env.sget("signLessons",{})||{};}
   function startLesson(les){S.les={l:les,step:"learn",i:0};env.render();window.scrollTo(0,0);}
@@ -216,13 +247,13 @@
       put(root,h("p",{class:"muted small",style:"margin:0 0 6px"},"Дохио "+(i+1)+" / "+its.length+" — видеог харж, өөрөө давтан хийгээрэй"),dots);
       put(root,h("div",{style:"font-weight:800;font-size:24px;text-align:center;margin:4px 0 8px"},it[0]));
       seen("L"+it[1]);
-      var u=pathURL(it[1]),src=vidFor(u);
-      put(root,src?videoBox(src,it[0]):card(u,it[0]));
+      var yt=it[1].indexOf("yt:")===0,u=yt?"https://www.youtube.com/watch?v="+it[1].slice(3):pathURL(it[1]);
+      put(root,media(it,les.ar,false));
       put(root,h("div",{class:"row",style:"margin-top:10px"},
         h("button",{class:"btn",disabled:i===0,onclick:function(){Ls.i=i-1;env.render();}},"‹ Өмнөх"),
         i<its.length-1?h("button",{class:"btn primary",onclick:function(){Ls.i=i+1;env.render();}},"Дараах ›")
           :h("button",{class:"btn primary",onclick:startLQuiz},"📝 Дасгал эхлэх")));
-      put(root,h("p",{class:"muted small",style:"margin-top:8px"},"Видео: «Монгол дохионы хэл» цахим толь (",h("a",{href:u,target:"_blank",rel:"noopener"},"mnsl.mn"),")"));
+      put(root,h("p",{class:"muted small",style:"margin-top:8px"},yt?"Видео: Сонсголгүйн боловсрол / Mongolian Deaf Education (":"Видео: «Монгол дохионы хэл» цахим толь (",h("a",{href:u,target:"_blank",rel:"noopener"},yt?"YouTube":"mnsl.mn"),")"));
       return;
     }
     var Q=Ls;
@@ -237,14 +268,37 @@
           stars>=2&&nx?h("button",{class:"btn primary",onclick:function(){startLesson(nx);}},les.topic?"Дараагийн хэсэг ›":"Дараагийн хичээл ›"):null));
       return;
     }
-    var q=Q.qs[Q.i],qu=pathURL(q.it[1]),qs=vidFor(qu);
+    var q=Q.qs[Q.i];
     put(root,h("p",{class:"muted small"},"Асуулт "+(Q.i+1)+" / "+Q.qs.length+" · ✅ "+Q.ok),h("div",{class:"q",style:"text-align:center;margin-bottom:6px"},"Энэ дохио юу гэсэн утгатай вэ?"));
-    put(root,qs?videoBox(qs,"?"):card(qu,"?"));
+    put(root,media(q.it,les.ar,true));
     var g=h("div",{style:"display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px"});
     q.o.forEach(function(o){var cls="opt";if(q.p!=null){if(o===q.a)cls+=" ok";else if(o===q.p)cls+=" bad";}
       put(g,h("button",{class:cls,disabled:q.p!=null,style:"font-size:18px;font-weight:700;margin:0",onclick:function(){q.p=o;if(o===q.a){Q.ok++;env.addXP(1);}env.render();}},o));});
     put(root,g);
     if(q.p!=null)put(root,h("button",{class:"btn primary",style:"width:100%;margin-top:10px",onclick:function(){Q.i++;env.render();window.scrollTo(0,0);}},Q.i+1<Q.qs.length?"Дараагийнх ›":"Дүн харах"));
+  }
+  function topicRow(o,pr,ico){
+    var d=o.parts.filter(function(l){return pr[l.id]>=2;}).length;
+    return h("button",{class:"lrow",type:"button",style:"width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer",onclick:function(){if(o.parts.length===1){S.topic=null;startLesson(o.parts[0]);}else{S.topic=o.id;env.render();window.scrollTo(0,0);}}},
+      ico?h("span",{class:"hexb ico"},o.ico):null,
+      h("span",{style:"flex:1"},h("b",null,o.t),h("div",{class:"muted small"},o.items.length+" дохио"+(o.parts.length>1?" · "+o.parts.length+" хэсэг":"")+(d?" · ✅ "+d+"/"+o.parts.length:""))),
+      h("span",{"aria-hidden":"true"},d===o.parts.length?"✅":"›"));
+  }
+  /* видео цуврал: дарсан видео нь апп дотор (YouTube embed) тоглоно, үзсэнийг тэмдэглэнэ (signWatched) */
+  function seriesView(root){
+    var M=mde(),sr=M&&M.series[S.series];if(!sr){S.series=null;put(root,h("p",{class:"muted"},"Ачаалж байна…"));return;}
+    var wt=env.sget("signWatched",{})||{};
+    put(root,h("h3",{style:"margin:4px 0 4px"},sr.ico+" "+sr.t),h("p",{class:"muted small",style:"margin:0 0 8px"},"Сонсголгүйн боловсрол / Mongolian Deaf Education · "+sr.items.length+" видео"));
+    sr.items.forEach(function(x){var on=S.open==="yt:"+x.id;
+      put(root,h("button",{class:"lrow",type:"button","aria-expanded":String(on),style:"width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer"+(on?";border-color:var(--sky)":""),
+          onclick:function(){S.open=on?null:"yt:"+x.id;if(!on&&!wt[x.id]){wt[x.id]=1;env.sset("signWatched",wt);env.addXP(1);}env.render();}},
+        h("span",{class:"hexb ico"},wt[x.id]?"✅":"▶️"),h("span",{style:"flex:1"},h("b",null,x.t),x.len?h("div",{class:"muted small"},"⏱ "+x.len):null),h("span",{"aria-hidden":"true"},on?"▾":"›")));
+      if(on){var w=h("div",{class:"note",style:"margin:6px 0 10px;padding:8px"});
+        put(w,h("iframe",{src:"https://www.youtube-nocookie.com/embed/"+x.id+"?autoplay=1&rel=0&playsinline=1&modestbranding=1",title:x.t,allow:"autoplay; encrypted-media; picture-in-picture; fullscreen",allowfullscreen:true,referrerpolicy:"strict-origin-when-cross-origin",
+            style:"display:block;width:100%;aspect-ratio:16/9;height:auto;border:0;border-radius:10px;background:#000"}),
+          h("div",{class:"muted small",style:"margin-top:4px"},"Видео: ",h("a",{href:"https://www.youtube.com/watch?v="+x.id+"&list="+sr.pl,target:"_blank",rel:"noopener"},"Сонсголгүйн боловсрол — YouTube ↗")));
+        put(root,w);}
+    });
   }
   function topicView(root){
     var o=topicById(S.topic);if(!o){S.topic=null;put(root,h("p",{class:"muted"},"Ачаалж байна…"));return;}
@@ -260,6 +314,7 @@
     if(!msl()){put(root,h("p",{class:"muted"},S.err?"Индексийг ачаалж чадсангүй. Интернэтээ шалгана уу.":"Ачаалж байна…"));loadMsl();return;}
     if(S.les){lessonView(root);return;}
     if(S.topic!=null){topicView(root);return;}
+    if(S.series!=null){seriesView(root);return;}
     var list=lessons(),pr=lprog(),done=list.filter(function(l){return pr[l.id]>=2;}).length;
     put(root,h("p",{class:"muted"},"Монгол дохионы хэлийг алхам алхмаар: хичээл бүрт дохиог видеогоор үзэж давтаад, дараа нь дасгал хийнэ. 80%-иас дээш зөв хариулбал хичээл дуусна."),
       h("div",{class:"small",style:"font-weight:700;margin:0 0 8px"},"Явц: "+done+" / "+list.length+" хичээл"),
@@ -279,13 +334,24 @@
       var g0="";
       T.forEach(function(o){
         if(o.g!==g0){g0=o.g;put(root,h("div",{class:"muted small",style:"font-weight:700;margin:10px 0 4px"},o.ico+" "+o.n+". "+o.g));}
-        var d=o.parts.filter(function(l){return pr[l.id]>=2;}).length;
-        put(root,h("button",{class:"lrow",type:"button",style:"width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer",onclick:function(){if(o.parts.length===1){S.topic=null;startLesson(o.parts[0]);}else{S.topic=o.id;env.render();window.scrollTo(0,0);}}},
-          h("span",{style:"flex:1"},h("b",null,o.t),h("div",{class:"muted small"},o.items.length+" дохио"+(o.parts.length>1?" · "+o.parts.length+" хэсэг":"")+(d?" · ✅ "+d+"/"+o.parts.length:""))),
-          h("span",{"aria-hidden":"true"},d===o.parts.length?"✅":"›")));
+        put(root,topicRow(o,pr,false));
       });
     }
-    put(root,h("p",{class:"muted small",style:"margin-top:16px"},"Видео, ангилал: «Монгол дохионы хэл» цахим толь — ",h("a",{href:MSL,target:"_blank",rel:"noopener"},"mnsl.mn"),". Зохиогчийн эрх тэдэнд хамаарна."));
+    /* Сонсголгүйн боловсрол (YouTube) — дохионы сан ба видео цуврал */
+    var M=mde();
+    put(root,h("h3",{style:"margin:22px 0 4px"},"🎓 Сонсголгүйн боловсрол — дохионы сан"));
+    if(!M)put(root,h("p",{class:"muted small"},"Ачаалж байна…"));
+    else{
+      var mt=0;M.vocab.forEach(function(o){mt+=o.items.length;});
+      put(root,h("p",{class:"muted small",style:"margin:0 0 6px"},"«Mongolian Deaf Education» сувгийн "+mt+" дохионы видео — харилцан яриа, төлөөний үг, мэргэжил, бие эрхтэн, эсрэг утгатай үг, үйл үг. Видео бүрийн дараа дасгалтай."));
+      M.vocab.forEach(function(o){put(root,topicRow(o,pr,true));});
+      put(root,h("h3",{style:"margin:22px 0 4px"},"🎬 Видео хичээл, дуу, үлгэр"));
+      var wt=env.sget("signWatched",{})||{};
+      M.series.forEach(function(sr){var d=sr.items.filter(function(x){return wt[x.id];}).length;
+        put(root,h("button",{class:"lrow",type:"button",style:"width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer",onclick:function(){S.series=sr.k;S.open=null;env.render();window.scrollTo(0,0);}},
+          h("span",{class:"hexb ico"},sr.ico),h("span",{style:"flex:1"},h("b",null,sr.t),h("div",{class:"muted small"},sr.items.length+" видео"+(d?" · үзсэн "+d:""))),h("span",{"aria-hidden":"true"},"›")));});
+    }
+    put(root,h("p",{class:"muted small",style:"margin-top:16px"},"Видео, ангилал: «Монгол дохионы хэл» цахим толь — ",h("a",{href:MSL,target:"_blank",rel:"noopener"},"mnsl.mn"),"; «Сонсголгүйн боловсрол / Mongolian Deaf Education» — ",h("a",{href:MDE_URL,target:"_blank",rel:"noopener"},"YouTube"),". Зохиогчийн эрх тэдэнд хамаарна."));
   }
   function viewMsl(root){
     put(root,h("p",{class:"muted"},"Монголд 9–15 мянган сонсголгүй иргэн амьдардаг. Үг, үсэг дээр дарахад дохионы видео энд, апп дотор тоглоно — албан ёсны «Монгол дохионы хэл» цахим толь (mnsl.mn)-ийн хуудсаар."));
@@ -452,8 +518,8 @@
   }
   function view(e){
     env=e;h=e.h;var root=h("div");
-    var inL=S.tab==="les"&&(S.les||S.topic!=null),inA=S.tab==="asl"&&(S.quiz||S.spell);
-    put(root,h("button",{class:"back",onclick:function(){if(inA){S.quiz=null;S.spell=null;env.render();}else if(inL){if(S.les)S.les=null;else S.topic=null;env.render();window.scrollTo(0,0);}else e.close();}},inA?"‹ ASL":inL?(S.les&&S.les.l.topic&&S.topic!=null?"‹ "+S.les.l.topic.t:"‹ Хичээлүүд"):"‹ Дүрэм"),
+    var inL=S.tab==="les"&&(S.les||S.topic!=null||S.series!=null),inA=S.tab==="asl"&&(S.quiz||S.spell);
+    put(root,h("button",{class:"back",onclick:function(){if(inA){S.quiz=null;S.spell=null;env.render();}else if(inL){if(S.les)S.les=null;else if(S.series!=null){S.series=null;S.open=null;}else S.topic=null;env.render();window.scrollTo(0,0);}else e.close();}},inA?"‹ ASL":inL?(S.les&&S.les.l.topic&&S.topic!=null?"‹ "+S.les.l.topic.t:"‹ Хичээлүүд"):"‹ Дүрэм"),
       h("h2",null,"🤟 Дохионы хэл"));
     if(!inA&&!inL){
       var seg=h("div",{class:"seg",role:"group","aria-label":"Дохионы хэл",style:"margin-bottom:10px"});
