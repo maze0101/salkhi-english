@@ -108,7 +108,7 @@
      ⚠️ sandbox-д allow-scripts БАЙХГҮЙ: тэдний pagelink.js нь хуудсан дээр хажуу тийш шудрах (Hammer swipe) ба ←/→ товчоор
      дараагийн/өмнөх дохио руу шилждэг — хурдны гулсуур чирэх, видео гүйлгэхэд санамсаргүй шилжиж байсан (хэрэглэгчийн мэдэгдсэн алдаа).
      Скриптгүй үед видео хөтчийн өөрийн удирдлагаар тоглоно (хурд: ⋮ цэс); тэдний «Видеоны хурд» гулсуур ажиллахгүй. */
-  function card(url,label){
+  function card(url,label,inLesson){
     var w=h("div",{class:"note",style:"margin:6px 0 10px;padding:8px"}),letter=url.indexOf("/khuruu-useg/")>0,vsrc=vidFor(url);
     var frame=function(src,title,hgt,bg){return h("iframe",{src:src,title:title,allow:"autoplay; fullscreen",allowfullscreen:true,
         sandbox:"allow-same-origin allow-popups allow-popups-to-escape-sandbox",referrerpolicy:"strict-origin-when-cross-origin",
@@ -130,7 +130,7 @@
     }
     put(w,
       h("div",{class:"row",style:"margin-top:6px"},
-        h("button",{class:"btn ghost",onclick:function(){S.open=null;env.render();}},"✕ Хаах"),
+        inLesson?null:h("button",{class:"btn ghost",onclick:function(){S.open=null;env.render();}},"✕ Хаах"),
         h("a",{class:"btn ghost",href:url,target:"_blank",rel:"noopener",style:"text-decoration:none"},"↗ mnsl.mn дээр")),
       h("div",{class:"muted small",style:"margin-top:4px"},"Видео, зураг: «Монгол дохионы хэл» цахим толь (",h("a",{href:url,target:"_blank",rel:"noopener"},"mnsl.mn"),")"+(vsrc?". Гарын хэлбэр, ижил утгатай дохиог тэдний хуудаснаас үзнэ.":" — тэдний хуудас апп дотор нээгдэж байна.")));
     return w;
@@ -146,6 +146,36 @@
      Хичээл бүр: зөвлөгөө → дохио нэг нэгээр (видео) → дасгал (видео харж утгыг сонгох). 80%+ бол дууссан, ⭐ хадгална (signLessons).
      items: [монгол, mnsl зам (ug/… | too/… | khuruu-useg/…)]. ах/эгч ижил дохио (303) тул дасгалд ижил видеотой сонголт гаргахгүй. */
   var LESSONS=null;
+  /* 🆘 Амьдралд хэрэгтэй дохио: нөхцөл байдлаар. Эх: тоо — mnsl.mn-ийн дохионы дугаар, "yt:<id>" — Сонсголгүйн боловсрол (YouTube),
+     "spell:<үг>" — тольд тусдаа дохиогүй тул хуруугаар үсэглэнэ (дасгалд орохгүй). ex: [өгүүлбэр, [дохионы нэрс дарааллаар]] — дохионы дараалал ойролцоо. */
+  var LIFE=[
+    {id:"life1",ico:"🆘",t:"Яаралтай үед",tip:"Яаралтай үед дохиог томоор, тод, нүүрний хувирлаар хийнэ. Сонсголгүй хүнд хандахдаа мөрөн дээр нь зөөлөн хүрч эсвэл гараа даллаж анхаарлыг нь татна.",
+     items:[["тусламж",782],["хэрэгтэй",743],["дуудах",1],["эмч",1058],["эмнэлэг",1034],["өвдөх",517],["цагдаа",132],["гал түймэр",260],["хурдан",186],["айх",526],["болохгүй",1213],["эм","spell:эм"]],
+     ex:[["Тусламж хэрэгтэй!",["тусламж","хэрэгтэй"]],["Эмч дуудаарай, хурдан!",["эмч","дуудах","хурдан"]],["Цагдаа дуудаарай!",["цагдаа","дуудах"]],["Гал гарлаа, хурдан!",["гал түймэр","хурдан"]],["Эм хэрэгтэй.",["эм","хэрэгтэй"]]]},
+    {id:"life2",ico:"🏪",t:"Дэлгүүрт",tip:"Үнийг асуухдаа барааг заагаад «хэд» гэж дохиогоод асуусан царай гаргана. Тоог тоон дохиогоор эсвэл утсан дээрээ бичиж харуулж болно.",
+     items:[["дэлгүүр",60],["авах",316],["хэд, хэчнээн",327],["үнэтэй",571],["хямд",1161],["мөнгө",1180],["төлөх",553],["хэрэгтэй",1164],["хэрэггүй",1163],["банк","spell:банк"]],
+     ex:[["Энэ хэд вэ?",["хэд, хэчнээн"]],["Үнэтэй байна, хямд нь байна уу?",["үнэтэй","хямд"]],["Мөнгөөр төлнө.",["мөнгө","төлөх"]],["Надад хэрэггүй.",["хэрэггүй"]],["Банк хаана байна?",["банк"]]]},
+    {id:"life3",ico:"🚌",t:"Тээвэрт",tip:"Чиглэлийг гараараа заахад болно — дохионы хэлэнд орон зай чухал. Хаягаа утсан дээрээ бичиж харуулбал илүү ойлгомжтой.",
+     items:[["автобус",479],["такси",153],["галт тэрэг",34],["онгоц",1360],["явах",103],["ирэх",146],["зогсох",51],["хүлээх",965],["хаана",96],["ойр",971],["хол",2]],
+     ex:[["Автобус хаана зогсдог вэ?",["автобус","зогсох","хаана"]],["Такси хүлээж байна.",["такси","хүлээх"]],["Хол уу, ойр уу?",["хол","ойр"]],["Галт тэрэг хэзээ ирэх вэ?",["галт тэрэг","ирэх"]]]},
+    {id:"life4",ico:"💬",t:"Ойлголцох",tip:"Ойлгоогүй бол ичихгүйгээр «дахин», «удаан» гэж дохиол. Бичиж харилцах нь ч зүгээр — утас, цаас ашигла.",
+     items:[["би","yt:Jr5J19NNEWs"],["та","yt:9hZZ5jT9-tI"],["сонсголгүй",255],["дохионы хэл",277],["мэдэх",896],["ойлгох",895],["ойлгохгүй",1062],["дахин",940],["удаан",63],["бичих",1195],["утас",1373],["хаяг","spell:хаяг"]],
+     ex:[["Би сонсголгүй.",["би","сонсголгүй"]],["Та дохионы хэл мэдэх үү?",["та","дохионы хэл","мэдэх"]],["Ойлгосонгүй, дахиад удаан.",["ойлгохгүй","дахин","удаан"]],["Бичиж өгөөч.",["бичих"]],["Таны хаяг?",["та","хаяг"]]]},
+    {id:"life5",ico:"🙏",t:"Эелдэг үг ба хэрэгцээ",tip:"Эелдэг үгийг инээмсэглэлтэй хийнэ. «Ус», «жорлон» тольд тусдаа дохиогүй тул хуруугаар үсэглэдэг.",
+     items:[["сайн байна уу",28],["баярлалаа",137],["уучлаарай",56],["гуйх",54],["тийм",1337],["үгүй",1090],["болно",432],["баяртай",240],["ус","spell:ус"],["жорлон","spell:жорлон"]],
+     ex:[["Тийм, болно.",["тийм","болно"]],["Үгүй, баярлалаа.",["үгүй","баярлалаа"]],["Уучлаарай, жорлон?",["уучлаарай","жорлон"]],["Ус гуйя.",["ус","гуйх"]]]}
+  ];
+  var LIFEL=null;
+  function lifeLessons(){
+    if(LIFEL)return LIFEL;if(!msl())return [];
+    LIFEL=LIFE.map(function(d){
+      var items=d.items.map(function(x){var v=x[1];
+        if(typeof v==="number"){var e=byNum(v);return e?[x[0],"ug/"+e.s,v]:null;}
+        return [x[0],v,v,v.indexOf("spell:")===0];}).filter(Boolean);
+      return {id:d.id,t:d.ico+" "+d.t,tip:d.tip,items:items,ex:d.ex,cr:"Сонсголгүйн боловсрол / Mongolian Deaf Education"};});
+    LIFEL.forEach(function(l,k){l.nx=LIFEL[k+1]||null;});
+    return LIFEL;
+  }
   function lessons(){
     if(LESSONS)return LESSONS;
     var tips={"👋 Мэндчилгээ":"Дохионы хэлэнд нүүрний хувирал дүрэм шиг үүрэгтэй: баярлалаа гэхдээ инээмсэглэж, уучлаарай гэхдээ харамссан царай гаргана. Ярилцагчийнхаа нүд рүү харж байх нь эелдэг ёс.",
@@ -235,13 +265,24 @@
       quiz?h("div",{"aria-hidden":"true",style:"position:absolute;left:0;right:0;top:0;height:64px;background:#000;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:22px"},"?"):null);
     return w;
   }
+  /* тольд дохиогүй үг: үсэг бүрийн гарын хэлбэрийг mnsl.mn-ийн хурууны үсгээр дараалуулан (S.spellI) */
+  function spellMedia(word){
+    var lets=String(word).toLowerCase().split("").filter(function(c){return msl().letters.indexOf(c)>=0;}),i=Math.max(0,Math.min(lets.length-1,S.spellI||0));
+    var box=h("div",{class:"note",style:"margin:0;padding:8px"});
+    var chips=h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"});
+    lets.forEach(function(c,k){put(chips,h("button",{class:"chip",type:"button","aria-pressed":String(k===i),style:"font-weight:800;margin:0"+(k===i?";border-color:var(--sky);background:color-mix(in srgb,var(--sky) 14%,var(--surface))":""),onclick:function(){S.spellI=k;env.render();}},c.toUpperCase()));});
+    put(box,h("div",{class:"small",style:"margin-bottom:6px"},"✋ Тольд тусдаа дохио алга — хуруугаар үсэглэнэ: "+(i+1)+" / "+lets.length+" үсэг"),chips,card(lurl(lets[i]),"«"+lets[i].toUpperCase()+"» үсэг",true),
+      h("div",{class:"row"},h("button",{class:"btn",disabled:i===0,onclick:function(){S.spellI=i-1;env.render();}},"‹ Үсэг"),h("button",{class:"btn",disabled:i>=lets.length-1,onclick:function(){S.spellI=i+1;env.render();}},"Үсэг ›")));
+    return box;
+  }
   function media(it,ar,quiz){
+    if(it[1].indexOf("spell:")===0)return spellMedia(it[1].slice(6));
     if(it[1].indexOf("yt:")===0)return ytSign(it[1].slice(3),quiz?"?":it[0],ar,quiz);
-    var u=pathURL(it[1]),src=vidFor(u);return src?videoBox(src,quiz?"?":it[0]):card(u,quiz?"?":it[0]);
+    var u=pathURL(it[1]),src=vidFor(u);return src?videoBox(src,quiz?"?":it[0]):card(u,quiz?"?":it[0],true);
   }
   function pathURL(p){return MSL+p.split("/").map(encodeURIComponent).join("/")+"/";}
   function lprog(){return env.sget("signLessons",{})||{};}
-  function startLesson(les){S.les={l:les,step:"learn",i:0};env.render();window.scrollTo(0,0);}
+  function startLesson(les){S.les={l:les,step:"learn",i:0};S.spellI=0;env.render();window.scrollTo(0,0);}
   function base(t,loose){t=String(t).replace(/\s*\(хувилбар \d\)$/,"");return loose?t.replace(/\s*\([^)]*\)/g,"").trim()||t:t;}
   function startLQuiz(){
     var les=S.les.l,its=les.items,lz=les.loose,B=function(t){return base(t,lz);};
@@ -266,7 +307,7 @@
       its.forEach(function(x,k){var short=String(x[0]).split(/[,;/]/)[0].trim(),on=k===i;
         var b=h("button",{class:"chip",type:"button",role:"tab","aria-selected":String(on),title:x[0],
           style:"flex:none;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:700;padding:5px 10px;margin:0"+(on?";border-color:var(--sky);background:color-mix(in srgb,var(--sky) 14%,var(--surface))":""),
-          onclick:function(){Ls.i=k;env.render();}},(k+1)+". "+short);
+          onclick:function(){Ls.i=k;S.spellI=0;env.render();}},(k+1)+". "+short);
         if(on)cur=b;put(dots,b);});
       put(root,dots);
       if(cur)setTimeout(function(){if(cur.isConnected)dots.scrollLeft=cur.offsetLeft-dots.offsetLeft-(dots.clientWidth-cur.offsetWidth)/2;},0);
@@ -276,13 +317,26 @@
         h("div",{style:"font-weight:800;font-size:clamp(19px,5.6vw,24px);line-height:1.25;overflow-wrap:anywhere"},head),
         parts.length?h("div",{class:"muted",style:"font-size:14px;line-height:1.35;margin-top:2px;overflow-wrap:anywhere"},parts.join(", ")):null));
       seen("L"+it[1]);
-      var yt=it[1].indexOf("yt:")===0,u=yt?"https://www.youtube.com/watch?v="+it[1].slice(3):pathURL(it[1]);
+      var yt=it[1].indexOf("yt:")===0,sp=it[1].indexOf("spell:")===0,u=yt?"https://www.youtube.com/watch?v="+it[1].slice(3):sp?MSL+"khuruu-useg/":pathURL(it[1]);
       put(root,media(it,les.ar,false));
       put(root,h("div",{class:"row",style:"margin-top:10px"},
-        h("button",{class:"btn",disabled:i===0,onclick:function(){Ls.i=i-1;env.render();}},"‹ Өмнөх"),
-        i<its.length-1?h("button",{class:"btn primary",onclick:function(){Ls.i=i+1;env.render();}},"Дараах ›")
+        h("button",{class:"btn",disabled:i===0,onclick:function(){Ls.i=i-1;S.spellI=0;env.render();}},"‹ Өмнөх"),
+        i<its.length-1?h("button",{class:"btn primary",onclick:function(){Ls.i=i+1;S.spellI=0;env.render();}},"Дараах ›")
           :h("button",{class:"btn primary",onclick:startLQuiz},"📝 Дасгал эхлэх")));
-      put(root,h("p",{class:"muted small",style:"margin-top:8px"},yt?"Видео: "+(les.cr||"YouTube")+" (":"Видео: «Монгол дохионы хэл» цахим толь (",h("a",{href:u,target:"_blank",rel:"noopener"},yt?"YouTube":"mnsl.mn"),")"));
+      put(root,h("p",{class:"muted small",style:"margin-top:8px"},yt?"Видео: "+(les.cr||"YouTube")+" (":sp?"Хурууны үсэг: «Монгол дохионы хэл» цахим толь (":"Видео: «Монгол дохионы хэл» цахим толь (",h("a",{href:u,target:"_blank",rel:"noopener"},yt?"YouTube":"mnsl.mn"),")"));
+      /* жишээ өгүүлбэр: үг дээр дарахад тэр дохио руу шилжинэ */
+      if(les.ex){
+        var exb=h("details",{class:"note",style:"margin:10px 0 0;padding:8px 10px"});if(S.exOpen)exb.open=true;
+        exb.addEventListener("toggle",function(){S.exOpen=exb.open;});
+        put(exb,h("summary",{style:"cursor:pointer;font-weight:700"},"💬 Жишээ өгүүлбэр ("+les.ex.length+")"));
+        les.ex.forEach(function(e){
+          var row=h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"});
+          e[1].forEach(function(w){var k=-1;its.forEach(function(x,j){if(k<0&&x[0]===w)k=j;});
+            put(row,h("button",{class:"chip",type:"button",style:"margin:0;font-size:13px;font-weight:800;padding:4px 9px"+(k===i?";border-color:var(--sky)":""),disabled:k<0,onclick:function(){Ls.i=k;S.spellI=0;env.render();window.scrollTo(0,0);}},w.toUpperCase()));});
+          put(exb,h("div",{style:"margin-top:10px"},h("div",{style:"font-weight:700"},e[0]),row));});
+        put(exb,h("div",{class:"muted small",style:"margin-top:8px"},"Дохионы дараалал ойролцоо: дохионы хэлэнд нөхцөл, туслах үгийг ихэвчлэн дохиолдоггүй, асуултыг нүүрний хувирлаар илэрхийлнэ."));
+        put(root,exb);
+      }
       return;
     }
     var Q=Ls;
@@ -353,6 +407,15 @@
         h("span",{class:"hexb ico"},st>=2?"✅":String(k+1)),
         h("span",{style:"flex:1"},h("b",null,l.t),h("div",{class:"muted small"},l.items.length+" дохио"+(st?" · "+"⭐".repeat(st):""))),
         h("span",{"aria-hidden":"true"},"›")));});
+    /* 🆘 амьдралд хэрэгтэй дохио */
+    var LL=lifeLessons();
+    if(LL.length){
+      put(root,h("h3",{style:"margin:20px 0 4px"},"🆘 Амьдралд хэрэгтэй дохио"),h("p",{class:"muted small",style:"margin:0 0 6px"},"Яаралтай үед, дэлгүүрт, тээвэрт, ойлголцох, эелдэг үг — дохио, хуруугаар үсэглэх үг, жишээ өгүүлбэртэй."));
+      LL.forEach(function(l){var st=pr[l.id]||0;
+        put(root,h("button",{class:"lrow",type:"button",style:"width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer",onclick:function(){startLesson(l);}},
+          h("span",{style:"flex:1"},h("b",null,l.t),h("div",{class:"muted small"},l.items.length+" дохио · "+l.ex.length+" жишээ өгүүлбэр"+(st?" · "+"⭐".repeat(st):""))),
+          h("span",{"aria-hidden":"true"},st>=2?"✅":"›")));});
+    }
     /* mnsl.mn-ийн бүх дохио — сэдвээр */
     put(root,h("h3",{style:"margin:20px 0 4px"},"📚 Сэдвээр — бүх дохио"));
     var T=topics();
