@@ -13,7 +13,7 @@ function initSalkhiHero(root) {
   let stars = [], flows = [];
   let t = 0, g = 0, sweep = -200, auto = 4;
   let ph = 0, ang1 = 0, ang2 = 1;
-  let capY = 34, moonX = 0;
+  let capY = 34, moonX = 0, sunY = 0, sunR = 18, glowR = 34;
   let wx = null, flash = 0, clouds = [], drops = [];
   let running = true, visible = true, raf = 0;
   const kite = { x: 0, y: 0, vx: 0, vy: 0, init: false };
@@ -50,6 +50,16 @@ function initSalkhiHero(root) {
       drops.push({ x: Math.random() * W, y: Math.random() * H, s: 0.7 + Math.random() * 0.6, p: Math.random() * 6 });
 
     const lr = buildLogo();
+
+    // Нар/сар: дээд товчны мөр ба логоны хоорондох зайд багтаана (дээд хэсэг 210px болж намссанаас хойш логотой давхцдаг байсан)
+    const tl = root.querySelector('.tools'), cr = cv.getBoundingClientRect();
+    const top = tl && tl.offsetHeight ? tl.getBoundingClientRect().bottom - cr.top : capY - 40;
+    const lb = logoEl ? logoEl.getBoundingClientRect() : null;
+    const lt = lb && lb.height ? lb.top - cr.top : capY + 50;
+    const gap = Math.max(24, lt - top);
+    sunY = top + gap / 2;
+    sunR = Math.max(9, Math.min(18, gap / 2 - 10));
+    glowR = Math.max(sunR + 4, Math.min(sunR + 16, gap / 2 - 2));
 
     // Хүүхэд логоны баруун талаас салхин тээрэм хүртэлх зайд алхана
     const x0 = (lr ? lr : 24 + Math.min(300, W * 0.62)) + 18, x1 = W * 0.74;
@@ -207,19 +217,19 @@ function initSalkhiHero(root) {
     ctx.fillStyle = sky[0]; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = sky[1]; ctx.fillRect(0, H * 0.5, W, H);
 
-    const mx = moonX, my = capY + 2;
+    const mx = moonX, my = sunY || capY + 2;
     if (day) {
       // Нар (бүрхэг үед үүлэн цаана бүдэг)
       ctx.globalAlpha = overcast ? 0.35 : 1;
-      ctx.fillStyle = 'rgba(255,236,170,0.25)'; ctx.beginPath(); ctx.arc(mx, my, 34 + Math.sin(t * 1.5) * 2, 0, 6.28); ctx.fill();
-      ctx.fillStyle = '#FFD86B'; ctx.beginPath(); ctx.arc(mx, my, 18, 0, 6.28); ctx.fill();
+      ctx.fillStyle = 'rgba(255,236,170,0.25)'; ctx.beginPath(); ctx.arc(mx, my, glowR + Math.sin(t * 1.5) * 2, 0, 6.28); ctx.fill();
+      ctx.fillStyle = '#FFD86B'; ctx.beginPath(); ctx.arc(mx, my, sunR, 0, 6.28); ctx.fill();
       ctx.globalAlpha = 1;
     } else {
       // Сар
       ctx.globalAlpha = overcast ? 0.4 : 1;
-      ctx.fillStyle = 'rgba(255,255,255,0.045)'; ctx.beginPath(); ctx.arc(mx, my, 48, 0, 6.28); ctx.fill();
-      ctx.fillStyle = '#E9E4D4'; ctx.beginPath(); ctx.arc(mx, my, 18, 0, 6.28); ctx.fill();
-      ctx.fillStyle = sky[0]; ctx.beginPath(); ctx.arc(mx + 8, my - 5, 16, 0, 6.28); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.045)'; ctx.beginPath(); ctx.arc(mx, my, glowR + 10, 0, 6.28); ctx.fill();
+      ctx.fillStyle = '#E9E4D4'; ctx.beginPath(); ctx.arc(mx, my, sunR, 0, 6.28); ctx.fill();
+      ctx.fillStyle = sky[0]; ctx.beginPath(); ctx.arc(mx + sunR * 0.45, my - sunR * 0.28, sunR * 0.9, 0, 6.28); ctx.fill();
       ctx.globalAlpha = 1;
       // Од (бүрхэг үед харагдахгүй)
       if (!overcast) for (const s of stars) {
