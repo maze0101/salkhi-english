@@ -1,6 +1,7 @@
 /* Салхи: 🤟 дохионы хэл — Монгол дохионы хэл (МДХ) ба Америкийн дохионы хэл (ASL).
    МДХ: https://mnsl.mn (© Монгол дохионы хэл) — 1398 дохио, 35 хурууны үсэг, тоо. Зураг, видео файлыг хуулахгүй, шууд тоглуулахгүй (лицензгүй):
         дарсан үед тэдний дохионы хуудсыг апп дотор iframe-ээр нэг нэгээр нээж, видео тэнд тоглоно; индекс (гарчиг + хаяг) sign/msl-data.js-д sitemap-аас авсан, энэ хэсгийг нээхэд ачаална.
+        Бүх дохионы видеоны зам (sign/msl-video.js), сэдэвчилсэн ангилал (sign/msl-topics.js) — REST /wp-json/wp/v2/ug-ээс; видео тэдний серверээс тоглоно.
    ASL: хурууны цагаан толгойн A–Z зураг — нийтийн өмч (wpclipart.com, Wikimedia Commons «Sign language A–Z.svg»), sign/asl/*.svg.
         Үгсийн видео — signasl.org (холбоос). Дасгал: үсэг таах, үг үсэглэх, нэрээ ASL-ээр.
    Үндсэн 48 үг: [ангилал, монгол, англи, signasl slug, МДХ дохионы дугаар | "too/<slug>" (цаг/тооны хэсэг) | null (тольд алга → толийг нээнэ),
@@ -51,7 +52,7 @@
     return w;
   }
   var TR={"а":"a","б":"b","в":"v","г":"g","д":"d","е":"ye","ё":"yo","ж":"j","з":"z","и":"i","й":"i","к":"k","л":"l","м":"m","н":"n","о":"o","ө":"o","п":"p","р":"r","с":"s","т":"t","у":"u","ү":"u","ф":"f","х":"kh","ц":"ts","ч":"ch","ш":"sh","щ":"sh","ъ":"","ы":"y","ь":"i","э":"e","ю":"yu","я":"ya"};
-  var env=null,h=null,S={tab:"les",les:null,q:"",name:"",nameA:"",quiz:null,spell:null,loading:false,open:null,from:""};
+  var env=null,h=null,S={tab:"les",les:null,topic:null,q:"",name:"",nameA:"",quiz:null,spell:null,loading:false,open:null,from:""};
   function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
   function link(href,label,extra){return h("a",{class:"btn",href:href,target:"_blank",rel:"noopener",style:"text-decoration:none;"+(extra||"")},label);}
   function msl(){return window.MSL_DATA||null;}
@@ -60,6 +61,8 @@
     var v=window.SALKHI_BUILD?"?v="+window.SALKHI_BUILD:"";
     /* видеоны жагсаалт (msl-video.js) зэрэг ачаална; олдохгүй бол хуудсаар нь харуулна */
     var sv=document.createElement("script");sv.src="sign/msl-video.js"+v;document.head.appendChild(sv);
+    /* сэдвүүд (msl-topics.js) — ачаалагдмагц сэдвийн хичээл, «Сэдвээр» хэсэг гарна */
+    var st=document.createElement("script");st.src="sign/msl-topics.js"+v;st.onload=function(){env.render();};document.head.appendChild(st);
     var s=document.createElement("script");s.src="sign/msl-data.js"+v;s.onload=function(){S.loading=false;S.ix=null;env.render();};
     s.onerror=function(){S.loading=false;S.err=true;env.render();};document.head.appendChild(s);
   }
@@ -163,15 +166,38 @@
       L.push({id:"a"+(k+1),t:"🔤 Үсэг "+g[0].toUpperCase()+"–"+g[g.length-1].toUpperCase(),
         tip:k===0?"Хурууны цагаан толгой (дактиль)-аар нэр, газрын нэр зэрэг дохиогүй үгийг үсэглэнэ. Гараа мөрний өндөрт, ярилцагч руугаа харуулж барина.":"Төстэй үсгүүдийг ялгахдаа эрхий хурууны байрлалд анхаар. Сурсан үсгээрээ нэрээ үсэглэж дадлага хийгээрэй.",
         items:g.map(function(c){return [c.toUpperCase(),"khuruu-useg/"+c,c];})});});
+    L.forEach(function(l,k){l.nx=L[k+1]||null;});
     LESSONS=L;return L;
   }
+  /* ---- mnsl.mn-ийн бүх дохио сэдвээр (msl-topics.js: {id, t, g (бүлэг), s: "дугаар|гарчиг" мөрүүд}) ----
+     Сэдэв бүрийг 10 дохиотой хэсэг (хичээл) болгоно. Цөөн дохиотой сэдэвт (<4) дасгалын буруу сонголтыг ижил бүлгээс авна. */
+  var TICO={1:"💬",2:"👋",3:"🎓",4:"💼",5:"🩺",6:"❤️",7:"🏠",8:"👕",9:"🍎",10:"🎨",11:"🐾",12:"🌳",13:"🕒",14:"💻",15:"⚽",16:"🎲",17:"🎵",18:"🚗",19:"🏛",20:"🗺"};
+  var TOPICS=null;
+  function topics(){
+    if(TOPICS)return TOPICS;var T=window.MSL_TOPICS;if(!T||!msl())return null;
+    var grp={};
+    TOPICS=T.map(function(t){
+      var n=parseInt(t.t,10),name=t.t.replace(/^[\d.]+\s*/,""),items=[];
+      t.s.split("\n").forEach(function(l){var k=parseInt(l,10),e=byNum(k);if(e)items.push([l.slice(l.indexOf("|")+1),"ug/"+e.s,k]);});
+      var o={id:t.id,n:n,ico:TICO[n]||"🤟",t:name,g:t.g.replace(/^[\d.]+\s*/,"")||name,items:items,parts:[]};
+      (grp[n]=grp[n]||[]).push(o);return o;});
+    TOPICS.forEach(function(o){
+      var pool=null;if(o.items.length<4){pool=[];grp[o.n].forEach(function(x){pool=pool.concat(x.items);});if(pool.length<4)pool=pool.concat(TOPICS[0].items);}
+      var np=Math.ceil(o.items.length/10),sz=Math.ceil(o.items.length/np);
+      for(var p=0;p<np;p++)o.parts.push({id:"t"+o.id+"-"+(p+1),t:o.ico+" "+o.t+(np>1?" ("+(p+1)+"/"+np+")":""),items:o.items.slice(p*sz,(p+1)*sz),pool:pool||o.items,topic:o,
+        tip:"«"+o.g+"» бүлгийн «"+o.t+"» сэдвийн дохио. Видеог 0.5× хурдаар үзэж гарын хэлбэр, байрлал, хөдөлгөөнийг ажиглаад өөрөө давтаарай."});
+      o.parts.forEach(function(l,k){l.nx=o.parts[k+1]||null;});
+    });
+    return TOPICS;
+  }
+  function topicById(id){var T=topics()||[];for(var i=0;i<T.length;i++)if(T[i].id===id)return T[i];return null;}
   function pathURL(p){return MSL+p.split("/").map(encodeURIComponent).join("/")+"/";}
   function lprog(){return env.sget("signLessons",{})||{};}
   function startLesson(les){S.les={l:les,step:"learn",i:0};env.render();window.scrollTo(0,0);}
   function startLQuiz(){
     var les=S.les.l,its=les.items;
     var qs=shuffle(its).slice(0,Math.min(8,its.length)).map(function(it){
-      var others=shuffle(its.filter(function(x){return x[2]!==it[2];})),o=[],seenS={};
+      var others=shuffle((les.pool||its).filter(function(x){return x[2]!==it[2]&&x[0]!==it[0];})),o=[],seenS={};
       others.forEach(function(x){if(o.length<3&&!seenS[x[0]]){seenS[x[0]]=1;o.push(x[0]);}});
       return {it:it,o:shuffle([it[0]].concat(o)),p:null};});
     S.les={l:les,step:"quiz",qs:qs,i:0,ok:0};env.render();window.scrollTo(0,0);
@@ -200,12 +226,12 @@
     if(Q.i>=Q.qs.length){
       var pct=Math.round(Q.ok*100/Q.qs.length),stars=pct>=100?3:pct>=80?2:pct>=50?1:0;
       if(!Q.fin){Q.fin=true;var pr=lprog();if(!pr[les.id]||pr[les.id]<stars){pr[les.id]=stars;env.sset("signLessons",pr);}env.logAct("sign");if(stars>=2){env.addXP(5);env.celebrate();}}
-      var list=lessons(),k=list.indexOf(les),nx=list[k+1];
+      var nx=les.nx;
       put(root,h("div",{class:"note",style:"text-align:center"},h("div",{style:"font-size:40px"},stars>=2?"🏆":"🤟"),
           h("div",{style:"font-weight:800;font-size:22px"},Q.ok+" / "+Q.qs.length),h("div",{style:"font-size:22px"},"⭐".repeat(stars)+"☆".repeat(3-stars)),
           h("div",{class:"muted"},stars>=2?"Хичээл дууслаа! +"+(Q.ok+5)+" XP":"80%-иас дээш авбал хичээл дуусна. Дахин үзээд оролдоорой.")),
         h("div",{class:"row"},h("button",{class:"btn",onclick:function(){startLesson(les);}},"🔁 Дахин үзэх"),h("button",{class:"btn",onclick:startLQuiz},"📝 Дахин дасгал"),
-          stars>=2&&nx?h("button",{class:"btn primary",onclick:function(){startLesson(nx);}},"Дараагийн хичээл ›"):null));
+          stars>=2&&nx?h("button",{class:"btn primary",onclick:function(){startLesson(nx);}},les.topic?"Дараагийн хэсэг ›":"Дараагийн хичээл ›"):null));
       return;
     }
     var q=Q.qs[Q.i],qu=pathURL(q.it[1]),qs=vidFor(qu);
@@ -217,9 +243,20 @@
     put(root,g);
     if(q.p!=null)put(root,h("button",{class:"btn primary",style:"width:100%;margin-top:10px",onclick:function(){Q.i++;env.render();window.scrollTo(0,0);}},Q.i+1<Q.qs.length?"Дараагийнх ›":"Дүн харах"));
   }
+  function topicView(root){
+    var o=topicById(S.topic);if(!o){S.topic=null;put(root,h("p",{class:"muted"},"Ачаалж байна…"));return;}
+    var pr=lprog();
+    put(root,h("h3",{style:"margin:4px 0 4px"},o.ico+" "+o.t),h("p",{class:"muted small",style:"margin:0 0 8px"},o.g+" · "+o.items.length+" дохио"));
+    o.parts.forEach(function(l,k){var st=pr[l.id]||0;
+      put(root,h("button",{class:"lrow",type:"button",style:"width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer",onclick:function(){startLesson(l);}},
+        h("span",{class:"hexb ico"},st>=2?"✅":String(k+1)),
+        h("span",{style:"flex:1"},h("b",null,(k+1)+"-р хэсэг"+(st?" "+"⭐".repeat(st):"")),h("div",{class:"muted small"},l.items.map(function(x){return x[0];}).join(", "))),
+        h("span",{"aria-hidden":"true"},"›")));});
+  }
   function viewLessons(root){
     if(!msl()){put(root,h("p",{class:"muted"},S.err?"Индексийг ачаалж чадсангүй. Интернэтээ шалгана уу.":"Ачаалж байна…"));loadMsl();return;}
     if(S.les){lessonView(root);return;}
+    if(S.topic!=null){topicView(root);return;}
     var list=lessons(),pr=lprog(),done=list.filter(function(l){return pr[l.id]>=2;}).length;
     put(root,h("p",{class:"muted"},"Монгол дохионы хэлийг алхам алхмаар: хичээл бүрт дохиог видеогоор үзэж давтаад, дараа нь дасгал хийнэ. 80%-иас дээш зөв хариулбал хичээл дуусна."),
       h("div",{class:"small",style:"font-weight:700;margin:0 0 8px"},"Явц: "+done+" / "+list.length+" хичээл"),
@@ -229,7 +266,23 @@
         h("span",{class:"hexb ico"},st>=2?"✅":String(k+1)),
         h("span",{style:"flex:1"},h("b",null,l.t),h("div",{class:"muted small"},l.items.length+" дохио"+(st?" · "+"⭐".repeat(st):""))),
         h("span",{"aria-hidden":"true"},"›")));});
-    put(root,h("p",{class:"muted small",style:"margin-top:16px"},"Видео: «Монгол дохионы хэл» цахим толь — ",h("a",{href:MSL,target:"_blank",rel:"noopener"},"mnsl.mn"),". Зохиогчийн эрх тэдэнд хамаарна."));
+    /* mnsl.mn-ийн бүх дохио — сэдвээр */
+    put(root,h("h3",{style:"margin:20px 0 4px"},"📚 Сэдвээр — бүх дохио"));
+    var T=topics();
+    if(!T)put(root,h("p",{class:"muted small"},"Сэдвүүдийг ачаалж байна…"));
+    else{
+      var tot=0,tdone=0;T.forEach(function(o){tot+=o.parts.length;o.parts.forEach(function(l){if(pr[l.id]>=2)tdone++;});});
+      put(root,h("p",{class:"muted small",style:"margin:0 0 6px"},"mnsl.mn тольд буй "+ix().length+" дохиог "+T.length+" сэдэв, "+tot+" хэсэг болгосон. Дууссан: "+tdone+" / "+tot+" хэсэг."));
+      var g0="";
+      T.forEach(function(o){
+        if(o.g!==g0){g0=o.g;put(root,h("div",{class:"muted small",style:"font-weight:700;margin:10px 0 4px"},o.ico+" "+o.n+". "+o.g));}
+        var d=o.parts.filter(function(l){return pr[l.id]>=2;}).length;
+        put(root,h("button",{class:"lrow",type:"button",style:"width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer",onclick:function(){if(o.parts.length===1){S.topic=null;startLesson(o.parts[0]);}else{S.topic=o.id;env.render();window.scrollTo(0,0);}}},
+          h("span",{style:"flex:1"},h("b",null,o.t),h("div",{class:"muted small"},o.items.length+" дохио"+(o.parts.length>1?" · "+o.parts.length+" хэсэг":"")+(d?" · ✅ "+d+"/"+o.parts.length:""))),
+          h("span",{"aria-hidden":"true"},d===o.parts.length?"✅":"›")));
+      });
+    }
+    put(root,h("p",{class:"muted small",style:"margin-top:16px"},"Видео, ангилал: «Монгол дохионы хэл» цахим толь — ",h("a",{href:MSL,target:"_blank",rel:"noopener"},"mnsl.mn"),". Зохиогчийн эрх тэдэнд хамаарна."));
   }
   function viewMsl(root){
     put(root,h("p",{class:"muted"},"Монголд 9–15 мянган сонсголгүй иргэн амьдардаг. Үг, үсэг дээр дарахад дохионы видео энд, апп дотор тоглоно — албан ёсны «Монгол дохионы хэл» цахим толь (mnsl.mn)-ийн хуудсаар."));
@@ -248,6 +301,18 @@
     };
     inp.addEventListener("input",function(){S.q=inp.value;draw();});
     put(root,inp,res);draw();
+    /* сэдвээр үзэх (msl-topics.js) — бүх 1398 дохио */
+    var T=topics();
+    if(T){
+      put(root,h("h3",{style:"margin:18px 0 6px"},"🗂 Сэдвээр үзэх"));
+      var sel=h("select",{class:"tin","aria-label":"Сэдэв сонгох"});
+      put(sel,h("option",{value:""},"— Сэдэв сонгох ("+T.length+") —"));
+      T.forEach(function(o){var op=h("option",{value:String(o.id)},o.ico+" "+o.n+". "+o.t+" ("+o.items.length+")");if(S.tb===o.id)op.selected=true;put(sel,op);});
+      sel.addEventListener("change",function(){S.tb=sel.value?parseInt(sel.value,10):null;S.open=null;env.render();});
+      put(root,sel);
+      var to=S.tb!=null?topicById(S.tb):null;
+      if(to)to.items.forEach(function(x){var u=pathURL(x[1]);put(root,row(u,"m"+x[2],h("div",{class:"t"},x[0]),null,"🤟","topic"));if(S.open===u&&S.from==="topic")put(root,card(u,x[0]));});
+    }
     /* үндсэн үгс */
     put(root,h("h3",{style:"margin:18px 0 6px"},"📚 Үндсэн үгс"));
     var cat="";
@@ -382,8 +447,8 @@
   }
   function view(e){
     env=e;h=e.h;var root=h("div");
-    var inL=S.tab==="les"&&S.les,inA=S.tab==="asl"&&(S.quiz||S.spell);
-    put(root,h("button",{class:"back",onclick:function(){if(inA){S.quiz=null;S.spell=null;env.render();}else if(inL){S.les=null;env.render();window.scrollTo(0,0);}else e.close();}},inA?"‹ ASL":inL?"‹ Хичээлүүд":"‹ Дүрэм"),
+    var inL=S.tab==="les"&&(S.les||S.topic!=null),inA=S.tab==="asl"&&(S.quiz||S.spell);
+    put(root,h("button",{class:"back",onclick:function(){if(inA){S.quiz=null;S.spell=null;env.render();}else if(inL){if(S.les)S.les=null;else S.topic=null;env.render();window.scrollTo(0,0);}else e.close();}},inA?"‹ ASL":inL?(S.les&&S.les.l.topic&&S.topic!=null?"‹ "+S.les.l.topic.t:"‹ Хичээлүүд"):"‹ Дүрэм"),
       h("h2",null,"🤟 Дохионы хэл"));
     if(!inA&&!inL){
       var seg=h("div",{class:"seg",role:"group","aria-label":"Дохионы хэл",style:"margin-bottom:10px"});
