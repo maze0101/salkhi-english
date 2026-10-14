@@ -5,6 +5,7 @@
         Нэмэлт: «Сонсголгүйн боловсрол / Mongolian Deaf Education» YouTube — дохионы сан, видео цуврал (sign/mde-data.js), албан ёсны embed-ээр.
    ASL: хурууны цагаан толгойн A–Z зураг — нийтийн өмч (wpclipart.com, Wikimedia Commons «Sign language A–Z.svg»), sign/asl/*.svg.
         Үгсийн видео — signasl.org (холбоос). Дасгал: үсэг таах, үг үсэглэх, нэрээ ASL-ээр.
+        ASL University (Lifeprint) «ASLU Lesson 1–60» — YouTube @aslu, sign/aslu-data.js; албан ёсны embed-ээр, хичээл + дасгал.
    Үндсэн 48 үг: [ангилал, монгол, англи, signasl slug, МДХ дохионы дугаар | "too/<slug>" (цаг/тооны хэсэг) | null (тольд алга → толийг нээнэ),
    тайлбар (яг ижил биш ойролцоо дохио бол)]. Дохиог WordPress REST (/wp-json/wp/v2/ug|too?search=) бүтэн гарчгаар хайж сонгосон. */
 (function(){
@@ -195,7 +196,7 @@
   /* сэдвийг ≤10 дохиотой хэсэг (хичээл) болгоно; хэсэг бүр nx-ээр дараагийнхтай холбогдоно */
   function mkParts(o,pre,pool,tip){
     var np=Math.ceil(o.items.length/10),sz=Math.ceil(o.items.length/np);o.parts=[];
-    for(var p=0;p<np;p++)o.parts.push({id:pre+o.id+"-"+(p+1),t:o.ico+" "+o.t+(np>1?" ("+(p+1)+"/"+np+")":""),items:o.items.slice(p*sz,(p+1)*sz),pool:pool||o.items,topic:o,ar:o.ar,tip:tip});
+    for(var p=0;p<np;p++)o.parts.push({id:pre+o.id+"-"+(p+1),t:o.ico+" "+o.t+(np>1?" ("+(p+1)+"/"+np+")":""),items:o.items.slice(p*sz,(p+1)*sz),pool:pool||o.items,topic:o,ar:o.ar,loose:o.loose,cr:o.cr,tip:tip});
     o.parts.forEach(function(l,k){l.nx=o.parts[k+1]||null;});
   }
   /* «Mongolian Deaf Education / Сонсголгүйн боловсрол» YouTube (mde-data.js): vocab — нэг видео = нэг дохио; series — урт хичээл */
@@ -203,14 +204,28 @@
   function mde(){
     if(MDE)return MDE;var D=window.MDE_DATA;if(!D)return null;
     MDE={vocab:D.vocab.map(function(v,k){
-        var o={id:"d"+k,n:0,ico:v.ico,t:v.t,g:"Сонсголгүйн боловсрол",ar:v.ar,pl:v.pl,
+        var o={id:"d"+k,n:0,ico:v.ico,t:v.t,g:"Сонсголгүйн боловсрол",ar:v.ar,pl:v.pl,cr:"Сонсголгүйн боловсрол / Mongolian Deaf Education",
           items:v.s.split("\n").map(function(l){var b=l.indexOf("|");return [l.slice(b+1),"yt:"+l.slice(0,b),"yt:"+l.slice(0,b)];})};
         mkParts(o,"",null,"«"+v.t+"» — Сонсголгүйн боловсрол (Mongolian Deaf Education) сувгийн дохионы сан. «Хувилбар» гэдэг нь нэг үгийг дохиолох өөр арга.");
         return o;}),
       series:D.series.map(function(v,k){return {k:k,ico:v.ico,t:v.t,pl:v.pl,items:v.s.split("\n").map(function(l){var a=l.split("|");return {id:a[0],t:a[1],len:a[2]};})};})};
     return MDE;
   }
-  function topicById(id){var T=(topics()||[]).concat(mde()?mde().vocab:[]);for(var i=0;i<T.length;i++)if(T[i].id===id)return T[i];return null;}
+  /* ASL University (Lifeprint) «ASLU Lesson 1–60» (aslu-data.js): видео бүр нэг дохио эсвэл дасгалын өгүүлбэр (ASL gloss, англиар).
+     loose: дасгалын хариултад хаалтан доторх тайлбарыг хасна — «BUS (fingerspelled)» ба «BUS (V-hand-version)» нэг хариулт. |L — урт өгүүлэмж, дасгалд орохгүй. */
+  var ASLU=null;
+  function aslu(){
+    if(ASLU)return ASLU;var D=window.ASLU_DATA;if(!D)return null;
+    ASLU=D.map(function(v,k){
+      var o={id:"u"+(k+1),n:k+1,ico:"🇺🇸",t:"ASLU Lesson "+(k+1),g:"ASL University",ar:"16/9",pl:v.pl,loose:true,cr:"Dr. Bill Vicars — ASL University (Lifeprint.com)",
+        items:v.s.split("\n").map(function(l){var a=l.split("|");return [a[1],"yt:"+a[0],"yt:"+a[0],a[2]==="L"];})};
+      mkParts(o,"",null,"ASL University-ийн "+(k+1)+"-р хичээл. Гарчиг нь ASL gloss (англиар): ТОМ үсгээр — дохио, жижиг үсгээр — тайлбар. Эхэнд нь үг, сүүлд нь дасгалын өгүүлбэр байна.");
+      return o;});
+    return ASLU;
+  }
+  function loadAslu(){if(window.ASLU_DATA||S.aLoading)return;S.aLoading=true;var v=window.SALKHI_BUILD?"?v="+window.SALKHI_BUILD:"";
+    var sc=document.createElement("script");sc.src="sign/aslu-data.js"+v;sc.onload=function(){S.aLoading=false;env.render();};sc.onerror=function(){S.aLoading=false;S.aErr=true;env.render();};document.head.appendChild(sc);}
+  function topicById(id){var T=(topics()||[]).concat(mde()?mde().vocab:[],aslu()||[]);for(var i=0;i<T.length;i++)if(T[i].id===id)return T[i];return null;}
   /* YouTube embed: autoplay (дуугүй), давталттай. quiz=true бол дээд талын гарчгийг (хариуг) далдална */
   function ytSign(id,label,ar,quiz){
     var w=h("div",{style:"position:relative;margin:0 auto;max-width:"+(ar==="4/5"?"340px":"520px")});
@@ -227,13 +242,14 @@
   function pathURL(p){return MSL+p.split("/").map(encodeURIComponent).join("/")+"/";}
   function lprog(){return env.sget("signLessons",{})||{};}
   function startLesson(les){S.les={l:les,step:"learn",i:0};env.render();window.scrollTo(0,0);}
-  function base(t){return String(t).replace(/\s*\(хувилбар \d\)$/,"");}
+  function base(t,loose){t=String(t).replace(/\s*\(хувилбар \d\)$/,"");return loose?t.replace(/\s*\([^)]*\)/g,"").trim()||t:t;}
   function startLQuiz(){
-    var les=S.les.l,its=les.items;
-    var qs=shuffle(its).slice(0,Math.min(8,its.length)).map(function(it){
-      var others=shuffle((les.pool||its).filter(function(x){return x[2]!==it[2]&&base(x[0])!==base(it[0]);})),o=[],seenS={};
-      others.forEach(function(x){var bx=base(x[0]);if(o.length<3&&!seenS[bx]){seenS[bx]=1;o.push(bx);}});
-      return {it:it,a:base(it[0]),o:shuffle([base(it[0])].concat(o)),p:null};});
+    var les=S.les.l,its=les.items,lz=les.loose,B=function(t){return base(t,lz);};
+    var qi=its.filter(function(x){return !x[3];});if(!qi.length)qi=its;
+    var qs=shuffle(qi).slice(0,Math.min(8,qi.length)).map(function(it){
+      var others=shuffle((les.pool||its).filter(function(x){return x[2]!==it[2]&&!x[3]&&B(x[0]).toLowerCase()!==B(it[0]).toLowerCase();})),o=[],seenS={};
+      others.forEach(function(x){var bx=B(x[0]);if(o.length<3&&!seenS[bx.toLowerCase()]){seenS[bx.toLowerCase()]=1;o.push(bx);}});
+      return {it:it,a:B(it[0]),o:shuffle([B(it[0])].concat(o)),p:null};});
     S.les={l:les,step:"quiz",qs:qs,i:0,ok:0};env.render();window.scrollTo(0,0);
   }
   function lessonView(root){
@@ -253,7 +269,7 @@
         h("button",{class:"btn",disabled:i===0,onclick:function(){Ls.i=i-1;env.render();}},"‹ Өмнөх"),
         i<its.length-1?h("button",{class:"btn primary",onclick:function(){Ls.i=i+1;env.render();}},"Дараах ›")
           :h("button",{class:"btn primary",onclick:startLQuiz},"📝 Дасгал эхлэх")));
-      put(root,h("p",{class:"muted small",style:"margin-top:8px"},yt?"Видео: Сонсголгүйн боловсрол / Mongolian Deaf Education (":"Видео: «Монгол дохионы хэл» цахим толь (",h("a",{href:u,target:"_blank",rel:"noopener"},yt?"YouTube":"mnsl.mn"),")"));
+      put(root,h("p",{class:"muted small",style:"margin-top:8px"},yt?"Видео: "+(les.cr||"YouTube")+" (":"Видео: «Монгол дохионы хэл» цахим толь (",h("a",{href:u,target:"_blank",rel:"noopener"},yt?"YouTube":"mnsl.mn"),")"));
       return;
     }
     var Q=Ls;
@@ -485,8 +501,21 @@
   function viewAsl(root){
     if(S.quiz){quizView(root);return;}
     if(S.spell){spellView(root);return;}
+    if(S.les){lessonView(root);return;}
+    if(S.topic!=null){topicView(root);return;}
     put(root,h("p",{class:"muted"},"Америкийн дохионы хэл (ASL) — АНУ, Канадад хэрэглэгддэг, дэлхийд хамгийн өргөн тархсан дохионы хэл. Хурууны цагаан толгой нь нэг гараар үсэглэдэг."));
     put(root,h("div",{class:"row"},h("button",{class:"btn primary",onclick:startQuiz},"📝 Үсэг таах"),h("button",{class:"btn",onclick:startSpell},"🔡 Үг үсэглэх")));
+    /* ASL University хичээл 1–60 */
+    put(root,h("h3",{style:"margin:16px 0 4px"},"📖 ASL University — 60 хичээл"));
+    var AU=aslu();
+    if(!AU){put(root,h("p",{class:"muted small"},S.aErr?"Ачаалж чадсангүй. Интернэтээ шалгана уу.":"Ачаалж байна…"));loadAslu();}
+    else{
+      var pr=lprog(),at=0,ad=0;AU.forEach(function(o){at+=o.items.length;o.parts.forEach(function(l){if(pr[l.id]>=2)ad++;});});
+      put(root,h("p",{class:"muted small",style:"margin:0 0 6px"},"Dr. Bill Vicars-ийн ASL University (Lifeprint) хөтөлбөр: "+at+" видео — үг ба дасгалын өгүүлбэр. Гарчиг англиар (ASL gloss). Хичээл бүр 10 хүртэл видеотой хэсгүүдтэй, дасгалтай. Дууссан хэсэг: "+ad));
+      var more=S.auAll?AU:AU.slice(0,10);
+      more.forEach(function(o){put(root,topicRow(o,pr,false));});
+      if(!S.auAll)put(root,h("button",{class:"btn",style:"width:100%;margin-top:6px",onclick:function(){S.auAll=true;env.render();}},"Бүх 60 хичээлийг харах ▾"));
+    }
     put(root,h("h3",{style:"margin:16px 0 6px"},"🔤 Хурууны цагаан толгой A–Z"));
     var g=h("div",{style:"display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px"});
     ABC.forEach(function(c){put(g,h("div",{style:"text-align:center"},img(c,72),h("div",{style:"font-weight:800"},c.toUpperCase()+(c==="j"||c==="z"?" ↷":""))));});
@@ -518,8 +547,8 @@
   }
   function view(e){
     env=e;h=e.h;var root=h("div");
-    var inL=S.tab==="les"&&(S.les||S.topic!=null||S.series!=null),inA=S.tab==="asl"&&(S.quiz||S.spell);
-    put(root,h("button",{class:"back",onclick:function(){if(inA){S.quiz=null;S.spell=null;env.render();}else if(inL){if(S.les)S.les=null;else if(S.series!=null){S.series=null;S.open=null;}else S.topic=null;env.render();window.scrollTo(0,0);}else e.close();}},inA?"‹ ASL":inL?(S.les&&S.les.l.topic&&S.topic!=null?"‹ "+S.les.l.topic.t:"‹ Хичээлүүд"):"‹ Дүрэм"),
+    var inL=(S.tab==="les"||S.tab==="asl")&&(S.les||S.topic!=null||S.series!=null),inA=S.tab==="asl"&&(S.quiz||S.spell);
+    put(root,h("button",{class:"back",onclick:function(){if(inA){S.quiz=null;S.spell=null;env.render();}else if(inL){if(S.les)S.les=null;else if(S.series!=null){S.series=null;S.open=null;}else S.topic=null;env.render();window.scrollTo(0,0);}else e.close();}},inA?"‹ ASL":inL?(S.les&&S.les.l.topic&&S.topic!=null?"‹ "+S.les.l.topic.t:S.tab==="asl"?"‹ ASL":"‹ Хичээлүүд"):"‹ Дүрэм"),
       h("h2",null,"🤟 Дохионы хэл"));
     if(!inA&&!inL){
       var seg=h("div",{class:"seg",role:"group","aria-label":"Дохионы хэл",style:"margin-bottom:10px"});
