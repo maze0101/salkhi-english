@@ -171,14 +171,16 @@
   }
   /* ---- mnsl.mn-ийн бүх дохио сэдвээр (msl-topics.js: {id, t, g (бүлэг), s: "дугаар|гарчиг" мөрүүд}) ----
      Сэдэв бүрийг 10 дохиотой хэсэг (хичээл) болгоно. Цөөн дохиотой сэдэвт (<4) дасгалын буруу сонголтыг ижил бүлгээс авна. */
-  var TICO={1:"💬",2:"👋",3:"🎓",4:"💼",5:"🩺",6:"❤️",7:"🏠",8:"👕",9:"🍎",10:"🎨",11:"🐾",12:"🌳",13:"🕒",14:"💻",15:"⚽",16:"🎲",17:"🎵",18:"🚗",19:"🏛",20:"🗺"};
+  var TICO={1:"💬",2:"👋",3:"🎓",4:"💼",5:"🩺",6:"❤️",7:"🏠",8:"👕",9:"🍎",10:"🎨",11:"🐾",12:"🌳",13:"🕒",14:"💻",15:"⚽",16:"🎲",17:"🎵",18:"🚗",19:"🏛",20:"🗺",21:"🔢",22:"🧮"};
   var TOPICS=null;
   function topics(){
     if(TOPICS)return TOPICS;var T=window.MSL_TOPICS;if(!T||!msl())return null;
     var grp={};
     TOPICS=T.map(function(t){
       var n=parseInt(t.t,10),name=t.t.replace(/^[\d.]+\s*/,""),items=[];
-      t.s.split("\n").forEach(function(l){var k=parseInt(l,10),e=byNum(k);if(e)items.push([l.slice(l.indexOf("|")+1),"ug/"+e.s,k]);});
+      t.s.split("\n").forEach(function(l){var b=l.indexOf("|"),lab=l.slice(b+1);
+        if(l.indexOf("too/")===0){items.push([lab,l.slice(0,b),l.slice(0,b)]);return;}
+        var k=parseInt(l,10),e=byNum(k);if(e)items.push([lab,"ug/"+e.s,k]);});
       var o={id:t.id,n:n,ico:TICO[n]||"🤟",t:name,g:t.g.replace(/^[\d.]+\s*/,"")||name,items:items,parts:[]};
       (grp[n]=grp[n]||[]).push(o);return o;});
     TOPICS.forEach(function(o){
@@ -194,12 +196,13 @@
   function pathURL(p){return MSL+p.split("/").map(encodeURIComponent).join("/")+"/";}
   function lprog(){return env.sget("signLessons",{})||{};}
   function startLesson(les){S.les={l:les,step:"learn",i:0};env.render();window.scrollTo(0,0);}
+  function base(t){return String(t).replace(/\s*\(хувилбар \d\)$/,"");}
   function startLQuiz(){
     var les=S.les.l,its=les.items;
     var qs=shuffle(its).slice(0,Math.min(8,its.length)).map(function(it){
-      var others=shuffle((les.pool||its).filter(function(x){return x[2]!==it[2]&&x[0]!==it[0];})),o=[],seenS={};
-      others.forEach(function(x){if(o.length<3&&!seenS[x[0]]){seenS[x[0]]=1;o.push(x[0]);}});
-      return {it:it,o:shuffle([it[0]].concat(o)),p:null};});
+      var others=shuffle((les.pool||its).filter(function(x){return x[2]!==it[2]&&base(x[0])!==base(it[0]);})),o=[],seenS={};
+      others.forEach(function(x){var bx=base(x[0]);if(o.length<3&&!seenS[bx]){seenS[bx]=1;o.push(bx);}});
+      return {it:it,a:base(it[0]),o:shuffle([base(it[0])].concat(o)),p:null};});
     S.les={l:les,step:"quiz",qs:qs,i:0,ok:0};env.render();window.scrollTo(0,0);
   }
   function lessonView(root){
@@ -238,8 +241,8 @@
     put(root,h("p",{class:"muted small"},"Асуулт "+(Q.i+1)+" / "+Q.qs.length+" · ✅ "+Q.ok),h("div",{class:"q",style:"text-align:center;margin-bottom:6px"},"Энэ дохио юу гэсэн утгатай вэ?"));
     put(root,qs?videoBox(qs,"?"):card(qu,"?"));
     var g=h("div",{style:"display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px"});
-    q.o.forEach(function(o){var cls="opt";if(q.p!=null){if(o===q.it[0])cls+=" ok";else if(o===q.p)cls+=" bad";}
-      put(g,h("button",{class:cls,disabled:q.p!=null,style:"font-size:18px;font-weight:700;margin:0",onclick:function(){q.p=o;if(o===q.it[0]){Q.ok++;env.addXP(1);}env.render();}},o));});
+    q.o.forEach(function(o){var cls="opt";if(q.p!=null){if(o===q.a)cls+=" ok";else if(o===q.p)cls+=" bad";}
+      put(g,h("button",{class:cls,disabled:q.p!=null,style:"font-size:18px;font-weight:700;margin:0",onclick:function(){q.p=o;if(o===q.a){Q.ok++;env.addXP(1);}env.render();}},o));});
     put(root,g);
     if(q.p!=null)put(root,h("button",{class:"btn primary",style:"width:100%;margin-top:10px",onclick:function(){Q.i++;env.render();window.scrollTo(0,0);}},Q.i+1<Q.qs.length?"Дараагийнх ›":"Дүн харах"));
   }
@@ -272,7 +275,7 @@
     if(!T)put(root,h("p",{class:"muted small"},"Сэдвүүдийг ачаалж байна…"));
     else{
       var tot=0,tdone=0;T.forEach(function(o){tot+=o.parts.length;o.parts.forEach(function(l){if(pr[l.id]>=2)tdone++;});});
-      put(root,h("p",{class:"muted small",style:"margin:0 0 6px"},"mnsl.mn тольд буй "+ix().length+" дохиог "+T.length+" сэдэв, "+tot+" хэсэг болгосон. Дууссан: "+tdone+" / "+tot+" хэсэг."));
+      put(root,h("p",{class:"muted small",style:"margin:0 0 6px"},"mnsl.mn тольд буй бүх "+(ix().length+msl().too.split("\n").length)+" дохиог (үг, тоо) "+T.length+" сэдэв, "+tot+" хэсэг болгосон. Дууссан: "+tdone+" / "+tot+" хэсэг."));
       var g0="";
       T.forEach(function(o){
         if(o.g!==g0){g0=o.g;put(root,h("div",{class:"muted small",style:"font-weight:700;margin:10px 0 4px"},o.ico+" "+o.n+". "+o.g));}
@@ -292,11 +295,13 @@
     var res=h("div");
     var draw=function(){
       res.textContent="";var q=String(S.q||"").toLowerCase().trim();
-      if(q.length<2){put(res,h("p",{class:"muted small",style:"margin:6px 0"},"Нийт "+ix().length+" дохио. 2-оос дээш үсэг бичнэ үү."));return;}
+      if(q.length<2){put(res,h("p",{class:"muted small",style:"margin:6px 0"},"Нийт "+(ix().length+msl().too.split("\n").length)+" дохио. 2-оос дээш үсэг бичнэ үү."));return;}
       var m=ix().filter(function(e){return (" "+e.t+" ").indexOf(" "+q)>=0;});
       m.sort(function(a,b){return (a.t.indexOf(q)===0?0:1)-(b.t.indexOf(q)===0?0:1)||a.t.length-b.t.length;});
-      if(!m.length){put(res,h("p",{class:"muted small",style:"margin:6px 0"},"Олдсонгүй. Өөр үгээр хайгаарай."));return;}
+      if(!m.length&&!msl().too.split("\n").some(function(sl){return (" "+sl.replace(/-/g," ")+" ").indexOf(" "+q)>=0;})){put(res,h("p",{class:"muted small",style:"margin:6px 0"},"Олдсонгүй. Өөр үгээр хайгаарай."));return;}
       m.slice(0,30).forEach(function(e){var u=ugURL(e);put(res,row(u,"m"+e.n,h("div",{class:"t"},e.t),"№"+e.n,"🤟","search"));if(S.open===u&&S.from==="search")put(res,card(u,e.t));});
+      var mt=msl().too.split("\n").filter(function(sl){var t=sl.replace(/-\d+$/,"").replace(/-/g," ");return (" "+t+" ").indexOf(" "+q)>=0;}).slice(0,10);
+      mt.forEach(function(sl){var u=MSL+"too/"+encodeURIComponent(sl)+"/",t=sl.replace(/-\d+$/,"").replace(/-/g," ");put(res,row(u,"t"+sl,h("div",{class:"t"},t),"🔢 тоо","🤟","search"));if(S.open===u&&S.from==="search")put(res,card(u,t));});
       if(m.length>30)put(res,h("p",{class:"muted small"},"… бас "+(m.length-30)+" илэрц. Илүү тодорхой бичээрэй."));
     };
     inp.addEventListener("input",function(){S.q=inp.value;draw();});
