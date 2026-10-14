@@ -189,7 +189,7 @@
       (grp[n]=grp[n]||[]).push(o);return o;});
     TOPICS.forEach(function(o){
       var pool=null;if(o.items.length<4){pool=[];grp[o.n].forEach(function(x){pool=pool.concat(x.items);});if(pool.length<4)pool=pool.concat(TOPICS[0].items);}
-      mkParts(o,"t",pool,"«"+o.g+"» бүлгийн «"+o.t+"» сэдвийн дохио. Видеог 0.5× хурдаар үзэж гарын хэлбэр, байрлал, хөдөлгөөнийг ажиглаад өөрөө давтаарай.");
+      mkParts(o,"t",pool,"Видеог 0.5× хурдаар үзэж гарын хэлбэр, байрлал, хөдөлгөөнийг ажиглаад өөрөө давтаарай.");
     });
     return TOPICS;
   }
@@ -257,11 +257,24 @@
     put(root,h("h3",{style:"margin:4px 0 6px"},les.t));
     if(Ls.step==="learn"){
       var i=Ls.i,it=its[i];
-      if(i===0)put(root,h("div",{class:"note",style:"margin:0 0 10px"},"💡 "+les.tip));
-      var dots=h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"});
-      its.forEach(function(x,k){put(dots,h("button",{class:"chip",type:"button","aria-pressed":String(k===i),style:"font-weight:700"+(k===i?";border-color:var(--sky);background:color-mix(in srgb,var(--sky) 14%,var(--surface))":""),onclick:function(){Ls.i=k;env.render();}},x[0]));});
-      put(root,h("p",{class:"muted small",style:"margin:0 0 6px"},"Дохио "+(i+1)+" / "+its.length+" — видеог харж, өөрөө давтан хийгээрэй"),dots);
-      put(root,h("div",{style:"font-weight:800;font-size:24px;text-align:center;margin:4px 0 8px"},it[0]));
+      /* утсанд: зөвлөгөө жижиг, дохионы жагсаалт нэг мөрөнд хажуу тийш гүйлгэнэ (богино нэрээр), видео дэлгэцэд багтана */
+      if(i===0)put(root,h("div",{class:"note small",style:"margin:0 0 8px;padding:8px 10px;font-size:13px;line-height:1.45"},"💡 "+les.tip));
+      put(root,h("div",{style:"display:flex;align-items:center;gap:8px;margin:0 0 6px"},
+        h("div",{style:"flex:1;height:6px;border-radius:4px;background:var(--line);overflow:hidden"},h("div",{style:"height:100%;width:"+Math.round((i+1)*100/its.length)+"%;background:var(--sky)"})),
+        h("span",{class:"muted small",style:"white-space:nowrap;font-weight:700"},(i+1)+" / "+its.length)));
+      var dots=h("div",{role:"tablist","aria-label":"Дохионууд",style:"display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:2px 0 6px;margin-bottom:6px"}),cur=null;
+      its.forEach(function(x,k){var short=String(x[0]).split(/[,;/]/)[0].trim(),on=k===i;
+        var b=h("button",{class:"chip",type:"button",role:"tab","aria-selected":String(on),title:x[0],
+          style:"flex:none;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:700;padding:5px 10px;margin:0"+(on?";border-color:var(--sky);background:color-mix(in srgb,var(--sky) 14%,var(--surface))":""),
+          onclick:function(){Ls.i=k;env.render();}},(k+1)+". "+short);
+        if(on)cur=b;put(dots,b);});
+      put(root,dots);
+      if(cur)setTimeout(function(){if(cur.isConnected)dots.scrollLeft=cur.offsetLeft-dots.offsetLeft-(dots.clientWidth-cur.offsetWidth)/2;},0);
+      /* гарчиг: эхний утга том, ижил утгатай бусад үг доор нь жижгээр */
+      var parts=String(it[0]).split(/,\s*/),head=parts.shift();
+      put(root,h("div",{style:"text-align:center;margin:2px 0 8px"},
+        h("div",{style:"font-weight:800;font-size:clamp(19px,5.6vw,24px);line-height:1.25;overflow-wrap:anywhere"},head),
+        parts.length?h("div",{class:"muted",style:"font-size:14px;line-height:1.35;margin-top:2px;overflow-wrap:anywhere"},parts.join(", ")):null));
       seen("L"+it[1]);
       var yt=it[1].indexOf("yt:")===0,u=yt?"https://www.youtube.com/watch?v="+it[1].slice(3):pathURL(it[1]);
       put(root,media(it,les.ar,false));
@@ -289,7 +302,7 @@
     put(root,media(q.it,les.ar,true));
     var g=h("div",{style:"display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px"});
     q.o.forEach(function(o){var cls="opt";if(q.p!=null){if(o===q.a)cls+=" ok";else if(o===q.p)cls+=" bad";}
-      put(g,h("button",{class:cls,disabled:q.p!=null,style:"font-size:18px;font-weight:700;margin:0",onclick:function(){q.p=o;if(o===q.a){Q.ok++;env.addXP(1);}env.render();}},o));});
+      put(g,h("button",{class:cls,disabled:q.p!=null,style:"font-size:clamp(14px,4.2vw,17px);line-height:1.3;font-weight:700;margin:0;padding:10px 8px;overflow-wrap:anywhere",onclick:function(){q.p=o;if(o===q.a){Q.ok++;env.addXP(1);}env.render();}},o));});
     put(root,g);
     if(q.p!=null)put(root,h("button",{class:"btn primary",style:"width:100%;margin-top:10px",onclick:function(){Q.i++;env.render();window.scrollTo(0,0);}},Q.i+1<Q.qs.length?"Дараагийнх ›":"Дүн харах"));
   }
