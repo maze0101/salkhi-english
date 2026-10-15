@@ -169,6 +169,18 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 .yr-bars{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;align-items:end;height:116px;margin-top:8px;font-size:11px;text-align:center;color:var(--ink-2)}
 .yr-bars i{display:block;border-radius:5px 5px 0 0;background:var(--sky);margin-bottom:3px}
 .yr-bars i.z{background:var(--line)}
+/* 🌐 хэл/түвшин/горимын самбар */
+.stat.pick{font:inherit;font-size:13px;color:inherit;cursor:pointer;border-color:var(--sky)!important;gap:5px}
+.stat.pick .pk-sub{color:var(--ink-2);font-weight:600}
+.stat.pick .pk-car{font-size:11px;opacity:.7;transition:transform .2s}
+.stat.pick[aria-expanded="true"] .pk-car{transform:rotate(180deg)}
+.picker{margin:10px 20px 0;padding:12px 14px 14px;background:var(--surface);border:1.5px solid var(--line);border-radius:18px;box-shadow:0 6px 18px rgba(0,0,0,.08);animation:pkIn .18s ease-out}
+@keyframes pkIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.picker .langs,.picker .levels{flex-wrap:wrap;padding:0;overflow:visible}
+.picker .modes{display:flex}
+.pk-h{font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2);margin:12px 0 6px}
+.pk-h:first-child{margin-top:0}
+@media (prefers-reduced-motion:reduce){.picker{animation:none}}
 /* 🏁 дараагийн тэмцээний карт (events.js) */
 .evt{position:relative;overflow:hidden;margin-top:12px;padding:16px;border-radius:20px;color:#fff;box-shadow:0 6px 18px rgba(20,40,90,.22)}
 .evt::before{content:"";position:absolute;inset:6px;border:1.5px solid rgba(255,255,255,.28);border-radius:15px;pointer-events:none}
@@ -651,7 +663,6 @@ h3{font-weight:800;letter-spacing:0}
       <p>Англи, япон, солонгос, хятад, орос, герман, уйгур хэлний үг, дүрэм, яриа</p>
       <p class="kidq" id="kidq"></p>
     </div>
-    <div class="moderow"><div class="modes" id="modes" role="group" aria-label="Горим"></div></div>
     <div class="kfox" id="salkhiFox">
       <div class="sm-m" tabindex="0" role="button" aria-label="Үнэг дээр дарж мэндлүүлэх">
       <svg viewBox="0 0 300 260" aria-hidden="true">
@@ -744,8 +755,15 @@ window.salkhiHero=initSalkhiHero(document.getElementById("salkhiHero"));
 </script>
   <div class="strip" id="strip"></div>
   <nav class="tabs" aria-label="Үндсэн цэс"><div class="in" id="tabs"></div></nav>
-  <div class="langs" id="langs" role="group" aria-label="Хэл"></div>
-  <div class="levels" id="levels" role="group" aria-label="Түвшин"></div>
+  <!-- 🌐 хэл / түвшин / горим: нэг товчоор нээгддэг самбар (onboard.js, анхны тохиргоо #langs/#modes доторх товчийг шууд дарна) -->
+  <div class="picker" id="picker" hidden>
+    <div class="pk-h">Хэл</div>
+    <div class="langs" id="langs" role="group" aria-label="Хэл"></div>
+    <div class="pk-h">Түвшин</div>
+    <div class="levels" id="levels" role="group" aria-label="Түвшин"></div>
+    <div class="pk-h">Горим</div>
+    <div class="modes" id="modes" role="group" aria-label="Горим"></div>
+  </div>
   <main id="main"></main>
 </div>
 
@@ -1449,23 +1467,46 @@ function meshSvg(){
 
 /* ---------- chrome ---------- */
 var elMain=document.getElementById("main");
+/* 🌐 сонголтын товч: «Англи · Бүгд» — дарахад хэл/түвшин/горимын самбар нээгдэнэ, сонгомогц хаагдана */
+function pickChip(){
+  var lvT=state.mode==="kid"?LV_LABEL[kidLv()]:state.level==="all"?"Бүгд":LV_LABEL[state.level],md={kid:"Хүүхэд",senior:"Ахмад"}[state.mode];
+  return h("button",{class:"stat pick",type:"button","aria-expanded":String(!!ui.pick),"aria-controls":"picker","aria-label":"Хэл, түвшин, горим солих: "+LANGN[state.lang]+", "+lvT+(md?", "+md:""),onclick:function(){setPick(!ui.pick);}},
+    h("span",{"aria-hidden":"true"},"🌐"),h("b",null,LANGN[state.lang]),h("span",{class:"pk-sub"},lvT+(md?" · "+md:"")),h("span",{class:"pk-car","aria-hidden":"true"},"▾"));
+}
+function setPick(on){
+  ui.pick=!!on;var p=document.getElementById("picker");if(p)p.hidden=!ui.pick;renderStrip();
+}
+document.getElementById("picker").addEventListener("click",function(e){
+  if(e.isTrusted&&e.target.closest&&e.target.closest("button"))setTimeout(function(){setPick(false);},0);
+});
+document.addEventListener("click",function(e){
+  if(!ui.pick||!e.isTrusted||!e.target.closest)return;
+  if(!e.target.closest("#picker")&&!e.target.closest(".stat.pick"))setPick(false);
+});
+document.addEventListener("keydown",function(e){if(ui.pick&&e.key==="Escape")setPick(false);});
 function renderStrip(){
   var s=document.getElementById("strip");s.textContent="";
   var lv=xpLevel(state.xp);
-  s.append(h("div",{class:"stat",title:"Түвшин "+lv+" · дараагийнх хүртэл "+(25*lv*(lv+1)-state.xp)+" XP","aria-label":"Түвшин "+lv+", "+state.xp+" XP"},h("b",null,String(state.xp)),"XP · Lv"+lv));
-  if(state.mode==="senior"){s.append(acctBtn());return;}
+  s.append(pickChip());
+  s.append(h("div",{class:"stat",title:"Түвшин "+lv+" · дараагийнх хүртэл "+(25*lv*(lv+1)-state.xp)+" XP","aria-label":"Түвшин "+lv+", "+state.xp+" XP"},h("b",null,"Lv "+lv)));
+  paintAcct();
+  if(state.mode==="senior")return;
   s.append(h("div",{class:"stat",title:state.freeze?"🧊 Streak хамгаалалт: "+state.freeze:streak()+" өдөр дараалан","aria-label":streak()+" өдөр дараалан"},h("b",null,String(streak())),"🔥"+(state.freeze?" 🧊"+(state.freeze>1?state.freeze:""):"")));
   s.append(h("div",{class:"stat","aria-label":"Өдрийн зорилго "+todayXP()+" / "+state.goal+" XP"},ringEl(todayXP()/state.goal,20,4),todayXP()+"/"+state.goal));
   if(state.mode==="kid")s.append(h("div",{class:"stat"},"⭐ "+state.stars));
-  s.append(acctBtn());
+}
+/* бүртгэлийн товч hero-гийн баруун дээд дүрс товчнуудын эгнээнд: нэвтэрсэн бол аватар/☁️ → Профайл, үгүй бол 👤 → нэвтрэх */
+function paintAcct(){
+  var S=window.SalkhiSync,a=S&&S.account(),b=document.getElementById("acctbtn");
+  if(!S||!window.SALKHI_FB){if(b)b.remove();return;}
+  if(!b){b=h("button",{class:"themebtn",id:"acctbtn",type:"button"});document.querySelector(".tools").append(b);}
+  var av=myAvatar(),nm=a?(myNick()||a.name.split(" ")[0]||"Нэвтэрсэн"):"";
+  b.textContent=a?(av?av.e:"☁️"):"👤";
+  b.title=a?nm+" · явц хадгалагдаж байна":"Нэвтэрч явцаа хадгалах";
+  b.setAttribute("aria-label",a?"Бүртгэл: "+nm:"Нэвтрэх");
+  b.onclick=a?function(){state.tab="stats";renderTabs();render();window.scrollTo(0,0);}:function(){S.openAuth("in");};
 }
 /* нэвтрэх товч: нэвтрээгүй бол нэвтрэх хуудас, нэвтэрсэн бол «Профайл» таб */
-function acctBtn(){
-  var S=window.SalkhiSync,a=S&&S.account();
-  if(!S||!window.SALKHI_FB)return "";
-  if(a)return h("button",{class:"stat acct",type:"button",title:"Явц Google-д хадгалагдаж байна","aria-label":"Бүртгэл: "+a.name,onclick:function(){state.tab="stats";renderTabs();render();window.scrollTo(0,0);}},"☁️ "+(a.name.split(" ")[0]||"Нэвтэрсэн"));
-  return h("button",{class:"stat acct",type:"button",title:"Нэвтэрч явцаа хадгалах",onclick:function(){S.openAuth("in");}},"🔐 Нэвтрэх");
-}
 function renderLevels(){
   var el=document.getElementById("levels");el.textContent="";
   if(state.mode==="kid"){
@@ -7076,7 +7117,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-3";
+var BUILD="20261015-4";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
