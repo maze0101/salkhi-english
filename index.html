@@ -582,6 +582,11 @@ p+p{margin-top:10px}
 .brand img{width:min(230px,54vw)}
 /* тайлбар бичиг цаасан шувуутай давхцдаг — хэлнүүд доорх чипэнд харагддаг тул зөвхөн дэлгэц уншигчид үлдээнэ */
 .brand .tag{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* 📜🤟 товчнууд логоны баруун талд, дээш доош (хүүхэд тэдний баруун талд алхана — hero.js .brand-ийн ирмэгийг хэмжинэ) */
+.brand{flex-direction:row;align-items:center;gap:10px}
+.brand img{width:min(250px,44vw)}
+.herobtns{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:5px}
+.herobtns .mnsbtn{height:30px;margin-top:0;padding:0 10px;font-size:12.5px;white-space:nowrap;text-align:left}
 .hero{gap:10px}
 .strip{padding-top:8px}
 .langs{padding-top:10px}
@@ -7397,7 +7402,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-19";
+var BUILD="20261015-21";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){

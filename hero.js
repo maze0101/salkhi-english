@@ -17,6 +17,7 @@ function initSalkhiHero(root) {
   let wx = null, flash = 0, clouds = [], drops = [];
   let running = true, visible = true, raf = 0;
   const kite = { x: 0, y: 0, vx: 0, vy: 0, init: false };
+  let kiteMaxY = 1e9;
   // цаасан шувууны өнгө (Одны дэлгүүр → setKite): a баруун тал, b зүүн тал + утас, f нүүр, x/y туузны зангилаа
   const KC0 = { a: '#D85A30', b: '#F0997B', f: '#4A1B0C', x: '#FAC775', y: '#5DCAA5' };
   let KC = KC0;
@@ -65,7 +66,11 @@ function initSalkhiHero(root) {
     glowR = Math.max(sunR + 4, Math.min(sunR + 16, gap / 2 - 2));
 
     // Хүүхэд логоны баруун талаас салхин тээрэм хүртэлх зайд алхана
-    const x0 = (lr ? lr : 24 + Math.min(300, W * 0.62)) + 18, x1 = W * 0.74;
+    // логоны баруун талын 📜🤟 товчнуудыг (.brand) ч тойрно
+    const brandEl = root.querySelector('.brand'), bR = brandEl ? brandEl.getBoundingClientRect().right - cr.left : 0;
+    const x0 = Math.max(lr ? lr : 24 + Math.min(300, W * 0.62), bR) + 18, x1 = Math.max(W * 0.74, x0);
+    // цаасан шувуу товчнуудын дээгүүр нисэх ёстой (их биеийн доод үзүүр ~18px)
+    kiteMaxY = brandEl ? brandEl.getBoundingClientRect().top - cr.top - 26 : 1e9;
     kid.mid = (x0 + x1) / 2;
     kid.amp = Math.max(0, Math.min(120, (x1 - x0) / 2));
 
@@ -162,9 +167,10 @@ function initSalkhiHero(root) {
   function drawKite(k) {
     const ax = kid.hx, ay = kid.hy;
     const base = kid.x - Math.min(70, W * 0.12);
-    if (!kite.init) { kite.x = base; kite.y = capY + 50; kite.init = true; }
+    const ky = Math.min(capY + 52, kiteMaxY);
+    if (!kite.init) { kite.x = base; kite.y = ky - 2; kite.init = true; }
     const tx = base + Math.sin(t * 0.8) * 10 + g * 40;
-    const ty = capY + 52 + Math.sin(t * 1.3) * 8 - g * 30;
+    const ty = ky + Math.sin(t * 1.3) * 8 - g * 30;
     kite.vx += (tx - kite.x) * 0.02; kite.vy += (ty - kite.y) * 0.02;
     kite.vx *= 0.9; kite.vy *= 0.9;
     kite.x += kite.vx; kite.y += kite.vy;
