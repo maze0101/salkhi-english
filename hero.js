@@ -17,6 +17,9 @@ function initSalkhiHero(root) {
   let wx = null, flash = 0, clouds = [], drops = [];
   let running = true, visible = true, raf = 0;
   const kite = { x: 0, y: 0, vx: 0, vy: 0, init: false };
+  // цаасан шувууны өнгө (Одны дэлгүүр → setKite): a баруун тал, b зүүн тал + утас, f нүүр, x/y туузны зангилаа
+  const KC0 = { a: '#D85A30', b: '#F0997B', f: '#4A1B0C', x: '#FAC775', y: '#5DCAA5' };
+  let KC = KC0;
   const kid = { mid: 0, amp: 0, x: 0, hx: 0, hy: 0, w: 0 };
   const logoEl = root.querySelector('.brand img');
   const logoImg = new Image();
@@ -172,24 +175,24 @@ function initSalkhiHero(root) {
     ctx.quadraticCurveTo((ax + kite.x) / 2 - 10, (ay + kite.y) / 2 + 30, kite.x, kite.y + 14); ctx.stroke();
 
     // Сүүл
-    ctx.strokeStyle = '#F0997B'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(kite.x, kite.y + 18);
+    ctx.strokeStyle = KC.b; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(kite.x, kite.y + 18);
     for (let i = 1; i <= 6; i++)
       ctx.lineTo(kite.x - i * 7 * (0.6 + k), kite.y + 18 + i * 4 + Math.sin(t * 6 - i) * 4 * (0.5 + k));
     ctx.stroke();
     for (let i = 1; i <= 3; i++) {
       const bx = kite.x - i * 14 * (0.6 + k);
       const by = kite.y + 18 + i * 8 + Math.sin(t * 6 - i * 2) * 4 * (0.5 + k);
-      ctx.fillStyle = i % 2 ? '#FAC775' : '#5DCAA5';
+      ctx.fillStyle = i % 2 ? KC.x : KC.y;
       ctx.beginPath(); ctx.moveTo(bx - 4, by - 3); ctx.lineTo(bx + 4, by + 3); ctx.lineTo(bx + 4, by - 3); ctx.lineTo(bx - 4, by + 3); ctx.fill();
     }
 
     // Биe + нүүр
     ctx.save(); ctx.translate(kite.x, kite.y);
     ctx.rotate(Math.sin(t * 1.7) * 0.12 + kite.vx * 0.03);
-    ctx.fillStyle = '#D85A30'; ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(12, 0); ctx.lineTo(0, 18); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#F0997B'; ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(-12, 0); ctx.lineTo(0, 18); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#4A1B0C'; ctx.beginPath(); ctx.arc(-4, -2, 1.6, 0, 6.28); ctx.arc(4, -2, 1.6, 0, 6.28); ctx.fill();
-    ctx.strokeStyle = '#4A1B0C'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(0, 3, 3, 0.3, 2.84); ctx.stroke();
+    ctx.fillStyle = KC.a; ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(12, 0); ctx.lineTo(0, 18); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = KC.b; ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(-12, 0); ctx.lineTo(0, 18); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = KC.f; ctx.beginPath(); ctx.arc(-4, -2, 1.6, 0, 6.28); ctx.arc(4, -2, 1.6, 0, 6.28); ctx.fill();
+    ctx.strokeStyle = KC.f; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(0, 3, 3, 0.3, 2.84); ctx.stroke();
     ctx.restore();
   }
 
@@ -342,6 +345,7 @@ function initSalkhiHero(root) {
     gust,
     // d: {t, c (WMO weather_code), day, w (м/с)} эсвэл null
     setWeather(d) { wx = d && typeof d.c === 'number' ? d : null; },
+    setKite(c) { KC = c && c.a ? c : KC0; },
     destroy() {
       running = false;
       cancelAnimationFrame(raf);
