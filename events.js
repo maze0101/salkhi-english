@@ -99,7 +99,7 @@
     touch:function(){if(env)check();},
     card:card,
     /* 🗓️ жилийн тэмцээний хуанли (Тоглож сурах самбарт): ойрын эхлэх дарааллаар, авсан медаль ✓ */
-    calendar:function(e){
+    calendar:function(e,open){
       env=e;var h=e.h,now=new Date(),m=medals(),c=current(now);
       var rows=EV.map(function(ev){var w=window_(ev,now);if(w.t<now){w=window_(ev,new Date(w.s.getFullYear()+1,ev.from[0]-1,ev.from[1]));}return {e:ev,w:w};})
         .sort(function(a,b){return a.w.s-b.w.s;});
@@ -113,9 +113,19 @@
           h("span",{class:"evr-tx"},h("b",null,r.e.t),h("span",{class:"muted small"},r.e.from.join("/")+" – "+r.e.to.join("/")+" · "+gx(r.e)+" XP, "+gd(r.e)+" өдөр")),
           h("span",{class:"evr-st"},got?"🏅":on?"Одоо":dd+" хоног")));
       });
-      return h("details",{class:"note evcal-box",style:"margin-top:12px"},
+      return h("details",{class:"note evcal-box",style:"margin-top:12px",open:!!open},
         h("summary",null,h("b",null,"🗓️ Тэмцээний хуанли"),h("span",{class:"muted small"}," · жилд "+EV.length+" тэмцээн · "+mine+" медаль авсан")),
         list);
+    },
+    /* hero-д ээлжлэн гарах жагсаалт: явагдаж буй (медаль аваагүй) + дараагийн n тэмцээн, эхлэх дарааллаар */
+    list:function(e,n){
+      env=e;var now=new Date(),c=current(now),m=medals(),out=[];
+      if(c&&!m[c.w.key])out.push({e:c.e,cur:true,left:progress(c).left,c:(TH[c.e.id]||TH.newyear)[1]});
+      EV.map(function(ev){var w=window_(ev,now);if(w.s<=now)w=window_(ev,new Date(w.s.getFullYear()+1,ev.from[0]-1,ev.from[1]));return {e:ev,s:w.s};})
+        .filter(function(r){return r.s>now&&!(c&&c.e.id===r.e.id);})
+        .sort(function(a,b){return a.s-b.s;}).slice(0,n||4)
+        .forEach(function(r){out.push({e:r.e,cur:false,dd:Math.ceil((r.s-now)/86400000),c:(TH[r.e.id]||TH.newyear)[1]});});
+      return out;
     },
     /* hero-гийн жижиг карт: явагдаж буй (медаль аваагүй) эсвэл дараагийн тэмцээн + өнгө */
     next:function(e){
