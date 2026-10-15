@@ -1,2 +1,5 @@
 .vscode/
 android/
+
+# хөтчийн туршилтын дэлгэцийн зургууд
+tests/browser/out/
