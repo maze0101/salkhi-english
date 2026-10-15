@@ -183,12 +183,16 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 @media (prefers-reduced-motion:reduce){.picker{animation:none}}
 /* 🛍️ одны дэлгүүр */
 .shop-bal{display:flex;align-items:center;gap:12px}
-.stat.starchip{font:inherit;font-size:13px;font-weight:800;color:inherit;cursor:pointer;background:color-mix(in srgb,#FFE7A3 55%,var(--surface));border-color:#E8B931!important}
+/* ⭐ / ⚡ шар өнгийн чипүүд: цайвар горимд шар дэвсгэр + бор бичиг, харанхуйд тунгалаг алт + шар бичиг */
+:root{--gold-bg:#FFF1C2;--gold-ink:#7A4E00;--gold-line:#E8B931}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--gold-bg:rgba(232,185,49,.16);--gold-ink:#FFD866;--gold-line:rgba(232,185,49,.75)}}
+:root[data-theme="dark"]{--gold-bg:rgba(232,185,49,.16);--gold-ink:#FFD866;--gold-line:rgba(232,185,49,.75)}
+.stat.starchip{font:inherit;font-size:13px;font-weight:800;cursor:pointer;background:var(--gold-bg);color:var(--gold-ink);border-color:var(--gold-line)!important}
 @media (min-width:560px){.strip>.starchip:not(.kidstar){display:none}}
-.shophome .sh-st{display:inline-block;margin-left:4px;padding:1px 9px;border-radius:999px;background:#FFE7A3;color:#7A4E00;font-size:13px;font-weight:800;vertical-align:1px}
+.shophome .sh-st{display:inline-block;margin-left:4px;padding:1px 9px;border-radius:999px;background:var(--gold-bg);color:var(--gold-ink);font-size:13px;font-weight:800;vertical-align:1px}
 .shop-bal .sb-ic{font-size:34px}
 .shop-bal b{font-size:20px}
-.sb-boost,.stat.boost{font-weight:800;color:#8A5A00;background:#FFE7A3;border-color:#E8B931!important}
+.sb-boost,.stat.boost{font-weight:800;color:var(--gold-ink);background:var(--gold-bg);border-color:var(--gold-line)!important}
 .sb-boost{flex:none;padding:5px 10px;border-radius:999px;font-size:13px}
 .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .shop-it{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:12px 10px;border-radius:16px;background:var(--surface);border:1.5px solid var(--line)}
@@ -7369,7 +7373,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-14";
+var BUILD="20261015-15";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
@@ -7387,6 +7391,27 @@ function checkUpdate(atStart){
 /* шинэ хувилбар шалгах нь index.html-ийг дахин татдаг тул эхний ачааллыг удаашруулахгүйн тулд ачаалж дууссаны дараа */
 window.addEventListener("load",function(){setTimeout(function(){checkUpdate(true);},4000);});
 applyFreeze();renderStrip();applyKite();
+/* 🎁 шагналын систем гарахаас өмнө ахисан түвшин, цолын одыг нэг удаа нөхөж олгоно (цонхгүй, нэг мэдэгдэлтэй).
+   Түлхүүрүүд rkgot-д бичигдэх тул дараа нь давхар олгохгүй. 🧊 нөхөхгүй (оронд нь 5-ын түвшинд +10 ⭐). */
+(function backfillRanks(){
+  if(sget("rkback",0))return;
+  var got=sget("rkgot",{});if(!got||typeof got!=="object")got={};
+  var add=0,now=Date.now();
+  function give(k,n){if(got[k])return;got[k]=now;add+=n;}
+  for(var n=2;n<=xpLevel(state.xp);n++)give("lv:"+n,5+n+(n%5===0?10:0));
+  /* хэл бүрээр дуусгасан хичээл: ачаалагдсан бол LESSONS-оос, үгүй бол id-аас (lp-<хэл>-…) */
+  var byId={},cnt={};LESSONS.forEach(function(x){byId[x.id]=x.lang||"en";});
+  Object.keys(state.lessons).forEach(function(id){var m=/^lp-([a-z]+)-/.exec(id),l=byId[id]||(m&&m[1]);if(l)cnt[l]=(cnt[l]||0)+1;});
+  Object.keys(cnt).forEach(function(l){LS_RANKS.forEach(function(r,i){if(cnt[l]>=r[0])give("ls:"+l+":"+i,10*(i+1)+(i>=2?10:0));});});
+  var mo=sget("mnscript",{})||{},les=mo.les||{},pn=0;for(var k in les)if((les[k]||0)>=5)pn++;
+  [1,3,5,7,10,13].forEach(function(t,j){var i=j+1;if(pn>=t)give("mns:"+i,10*(i+1)+(i%2===0?10:0));});
+  var lg=null;try{lg=JSON.parse(localStorage.getItem("salkhi:league"));}catch(e){}
+  for(var ti=1;lg&&ti<=(lg.tier|0);ti++)give("lg:back:"+ti,15*ti+10);
+  sset("rkback",1);
+  if(!add)return;
+  sset("rkgot",got);state.stars+=add;sset("stars",state.stars);renderStrip();
+  setTimeout(function(){toast("🎁 Өмнө ахисан түвшин, цолын шагнал: ⭐ +"+add+" — Одны дэлгүүрт зарцуулаарай",6000);},1500);
+})();
 /* ⚡ 2× XP дуусахад самбар шинэчлэгдэнэ */
 setInterval(function(){if(document.visibilityState==="visible"&&(boostLeft()||document.querySelector(".stat.boost")))renderStrip();},30000);
 /* Монголын цаг агаар (Open-Meteo, түлхүүргүй). 30 мин кэшлэнэ, офлайн үед сүүлийн утгыг харуулна. */
