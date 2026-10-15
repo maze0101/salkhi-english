@@ -309,13 +309,37 @@
     }
     /* 48 үндсэн үг → толь бичгийн видео (шинэ таб) */
     put(root,h("h3",{style:"margin:18px 0 4px"},"🎬 48 үндсэн үг"));
-    put(root,h("p",{class:"muted small",style:"margin:0 0 8px"},"Дарахад "+L.dict.name+" шинэ цонхонд нээгдэж, тухайн үгийн дохионы видеог харуулна (тэр сайт апп дотор нээгдэхийг зөвшөөрдөггүй)."));
+    /* апп дотор: vid (өөрийн сервер дээрх CC видео) → frame (iframe зөвшөөрдөг толь) → эс бөгөөс шинэ цонх */
+    var how=L.vid?"🎬 тэмдэгтэй үгийн видео апп дотор тоглоно ("+L.vid.src+"), бусад нь "+L.dict.name+" шинэ цонхонд."
+      :L.frame?"Дарахад "+L.frame.name+" апп дотор нээгдэнэ."
+      :"Дарахад "+L.dict.name+" шинэ цонхонд нээгдэнэ — энэ толь апп дотор нээгдэхийг зөвшөөрдөггүй, өөр нээлттэй видео толь олдсонгүй.";
+    put(root,h("p",{class:"muted small",style:"margin:0 0 8px"},how));
     var cat=null,list=h("div");
     WORDS.forEach(function(w,i){
       var nat=L.words[i];if(!nat)return;
       if(w[0]!==cat){cat=w[0];put(list,h("div",{class:"muted small",style:"font-weight:800;margin:10px 0 4px"},cat));}
-      put(list,h("a",{class:"lrow",href:L.dict.url(nat),target:"_blank",rel:"noopener",style:"text-decoration:none;color:inherit;margin-top:6px"},
-        h("span",{style:"flex:1;min-width:0"},h("div",{class:"t"},nat),h("div",{class:"muted small"},w[1])),h("span",{"aria-hidden":"true"},"🔗")));
+      var v=L.vid&&L.vid.map[nat],inApp=!!(v||L.frame),key=S.wl+":"+i,open=S.wOpen===key;
+      var label=h("span",{style:"flex:1;min-width:0"},h("div",{class:"t"},nat),h("div",{class:"muted small"},w[1]));
+      if(!inApp){
+        put(list,h("a",{class:"lrow",href:L.dict.url(nat),target:"_blank",rel:"noopener",style:"text-decoration:none;color:inherit;margin-top:6px"},label,h("span",{"aria-hidden":"true"},"🔗")));
+        return;
+      }
+      put(list,h("button",{class:"lrow",type:"button","aria-expanded":String(open),style:"margin-top:6px",onclick:function(){S.wOpen=open?null:key;env.render();}},label,h("span",{"aria-hidden":"true"},open?"▾":"🎬")));
+      if(!open)return;
+      if(v){
+        var vd=h("video",{src:L.vid.dir+v[0],controls:"",autoplay:"",muted:"",loop:"",playsinline:"",preload:"auto",style:"width:100%;max-height:60vh;border-radius:12px;background:#000"});
+        vd.muted=true;vd.playbackRate=S.rate||1;
+        setTimeout(function(){if(vd.isConnected){vd.playbackRate=S.rate||1;var p=vd.play();if(p&&p.catch)p.catch(function(){});}},0);
+        put(list,h("div",{class:"note",style:"margin:6px 0 4px"},vd,
+          h("div",{class:"seg",style:"margin:8px 0 0"},[0.5,0.75,1].map(function(r){return h("button",{"aria-pressed":String((S.rate||1)===r),onclick:function(){S.rate=r;vd.playbackRate=r;[].forEach.call(this.parentNode.children,function(b){b.setAttribute("aria-pressed",String(b===this));},this);}},r+"×");})),
+          h("div",{class:"muted small",style:"margin-top:6px"},"Видео: ",h("a",{href:v[3],target:"_blank",rel:"noopener"},v[2]),", ",L.vid.src,", ",
+            h("a",{href:"https://creativecommons.org/licenses/"+v[1].replace(/\/de$/,"/de")+"/",target:"_blank",rel:"noopener"},"CC "+v[1].toUpperCase()))));
+      }else{
+        put(list,h("div",{class:"note",style:"margin:6px 0 4px;padding:6px"},
+          h("iframe",{src:L.frame.url(nat),title:L.frame.name+": "+nat,loading:"lazy",referrerpolicy:"no-referrer",style:"width:100%;height:min(560px,70vh);border:0;border-radius:10px;background:#fff"}),
+          h("div",{class:"muted small",style:"margin-top:6px;display:flex;gap:8px;align-items:center"},h("span",{style:"flex:1"},"Эх сурвалж: "+L.frame.name),
+            h("a",{href:L.frame.url(nat),target:"_blank",rel:"noopener"},"Шинэ цонхонд ↗"))));
+      }
     });
     put(root,list);
     put(root,h("p",{class:"muted small",style:"margin-top:12px"},"Орчуулга, мэдээллийг Claude бэлдсэн — тухайн орны дохионы хэлний багшаар шалгуулаагүй."));
