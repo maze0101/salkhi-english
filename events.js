@@ -43,12 +43,31 @@
     EV.forEach(function(e){for(var dy=0;dy<2;dy++){var s=new Date(now.getFullYear()+dy,e.from[0]-1,e.from[1]);if(s>now&&(!best||s<best.s)){best={e:e,s:s};break;}}});
     return best;
   }
+  /* тэмцээн бүрийн өнгө (харанхуй горимд ч цагаан бичигтэй тул ижил) */
+  var TH={newyear:["#173E8C","#3F8FD8"],tsagaan:["#24509E","#6FA3DD"],kids:["#C23A78","#F09A3E"],naadam:["#A50E26","#D99A1E"],school:["#22694B","#5FAE5A"]};
+  function md(a){return a[0]+"-р сарын "+a[1];}
+  function teaserCard(h,ev,dd){
+    var t=TH[ev.id]||TH.newyear;
+    return h("div",{class:"evt","data-ic":ev.ic,style:"background:linear-gradient(135deg,"+t[0]+" 0%,"+t[1]+" 100%)"},
+      h("div",{class:"evt-top"},
+        h("span",{class:"evt-ic","aria-hidden":"true"},ev.ic),
+        h("div",{style:"flex:1;min-width:0"},
+          h("div",{class:"evt-k"},"Дараагийн тэмцээн"),
+          h("div",{class:"evt-t"},ev.t),
+          h("div",{class:"evt-d"},md(ev.from)+" – "+md(ev.to))),
+        h("div",{class:"evt-cd","aria-label":dd+" хоногийн дараа эхэлнэ"},h("b",null,String(dd)),h("span",null,"хоног үлдлээ"))),
+      h("div",{class:"evt-goal"},
+        h("div",null,h("span",{"aria-hidden":"true"},"⚡"),h("b",null,GOAL_XP+" XP")),
+        h("div",null,h("span",{"aria-hidden":"true"},"📅"),h("b",null,GOAL_DAYS+" өдөр")),
+        h("div",null,h("span",{"aria-hidden":"true"},"⏳"),h("b",null,"14 хоногт"))),
+      h("div",{class:"evt-m"},h("span",{"aria-hidden":"true"},"🏅"),h("span",null,"Шагнал: ",h("b",null,ev.m))));
+  }
   function card(e,teaser){
     env=e;var h=e.h,c=current();
     if(!c){
       if(!teaser)return null;var u=upcoming();if(!u)return null;
       var dd=Math.ceil((u.s-new Date())/86400000);
-      return h("div",{class:"srow",style:"margin-top:12px"},h("span",{style:"flex:1"},h("b",null,u.e.ic+" Дараагийн тэмцээн: "+u.e.t),h("div",{class:"muted small"},dd+" хоногийн дараа эхэлнэ · 14 хоногт "+GOAL_XP+" XP + "+GOAL_DAYS+" өдөр → "+u.e.m)));
+      return teaserCard(h,u.e,dd);
     }
     var p=progress(c),got=medals()[c.w.key];
     var box=h("div",{class:"note",style:"margin:0 0 12px;border-color:var(--sky)"});

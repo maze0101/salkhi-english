@@ -169,6 +169,22 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 .yr-bars{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;align-items:end;height:116px;margin-top:8px;font-size:11px;text-align:center;color:var(--ink-2)}
 .yr-bars i{display:block;border-radius:5px 5px 0 0;background:var(--sky);margin-bottom:3px}
 .yr-bars i.z{background:var(--line)}
+/* 🏁 дараагийн тэмцээний карт (events.js) */
+.evt{position:relative;overflow:hidden;margin-top:12px;padding:16px;border-radius:20px;color:#fff;box-shadow:0 6px 18px rgba(20,40,90,.22)}
+.evt::before{content:"";position:absolute;inset:6px;border:1.5px solid rgba(255,255,255,.28);border-radius:15px;pointer-events:none}
+.evt::after{content:attr(data-ic);position:absolute;right:-14px;bottom:-26px;font-size:120px;opacity:.13;transform:rotate(-12deg);pointer-events:none}
+.evt-top{display:flex;align-items:center;gap:12px;position:relative}
+.evt-ic{flex:none;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-size:28px}
+.evt-k{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+.evt-t{font-family:var(--hfont);font-weight:700;font-size:17px;line-height:1.25;margin-top:2px}
+.evt-d{font-size:12.5px;opacity:.85;margin-top:2px}
+.evt-cd{flex:none;text-align:center;background:rgba(255,255,255,.95);color:#13306B;border-radius:14px;padding:6px 10px;min-width:64px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.evt-cd b{display:block;font-size:24px;line-height:1.05;font-weight:900}
+.evt-cd span{display:block;font-size:10px;font-weight:700;line-height:1.2}
+.evt-goal{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:14px;position:relative}
+.evt-goal>div{display:flex;align-items:center;justify-content:center;gap:5px;padding:8px 4px;border-radius:12px;background:rgba(255,255,255,.16);font-size:13.5px;white-space:nowrap}
+.evt-m{display:flex;gap:6px;align-items:center;margin-top:10px;font-size:13.5px;position:relative}
+.evt-m b{color:#FFE08A}
 
 /* нэвтрэх хуудас */
 .auth{position:fixed;inset:0;z-index:200;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
@@ -7060,7 +7076,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-2";
+var BUILD="20261015-3";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
