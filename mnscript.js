@@ -283,7 +283,8 @@
     if(Q.i>=Q.qs.length){
       if(!Q.saved){
         Q.saved=1;var before=passedN(o);o.les[i]=Math.max(o.les[i]||0,Q.ok);env.sset("mnscript",o);env.addXP(Q.ok*3);
-        Q.rank=rankOf(passedN(o));Q.up=rankOf(before)!==Q.rank;if(Q.up||Q.ok===Q.qs.length)env.celebrate();
+        Q.rank=rankOf(passedN(o));Q.up=rankOf(before)!==Q.rank;
+        if(Q.up&&env.rankUp)env.rankUp(RANKS.indexOf(Q.rank),Q.rank[1]);else if(Q.up||Q.ok===Q.qs.length)env.celebrate();
       }
       root.append(h("h2",null,Q.ok+" / "+Q.qs.length),h("p",null,Q.ok>=5?"Давлаа! 🎉":"5-аас дээш оноо авбал давна. Дахиад оролдоорой."),h("p",{class:"muted"},"+"+(Q.ok*3)+" XP"));
       if(Q.up)root.append(h("div",{class:"note",style:"text-align:center;font-size:18px;font-weight:700"},"🏅 Шинэ цол: "+Q.rank[1]));

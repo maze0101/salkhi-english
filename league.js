@@ -44,7 +44,7 @@
       else if(rank&&old.tier>0&&n>=DEMO_MIN&&rank>n-DEMO)move=-1;
       var ns={tier:Math.max(0,Math.min(TIERS.length-1,old.tier+move)),done:old.wk,last:{wk:old.wk,rank:rank,n:n,move:move,tier:old.tier,seen:false}};
       save(ns);
-      if(move>0)env.freeze();
+      if(move>0)env.freeze(TIERS[ns.tier],ns.tier,old.wk);
       paint();
     }).catch(function(){var ns=st();ns.done=old.wk;delete ns.wk;delete ns.g;save(ns);});
   }
