@@ -1,15 +1,27 @@
-/* Салхи: 🏆 улирлын тэмцээн — жилд 5 удаа, 14 хоног үргэлжилнэ (Шинэ жил, Цагаан сар, Хүүхдийн баяр, Наадам, Хичээлийн шинэ жил).
+/* Салхи: 🏆 улирлын тэмцээн — жилд 13 удаа, ~14 хоног үргэлжилнэ (Шинэ жил, Цагаан сар, Хүүхдийн баяр, Наадам, Хичээлийн шинэ жил).
    Зорилго: тэмцээний хугацаанд 300 XP + 7 өдөр хичээллэх. Биелүүлбэл тусгай медаль ба гэрчилгээ (Профайл → 🎓 Гэрчилгээ).
    Явцыг апп-ын өдрийн XP-ээс (state.daily) тооцдог тул сервер шаардахгүй. Цагаан сарын огноо жил бүр өөр тул ойролцоо 2-р сарын эхний 14 хоног. */
 (function(){
   var GOAL_XP=300,GOAL_DAYS=7,KEY="evmedal";
   var EV=[
-    {id:"newyear",ic:"❄️",t:"Шинэ жилийн сорил",from:[12,20],to:[1,2],m:"Өвлийн цасан медаль"},
+    /* xp/days байхгүй бол GOAL_XP / GOAL_DAYS. Хугацаа давхцахгүй (оны дарааллаар) */
+    {id:"winter",ic:"⛄",t:"Есөн есийн сорил",from:[1,15],to:[1,28],m:"Хүйтэн жавартай медаль",xp:350,d:"Хамгийн хүйтэн үед ч гэрээсээ сурна"},
     {id:"tsagaan",ic:"🐎",t:"Цагаан сарын сорил",from:[2,1],to:[2,14],m:"Цагаан сарын мөнгөн медаль"},
+    {id:"spring",ic:"🌷",t:"Хаврын сорил",from:[3,1],to:[3,14],m:"Хаврын цэцгийн медаль",d:"Эмэгтэйчүүдийн баяраар хамт сурцгаая"},
+    {id:"book",ic:"📚",t:"Номын баярын сорил",from:[4,16],to:[4,29],m:"Номын хорхойн медаль",xp:250,days:8,d:"Дэлхийн номын өдөр (4/23) — түүх, бичвэр уншаарай"},
+    {id:"marathon",ic:"🏃",t:"Хэлний марафон",from:[5,1],to:[5,14],m:"Марафончны медаль",xp:500,days:10,d:"Хамгийн хэцүү нь — 14 хоногт 10 өдөр"},
     {id:"kids",ic:"🎈",t:"Хүүхдийн баярын сорил",from:[5,25],to:[6,7],m:"Хүүхдийн баярын медаль"},
+    {id:"summer",ic:"☀️",t:"Зуны амралтын сорил",from:[6,15],to:[6,28],m:"Зуны нарны медаль",xp:250,d:"Амралтаараа хэлээ мартахгүй"},
     {id:"naadam",ic:"🏇",t:"Наадмын сорил",from:[7,1],to:[7,14],m:"Наадмын алтан медаль"},
-    {id:"school",ic:"🎒",t:"Хичээлийн шинэ жилийн сорил",from:[9,1],to:[9,14],m:"Шинэ хичээлийн жилийн медаль"}
+    {id:"steppe",ic:"⛺",t:"Зуслангийн сорил",from:[8,1],to:[8,14],m:"Талын салхины медаль",xp:250,d:"Хөдөө, зусланд ч өдөрт 5 минут"},
+    {id:"school",ic:"🎒",t:"Хичээлийн шинэ жилийн сорил",from:[9,1],to:[9,14],m:"Шинэ хичээлийн жилийн медаль"},
+    {id:"autumn",ic:"🍂",t:"Алтан намрын сорил",from:[10,20],to:[11,2],m:"Алтан навчны медаль"},
+    {id:"indep",ic:"🦅",t:"Тусгаар тогтнолын сорил",from:[11,20],to:[12,3],m:"Хүлэг баатрын медаль",xp:400,days:8,d:"11/26 — Үндэсний эрх чөлөө, тусгаар тогтнолын өдөр"},
+    {id:"newyear",ic:"❄️",t:"Шинэ жилийн сорил",from:[12,20],to:[1,2],m:"Өвлийн цасан медаль"}
   ];
+  function gx(e){return e.xp||GOAL_XP;}
+  function gd(e){return e.days||GOAL_DAYS;}
+  function span(e){var y=2001,s=new Date(y,e.from[0]-1,e.from[1]),t=new Date(y,e.to[0]-1,e.to[1]);if(t<s)t=new Date(y+1,e.to[0]-1,e.to[1]);return Math.round((t-s)/86400000)+1;}
   var env=null;
   function dk(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
   /* тухайн өдөр идэвхтэй тэмцээн (Шинэ жил оны заагийг давна) */
@@ -34,7 +46,7 @@
     var c=current();if(!c)return;
     var m=medals();if(m[c.w.key])return;
     var p=progress(c);
-    if(p.xp>=GOAL_XP&&p.days>=GOAL_DAYS){m[c.w.key]={ic:c.e.ic,t:c.e.m,ev:c.e.t,d:dk(new Date())};env.sset(KEY,m);env.toast(c.e.ic+" "+c.e.m+" авлаа! Гэрчилгээ нээгдлээ 🎓",6000);env.celebrate();}
+    if(p.xp>=gx(c.e)&&p.days>=gd(c.e)){m[c.w.key]={ic:c.e.ic,t:c.e.m,ev:c.e.t,d:dk(new Date()),x:gx(c.e),n:gd(c.e)};env.sset(KEY,m);env.toast(c.e.ic+" "+c.e.m+" авлаа! Гэрчилгээ нээгдлээ 🎓",6000);env.celebrate();}
   }
   function bar(v,max){var pct=Math.min(100,Math.round(v/max*100));return env.h("div",{style:"height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin:4px 0 8px"},env.h("i",{style:"display:block;height:100%;width:"+pct+"%;background:"+(pct>=100?"var(--ok)":"var(--neon)")}));}
   /* дараагийн тэмцээн хүртэл (идэвхтэй тэмцээн байхгүй үед hub-д харуулна) */
@@ -44,7 +56,9 @@
     return best;
   }
   /* тэмцээн бүрийн өнгө (харанхуй горимд ч цагаан бичигтэй тул ижил) */
-  var TH={newyear:["#173E8C","#3F8FD8"],tsagaan:["#24509E","#6FA3DD"],kids:["#C23A78","#F09A3E"],naadam:["#A50E26","#D99A1E"],school:["#22694B","#5FAE5A"]};
+  var TH={newyear:["#173E8C","#3F8FD8"],tsagaan:["#24509E","#6FA3DD"],kids:["#C23A78","#F09A3E"],naadam:["#A50E26","#D99A1E"],school:["#22694B","#5FAE5A"],
+    winter:["#2B3F6B","#7FA7D9"],spring:["#B03A6E","#E98FB4"],book:["#5A3E8C","#9C7BD1"],marathon:["#B8461B","#EE9A3A"],summer:["#C77700","#F2C230"],
+    steppe:["#3E6B2A","#8DBF5A"],autumn:["#8C3B12","#D98A2B"],indep:["#1F3F8F","#C8102E"]};
   function md(a){return a[0]+"-р сарын "+a[1];}
   function teaserCard(h,ev,dd){
     var t=TH[ev.id]||TH.newyear;
@@ -57,9 +71,9 @@
           h("div",{class:"evt-d"},md(ev.from)+" – "+md(ev.to))),
         h("div",{class:"evt-cd","aria-label":dd+" хоногийн дараа эхэлнэ"},h("b",null,String(dd)),h("span",null,"хоног үлдлээ"))),
       h("div",{class:"evt-goal"},
-        h("div",null,h("span",{"aria-hidden":"true"},"⚡"),h("b",null,GOAL_XP+" XP")),
-        h("div",null,h("span",{"aria-hidden":"true"},"📅"),h("b",null,GOAL_DAYS+" өдөр")),
-        h("div",null,h("span",{"aria-hidden":"true"},"⏳"),h("b",null,"14 хоногт"))),
+        h("div",null,h("span",{"aria-hidden":"true"},"⚡"),h("b",null,gx(ev)+" XP")),
+        h("div",null,h("span",{"aria-hidden":"true"},"📅"),h("b",null,gd(ev)+" өдөр")),
+        h("div",null,h("span",{"aria-hidden":"true"},"⏳"),h("b",null,span(ev)+" хоногт"))),
       h("div",{class:"evt-m"},h("span",{"aria-hidden":"true"},"🏅"),h("span",null,"Шагнал: ",h("b",null,ev.m))));
   }
   function card(e,teaser){
@@ -74,8 +88,9 @@
     box.append(h("div",{style:"display:flex;align-items:center;gap:10px"},h("span",{style:"font-size:32px","aria-hidden":"true"},c.e.ic),
       h("div",{style:"flex:1"},h("b",null,c.e.t),h("div",{class:"muted small"},got?"🏅 Медаль авсан!":"Дуусахад "+p.left+" өдөр үлдлээ · шагнал: "+c.e.m))));
     if(!got){
-      box.append(h("div",{class:"small",style:"margin-top:8px"},"⚡ "+Math.min(p.xp,GOAL_XP)+" / "+GOAL_XP+" XP"),bar(p.xp,GOAL_XP));
-      box.append(h("div",{class:"small"},"📅 "+Math.min(p.days,GOAL_DAYS)+" / "+GOAL_DAYS+" өдөр хичээллэсэн"),bar(p.days,GOAL_DAYS));
+      if(c.e.d)box.append(h("div",{class:"muted small",style:"margin-top:6px"},c.e.d));
+      box.append(h("div",{class:"small",style:"margin-top:8px"},"⚡ "+Math.min(p.xp,gx(c.e))+" / "+gx(c.e)+" XP"),bar(p.xp,gx(c.e)));
+      box.append(h("div",{class:"small"},"📅 "+Math.min(p.days,gd(c.e))+" / "+gd(c.e)+" өдөр хичээллэсэн"),bar(p.days,gd(c.e)));
     }else box.append(h("div",{class:"small",style:"margin-top:6px"},"Профайл → 🎓 Гэрчилгээ хэсгээс тусгай гэрчилгээгээ татаарай."));
     return box;
   }
@@ -83,6 +98,25 @@
     init:function(e){env=e;},
     touch:function(){if(env)check();},
     card:card,
+    /* 🗓️ жилийн тэмцээний хуанли (Тоглож сурах самбарт): ойрын эхлэх дарааллаар, авсан медаль ✓ */
+    calendar:function(e){
+      env=e;var h=e.h,now=new Date(),m=medals(),c=current(now);
+      var rows=EV.map(function(ev){var w=window_(ev,now);if(w.t<now){w=window_(ev,new Date(w.s.getFullYear()+1,ev.from[0]-1,ev.from[1]));}return {e:ev,w:w};})
+        .sort(function(a,b){return a.w.s-b.w.s;});
+      var mine=Object.keys(m).length;
+      var list=h("div",{class:"evcal"});
+      rows.forEach(function(r){
+        var on=c&&c.e.id===r.e.id,got=m[r.w.key],t=TH[r.e.id]||TH.newyear;
+        var dd=Math.ceil((r.w.s-now)/86400000);
+        list.append(h("div",{class:"evrow"+(on?" on":""),title:r.e.d||null},
+          h("span",{class:"evr-ic",style:"background:linear-gradient(135deg,"+t[0]+","+t[1]+")","aria-hidden":"true"},r.e.ic),
+          h("span",{class:"evr-tx"},h("b",null,r.e.t),h("span",{class:"muted small"},r.e.from.join("/")+" – "+r.e.to.join("/")+" · "+gx(r.e)+" XP, "+gd(r.e)+" өдөр")),
+          h("span",{class:"evr-st"},got?"🏅":on?"Одоо":dd+" хоног")));
+      });
+      return h("details",{class:"note evcal-box",style:"margin-top:12px"},
+        h("summary",null,h("b",null,"🗓️ Тэмцээний хуанли"),h("span",{class:"muted small"}," · жилд "+EV.length+" тэмцээн · "+mine+" медаль авсан")),
+        list);
+    },
     /* hero-гийн жижиг карт: явагдаж буй (медаль аваагүй) эсвэл дараагийн тэмцээн + өнгө */
     next:function(e){
       env=e;var c=current();
@@ -91,7 +125,7 @@
       return {e:u.e,cur:false,dd:Math.ceil((u.s-new Date())/86400000),c:(TH[u.e.id]||TH.newyear)[1]};
     },
     /* certList-д нэмэх: [{ic,t,d}] */
-    certs:function(e){env=e;var m=medals();return Object.keys(m).map(function(k){var x=m[k];return {ic:x.ic,t:x.t,d:x.ev+"-д "+GOAL_XP+" XP, "+GOAL_DAYS+" өдөр хичээллэв"};});},
+    certs:function(e){env=e;var m=medals();return Object.keys(m).map(function(k){var x=m[k];return {ic:x.ic,t:x.t,d:x.ev+"-д "+(x.x||GOAL_XP)+" XP, "+(x.n||GOAL_DAYS)+" өдөр хичээллэв"};});},
     _current:current
   };
 })();
