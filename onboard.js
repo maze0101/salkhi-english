@@ -80,6 +80,7 @@
       O={s:0,goal:null};ov=h("div",{class:"onbov",role:"dialog","aria-modal":"true","aria-label":"Танилцуулга"});
       document.body.append(ov);document.documentElement.style.overflow="hidden";step();return true;
     },
-    forYou:forYou
+    forYou:forYou,
+    goals:GOALS
   };
 })();
