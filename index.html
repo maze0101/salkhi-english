@@ -232,7 +232,12 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
   .tools-out .strip>.tools{order:2}
   .tools-out .strip::before{content:"";order:3;flex-basis:100%;height:0}
   .tools-out .strip>.stat:not(.pick){order:4}
-  .tools-out .strip>.starchip{order:5;margin-left:auto}
+  .tools-out .strip>.starchip{order:5}
+  /* хоёр мөрийг бүтэн өргөнөөр дүүргэнэ: хэлний товч дүрс товчнууд хүртэл сунана, доод мөрийн чипүүд тэнцүү хуваана */
+  .tools-out .strip>.stat.pick{flex:1 1 auto;min-width:0}
+  .tools-out .strip>.stat.pick .pk-car{margin-left:auto}
+  .tools-out .strip>.tools{margin-left:0}
+  .tools-out .strip>.stat:not(.pick){flex:1 1 0;min-width:0;justify-content:center}
   .strip .tools{gap:5px}
   .strip .tools .themebtn{height:34px;min-width:34px;padding:0 6px}
 }
@@ -7382,7 +7387,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-16";
+var BUILD="20261015-17";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
