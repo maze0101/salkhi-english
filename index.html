@@ -182,14 +182,12 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 .pk-h:first-child{margin-top:0}
 @media (prefers-reduced-motion:reduce){.picker{animation:none}}
 /* 🏁 hero дахь тэмцээний жижиг карт */
-.heroev{position:absolute;right:16px;top:calc(62px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:9px;max-width:min(240px,56%);padding:7px 13px 7px 7px;border-radius:16px;border:1px solid rgba(255,255,255,.28);background:rgba(10,24,28,.4);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;text-align:left;font:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.2);animation:heIn .4s ease-out}
+.heroev{position:absolute;right:16px;top:calc(54px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:7px;max-width:min(300px,calc(100% - 32px));height:30px;padding:0 11px 0 3px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(10,24,28,.4);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;text-align:left;font:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.2);animation:heIn .4s ease-out}
 .heroev:hover{background:rgba(10,24,28,.55)}
 @keyframes heIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-.he-ic{flex:none;width:36px;height:36px;border-radius:50%;background:var(--evc,#3F8FD8);border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:19px}
-.he-tx{min-width:0;display:flex;flex-direction:column;line-height:1.22}
-.he-k{font-size:9.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;opacity:.82;white-space:nowrap}
-.heroev b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.he-cd{font-size:11.5px;font-weight:800;color:#FFE08A;white-space:nowrap}
+.he-ic{flex:none;width:24px;height:24px;border-radius:50%;background:var(--evc,#3F8FD8);border:1.5px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:13px}
+.heroev b{min-width:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.he-cd{flex:none;font-size:12px;font-weight:800;color:#FFE08A;white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.heroev{animation:none}}
 /* 🗓️ тэмцээний хуанли (events.js) */
 .evcal-box summary{cursor:pointer;list-style:none}
@@ -1512,11 +1510,11 @@ function paintHeroEv(){
   var b=document.getElementById("heroev"),n=window.Events?Events.next(xEnv()):null;
   if(!n){if(b)b.remove();return;}
   if(!b){b=h("button",{class:"heroev",id:"heroev",type:"button",onclick:function(){state.tab="stats";ui.hub=true;ui.set=false;ui.wrap=null;renderTabs();render();window.scrollTo(0,0);}});ov.append(b);}
-  var cd=n.cur?n.left+" өдөр үлдлээ":n.dd+" хоног үлдлээ";
+  var cd=n.cur?n.left+" өдөр үлдлээ":n.dd+" хоног үлдлээ",cds=n.cur?"⏳ "+n.left+" өдөр":n.dd+" хоног";
   b.style.setProperty("--evc",n.c);b.textContent="";
   b.setAttribute("aria-label",(n.cur?"Тэмцээн явагдаж байна: ":"Дараагийн тэмцээн: ")+n.e.t+", "+cd+". Шагнал: "+n.e.m);
-  b.append(h("span",{class:"he-ic","aria-hidden":"true"},n.e.ic),
-    h("span",{class:"he-tx","aria-hidden":"true"},h("span",{class:"he-k"},n.cur?"Тэмцээн явагдаж байна":"Дараагийн тэмцээн"),h("b",null,n.e.t),h("span",{class:"he-cd"},"⏳ "+cd)));
+  b.title=(n.cur?"Тэмцээн явагдаж байна":"Дараагийн тэмцээн")+" · "+n.e.m;
+  b.append(h("span",{class:"he-ic","aria-hidden":"true"},n.e.ic),h("b",{"aria-hidden":"true"},n.e.t),h("span",{class:"he-cd","aria-hidden":"true"},cds));
 }
 function renderStrip(){
   paintHeroEv();
@@ -7152,7 +7150,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-6";
+var BUILD="20261015-7";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
