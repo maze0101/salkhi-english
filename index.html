@@ -183,6 +183,7 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 @media (prefers-reduced-motion:reduce){.picker{animation:none}}
 /* 🛍️ одны дэлгүүр */
 .shop-bal{display:flex;align-items:center;gap:12px}
+.shophome .sh-st{display:inline-block;margin-left:4px;padding:1px 9px;border-radius:999px;background:#FFE7A3;color:#7A4E00;font-size:13px;font-weight:800;vertical-align:1px}
 .shop-bal .sb-ic{font-size:34px}
 .shop-bal b{font-size:20px}
 .sb-boost,.stat.boost{font-weight:800;color:#8A5A00;background:#FFE7A3;border-color:#E8B931!important}
@@ -2669,6 +2670,7 @@ function viewWords(){
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
   if(window.Daily5)root.append(Daily5.card(d5Env(),startDaily5));
   if(window.Reels)root.append(Reels.card(reelsEnv()));
+  root.append(shopHomeCard());
   if(window.Onboard){var fy=Onboard.forYou(onbEnv());if(fy)root.append(fy);}
   if(window.Events){var evc=Events.card(xEnv());if(evc)root.append(evc);}
   root.append(taskPanel());
@@ -7211,7 +7213,7 @@ function shopBuy(it){
 function shopPick(it){var s=shopSt();if(it.cat==="kite")s.kite=it.id;else if(it.cat==="card")s.card=it.id;sset("shop",s);if(it.cat==="kite")applyKite();render();}
 function viewShop(){
   var root=h("div"),s=shopSt(),bl=boostLeft();
-  root.append(h("button",{class:"back",onclick:function(){ui.shop=false;ui.shopArm=null;render();window.scrollTo(0,0);}},"‹ Буцах"));
+  root.append(h("button",{class:"back",onclick:function(){ui.shop=false;ui.shopArm=null;if(ui.shopFrom&&ui.shopFrom!=="stats"){state.tab=ui.shopFrom;renderTabs();}ui.shopFrom=null;render();window.scrollTo(0,0);}},"‹ Буцах"));
   root.append(h("h2",null,"🛍️ Одны дэлгүүр"));
   root.append(h("div",{class:"note shop-bal"},h("span",{class:"sb-ic","aria-hidden":"true"},"⭐"),
     h("div",{style:"flex:1"},h("b",null,state.stars+" од"),h("div",{class:"muted small"},"Түвшин, цол ахих бүрт од авна")),
@@ -7241,9 +7243,19 @@ function viewShop(){
   root.append(h("p",{class:"muted small",style:"margin-top:16px"},"Үнийг дарахад «Авах уу?» гэж асууна — дахин дарвал авна."));
   return root;
 }
+/* 🛍️ нүүр (Үгс таб) дээрх дэлгүүрийн карт — «Богино хичээл»-тэй ижил загвар */
+function openShop(){ui.shopFrom=state.tab;ui.shop=true;ui.hub=false;ui.shopArm=null;state.tab="stats";renderTabs();render();window.scrollTo(0,0);}
+function shopHomeCard(){
+  var bl=boostLeft(),cheap=SHOP.filter(function(it){return it.p>0&&!owns(it.id)&&!(it.id==="frz"&&state.freeze>=2);}).reduce(function(m,it){return Math.min(m,it.p);},1e9);
+  var sub=bl?"⚡ 2× XP идэвхтэй · "+Math.ceil(bl/60000)+" мин үлдлээ"
+    :state.stars>=cheap?"Одоо авч болох бараа байна: 🧊, ⚡ 2× XP, аватар, цаасан шувуу"
+    :"Цол ахиж од цуглуул · дараагийн бараа хүртэл "+(cheap-state.stars)+" ⭐";
+  return h("button",{class:"gamecard shophome",type:"button",style:"margin:10px 0 0",onclick:openShop},
+    h("i",{"aria-hidden":"true"},"🛍️"),h("div",null,h("b",null,"Одны дэлгүүр ",h("span",{class:"sh-st"},"⭐ "+state.stars)),h("span",null,sub)));
+}
 function shopCard(){
   var bl=boostLeft();
-  return h("button",{class:"lrow",type:"button",style:"margin-top:12px",onclick:function(){ui.shop=true;ui.hub=false;state.tab="stats";renderTabs();render();window.scrollTo(0,0);}},
+  return h("button",{class:"lrow",type:"button",style:"margin-top:12px",onclick:openShop},
     h("span",{class:"hexb ico"},"🛍️"),h("span",{style:"flex:1"},h("div",{class:"t"},"Одны дэлгүүр · ⭐ "+state.stars),
       h("div",{class:"muted small"},bl?"⚡ 2× XP идэвхтэй · "+Math.ceil(bl/60000)+" мин үлдлээ":"🧊 хамгаалалт, ⚡ 2× XP, аватар, цаасан шувууны өнгө")),h("span",{"aria-hidden":"true"},"›"));
 }
@@ -7353,7 +7365,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-12";
+var BUILD="20261015-13";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
