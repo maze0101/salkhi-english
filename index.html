@@ -181,6 +181,34 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 .pk-h{font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2);margin:12px 0 6px}
 .pk-h:first-child{margin-top:0}
 @media (prefers-reduced-motion:reduce){.picker{animation:none}}
+/* 📱 ханын зураг, ✍️ нэр, 🔤 зээлсэн үг, 🌙 унтахын өмнө, 🏷️ шошго, 🤝 ээлжлэн */
+.wall-prev{margin:12px auto 0;width:min(240px,70vw);aspect-ratio:1080/2340;border-radius:26px;padding:16px 14px;color:#fff;display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden}
+.wp-clock{font:700 34px/1 var(--hfont);margin:14px 0 auto;opacity:.95}
+.wp-k{font-size:10px;font-weight:800;color:#E8B931}
+.wp-w{width:100%;background:rgba(255,255,255,.12);border-radius:10px;padding:5px 6px;text-align:center;display:flex;flex-direction:column}
+.wp-w b{font-size:14px}.wp-w span{font-size:9.5px;opacity:.85}
+.nm-out{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.nm-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line)}
+.nm-f{font-size:24px}.nm-v{font-size:20px;word-break:break-word}
+.loan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:12px}
+.loan{display:flex;flex-direction:column;gap:2px;text-align:left;padding:10px 12px;border-radius:14px;background:var(--surface);border:1.5px solid var(--line);color:inherit;font:inherit;cursor:pointer}
+.loan b{font-size:17px}.loan:hover{border-color:var(--sel-line)}
+.bedcard{background:linear-gradient(135deg,#1B2350,#3B2C78)!important;color:#fff!important;border-color:#3B2C78!important}
+.bedcard span{color:rgba(255,255,255,.8)!important}
+.bedov{position:fixed;inset:0;z-index:250;background:radial-gradient(120% 80% at 50% 0%,#2A2F6B 0%,#141838 60%,#0B0D22 100%);color:#F1EEFF;display:flex;align-items:center;justify-content:center;padding:20px}
+.bed-stars{position:absolute;inset:0;background-image:radial-gradient(1.5px 1.5px at 20% 30%,#fff8,transparent),radial-gradient(1.5px 1.5px at 70% 20%,#fff9,transparent),radial-gradient(1px 1px at 40% 70%,#fff7,transparent),radial-gradient(1.5px 1.5px at 85% 60%,#fff8,transparent),radial-gradient(1px 1px at 10% 85%,#fff6,transparent),radial-gradient(1px 1px at 55% 45%,#fff6,transparent);pointer-events:none}
+.bed-x{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:16px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-size:18px;cursor:pointer}
+.bed-c{position:relative;text-align:center;max-width:420px;width:100%;display:flex;flex-direction:column;align-items:center;gap:8px}
+.bed-n{font-size:13px;opacity:.7}.bed-w{font:700 44px/1.15 var(--hfont);word-break:break-word}.bed-r{opacity:.75;font-size:18px}.bed-m{font-size:24px;font-weight:800;color:#FFE08A;margin-top:6px}
+.bedov .btn{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)}
+.bedov .btn.primary{background:#E8B931;color:#2A1B00;border-color:#E8B931}
+.lbl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.lbl{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:10px 6px;border-radius:14px;background:var(--surface);border:1.5px dashed var(--line)}
+.lbl-ic{font-size:26px}.lbl b{font-size:16px;word-break:break-word}
+.pass-hand{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;padding:26px 16px}
+.pass-q{text-align:center;padding:18px 12px}
+.pass-q b{display:block;font:700 30px/1.2 var(--hfont);word-break:break-word}
+.pass-top{display:flex;justify-content:space-between;align-items:baseline;margin:6px 0 8px}
 /* 🎯 долоо хоногийн даалгавар */
 .wq{margin:0 0 12px}
 .wq-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
@@ -2770,6 +2798,10 @@ function viewReview(){
 function viewWords(){
   if(ui.rev)return viewReview();
   if(ui.d5&&window.Daily5&&Daily5.active())return Daily5.view(d5Env(function(){ui.d5=false;render();window.scrollTo(0,0);}));
+  if(ui.wtool==="wall")return viewWall();
+  if(ui.wtool==="loan")return viewLoans();
+  if(ui.wtool==="name")return viewName();
+  if(ui.wtool==="lbl")return viewLabels();
   if(ui.wtool==="screen"&&window.ScreenLang)return ScreenLang.view(xEnv(function(){ui.wtool=null;render();window.scrollTo(0,0);}));
   if(ui.wtool==="ws"&&window.Worksheet)return Worksheet.view(xEnv(function(){ui.wtool=null;render();window.scrollTo(0,0);}));
   if(ui.wtool==="read"&&window.Reader&&state.mode!=="kid")return Reader.view(toolEnv(function(){ui.wtool=null;render();window.scrollTo(0,0);}));
@@ -2784,12 +2816,17 @@ function viewWords(){
   if(window.Events){var evc=Events.card(xEnv());if(evc)root.append(evc);}
   root.append(taskPanel());
   if(state.mode!=="kid")root.append(weeklyCard());
+  var bdc=bedCard();if(bdc)root.append(bdc);
   var rc=reviewCard();if(rc)root.append(rc);
   var wxc=wxWordsCard();if(wxc)root.append(wxc);
   root.append(h("div",{class:"toolgrid"},
     state.mode!=="kid"&&window.ScreenLang?h("button",{class:"btn",onclick:function(){ui.wtool="screen";render();window.scrollTo(0,0);}},"📺 Дэлгэцийн хэл"):null,
     window.Worksheet?h("button",{class:"btn",onclick:function(){ui.wtool="ws";render();window.scrollTo(0,0);}},"🖨️ Ажлын хуудас"):null,
-    state.mode!=="kid"&&window.Reader?h("button",{class:"btn",onclick:function(){ui.wtool="read";render();window.scrollTo(0,0);}},"📄 Өөрийн бичвэр"):null));
+    state.mode!=="kid"&&window.Reader?h("button",{class:"btn",onclick:function(){ui.wtool="read";render();window.scrollTo(0,0);}},"📄 Өөрийн бичвэр"):null,
+    h("button",{class:"btn",onclick:function(){ui.wtool="wall";render();window.scrollTo(0,0);}},"📱 Ханын зураг"),
+    h("button",{class:"btn",onclick:function(){ui.wtool="loan";render();window.scrollTo(0,0);}},"🔤 Та аль хэдийн мэднэ"),
+    h("button",{class:"btn",onclick:function(){ui.wtool="name";render();window.scrollTo(0,0);}},"✍️ Нэрээ гадаад бичгээр"),
+    h("button",{class:"btn",onclick:function(){ui.wtool="lbl";render();window.scrollTo(0,0);}},"🏷️ Гэрийн шошго")));
   var hs=state.mode!=="kid"&&window.MnHoliday&&MnHoliday.has(state.lang)&&MnHoliday.season();
   if(hs&&sget("holban","")!==hs+new Date().getFullYear())root.append(h("div",{class:"note",style:"display:flex;gap:10px;align-items:center;margin-bottom:12px"},
     h("div",{style:"flex:1"},h("b",null,"🎉 "+MnHoliday.title(hs)+" болж байна!"),h("div",{class:"muted small"},"Гадаад найздаа "+LANGN[state.lang].toLowerCase()+" хэлээр тайлбарлаж сур.")),
@@ -4898,7 +4935,8 @@ var GAMES=[
   ["dict","🎧","Цээж бичиг","Өгүүлбэр сонсоод бүтнээр нь бич"],
   ["order","🧱","Өгүүлбэр бүтээх","Монгол утгаас нь үгсийг зөв дарааллаар байрлуул"],
   ["chain","🔗","Сүүл холбох","Өмнөх үгийн сүүлийн үсгээр эхлэх үг бич"],
-  ["teach","👩‍🏫","Багш болох","Сурсан 3 үгээ гэрийнхэндээ зааж, шалгаарай"]
+  ["teach","👩‍🏫","Багш болох","Сурсан 3 үгээ гэрийнхэндээ зааж, шалгаарай"],
+  ["pass","🤝","Ээлжлэн тоглох","2–4 хүн нэг утсаар ээлжлэн тоглож өрсөлдөнө"]
 ];
 function teachEnv(){
   return {h:h,render:render,toast:toast,sget:sget,sset:sset,speakBtn:speakBtn,logAct:logAct,gameHead:gameHead,gameOver:gameOver,
@@ -5140,6 +5178,8 @@ function startGame(kind){
     G.round=0;G.rounds=8;G.pool=orderPool();G.used={};
     if(G.pool.length<8){toast("Энэ түвшинд тохирох өгүүлбэр цөөн байна");return;}
     nextOrder(G);
+  }else if(kind==="pass"){
+    if(!passStart(G))return;
   }else if(kind==="teach"){
     if(!window.Teach){toast("Ачаалж чадсангүй");return;}
     var TG=Teach.start(teachEnv());
@@ -5269,6 +5309,7 @@ function viewGame(root){
   if(G.kind==="order")return viewOrder(root,G);
   if(G.kind==="chain")return viewChain(root,G);
   if(G.kind==="teach")return Teach.view(root,G,teachEnv());
+  if(G.kind==="pass")return viewPass(root,G);
   if(G.kind==="match"){
     var clock=h("span",{class:"big",id:"gclock"},fmtSec((Date.now()-G.t0)/1000));
     gameHead(root,"🧩 Хос олох",clock);
@@ -7284,6 +7325,330 @@ function pfShareImg(s){
   },"image/png");
 }
 
+/* ==================== 2.0 нэмэлт хэрэгслүүд ==================== */
+function toolBack(){return h("button",{class:"back",onclick:function(){ui.wtool=null;render();window.scrollTo(0,0);}},"‹ Үгс");}
+function canvasOut(cv,name,text){
+  cv.toBlob(function(b){
+    if(!b){toast("Зураг үүсгэж чадсангүй");return;}
+    var f;try{f=new File([b],name,{type:"image/png"});}catch(e){f=null;}
+    if(f&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],text:text||""}).catch(function(){});return;}
+    var a=document.createElement("a"),u=URL.createObjectURL(b);a.href=u;a.download=name;document.body.append(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(u);},4000);toast("Зураг татагдлаа");
+  },"image/png");
+}
+function wordsOfLang(){return WORDS.filter(function(w){return (w[6]||"en")===state.lang&&w[5]!=="mine";});}
+function dayPick(list,n,salt){
+  var s=0,k=dkey(new Date())+(salt||"");for(var i=0;i<k.length;i++)s=(s*33+k.charCodeAt(i))>>>0;
+  var a=list.slice(),out=[];while(out.length<n&&a.length){out.push(a.splice(s%a.length,1)[0]);s=(s*1103515245+12345)>>>0;}
+  return out;
+}
+
+/* ---------- 📱 Түгжигдсэн дэлгэцийн зураг: өдрийн 5 үг (одоогийн түвшнээс, мэдэхгүй үгсээс давуу) ---------- */
+function wallWords(){
+  var p=pool().filter(function(w){return w[1].length<=18&&w[2].length<=26;});
+  var un=p.filter(function(w){return (state.box[w[1]]||0)<2;});
+  return dayPick(un.length>=5?un:p,5,"wall");
+}
+function wallpaperImg(){
+  var ws=wallWords();if(ws.length<3){toast("Үг хүрэлцэхгүй байна");return;}
+  var W=1080,H=2340,cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  var c=cv.getContext("2d"),g=c.createLinearGradient(0,0,0,H),cg=cardGrad();
+  g.addColorStop(0,cg[0]);g.addColorStop(1,cg[1]);c.fillStyle=g;c.fillRect(0,0,W,H);
+  /* түгжигдсэн дэлгэцийн цаг дээд 30%-д байдаг — үгсийг доод талд */
+  c.fillStyle="rgba(255,255,255,.08)";for(var i=0;i<60;i++){c.beginPath();c.arc((i*197)%W,(i*331)%(H*0.5),2+(i%3),0,7);c.fill();}
+  c.textAlign="center";c.textBaseline="middle";
+  c.fillStyle="#E8B931";c.font="700 40px Nunito,sans-serif";c.fillText("Өнөөдрийн 5 үг · "+LANGN[state.lang],W/2,900);
+  var y=1020;
+  ws.forEach(function(w){
+    c.fillStyle="rgba(255,255,255,.12)";rrect(c,90,y,W-180,220,36);c.fill();
+    c.fillStyle="#fff";c.font="800 76px Nunito,'Noto Sans JP','Noto Sans KR','Microsoft YaHei',sans-serif";c.fillText(w[1],W/2,y+80);
+    c.fillStyle="rgba(255,255,255,.8)";c.font="600 40px Nunito,sans-serif";
+    c.fillText((w[7]&&w[7]!==w[1]?w[7]+" · ":"")+w[2],W/2,y+160);
+    y+=250;
+  });
+  c.fillStyle="rgba(255,255,255,.6)";c.font="700 34px Unbounded,Nunito,sans-serif";c.fillText("Салхи",W/2,H-110);
+  canvasOut(cv,"salkhi-wallpaper.png","Өнөөдрийн 5 үг — Салхи");
+}
+function viewWall(){
+  var root=h("div"),ws=wallWords();
+  root.append(toolBack(),h("h2",null,"📱 Ханын зураг"));
+  root.append(h("p",{class:"muted"},"Утасныхаа түгжигдсэн дэлгэцэнд тавь — утсаа нээх бүрт өнөөдрийн 5 үгээ харна. Өдөр бүр шинэ үг."));
+  root.append(h("div",{class:"wall-prev",style:"background:linear-gradient(180deg,"+cardGrad()[0]+","+cardGrad()[1]+")"},
+    h("div",{class:"wp-clock"},new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})),
+    h("div",{class:"wp-k"},"Өнөөдрийн 5 үг"),
+    ws.map(function(w){return h("div",{class:"wp-w"},h("b",null,w[1]),h("span",null,(w[7]&&w[7]!==w[1]?w[7]+" · ":"")+w[2]));})));
+  root.append(h("button",{class:"btn primary",style:"width:100%;margin-top:12px",onclick:wallpaperImg},"📥 Зураг татах / хуваалцах"));
+  root.append(h("p",{class:"muted small",style:"margin-top:8px"},"Утсан дээр: Зургийн цомгоос нээгээд → «Ханын зураг болгох» → «Түгжигдсэн дэлгэц»."));
+  return root;
+}
+
+/* ---------- ✍️ Нэрээ гадаад бичгээр: кирилл нэрийг латин, хангыль, катакана, герман болгоно (автомат, ойролцоо) ---------- */
+var NM_V="аэиоөуүыеёюя";
+function nmTok(s){
+  /* [гийгүүлэгч, эгшиг] хэсгүүд: е/ё/ю/я → й+эгшиг; урт эгшиг (аа, ээ…) нэг эгшиг + урт тэмдэг */
+  s=s.toLowerCase().replace(/[ьъ]/g,"").replace(/[^а-яөүё]/g,"");
+  var out=[],i=0;
+  while(i<s.length){
+    var ch=s[i];
+    if(NM_V.indexOf(ch)>=0){
+      var v=ch,y=false;if("еёюя".indexOf(ch)>=0){y=true;v={"е":"э","ё":"о","ю":"у","я":"а"}[ch];}
+      var long=s[i+1]===ch||(ch==="и"&&s[i+1]==="й")||(s[i+1]===v);
+      out.push({v:v,y:y,long:long});i+=long?2:1;
+    }else{out.push({c:ch});i++;}
+  }
+  return out;
+}
+var NM_LAT={а:"a",б:"b",в:"v",г:"g",д:"d",ж:"j",з:"z",и:"i",й:"i",к:"k",л:"l",м:"m",н:"n",о:"o",ө:"ö",п:"p",р:"r",с:"s",т:"t",у:"u",ү:"ü",ф:"f",х:"kh",ц:"ts",ч:"ch",ш:"sh",щ:"sh",ы:"y",э:"e"};
+function nmLatin(s,de){
+  var m=de?{ж:"dsch",х:"ch",ц:"z",ч:"tsch",ш:"sch",щ:"sch",в:"w",й:"j",з:"s"}:{};
+  var r=nmTok(s).map(function(t){if(t.c)return m[t.c]||NM_LAT[t.c]||"";var v=(t.y?(de?"j":"y"):"")+NM_LAT[t.v];return t.long?v+NM_LAT[t.v]:v;}).join("");
+  return r.charAt(0).toUpperCase()+r.slice(1);
+}
+/* катакана: гийгүүлэгч + эгшиг мөр; эгшиггүй гийгүүлэгч → «у/о» мөр, төгсгөлийн н → ン, урт → ー */
+var KANA={"":"アイウエオ",k:"カキクケコ",g:"ガギグゲゴ",s:"サシスセソ",z:"ザジズゼゾ",t:"タチツテト",d:"ダヂヅデド",n:"ナニヌネノ",h:"ハヒフヘホ",b:"バビブベボ",p:"パピプペポ",m:"マミムメモ",r:"ラリルレロ",y:"ヤイユエヨ",w:"ワイウエヲ",j:"ジャ|ジ|ジュ|ジェ|ジョ",ch:"チャ|チ|チュ|チェ|チョ",sh:"シャ|シ|シュ|シェ|ショ",ts:"ツァ|ツィ|ツ|ツェ|ツォ",f:"ファ|フィ|フ|フェ|フォ",v:"ヴァ|ヴィ|ヴ|ヴェ|ヴォ"};
+var KC={б:"b",в:"b",г:"g",д:"d",ж:"j",з:"z",к:"k",л:"r",м:"m",н:"n",п:"p",р:"r",с:"s",т:"t",ф:"f",х:"h",ц:"ts",ч:"ch",ш:"sh",щ:"sh",й:"y"};
+var KV={а:0,и:1,ы:1,у:2,ү:2,э:3,о:4,ө:4};
+function kanaOf(c,vi){var row=KANA[c]||KANA[""];return row.indexOf("|")>=0?row.split("|")[vi]:row.charAt(vi);}
+function nmKata(s){
+  var T=nmTok(s),out="";
+  for(var i=0;i<T.length;i++){
+    var t=T[i];
+    if(t.v){out+=(t.y?kanaOf("y",KV[t.v]):kanaOf("",KV[t.v]))+(t.long?"ー":"");continue;}
+    var nx=T[i+1],c=KC[t.c]||"";
+    if(t.c==="н"&&(!nx||nx.c)){out+="ン";continue;}
+    if(nx&&nx.v){out+=kanaOf(c,KV[nx.v])+(nx.y?"":"")+(nx.long?"ー":"");i++;continue;}
+    out+=kanaOf(c,(c==="t"||c==="d")?4:2);
+  }
+  return out;
+}
+/* хангыль: эхний гийгүүлэгч/эгшиг/төгсгөл → 0xAC00 + (I*21+M)*28+F */
+var HI={г:0,к:15,н:2,д:3,т:16,л:5,р:5,м:6,б:7,в:7,п:17,с:9,ш:9,щ:9,ж:12,з:12,ч:14,ц:14,х:18,ф:17,й:11,"":11};
+var HM={а:0,э:5,и:20,ы:18,о:8,ө:4,у:13,ү:13},HMY={а:2,э:7,о:12,у:17};
+var HF={н:4,м:16,л:8,р:8,г:1,б:17,"":0};
+function hsyl(i,m,f){return String.fromCharCode(0xAC00+(i*21+m)*28+(f||0));}
+function nmHangul(s){
+  var T=nmTok(s),out="";
+  for(var i=0;i<T.length;i++){
+    var t=T[i],ini=11;
+    if(t.c){
+      var nx=T[i+1];
+      if(nx&&nx.v){ini=HI[t.c]!=null?HI[t.c]:11;t=nx;i++;}
+      else{out+=hsyl(HI[t.c]!=null?HI[t.c]:11,"шжчщ".indexOf(t.c)>=0?20:18,0);continue;}
+    }
+    var med=t.y&&HMY[t.v]!=null?HMY[t.v]:HM[t.v];
+    if(t.c==null&&t.y)ini=11;
+    /* дараагийн гийгүүлэгч нь төгсгөл болох уу: араас нь эгшиг ирэхгүй бол */
+    var a=T[i+1],b=T[i+2],fin=0;
+    if(a&&a.c&&HF[a.c]&&!(b&&b.v)){fin=HF[a.c];i++;}
+    out+=hsyl(ini,med,fin)+(t.long&&!fin?"":"");
+  }
+  return out;
+}
+function viewName(){
+  var root=h("div"),nm=ui.nmIn!=null?ui.nmIn:(myNick()||(window.SalkhiSync&&SalkhiSync.account()&&SalkhiSync.account().name)||"").split(" ")[0];
+  root.append(toolBack(),h("h2",null,"✍️ Нэрээ гадаад бичгээр"));
+  var inp=h("input",{class:"tin",value:nm,maxlength:"24",placeholder:"Нэрээ кириллээр бич: Бат-Эрдэнэ","aria-label":"Нэр",autocomplete:"off"});
+  var out=h("div",{class:"nm-out"});
+  function paint(){
+    var v=inp.value.trim();ui.nmIn=inp.value;out.textContent="";
+    if(!/[а-яөүё]/i.test(v)){out.append(h("p",{class:"muted"},"Кирилл үсгээр бичнэ үү."));return;}
+    var parts=v.split(/[-\s]+/).filter(Boolean);
+    [["🇬🇧","Англи / латин",parts.map(function(p){return nmLatin(p);}).join("-")],
+     ["🇩🇪","Герман",parts.map(function(p){return nmLatin(p,true);}).join("-")],
+     ["🇰🇷","Солонгос (хангыль)",parts.map(nmHangul).join(" ")],
+     ["🇯🇵","Япон (катакана)",parts.map(nmKata).join("・")],
+     ["🇷🇺","Орос",v]].forEach(function(r){
+      out.append(h("div",{class:"nm-row"},h("span",{class:"nm-f","aria-hidden":"true"},r[0]),h("div",{style:"flex:1;min-width:0"},h("div",{class:"muted small"},r[1]),h("b",{class:"nm-v"},r[2])),
+        h("button",{class:"btn ghost",style:"flex:none;padding:6px 10px","aria-label":r[1]+" хуулах",onclick:function(){if(navigator.clipboard)navigator.clipboard.writeText(r[2]).then(function(){toast("Хуулагдлаа");});}},"📋")));
+    });
+  }
+  inp.addEventListener("input",paint);
+  root.append(inp,out,h("p",{class:"muted small",style:"margin-top:10px"},"Автомат, ойролцоо хөрвүүлэлт. Паспорт, албан бичигт латин үсгийг MNS 5217 стандартаар шалгуулаарай. Хятад бичгээр нэрийг дууны утгаар сонгодог тул энд гаргаагүй."));
+  paint();
+  return root;
+}
+
+/* ---------- 🔤 «Та аль хэдийн мэднэ»: монгол хэлэнд орсон үгс ---------- */
+var LOANS={
+  en:"computer|компьютер,internet|интернэт,taxi|такси,bank|банк,coffee|кофе,pizza|пицца,bus|автобус,telephone|телефон,video|видео,radio|радио,museum|музей,theatre|театр,park|парк,club|клуб,sport|спорт,football|футбол,basketball|сагсан бөмбөг (баскетбол),tennis|теннис,guitar|гитар,chocolate|шоколад,banana|банана,lemon|лимон,salad|салат,ketchup|кетчуп,hamburger|гамбургер,sandwich|сэндвич,doctor|доктор,manager|менежер,company|компани,business|бизнес,marketing|маркетинг,brand|брэнд,interview|интервью,project|проект,design|дизайн,photo|фото,camera|камер,printer|принтер,smartphone|смартфон,email|имэйл,online|онлайн,offline|офлайн,like|лайк,blog|блог,shampoo|шампунь,hotel|отель,cafe|кафе,menu|меню,stress|стресс,energy|энерги,idea|санаа (идея)",
+  ru:"машина|машин,автобус|автобус,троллейбус|троллейбус,трактор|трактор,бензин|бензин,гараж|гараж,телевизор|телевизор,радио|радио,телефон|телефон,компьютер|компьютер,кино|кино,театр|театр,музей|музей,концерт|концерт,балет|балет,цирк|цирк,футбол|футбол,хоккей|хоккей,спорт|спорт,университет|их сургууль (университет),институт|институт,лекция|лекц,директор|директор,инженер|инженер,доктор|доктор,кофе|кофе,шоколад|шоколад,лимон|лимон,банан|банана,помидор|помидор,салат|салат,торт|бялуу (торт),класс|анги (класс),грамм|грамм,километр|километр,литр|литр,метр|метр",
+  de:"Computer|компьютер,Internet|интернэт,Taxi|такси,Bank|банк,Kaffee|кофе,Pizza|пицца,Bus|автобус,Telefon|телефон,Radio|радио,Museum|музей,Theater|театр,Park|парк,Sport|спорт,Fußball|футбол,Gitarre|гитар,Schokolade|шоколад,Banane|банана,Salat|салат,Doktor|доктор,Ingenieur|инженер,Direktor|директор,Foto|фото,Kamera|камер,Hotel|отель,Café|кафе,Konzert|концерт,Ballett|балет,Kilometer|километр,Liter|литр",
+  ja:"コンピューター|компьютер|konpyūtā,インターネット|интернэт|intānetto,タクシー|такси|takushī,バス|автобус|basu,コーヒー|кофе|kōhī,ピザ|пицца|piza,ホテル|отель|hoteru,テレビ|телевиз|terebi,ラジオ|радио|rajio,カメラ|камер|kamera,ギター|гитар|gitā,チョコレート|шоколад|chokorēto,バナナ|банана|banana,レモン|лимон|remon,サラダ|салат|sarada,ハンバーガー|гамбургер|hanbāgā,アイスクリーム|зайрмаг (айс крийм)|aisukurīmu,テニス|теннис|tenisu,スポーツ|спорт|supōtsu,メニュー|меню|menyū,ケーキ|бялуу (кекс)|kēki,ジュース|жүүс|jūsu",
+  ko:"컴퓨터|компьютер|keompyuteo,인터넷|интернэт|inteonet,택시|такси|taeksi,버스|автобус|beoseu,커피|кофе|keopi,피자|пицца|pija,호텔|отель|hotel,라디오|радио|radio,카메라|камер|kamera,기타|гитар|gita,초콜릿|шоколад|chokollit,바나나|банана|banana,레몬|лимон|remon,샐러드|салат|saelleodeu,햄버거|гамбургер|haembeogeo,아이스크림|зайрмаг (айс крийм)|aiseukeurim,테니스|теннис|teniseu,스포츠|спорт|seupocheu,메뉴|меню|menyu,케이크|бялуу (кейк)|keikeu,주스|жүүс|juseu",
+  zh:"咖啡|кофе|kāfēi,巧克力|шоколад|qiǎokèlì,披萨|пицца|pīsà,汉堡|гамбургер|hànbǎo,沙拉|салат|shālā,可乐|кола|kělè,吉他|гитар|jítā,沙发|буйдан (софа)|shāfā,巴士|автобус|bāshì,咖喱|карри|gālí,坦克|танк|tǎnkè,幽默|хошин (юмор)|yōumò,迪斯科|диско|dísīkē,模特|загвар өмсөгч (модель)|mótè"
+};
+function viewLoans(){
+  var root=h("div"),raw=LOANS[state.lang];
+  root.append(toolBack(),h("h2",null,"🔤 Та аль хэдийн мэднэ"));
+  if(!raw){root.append(h("p",{class:"muted"},LANGN[state.lang]+" хэлэнд одоохондоо жагсаалт алга."));return root;}
+  var L=raw.split(",").map(function(x){return x.split("|");});
+  root.append(h("div",{class:"note",style:"text-align:center"},h("div",{style:"font-size:40px","aria-hidden":"true"},"🎉"),
+    h("b",{style:"font-size:18px"},"Та "+LANGN[state.lang].toLowerCase()+" хэлний "+L.length+" үгийг аль хэдийн мэднэ!"),
+    h("div",{class:"muted small"},"Эдгээр нь монгол хэлэнд орж ирсэн үгс — дуудлага нь бараг ижил. Дарж сонсоорой.")));
+  var grid=h("div",{class:"loan-grid"});
+  L.forEach(function(x){
+    grid.append(h("button",{class:"loan",type:"button",onclick:function(){speak(cleanSpeak(x[0]));},"aria-label":x[0]+" — "+x[1]+", сонсох"},
+      h("b",null,x[0]),x[2]?h("span",{class:"muted small"},x[2]):null,h("span",null,"🇲🇳 "+x[1])));
+  });
+  root.append(grid);
+  return root;
+}
+
+/* ---------- 🌙 Унтахын өмнөх 3 минут (20:00–03:00): өнөөдөр алдсан + давтах үгс, тайван, удаан дуудлагатай ---------- */
+function bedWords(){
+  var k=dkey(new Date()),a=state.act[k]||{},mw=(a.mw||[]).slice(),all=wordsOfLang(),by={};
+  all.forEach(function(w){by[w[1]]=w;});
+  var out=mw.map(function(t){return by[t];}).filter(Boolean);
+  var known=all.filter(function(w){return (state.box[w[1]]||0)>=1&&out.indexOf(w)<0;});
+  return out.concat(dayPick(known,Math.max(0,10-out.length),"bed")).slice(0,10);
+}
+function bedTime(){var hr=new Date().getHours();return hr>=20||hr<3;}
+function bedCard(){
+  if(!bedTime()||sget("bedDone","")===dkey(new Date(new Date().getTime()-(new Date().getHours()<3?86400000:0))))return null;
+  var n=bedWords().length;if(n<3)return null;
+  return h("button",{class:"gamecard bedcard",type:"button",style:"margin:10px 0 0",onclick:bedOpen},
+    h("i",{"aria-hidden":"true"},"🌙"),h("div",null,h("b",null,"Унтахын өмнөх 3 минут"),h("span",null,"Өнөөдрийн "+n+" үгээ тайван давтаад унтаарай — нойронд санах ой бэхжинэ")));
+}
+function bedOpen(){
+  var L=bedWords(),i=0,shown=false;
+  var ov=h("div",{class:"bedov",role:"dialog","aria-modal":"true","aria-label":"Унтахын өмнөх давталт"});
+  function close(){ov.remove();document.documentElement.style.overflow="";}
+  function paint(){
+    ov.textContent="";
+    var stars=h("div",{class:"bed-stars","aria-hidden":"true"});
+    ov.append(stars,h("button",{class:"bed-x","aria-label":"Хаах",onclick:close},"✕"));
+    if(i>=L.length){
+      var d=new Date();if(d.getHours()<3)d.setDate(d.getDate()-1);sset("bedDone",dkey(d));addXP(5);
+      ov.append(h("div",{class:"bed-c"},h("div",{style:"font-size:56px"},"😴"),h("b",{style:"font-size:22px"},"Сайхан амраарай"),h("p",null,L.length+" үг давтлаа · +5 XP. Маргааш уулзъя 🌙"),h("button",{class:"btn",onclick:function(){close();render();}},"Баяртай")));
+      return;
+    }
+    var w=L[i];
+    ov.append(h("div",{class:"bed-c"},
+      h("div",{class:"bed-n"},(i+1)+" / "+L.length),
+      h("div",{class:"bed-w"},w[1]),w[7]&&w[7]!==w[1]?h("div",{class:"bed-r"},w[7]):null,
+      shown?h("div",{class:"bed-m"},w[2]):h("button",{class:"btn",onclick:function(){shown=true;paint();}},"Утгыг харах"),
+      h("div",{class:"row",style:"justify-content:center;margin-top:16px"},
+        h("button",{class:"btn ghost",onclick:function(){speak(cleanSpeak(w[1]),null,true);}},"🔊 Удаан"),
+        h("button",{class:"btn primary",onclick:function(){i++;shown=false;paint();}},i===L.length-1?"Дуусгах":"Дараах ›"))));
+    if(!shown)setTimeout(function(){if(ov.isConnected)speak(cleanSpeak(w[1]),null,true);},350);
+  }
+  document.body.append(ov);document.documentElement.style.overflow="hidden";paint();
+}
+
+/* ---------- 🏷️ Гэрийн эд зүйлсийн QR шошго: монгол утгаар нь толь бичгээс хайна, QR → апп нээгдэж үгийг уншина (#say=) ---------- */
+var HOME_ITEMS=[["🚪","хаалга"],["🪟","цонх"],["🪑","сандал"],["🛏️","ор"],["🍽️","таваг"],["🥄","халбага"],["☕","аяга"],["📚","ном"],["💡","гэрэл"],["🪞","толь"],["🛋️","буйдан"],
+  ["📺","зурагт"],["💻","компьютер"],["📱","утас"],["👟","гутал"],["🎒","цүнх"],["🖊️","үзэг"],["🔑","түлхүүр"],["💧","ус"],["🧊","хөргөгч"],["🧺","угаалга"],["🍳","тогоо"],["🪥","шүдний сойз"],["🧼","саван"],["🌱","цэцэг"],["👕","хувцас"],["🗑️","хогийн сав"]];
+function homeLabels(){
+  var all=wordsOfLang(),out=[];
+  HOME_ITEMS.forEach(function(it){
+    /* утгын аль нэг хэсэг (таслалаар) яг тэр үг байх ёстой — «цаг» нь «цаг агаар»-т таарахгүй */
+    var w=all.filter(function(x){return x[1].length<=16&&String(x[2]).split(/[,;]/).some(function(p){return p.replace(/\(.*?\)/g,"").trim().toLowerCase()===it[1];});}).sort(function(a,b){return a[2].length-b[2].length;})[0];
+    if(w)out.push({ic:it[0],w:w});
+  });
+  return out;
+}
+function sayUrl(w){return SITE_URL+"#say="+state.lang+":"+encodeURIComponent(w[1]);}
+function viewLabels(){
+  var root=h("div"),L=homeLabels();
+  root.append(toolBack(),h("h2",null,"🏷️ Гэрийн шошго"));
+  root.append(h("p",{class:"muted"},"Хэвлээд гэрийнхээ эд зүйлс дээр наа. Утасны камераар QR-ыг уншуулбал апп нээгдэж, үгийг чангаар уншина."));
+  if(!L.length){root.append(h("p",{class:"muted"},"Энэ хэлэнд тохирох үг олдсонгүй."));return root;}
+  var grid=h("div",{class:"lbl-grid"});
+  L.forEach(function(x){grid.append(h("div",{class:"lbl"},h("span",{class:"lbl-ic","aria-hidden":"true"},x.ic),h("b",null,x.w[1]),x.w[7]&&x.w[7]!==x.w[1]?h("span",{class:"muted small"},x.w[7]):null,h("span",{class:"small"},x.w[2])));});
+  root.append(h("button",{class:"btn primary",style:"width:100%;margin:6px 0 12px",onclick:function(){printLabels(L);}},"🖨️ "+L.length+" шошго хэвлэх (QR-тай)"),grid);
+  return root;
+}
+function printLabels(L){
+  loadQR(function(ok){
+    if(!ok){toast("QR ачаалж чадсангүй (интернет шаардлагатай)");return;}
+    var cells=L.map(function(x){
+      var q=window.qrcode(0,"M");q.addData(sayUrl(x.w));q.make();
+      var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});};
+      return '<div class="c"><div class="q">'+q.createSvgTag(3,0)+'</div><div class="t"><div class="i">'+x.ic+'</div><b>'+esc(x.w[1])+'</b>'+(x.w[7]&&x.w[7]!==x.w[1]?'<small>'+esc(x.w[7])+'</small>':'')+'<span>'+esc(x.w[2])+'</span></div></div>';
+    }).join("");
+    var wdw=window.open("","_blank");
+    if(!wdw){toast("Шинэ цонх нээгдсэнгүй — popup зөвшөөрнө үү");return;}
+    wdw.document.write('<!doctype html><html lang="mn"><head><meta charset="utf-8"><title>Салхи — гэрийн шошго</title><style>body{font-family:system-ui,sans-serif;margin:10mm}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}.c{display:flex;gap:3mm;align-items:center;border:1.5px dashed #999;border-radius:4mm;padding:3mm;break-inside:avoid}.q svg{width:24mm;height:24mm}.t{display:flex;flex-direction:column}.i{font-size:20px}b{font-size:18px}small{color:#555}span{font-size:12px;color:#333}@media print{button{display:none}}</style></head><body><button onclick="print()" style="margin-bottom:6mm;padding:8px 14px">🖨️ Хэвлэх</button><div class="g">'+cells+'</div></body></html>');
+    wdw.document.close();
+  });
+}
+/* #say=<хэл>:<үг> — QR шошгоноос нээгдэхэд үгийн карт (дуу тоглуулахад хэрэглэгчийн дарах шаардлагатай) */
+var sayPending=null;
+(function(){
+  var m=/[#&]say=([a-z]{2}):([^&]+)/.exec(location.hash||"");if(!m)return;
+  try{history.replaceState(null,"",location.href.split("#")[0]);}catch(e){}
+  try{sayPending={l:m[1],t:decodeURIComponent(m[2])};}catch(e){}
+})();
+function sayShow(){
+  if(!sayPending)return;var p=sayPending;sayPending=null;
+  if(p.l!==state.lang&&window.SALKHI_LANGS.indexOf(p.l)>=0){onbEnv().setLang(p.l);}
+  setTimeout(function(){
+    var w=WORDS.filter(function(x){return x[1]===p.t&&(x[6]||"en")===p.l;})[0];
+    var o=h("div",{class:"lvup",role:"dialog","aria-label":p.t},h("div",null,
+      h("div",{class:"muted small",style:"font-weight:800;letter-spacing:.08em"},"🏷️ ГЭРИЙН ШОШГО"),
+      h("div",{class:"rk-t",style:"font-size:34px"},p.t),w&&w[7]&&w[7]!==w[1]?h("div",{class:"muted"},w[7]):null,w?h("div",{style:"margin-top:6px;font-weight:700"},w[2]):null,
+      h("div",{class:"row",style:"justify-content:center;margin-top:14px"},
+        h("button",{class:"btn primary",onclick:function(e){e.stopPropagation();speak(cleanSpeak(p.t));}},"🔊 Сонсох"),
+        h("button",{class:"btn ghost",onclick:function(){o.remove();}},"Хаах"))));
+    document.body.append(o);
+  },p.l!==state.lang?1500:300);
+}
+
+/* ---------- 🤝 Ээлжлэн тоглох: 2–4 хүн нэг утсаар, тус бүр 5 асуулт (үг → монгол утга) ---------- */
+var PASS_N=5;
+function passStart(G){
+  var ws=gameWords();if(ws.length<8){toast("Тоглоход үг хүрэлцэхгүй байна");return null;}
+  G.stage="setup";G.names=(sget("passNames",null)||["Тоглогч 1","Тоглогч 2"]).slice(0,4);G.ws=ws;return G;
+}
+function passQ(G){
+  var w=pickDistinct(G.ws,1)[0],opts=pickDistinct(G.ws.filter(function(x){return x[2]!==w[2];}),3).map(function(x){return x[2];});
+  opts.push(w[2]);G.q={w:w,opts:shuffle(opts),picked:null};
+}
+function viewPass(root,G){
+  gameHead(root,"🤝 Ээлжлэн тоглох");
+  if(G.stage==="setup"){
+    root.append(h("p",{class:"muted"},"Нэг утсаар 2–4 хүн ээлжлэн тоглоно. Хүн бүрт "+PASS_N+" асуулт. Хамгийн олон оноо авсан нь ялна!"));
+    G.names.forEach(function(n,i){
+      root.append(h("div",{class:"row",style:"margin-top:8px"},h("input",{class:"tin",style:"margin:0",value:n,maxlength:"14","aria-label":"Тоглогч "+(i+1),oninput:function(e){G.names[i]=e.target.value;}}),
+        G.names.length>2?h("button",{class:"btn ghost",style:"flex:none","aria-label":"Хасах",onclick:function(){G.names.splice(i,1);render();}},"✕"):null));
+    });
+    if(G.names.length<4)root.append(h("button",{class:"btn",style:"margin-top:8px",onclick:function(){G.names.push("Тоглогч "+(G.names.length+1));render();}},"➕ Тоглогч нэмэх"));
+    root.append(h("button",{class:"btn primary",style:"width:100%;margin-top:14px",onclick:function(){
+      G.names=G.names.map(function(n,i){return n.trim()||"Тоглогч "+(i+1);});sset("passNames",G.names);
+      G.score=G.names.map(function(){return 0;});G.p=0;G.k=0;G.stage="hand";render();
+    }},"Эхлэх"));
+    return root;
+  }
+  if(G.stage==="hand"){
+    root.append(h("div",{class:"note pass-hand"},h("div",{style:"font-size:52px","aria-hidden":"true"},"📱➡️🙋"),
+      h("div",{class:"muted"},"Утсаа өгөөрэй:"),h("b",{style:"font-size:26px"},G.names[G.p]),
+      h("button",{class:"btn primary",style:"margin-top:12px",onclick:function(){passQ(G);G.stage="q";render();}},"Би бэлэн!")));
+    return root;
+  }
+  if(G.stage==="q"){
+    var q=G.q;
+    root.append(h("div",{class:"pass-top"},h("b",null,G.names[G.p]),h("span",{class:"muted small"},(G.k+1)+" / "+PASS_N+" · оноо "+G.score[G.p])));
+    root.append(h("div",{class:"note pass-q"},h("b",null,q.w[1]),q.w[7]&&q.w[7]!==q.w[1]?h("div",{class:"muted"},q.w[7]):null,
+      h("button",{class:"btn ghost",style:"margin-top:6px;padding:4px 10px","aria-label":"Сонсох",onclick:function(){speak(cleanSpeak(q.w[1]));}},"🔊")));
+    var box=h("div",{style:"display:grid;gap:8px;margin-top:12px"});
+    q.opts.forEach(function(o){
+      var cls="opt"+(q.picked!=null?(o===q.w[2]?" ok":o===q.picked?" bad":""):"");
+      box.append(h("button",{class:cls,disabled:q.picked!=null,onclick:function(){q.picked=o;if(o===q.w[2]){G.score[G.p]++;sfx("ok");}else sfx("bad");render();}},o));
+    });
+    root.append(box);
+    if(q.picked!=null)root.append(h("button",{class:"btn primary",style:"width:100%;margin-top:12px",onclick:function(){
+      G.k++;if(G.k<PASS_N){passQ(G);render();return;}
+      G.k=0;G.p++;if(G.p<G.names.length){G.stage="hand";render();return;}
+      G.stage="end";render();
+    }},G.k+1<PASS_N?"Дараах ›":G.p+1<G.names.length?"Дараагийн тоглогч ›":"Дүнг харах 🏁"));
+    return root;
+  }
+  var order=G.names.map(function(n,i){return {n:n,s:G.score[i]};}).sort(function(a,b){return b.s-a.s;}),medal=["🥇","🥈","🥉","🎖️"];
+  var lines=order.map(function(r,i){return medal[i]+" "+r.n+" — "+r.s+" / "+PASS_N;});
+  gameOver(root,G,lines,10,"pass");
+  return root;
+}
+
 /* ---------- 🎯 Долоо хоногийн даалгавар: долоо хоног бүр 3 даалгавар (долоо хоногийн түлхүүрээр тогтмол сонгоно).
    Явц нь state.act / state.daily-ээс (Даваагаас өнөөдрийг хүртэл). Даалгавар бүр 15 ⭐, гурвуулаа бол +25 ⭐ (rkgot "wq:…"). ---------- */
 var WQ_POOL=[["days",5,"📅","5 өдөр хичээллэ"],["xp",250,"⚡","250 XP цуглуул"],["r",3,"📖","3 түүх унш"],["l",3,"🎓","3 дүрмийн хичээл дуусга"],
@@ -7567,7 +7932,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-26";
+var BUILD="20261015-27";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
@@ -7584,7 +7949,7 @@ function checkUpdate(atStart){
 }
 /* шинэ хувилбар шалгах нь index.html-ийг дахин татдаг тул эхний ачааллыг удаашруулахгүйн тулд ачаалж дууссаны дараа */
 window.addEventListener("load",function(){setTimeout(function(){checkUpdate(true);},4000);});
-applyFreeze();renderStrip();applyKite();applySkin();
+applyFreeze();renderStrip();applyKite();applySkin();sayShow();
 /* 🎁 шагналын систем гарахаас өмнө ахисан түвшин, цолын одыг нэг удаа нөхөж олгоно (цонхгүй, нэг мэдэгдэлтэй).
    Түлхүүрүүд rkgot-д бичигдэх тул дараа нь давхар олгохгүй. 🧊 нөхөхгүй (оронд нь 5-ын түвшинд +10 ⭐). */
 (function backfillRanks(){
