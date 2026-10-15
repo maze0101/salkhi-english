@@ -255,6 +255,71 @@
   }
   function loadAslu(){if(window.ASLU_DATA||S.aLoading)return;S.aLoading=true;var v=window.SALKHI_BUILD?"?v="+window.SALKHI_BUILD:"";
     var sc=document.createElement("script");sc.src="sign/aslu-data.js"+v;sc.onload=function(){S.aLoading=false;env.render();};sc.onerror=function(){S.aLoading=false;S.aErr=true;env.render();};document.head.appendChild(sc);}
+  /* ---------- 🌍 Дэлхийн дохионы хэлүүд (sign/world-data.js): апп-ын хэл бүрийн дохионы хэл ---------- */
+  function world(){return window.SIGN_WORLD||null;}
+  function loadWorld(){if(window.SIGN_WORLD||S.wLoading)return;S.wLoading=true;var v=window.SALKHI_BUILD?"?v="+window.SALKHI_BUILD:"";
+    var sc=document.createElement("script");sc.src="sign/world-data.js"+v;sc.onload=function(){S.wLoading=false;env.render();};sc.onerror=function(){S.wLoading=false;S.wErr=true;env.render();};document.head.appendChild(sc);}
+  /* латин үсгээр (BSL, DGS) нэрийг үсэглэх: DGS-д SCH, Ä Ö Ü тусдаа тэмдэг */
+  function spellLatin(L,key,txt){
+    var map={};L.abc.forEach(function(a){map[a[0]]=a;});
+    var s=String(txt||"").toUpperCase().replace(/[^A-ZÄÖÜß ]/g,""),out=[];
+    for(var i=0;i<s.length;i++){
+      if(s[i]===" "){out.push(null);continue;}
+      if(key==="dgs"&&s.substr(i,3)==="SCH"&&map.SCH){out.push(map.SCH);i+=2;continue;}
+      var c=s[i]==="ß"?"S":s[i];
+      if(map[c])out.push(map[c]);else if(key!=="dgs"&&"ÄÖÜ".indexOf(c)>=0)out.push(map[{"Ä":"A","Ö":"O","Ü":"U"}[c]]);
+    }
+    return out;
+  }
+  /* товчлол: «日本手話 (Nihon Shuwa, JSL)» → JSL */
+  function ab(L){var m=/\(([^)]+)\)/.exec(L.native);return m?m[1].split(", ").pop():L.native;}
+  function viewWorld(root){
+    var W=world();
+    if(!W){put(root,h("p",{class:"muted"},S.wErr?"Ачаалж чадсангүй. Интернэтээ шалгана уу.":"Ачаалж байна…"));loadWorld();return;}
+    var keys=["bsl","jsl","ksl","csl","rsl","dgs"];
+    if(!S.wl)S.wl=W.langs[env.lang()]||"bsl";
+    put(root,h("p",{class:"muted"},"Хэл бүр өөрийн дохионы хэлтэй — англи хэлтэй орнуудад ч ASL, BSL хоёр тэс өөр. Таны сурч буй хэлний орны дохионы хэл:"));
+    if(env.lang()==="ug")put(root,h("p",{class:"note small"},"Уйгур хэлний дохионы хэлний нээлттэй толь олдсонгүй — доорх хэлүүдээс сонгоно уу."));
+    var chips=h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px"});
+    keys.forEach(function(k){var L=W.list[k];put(chips,h("button",{class:"chip","aria-pressed":String(S.wl===k),onclick:function(){S.wl=k;S.wName="";env.render();}},L.flag+" "+ab(L)));});
+    put(root,chips);
+    var L=W.list[S.wl];
+    put(root,h("div",{class:"note"},h("div",{style:"display:flex;gap:10px;align-items:center"},h("span",{style:"font-size:34px","aria-hidden":"true"},L.flag),
+      h("div",null,h("b",{style:"font-size:17px"},L.name),h("div",{class:"muted small"},L.native))),
+      h("ul",{style:"margin:8px 0 0;padding-left:18px"},L.facts.map(function(f){return h("li",{style:"margin:3px 0"},f);}))));
+    /* хурууны үсэг */
+    put(root,h("h3",{style:"margin:16px 0 6px"},"🔤 Хурууны үсэг"));
+    if(L.abc){
+      var g=h("div",{style:"display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px"});
+      L.abc.forEach(function(a){put(g,h("div",{style:"text-align:center"},h("img",{src:a[1],alt:L.name+" хурууны үсэг "+a[0],loading:"lazy",style:"width:100%;max-width:76px;aspect-ratio:3/4;object-fit:contain;background:#fff;border-radius:10px;border:1px solid var(--line)"}),h("div",{style:"font-weight:800"},a[0])));});
+      put(root,g);
+    }else if(L.chart){
+      put(root,h("img",{src:L.chart,alt:L.chartAlt||"",loading:"lazy",style:"width:100%;border-radius:12px;border:1px solid var(--line)"}));
+    }
+    if(L.abcNote)put(root,h("p",{class:"muted small"},L.abcNote));
+    if(L.abcCredit)put(root,h("p",{class:"muted small",style:"margin:4px 0 0"},L.abcCredit));
+    /* нэрээ үсэглэх (латин үсэгтэй дохионы хэлүүд) */
+    if(S.wl==="bsl"||S.wl==="dgs"){
+      var inp=h("input",{class:"tin",value:S.wName||"",placeholder:"Нэрээ латинаар бич: Bat",maxlength:"20","aria-label":"Нэр (латин)",autocomplete:"off",style:"margin-top:12px"});
+      var out=h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"});
+      var paint=function(){out.textContent="";S.wName=inp.value;spellLatin(L,S.wl,inp.value).forEach(function(a){
+        if(!a){put(out,h("span",{style:"width:14px"}));return;}
+        put(out,h("div",{style:"text-align:center"},h("img",{src:a[1],alt:a[0],style:"width:56px;height:74px;object-fit:contain;background:#fff;border-radius:8px;border:1px solid var(--line)"}),h("div",{class:"small",style:"font-weight:800"},a[0])));});};
+      inp.addEventListener("input",paint);put(root,h("b",{style:"display:block;margin-top:14px"},"✍️ Нэрээ "+ab(L)+"-ээр үсэглэх"),inp,out);paint();
+    }
+    /* 48 үндсэн үг → толь бичгийн видео (шинэ таб) */
+    put(root,h("h3",{style:"margin:18px 0 4px"},"🎬 48 үндсэн үг"));
+    put(root,h("p",{class:"muted small",style:"margin:0 0 8px"},"Дарахад "+L.dict.name+" шинэ цонхонд нээгдэж, тухайн үгийн дохионы видеог харуулна (тэр сайт апп дотор нээгдэхийг зөвшөөрдөггүй)."));
+    var cat=null,list=h("div");
+    WORDS.forEach(function(w,i){
+      var nat=L.words[i];if(!nat)return;
+      if(w[0]!==cat){cat=w[0];put(list,h("div",{class:"muted small",style:"font-weight:800;margin:10px 0 4px"},cat));}
+      put(list,h("a",{class:"lrow",href:L.dict.url(nat),target:"_blank",rel:"noopener",style:"text-decoration:none;color:inherit;margin-top:6px"},
+        h("span",{style:"flex:1;min-width:0"},h("div",{class:"t"},nat),h("div",{class:"muted small"},w[1])),h("span",{"aria-hidden":"true"},"🔗")));
+    });
+    put(root,list);
+    put(root,h("p",{class:"muted small",style:"margin-top:12px"},"Орчуулга, мэдээллийг Claude бэлдсэн — тухайн орны дохионы хэлний багшаар шалгуулаагүй."));
+  }
   function topicById(id){var T=(topics()||[]).concat(mde()?mde().vocab:[],aslu()||[]);for(var i=0;i<T.length;i++)if(T[i].id===id)return T[i];return null;}
   /* YouTube embed: autoplay (дуугүй), давталттай. quiz=true бол дээд талын гарчгийг (хариуг) далдална */
   function ytSign(id,label,ar,quiz){
@@ -628,10 +693,10 @@
       h("h2",null,"🤟 Дохионы хэл"));
     if(!inA&&!inL){
       var seg=h("div",{class:"seg",role:"group","aria-label":"Дохионы хэл",style:"margin-bottom:10px"});
-      [["les","📖 Хичээл"],["msl","🇲🇳 Толь"],["asl","🇺🇸 ASL"]].forEach(function(t){put(seg,h("button",{"aria-pressed":String(S.tab===t[0]),onclick:function(){S.tab=t[0];S.open=null;env.render();}},t[1]));});
+      [["les","📖 Хичээл"],["msl","🇲🇳 Толь"],["asl","🇺🇸 ASL"],["world","🌍 Дэлхий"]].forEach(function(t){put(seg,h("button",{"aria-pressed":String(S.tab===t[0]),onclick:function(){S.tab=t[0];S.open=null;env.render();}},t[1]));});
       put(root,seg);
     }
-    if(S.tab==="asl")viewAsl(root);else if(S.tab==="les")viewLessons(root);else viewMsl(root);
+    if(S.tab==="asl")viewAsl(root);else if(S.tab==="les")viewLessons(root);else if(S.tab==="world")viewWorld(root);else viewMsl(root);
     return root;
   }
   window.Sign={view:view,words:WORDS,translit:translit};
