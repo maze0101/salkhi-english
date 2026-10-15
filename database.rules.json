@@ -6,7 +6,15 @@
       "$uid": {
         ".read": "auth != null",
         ".write": "auth != null && auth.uid === $uid",
-        ".validate": "newData.hasChildren(['name','code']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('code').isString() && newData.child('code').val().length === 6"
+        ".validate": "newData.hasChildren(['name','code']) && newData.child('name').isString() && newData.child('name').val().length <= 20 && newData.child('code').isString() && newData.child('code').val().length === 6",
+        "av": { ".validate": "newData.isString() && newData.val().length <= 16" },
+        "avc": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10" },
+        "avf": { ".validate": "newData.isBoolean()" },
+        "st": { ".validate": "newData.isString() && newData.val().length <= 60" },
+        "ttl": { ".validate": "newData.isString() && newData.val().length <= 60" },
+        "lv": { ".validate": "newData.isNumber()" },
+        "bdg": { ".validate": "newData.isNumber()" },
+        "best": { ".validate": "newData.isNumber()" }
       }
     },
     "codes": {

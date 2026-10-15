@@ -5,7 +5,7 @@
 (function(){
   var SDK="https://www.gstatic.com/firebasejs/10.12.2/",P="salkhi:",META=P+"_sync";
   var SYNC=["level","box","due","srs","xp","daily","lessons","chat","stars","listenOk","goal","custom","saved","tasks","lang","freeze","frozen","frzMark",
-    "langxp","miss","goals","stories","speech","exam","mbook","act","games","examLog","writes","wex","kxlog","kxopt","aimem","aiopt","certName","wxCity","kidlv","prsent","camlog","avatar","nick","mins"];
+    "langxp","miss","goals","stories","speech","exam","mbook","act","games","examLog","writes","wex","kxlog","kxopt","aimem","aiopt","certName","wxCity","kidlv","prsent","camlog","avatar","nick","mins","status"];
   var DEEP={xp:1,daily:1,mins:1,langxp:1,lessons:1,chat:1,listenOk:1,act:1,games:1,stories:1,exam:1};
   function synced(k){return SYNC.indexOf(k)>=0||/^(amiss|jobbest):(en|ja|ko|zh|ru|de|ug)$/.test(k);}
 
@@ -305,13 +305,15 @@
     var m=meta(),signed=!!(m.g&&cfg()&&auth),nm=st.nick||(signed?(m.name||"Хэрэглэгч"):"Зочин");
     /* st.av: өөрөө сонгосон аватар {e,bg} — Google-ийн зургаас давуу; st.edit: аватар дээр дарахад засварлах */
     var av=h(st.edit?"button":"div",st.edit?{class:"pf-av",type:"button","aria-label":"Аватар, нэр солих",onclick:st.edit}:{class:"pf-av","aria-hidden":"true"});
-    if(st.av){av.textContent=st.av.e;av.style.background=st.av.bg;av.style.fontSize="34px";}
+    if(st.av){av.textContent=st.av.e;av.style.background=st.av.bg;av.style.fontSize="34px";if(st.av.f)av.classList.add("gold");}
     else if(signed&&m.photo){var im=h("img",{src:m.photo,alt:"",referrerpolicy:"no-referrer"});im.onerror=function(){im.remove();av.textContent=nm.charAt(0).toUpperCase();};av.append(im);}
     else av.textContent=signed?nm.charAt(0).toUpperCase():"👤";
     var info=h("div",{class:"pf-info"},h("div",{class:"pf-name"},nm));
+    if(st.title)info.append(h("div",{class:"pf-title"},st.title));
     if(signed&&m.email&&m.email!==nm)info.append(h("div",{class:"pf-mail"},m.email));
     info.append(h("div",{class:"pf-chips"},h("span",null,"Lv "+st.lvl),h("span",null,st.xp+" XP"),h("span",null,"🔥 "+st.streak)));
     var card=h("div",{class:"pf-card"},h("div",{class:"pf-top"},av,info));
+    if(st.status)card.append(h("div",{class:"pf-status"},"💬 "+st.status));
     if(st.extra)card.append(st.extra);
     if(!auth||!cfg())return card;
     if(signed){

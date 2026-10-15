@@ -48,13 +48,59 @@
   function enter(){
     if(!prof){if(setScreen("name"))paint();return;}
     syncProfile();loadFriends();if(setScreen("home"))paint();
+    var lc=env.fromLink&&env.fromLink();
+    if(lc){if(lc===prof.code)env.toast("Энэ таны өөрийн QR код");else addFriend(lc);}
+  }
+  /* найзын QR / холбоос: <сайт>#fr=КОД */
+  function frLink(){return (env.siteUrl||location.href.split("#")[0])+"#fr="+prof.code;}
+  var qrOpen=false,openF=null,scan=null;
+  function stopScan(){if(!scan)return;clearInterval(scan.t);try{scan.stream.getTracks().forEach(function(t){t.stop();});}catch(e){}scan.box.remove();scan=null;}
+  function startScan(){
+    if(scan||!("BarcodeDetector" in window)||!navigator.mediaDevices)return;
+    var det;try{det=new BarcodeDetector({formats:["qr_code"]});}catch(e){env.toast("Энэ төхөөрөмж QR уншиж чадахгүй");return;}
+    var video=h("video",{playsinline:"",muted:"",style:"width:100%;max-height:60vh;border-radius:14px;background:#000"});
+    var box=h("div",{class:"onbov",role:"dialog","aria-modal":"true","aria-label":"QR уншуулах",style:"display:flex;flex-direction:column;justify-content:center;padding:16px;gap:10px"},
+      h("b",{style:"color:#fff;text-align:center"},"📷 Найзынхаа QR кодыг камерт харуул"),video,
+      h("button",{class:"btn",onclick:stopScan},"Хаах"));
+    document.body.append(box);
+    navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(function(stream){
+      if(!box.isConnected){stream.getTracks().forEach(function(t){t.stop();});return;}
+      scan={box:box,stream:stream,t:0};video.srcObject=stream;video.play().catch(function(){});
+      scan.t=setInterval(function(){
+        if(video.readyState<2)return;
+        det.detect(video).then(function(r){
+          if(!r.length||!scan)return;
+          var v=String(r[0].rawValue||""),m=/[#&]fr=([A-Za-z0-9]{6})/.exec(v)||/^\s*([A-Za-z0-9]{6})\s*$/.exec(v);
+          if(!m){env.toast("Энэ Салхийн найзын QR биш байна");return;}
+          stopScan();var c=m[1].toUpperCase();if(c===prof.code)env.toast("Энэ таны өөрийн код");else addFriend(c);
+        }).catch(function(){});
+      },450);
+    },function(){box.remove();env.toast("Камер ашиглах зөвшөөрөл өгөөгүй байна");});
+  }
+  /* найзын профайл (жагсаалтаас нэр дээр дарахад) */
+  function friendCard(r){
+    var bg=(env.avBg||[])[r.avc|0]||"#2A5CB8";
+    var av=h("div",{class:"pf-av"+(r.avf?" gold":""),"aria-hidden":"true",style:"width:56px;height:56px;background:"+bg+";font-size:"+(r.av?"30px":"22px")},r.av||String(r.name||"?").charAt(0).toUpperCase());
+    function t(ic,v,l){return h("div",{style:"flex:1;min-width:0;text-align:center;padding:6px 2px;border-radius:10px;background:var(--bg)"},h("div",{style:"font-weight:800"},ic+" "+v),h("div",{class:"muted",style:"font-size:11px"},l));}
+    return h("div",{class:"note",style:"margin-top:4px"},
+      h("div",{style:"display:flex;gap:12px;align-items:center"},av,h("div",{style:"min-width:0;flex:1"},
+        h("div",{style:"font-weight:800;font-size:17px"},r.name),
+        r.ttl?h("div",{class:"muted small"},r.ttl):null,
+        r.lang?h("div",{class:"muted small"},(env.langName?env.langName(r.lang):r.lang)+" хэл сурч байна"):null)),
+      r.st?h("div",{style:"margin-top:8px;font-style:italic"},"💬 "+r.st):null,
+      h("div",{style:"display:flex;gap:6px;margin-top:10px"},t("⭐","Lv "+(r.lv||1),r.xp+" XP"),t("🔥",r.streak,"одоо"),t("🏆",Math.max(r.best||0,r.streak||0),"дээд дараалал"),t("🏅",r.bdg||0,"шагнал")));
   }
   function me(){return env.me();}
+  /* найзуудад харагдах профайл: аватар, статус, түвшин, цол, шагнал, дээд дараалал (users/{uid}) */
+  function pub(m){
+    return {av:String(m.av||"").slice(0,16),avc:+m.avc||0,avf:!!m.avf,st:String(m.st||"").slice(0,60),lv:+m.lv||1,ttl:String(m.ttl||"").slice(0,60),bdg:+m.bdg||0,best:+m.best||0};
+  }
   function syncProfile(){
     if(!db||!uid||!prof)return;
-    var m=me();
+    var m=me(),p=pub(m);
     prof.xp=m.xp;prof.streak=m.streak;prof.lang=m.lang;prof.wxp=m.wxp;prof.wk=m.wk;
-    db.ref("users/"+uid).update({xp:m.xp,streak:m.streak,lang:m.lang,wxp:m.wxp,wk:m.wk,ts:firebase.database.ServerValue.TIMESTAMP}).catch(function(){});
+    p.xp=m.xp;p.streak=m.streak;p.lang=m.lang;p.wxp=m.wxp;p.wk=m.wk;p.ts=firebase.database.ServerValue.TIMESTAMP;
+    db.ref("users/"+uid).update(p).catch(function(){});
   }
   function randCode(){
     var a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",s="";
@@ -68,7 +114,8 @@
       if(!res.committed){if(tries>6)throw new Error("код үүсгэж чадсангүй");return createProfile(name,tries+1);}
       var m=me();
       prof={name:name,code:code,lang:m.lang,xp:m.xp,streak:m.streak,wxp:m.wxp,wk:m.wk};
-      return db.ref("users/"+uid).set({name:name,code:code,lang:m.lang,xp:m.xp,streak:m.streak,wxp:m.wxp,wk:m.wk,ts:firebase.database.ServerValue.TIMESTAMP});
+      var row=pub(m);row.name=name;row.code=code;row.lang=m.lang;row.xp=m.xp;row.streak=m.streak;row.wxp=m.wxp;row.wk=m.wk;row.ts=firebase.database.ServerValue.TIMESTAMP;
+      return db.ref("users/"+uid).set(row);
     });
   }
   function blocks(){return ls(BLOCK_KEY,[]);}
@@ -78,7 +125,7 @@
   function loadFriends(){
     db.ref("friends/"+uid).once("value").then(function(snap){
       var ids=Object.keys(snap.val()||{});
-      return Promise.all(ids.map(function(id){return db.ref("users/"+id).once("value").then(function(s){var v=s.val();return v?{uid:id,name:v.name,xp:v.xp||0,streak:v.streak||0,lang:v.lang||"",wxp:v.wxp||0,wk:v.wk||""}:null;});}));
+      return Promise.all(ids.map(function(id){return db.ref("users/"+id).once("value").then(function(s){var v=s.val();if(!v)return null;var r=pub(v);r.uid=id;r.name=v.name;r.xp=v.xp||0;r.streak=v.streak||0;r.lang=v.lang||"";r.wxp=v.wxp||0;r.wk=v.wk||"";return r;});}));
     }).then(function(list){
       friendsData=list.filter(Boolean);
       if(screen==="home"&&sub==="friends")paint();
@@ -105,10 +152,14 @@
       h("div",{class:"muted small"},"Таны найзын код (найздаа өг):"),
       h("div",{style:"font-size:28px;font-weight:800;letter-spacing:4px;margin:6px 0"},prof.code),
       h("button",{class:"btn",style:"padding:8px 14px",onclick:function(){
-        var t="Салхи апп дээр намайг нэм. Миний код: "+prof.code+" "+(window.SITE_URL||"");
+        var t="Салхи апп дээр намайг нэм. Миний код: "+prof.code+" "+frLink();
         if(navigator.share){navigator.share({text:t}).catch(function(){});}
         else if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){env.toast("Хуулагдлаа");});}
-      }},"📤 Хуваалцах"));
+      }},"📤 Хуваалцах"),
+      h("button",{class:"btn",style:"padding:8px 14px;margin-left:6px","aria-expanded":String(qrOpen),onclick:function(){qrOpen=!qrOpen;paint();}},"🔳 QR код"),
+      "BarcodeDetector" in window&&navigator.mediaDevices?h("button",{class:"btn",style:"padding:8px 14px;margin-left:6px",onclick:startScan},"📷 Уншуулах"):null);
+    if(qrOpen&&env.qr){var qb=h("div",{style:"margin-top:10px;text-align:center"});env.qr(qb,frLink());
+      codeRow.append(qb,h("p",{class:"muted small",style:"margin:6px 0 0;text-align:center"},"Найз тань утасныхаа камераар уншуулбал апп нээгдэж, таныг шууд найзаар нэмнэ."));}
     var inp=h("input",{class:"tin",type:"text",maxlength:"6",autocapitalize:"characters",autocomplete:"off",placeholder:"Найзын код (6 тэмдэгт)","aria-label":"Найзын код"});
     var add=h("button",{class:"btn primary",style:"margin-top:8px",onclick:function(){addFriend(inp.value);inp.value="";}},"➕ Найз нэмэх");
     /* долоо хоногийн XP нь зөвхөн энэ долоо хоногт шинэчлэгдсэн бол тооцогдоно; өмнөх долоо хоногийнх 0 */
@@ -126,7 +177,9 @@
     rows.forEach(function(r,i){
       var line=h("div",{class:"note",style:"display:flex;align-items:center;gap:8px;margin-top:8px"},
         h("div",{style:"width:26px;font-weight:800"},String(i+1)),
-        h("div",{style:"flex:1;min-width:0"},h("div",{style:"font-weight:700"},r.name),h("div",{class:"muted small"},"🔥 "+r.streak+" · "+(week?wx(r)+" XP энэ 7 хоногт · нийт "+r.xp:r.xp+" XP"))));
+        r.self?h("div",{style:"flex:1;min-width:0"},h("div",{style:"font-weight:700"},r.name),h("div",{class:"muted small"},"🔥 "+r.streak+" · "+(week?wx(r)+" XP энэ 7 хоногт · нийт "+r.xp:r.xp+" XP")))
+          :h("button",{type:"button",style:"flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer","aria-expanded":String(openF===r.uid),onclick:function(){openF=openF===r.uid?null:r.uid;paint();}},
+            h("div",{style:"font-weight:700"},(r.av?r.av+" ":"")+r.name+" ›"),h("div",{class:"muted small"},"🔥 "+r.streak+" · "+(week?wx(r)+" XP энэ 7 хоногт · нийт "+r.xp:r.xp+" XP"))));
       if(!r.self){
         line.append(
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Чат","aria-label":"Чат",onclick:function(){openChat(r);}},"💬"),
@@ -136,6 +189,7 @@
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Хасах","aria-label":"Хасах",onclick:function(){removeFriend(r.uid);}},"✖"));
       }
       board.append(line);
+      if(!r.self&&openF===r.uid)board.append(friendCard(r));
     });
     if(!friendsData.length)board.append(h("p",{class:"muted small"},"Найз алга. Дээрх кодоор найзаа нэм."));
     box.append(codeRow,inp,add,h("button",{class:"btn ghost",style:"margin-top:8px;width:100%",onclick:function(){syncProfile();loadFriends();goals.loaded=false;paint();}},"⟳ Шинэчлэх"),board,viewGoals(),viewMyProfile());
