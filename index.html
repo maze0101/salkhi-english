@@ -183,6 +183,8 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 @media (prefers-reduced-motion:reduce){.picker{animation:none}}
 /* 🛍️ одны дэлгүүр */
 .shop-bal{display:flex;align-items:center;gap:12px}
+.stat.starchip{font:inherit;font-size:13px;font-weight:800;color:inherit;cursor:pointer;background:color-mix(in srgb,#FFE7A3 55%,var(--surface));border-color:#E8B931!important}
+@media (min-width:560px){.strip>.starchip:not(.kidstar){display:none}}
 .shophome .sh-st{display:inline-block;margin-left:4px;padding:1px 9px;border-radius:999px;background:#FFE7A3;color:#7A4E00;font-size:13px;font-weight:800;vertical-align:1px}
 .shop-bal .sb-ic{font-size:34px}
 .shop-bal b{font-size:20px}
@@ -223,6 +225,7 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
   .tools-out .strip>.tools{order:2}
   .tools-out .strip::before{content:"";order:3;flex-basis:100%;height:0}
   .tools-out .strip>.stat:not(.pick){order:4}
+  .tools-out .strip>.starchip{order:5;margin-left:auto}
   .strip .tools{gap:5px}
   .strip .tools .themebtn{height:34px;min-width:34px;padding:0 6px}
 }
@@ -1639,7 +1642,8 @@ function renderStrip(){
   if(state.mode==="senior"){sMain.insertBefore(s,TOOLS.parentNode===sMain?TOOLS:null);return;}
   s.append(h("div",{class:"stat",title:state.freeze?"🧊 Streak хамгаалалт: "+state.freeze:streak()+" өдөр дараалан","aria-label":streak()+" өдөр дараалан"},h("b",null,String(streak())),"🔥"+(state.freeze?" 🧊"+(state.freeze>1?state.freeze:""):"")));
   s.append(h("div",{class:"stat","aria-label":"Өдрийн зорилго "+todayXP()+" / "+state.goal+" XP"},ringEl(todayXP()/state.goal,20,4),todayXP()+"/"+state.goal));
-  if(state.mode==="kid")s.append(h("div",{class:"stat"},"⭐ "+state.stars));
+  /* ⭐ одны чип → Одны дэлгүүр (утсанд 2-р мөрийн баруун талд; өргөн дэлгэцэд багтахгүй тул зөвхөн хүүхдийн горимд) */
+  s.append(h("button",{class:"stat starchip"+(state.mode==="kid"?" kidstar":""),type:"button",title:"Одны дэлгүүр","aria-label":"Одны дэлгүүр: "+state.stars+" од",onclick:openShop},"⭐ "+state.stars));
   var bl=boostLeft();if(bl)s.append(h("div",{class:"stat boost",title:"2× XP идэвхтэй","aria-label":"2 дахин XP, "+Math.ceil(bl/60000)+" минут үлдлээ"},"⚡2× "+Math.ceil(bl/60000)+"м"));
   sMain.insertBefore(s,TOOLS.parentNode===sMain?TOOLS:null);
 }
@@ -7365,7 +7369,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-13";
+var BUILD="20261015-14";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
