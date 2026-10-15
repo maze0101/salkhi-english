@@ -209,6 +209,14 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 .heroev:focus-visible{outline:2px solid #FFE08A;outline-offset:2px}
 /* hero-гийн дээд товчнууд: бүгд ижил дүрс-товч (тайлбар нь tooltip/aria-д) — цэгцтэй нэг эгнээ */
 .salkhi-hero #ratebtn .lbl,.salkhi-hero #forbtn .lbl{display:none}
+/* өргөн дэлгэц: товчнууд явцын мөрийн баруун талд — чипүүдтэй ижил загвар, мөр багтахгүй бол дараагийн мөрөнд баруун тийш */
+.tools-out .strip{flex-wrap:wrap;overflow:visible;row-gap:8px}
+.strip .tools{position:static;margin-left:auto;display:flex;align-items:center;gap:6px}
+.strip .tools .themebtn{height:34px;min-width:34px;padding:0 8px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none;font-size:15px}
+.strip .tools .themebtn:hover{background:var(--soft)}
+.salkhi-hero__overlay>.wxbtn{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:16px;height:36px;padding:0 11px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(10,24,28,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#F4F8F7;font-weight:800}
+.strip #ratebtn .lbl,.strip #forbtn .lbl{display:none}
+
 @keyframes heIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 .he-ic{flex:none;width:24px;height:24px;border-radius:50%;background:var(--evc,#3F8FD8);border:1.5px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:13px}
 .heroev b{min-width:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1598,24 +1606,38 @@ function heroEvNext(){
   if(heroEv.hold||document.visibilityState!=="visible"||heroEv.list.length<2)return;
   heroEv.i=(heroEv.i+1)%heroEv.list.length;heroEvFill(b,true);
 }
+/* 🧰 hero-гийн дээд товчнууд (цаг агаар, 🌍, загвар, хурд, бүртгэл): өргөн дэлгэцэд (≥560px) явцын мөрийн баруун талын
+   хоосон зайд шилжинэ, утсанд hero дотроо үлдэнэ. renderStrip мөрийг цэвэрлэдэг тул элементийг TOOLS-д барьж дахин байрлуулна. */
+var TOOLS=document.querySelector(".salkhi-hero .tools"),TOOLS_MQ=window.matchMedia?matchMedia("(min-width:560px)"):null;
+function placeTools(){
+  var wide=!!(TOOLS_MQ&&TOOLS_MQ.matches),s=document.getElementById("strip"),ov=document.querySelector(".salkhi-hero__overlay");
+  /* цаг агаарын чип hero-гийн анимацитай холбоотой тул өргөн дэлгэцэд hero-гийн баруун дээд буланд үлдэнэ */
+  var wx=document.querySelector(".wxbtn");
+  if(wide){if(TOOLS.parentNode!==s)s.append(TOOLS);if(wx&&wx.parentNode!==ov)ov.insertBefore(wx,ov.firstChild);}
+  else{if(TOOLS.parentNode!==ov)ov.insertBefore(TOOLS,ov.querySelector(".heroev"));if(wx&&wx.parentNode!==TOOLS)TOOLS.prepend(wx);}
+  document.documentElement.classList.toggle("tools-out",wide);
+}
+if(TOOLS_MQ){if(TOOLS_MQ.addEventListener)TOOLS_MQ.addEventListener("change",placeTools);else if(TOOLS_MQ.addListener)TOOLS_MQ.addListener(placeTools);}
 function renderStrip(){
   paintHeroEv();
-  var s=document.getElementById("strip");s.textContent="";
+  var s=document.getElementById("strip");s.textContent="";placeTools();
+  var sMain=s;s=document.createDocumentFragment();
   var lv=xpLevel(state.xp);
   s.append(pickChip());
   s.append(h("div",{class:"stat",title:"Түвшин "+lv+" · дараагийнх хүртэл "+(25*lv*(lv+1)-state.xp)+" XP","aria-label":"Түвшин "+lv+", "+state.xp+" XP"},h("b",null,"Lv "+lv)));
   paintAcct();
-  if(state.mode==="senior")return;
+  if(state.mode==="senior"){sMain.insertBefore(s,TOOLS.parentNode===sMain?TOOLS:null);return;}
   s.append(h("div",{class:"stat",title:state.freeze?"🧊 Streak хамгаалалт: "+state.freeze:streak()+" өдөр дараалан","aria-label":streak()+" өдөр дараалан"},h("b",null,String(streak())),"🔥"+(state.freeze?" 🧊"+(state.freeze>1?state.freeze:""):"")));
   s.append(h("div",{class:"stat","aria-label":"Өдрийн зорилго "+todayXP()+" / "+state.goal+" XP"},ringEl(todayXP()/state.goal,20,4),todayXP()+"/"+state.goal));
   if(state.mode==="kid")s.append(h("div",{class:"stat"},"⭐ "+state.stars));
   var bl=boostLeft();if(bl)s.append(h("div",{class:"stat boost",title:"2× XP идэвхтэй","aria-label":"2 дахин XP, "+Math.ceil(bl/60000)+" минут үлдлээ"},"⚡2× "+Math.ceil(bl/60000)+"м"));
+  sMain.insertBefore(s,TOOLS.parentNode===sMain?TOOLS:null);
 }
 /* бүртгэлийн товч hero-гийн баруун дээд дүрс товчнуудын эгнээнд: нэвтэрсэн бол аватар/☁️ → Профайл, үгүй бол 👤 → нэвтрэх */
 function paintAcct(){
   var S=window.SalkhiSync,a=S&&S.account(),b=document.getElementById("acctbtn");
   if(!S||!window.SALKHI_FB){if(b)b.remove();return;}
-  if(!b){b=h("button",{class:"themebtn",id:"acctbtn",type:"button"});document.querySelector(".tools").append(b);}
+  if(!b){b=h("button",{class:"themebtn",id:"acctbtn",type:"button"});TOOLS.append(b);}
   var av=myAvatar(),nm=a?(myNick()||a.name.split(" ")[0]||"Нэвтэрсэн"):"";
   b.textContent=a?(av?av.e:"☁️"):"👤";
   b.title=a?nm+" · явц хадгалагдаж байна":"Нэвтэрч явцаа хадгалах";
@@ -7322,7 +7344,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-10";
+var BUILD="20261015-11";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
@@ -7431,7 +7453,7 @@ function wxChip(){
   if(!wxChip.el){
     wxChip.el=h("button",{class:"wxbtn",type:"button",hidden:true,onclick:wxClick});
     /* hero-ийн баруун дээд буланд, theme товчны өмнө */
-    var tl=document.querySelector(".salkhi-hero .tools");if(tl)tl.prepend(wxChip.el);
+    TOOLS.prepend(wxChip.el);placeTools();
   }
   return wxChip.el;
 }
