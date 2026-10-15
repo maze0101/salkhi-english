@@ -83,6 +83,13 @@
     init:function(e){env=e;},
     touch:function(){if(env)check();},
     card:card,
+    /* hero-гийн жижиг карт: явагдаж буй (медаль аваагүй) эсвэл дараагийн тэмцээн + өнгө */
+    next:function(e){
+      env=e;var c=current();
+      if(c&&!medals()[c.w.key])return {e:c.e,cur:true,left:progress(c).left,c:(TH[c.e.id]||TH.newyear)[1]};
+      var u=upcoming();if(!u)return null;
+      return {e:u.e,cur:false,dd:Math.ceil((u.s-new Date())/86400000),c:(TH[u.e.id]||TH.newyear)[1]};
+    },
     /* certList-д нэмэх: [{ic,t,d}] */
     certs:function(e){env=e;var m=medals();return Object.keys(m).map(function(k){var x=m[k];return {ic:x.ic,t:x.t,d:x.ev+"-д "+GOAL_XP+" XP, "+GOAL_DAYS+" өдөр хичээллэв"};});},
     _current:current
