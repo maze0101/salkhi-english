@@ -47,7 +47,7 @@
   }
   function enter(){
     if(!prof){if(setScreen("name"))paint();return;}
-    syncProfile();loadFriends();if(setScreen("home"))paint();
+    syncProfile();loadFriends();checkGifts();if(setScreen("home"))paint();
     var lc=env.fromLink&&env.fromLink();
     if(lc){if(lc===prof.code)env.toast("Энэ таны өөрийн QR код");else addFriend(lc);}
   }
@@ -88,7 +88,43 @@
         r.ttl?h("div",{class:"muted small"},r.ttl):null,
         r.lang?h("div",{class:"muted small"},(env.langName?env.langName(r.lang):r.lang)+" хэл сурч байна"):null)),
       r.st?h("div",{style:"margin-top:8px;font-style:italic"},"💬 "+r.st):null,
-      h("div",{style:"display:flex;gap:6px;margin-top:10px"},t("⭐","Lv "+(r.lv||1),r.xp+" XP"),t("🔥",r.streak,"одоо"),t("🏆",Math.max(r.best||0,r.streak||0),"дээд дараалал"),t("🏅",r.bdg||0,"шагнал")));
+      h("div",{style:"display:flex;gap:6px;margin-top:10px"},t("⭐","Lv "+(r.lv||1),r.xp+" XP"),t("🔥",r.streak,"одоо"),t("🏆",Math.max(r.best||0,r.streak||0),"дээд дараалал"),t("🏅",r.bdg||0,"шагнал")),
+      giftBox(r));
+  }
+  /* 🎁 од бэлэглэх: gifts/{найз}/{id} = {from,name,n,msg,ts}; найз нь апп-аа нээхэд одоо авна (дүрэм: зөвхөн найздаа, 1–20 од) */
+  var GIFT_MSG=["Амжилт хүсье! 💪","🎂 Төрсөн өдрийн мэнд!","Баярлалаа! 🙏","Хамт сурцгаая! 📚"],gift={to:null,n:5,m:0};
+  function giftBox(r){
+    if(!env.spendStars)return null;
+    if(gift.to!==r.uid)return h("button",{class:"btn",style:"width:100%;margin-top:10px",onclick:function(){gift.to=r.uid;gift.n=5;gift.m=0;paint();}},"🎁 Од бэлэглэх");
+    var box=h("div",{class:"note",style:"margin:10px 0 0;background:var(--bg)"},
+      h("div",{class:"muted small",style:"margin-bottom:6px"},"Танд ⭐ "+env.stars()+" од байна"),
+      h("div",{class:"seg",style:"margin:0 0 8px"},[5,10,20].map(function(n){return h("button",{"aria-pressed":String(gift.n===n),onclick:function(){gift.n=n;paint();}},"⭐ "+n);})),
+      h("div",{style:"display:flex;flex-wrap:wrap;gap:6px"},GIFT_MSG.map(function(m,i){return h("button",{class:"chip","aria-pressed":String(gift.m===i),onclick:function(){gift.m=i;paint();}},m);})),
+      h("div",{class:"row",style:"margin-top:10px"},
+        h("button",{class:"btn primary",disabled:env.stars()<gift.n,onclick:function(e){sendGift(r,gift.n,GIFT_MSG[gift.m],e.currentTarget);}},"Илгээх ⭐ "+gift.n),
+        h("button",{class:"btn ghost",onclick:function(){gift.to=null;paint();}},"Болих")));
+    return box;
+  }
+  function sendGift(r,n,msg,btn){
+    if(!db||!uid||!prof)return;
+    if(env.stars()<n){env.toast("⭐ од хүрэлцэхгүй байна");return;}
+    btn.disabled=true;
+    db.ref("gifts/"+r.uid).push({from:uid,name:prof.name,n:n,msg:msg,ts:firebase.database.ServerValue.TIMESTAMP}).then(function(){
+      env.spendStars(n);gift.to=null;env.toast("🎁 "+r.name+"-д ⭐ "+n+" илгээлээ");paint();
+    },function(){btn.disabled=false;env.toast("Илгээж чадсангүй — дахин оролдоорой");});
+  }
+  /* надад ирсэн бэлэг: нэг бүрчлэн авч устгана (устгаж чадсаны дараа л од нэмнэ — давхар авахгүй) */
+  function checkGifts(){
+    if(!db||!uid||!env.addStars)return;
+    db.ref("gifts/"+uid).once("value").then(function(s){
+      var all=s.val()||{};
+      Object.keys(all).forEach(function(k){
+        var g=all[k]||{},n=Math.max(0,Math.min(20,+g.n||0));if(!n)return;
+        db.ref("gifts/"+uid+"/"+k).remove().then(function(){
+          env.addStars(n);env.toast("🎁 "+(g.name||"Найз")+" танд ⭐ "+n+" бэлэглэлээ"+(g.msg?": «"+g.msg+"»":""),6000);
+        },function(){});
+      });
+    }).catch(function(){});
   }
   function me(){return env.me();}
   /* найзуудад харагдах профайл: аватар, статус, түвшин, цол, шагнал, дээд дараалал (users/{uid}) */

@@ -17,6 +17,15 @@
         "best": { ".validate": "newData.isNumber()" }
       }
     },
+    "gifts": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$gid": {
+          ".write": "auth != null && ((!data.exists() && newData.child('from').val() === auth.uid && root.child('friends/' + auth.uid + '/' + $uid).exists()) || (auth.uid === $uid && !newData.exists()))",
+          ".validate": "newData.hasChildren(['from','n','ts']) && newData.child('n').isNumber() && newData.child('n').val() >= 1 && newData.child('n').val() <= 20 && (!newData.child('name').exists() || (newData.child('name').isString() && newData.child('name').val().length <= 20)) && (!newData.child('msg').exists() || (newData.child('msg').isString() && newData.child('msg').val().length <= 40))"
+        }
+      }
+    },
     "codes": {
       "$code": {
         ".read": "auth != null",

@@ -98,6 +98,19 @@
     init:function(e){env=e;},
     touch:function(){if(env)check();},
     card:card,
+    /* 🏅 медалийн цомог: 13 тэмцээн, авсан медаль өнгөтэй (аль онд авсан), аваагүй нь саарал */
+    album:function(e){
+      env=e;var h=e.h,m=medals(),byId={},n=0;
+      Object.keys(m).forEach(function(k){var p=k.split(":");(byId[p[0]]=byId[p[0]]||[]).push(p[1]);});
+      var grid=h("div",{class:"alb"});
+      EV.forEach(function(ev){
+        var ys=(byId[ev.id]||[]).sort(),t=TH[ev.id]||TH.newyear;if(ys.length)n++;
+        grid.append(h("div",{class:ys.length?"":"no",title:ev.m+" — "+ev.t,"aria-label":ev.m+(ys.length?", авсан: "+ys.join(", "):", хараахан аваагүй")},
+          h("span",{class:"am",style:"background:linear-gradient(135deg,"+t[0]+","+t[1]+")","aria-hidden":"true"},ev.ic),
+          ev.m,ys.length?h("span",{class:"ay"},"🏅 "+ys.join(", ")):h("span",{class:"ay",style:"color:var(--ink-2)"},ev.from.join("/")+" – "+ev.to.join("/"))));
+      });
+      return h("div",null,h("h3",{style:"margin:20px 0 0"},"🏅 Медалийн цомог: "+n+" / "+EV.length),grid);
+    },
     /* 🗓️ жилийн тэмцээний хуанли (Тоглож сурах самбарт): ойрын эхлэх дарааллаар, авсан медаль ✓ */
     calendar:function(e,open){
       env=e;var h=e.h,now=new Date(),m=medals(),c=current(now);
