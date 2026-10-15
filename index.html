@@ -204,7 +204,11 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 .si-kite{width:30px;height:44px;margin:2px 0;background:linear-gradient(90deg,var(--kb) 50%,var(--ka) 50%);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)}
 .si-card{width:46px;height:56px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:inset 0 0 0 2px #E8B931}
 /* 🏁 hero дахь тэмцээний жижиг карт */
-.heroev{position:absolute;right:16px;top:calc(58px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:3px;max-width:min(300px,calc(100% - 32px));height:36px;padding:0 10px 0 4px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(10,24,28,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;text-align:left;font:inherit;cursor:pointer;overflow:hidden;animation:heIn .4s ease-out}
+.herotop{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:16px;right:16px;display:flex;align-items:center;gap:8px;pointer-events:none}
+.herotop>*{pointer-events:auto}
+.herotop .wxbtn{margin-left:auto;flex:none;height:36px;padding:0 11px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(10,24,28,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#F4F8F7;font-weight:800}
+@media (max-width:440px){.herotop .wxbtn span:last-child{display:none}.herotop .wxbtn{padding:0 10px}}
+.heroev{position:relative;flex:0 1 auto;min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:3px;max-width:min(300px,calc(100% - 32px));height:36px;padding:0 10px 0 4px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(10,24,28,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;text-align:left;font:inherit;cursor:pointer;overflow:hidden;animation:heIn .4s ease-out}
 .he-in{display:flex;align-items:center;gap:7px;min-width:0}
 .he-anim{animation:heSwap .45s ease-out}
 @keyframes heSwap{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -221,7 +225,6 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 .strip .tools{position:static;margin-left:auto;display:flex;align-items:center;gap:6px}
 .strip .tools .themebtn{height:34px;min-width:34px;padding:0 8px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);-webkit-backdrop-filter:none;backdrop-filter:none;font-size:15px}
 .strip .tools .themebtn:hover{background:var(--soft)}
-.salkhi-hero__overlay>.wxbtn{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:16px;height:36px;padding:0 11px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(10,24,28,.38);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#F4F8F7;font-weight:800}
 .strip #ratebtn .lbl,.strip #forbtn .lbl{display:none}
 @media (max-width:559px){
   .tools-out .strip{row-gap:8px}
@@ -1601,7 +1604,7 @@ function paintHeroEv(){
     b=h("button",{class:"heroev",id:"heroev",type:"button",onclick:function(){state.tab="stats";ui.hub=true;ui.evcal=true;ui.set=false;ui.wrap=null;ui.shop=false;renderTabs();render();window.scrollTo(0,0);}});
     ["mouseenter","focus"].forEach(function(t){b.addEventListener(t,function(){heroEv.hold=true;});});
     ["mouseleave","blur"].forEach(function(t){b.addEventListener(t,function(){heroEv.hold=false;});});
-    ov.append(b);heroEv.sig="";
+    heroTop().prepend(b);heroEv.sig="";
   }
   var sig=L.map(function(n){return n.e.id+":"+(n.cur?"c"+n.left:n.dd);}).join(",");
   if(sig!==heroEv.sig){heroEv.sig=sig;heroEv.list=L;if(heroEv.i>=L.length)heroEv.i=0;heroEvFill(b,false);}
@@ -1627,11 +1630,17 @@ function heroEvNext(){
    утсанд 2 мөр — [🌐 хэл … товчнууд] / [Lv 🔥 ◯]. Цаг агаар hero-гийн баруун дээд буланд үлдэнэ.
    renderStrip мөрийг цэвэрлэдэг тул элементийг TOOLS-д барьж дахин байрлуулна. */
 var TOOLS=document.querySelector(".salkhi-hero .tools");
+/* hero-гийн дээд эгнээ: зүүн талд тэмцээний товч, баруун талд цаг агаар (нэг мөрөнд, тэмцээний нэр багтахгүй бол «…») */
+function heroTop(){
+  var ov=document.querySelector(".salkhi-hero__overlay"),t=document.getElementById("herotop");
+  if(!t){t=h("div",{class:"herotop",id:"herotop"});ov.insertBefore(t,ov.firstChild);}
+  return t;
+}
 function placeTools(){
   var wide=true,s=document.getElementById("strip"),ov=document.querySelector(".salkhi-hero__overlay");
   /* цаг агаарын чип hero-гийн анимацитай холбоотой тул өргөн дэлгэцэд hero-гийн баруун дээд буланд үлдэнэ */
-  var wx=document.querySelector(".wxbtn");
-  if(wide){if(TOOLS.parentNode!==s)s.append(TOOLS);if(wx&&wx.parentNode!==ov)ov.insertBefore(wx,ov.firstChild);}
+  var wx=document.querySelector(".wxbtn"),top=heroTop();
+  if(wide){if(TOOLS.parentNode!==s)s.append(TOOLS);if(wx&&wx.parentNode!==top)top.append(wx);}
   else{if(TOOLS.parentNode!==ov)ov.insertBefore(TOOLS,ov.querySelector(".heroev"));if(wx&&wx.parentNode!==TOOLS)TOOLS.prepend(wx);}
   document.documentElement.classList.toggle("tools-out",wide);
 }
@@ -7373,7 +7382,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-15";
+var BUILD="20261015-16";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
