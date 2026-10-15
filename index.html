@@ -491,14 +491,31 @@ p+p{margin-top:10px}
 @keyframes combo{0%{opacity:0;transform:translateX(-50%) scale(.4)}15%{opacity:1;transform:translateX(-50%) scale(1.12)}25%{transform:translateX(-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-30px)}}
 .lvup{position:fixed;inset:0;z-index:240;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(4px);animation:shfade .25s}
 .lvup>div{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:26px 30px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:lvpop .5s cubic-bezier(.3,1.6,.5,1);max-width:calc(100vw - 32px)}
-.wnew>div{max-width:min(420px,calc(100vw - 32px));max-height:calc(100vh - 48px);overflow:auto;text-align:left;padding:22px 22px 18px}
-.wnew .muted.small:first-child{text-align:center}
-.wn-v{font-family:var(--hfont);font-size:30px;font-weight:800;text-align:center;margin:4px 0 12px}
+/* 🎉 Салхи 2.0 «Юу шинэ вэ»: хөх толгой + алтан хээ + том 2.0, өнгөт дүрстэй жагсаалт */
+.wnew>div{max-width:min(440px,calc(100vw - 28px));max-height:calc(100vh - 40px);overflow:auto;text-align:left;padding:0}
+.wn-head{position:relative;padding:22px 18px 26px;text-align:center;color:#fff;background:radial-gradient(120% 90% at 50% 0%,#3B6FD0 0%,#1A3A7C 55%,#0F2350 100%);border-radius:22px 22px 0 0;overflow:hidden}
+.wn-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;background:var(--hee,none) rgba(0,0,0,.18);background-size:16px 10px;background-repeat:repeat-x}
+.wn-k{font-size:11.5px;font-weight:800;letter-spacing:.14em;color:#FFE08A}
+.wn-big{font-family:var(--hfont);font-size:76px;font-weight:800;line-height:1;margin:6px 0 4px;background:linear-gradient(180deg,#FFF6D6 0%,#F2C94C 55%,#C9921A 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 10px rgba(0,0,0,.35));animation:wnPop .7s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes wnPop{from{transform:scale(.4) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
+.wn-sub{font-size:13.5px;font-weight:700;opacity:.92}
+.wnew .wn-list{padding:16px 18px 0}
 .wn-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
 .wn-list li{display:flex;gap:10px;align-items:flex-start}
 .wnew .wn-list b{display:block;font-size:15px;line-height:1.3;background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--ink)}
 .wn-list li>span:last-child{display:flex;flex-direction:column;line-height:1.3}
-.wn-ic{flex:none;width:34px;height:34px;border-radius:10px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:18px}
+.wn-ic{flex:none;width:36px;height:36px;border-radius:12px;background:color-mix(in srgb,var(--wc,#2A5CB8) 16%,var(--surface));border:1.5px solid color-mix(in srgb,var(--wc,#2A5CB8) 45%,transparent);display:flex;align-items:center;justify-content:center;font-size:18px}
+@media (prefers-reduced-motion:reduce){.wn-big,.v2b,.sp-v{animation:none!important}}
+/* splash 2.0 */
+.sp-v{display:inline-flex;align-items:center;gap:10px;font:800 20px/1 var(--hfont);color:#B8860B;letter-spacing:.02em;animation:splashpop .5s .16s ease-out both}
+.sp-v i{display:block;width:34px;height:10px;background:var(--hee,none);background-size:16px 10px;background-repeat:repeat-x;opacity:.9}
+/* hero: логоны буланд 2.0 */
+.logo-w{position:relative;display:inline-flex}
+.v2b{position:absolute;top:-24px;right:-12px;pointer-events:auto;cursor:pointer;padding:3px 8px;border-radius:999px;border:1.5px solid #FFF3C4;background:linear-gradient(135deg,#FFE08A,#E8B931 55%,#C9921A);color:#3A2600;font:800 11.5px/1.1 var(--hfont);box-shadow:0 3px 10px rgba(0,0,0,.3);transform:rotate(8deg);animation:v2in .8s .4s cubic-bezier(.3,1.6,.5,1) both}
+.v2b:hover{filter:brightness(1.06)}
+@keyframes v2in{from{transform:scale(0) rotate(-30deg)}to{transform:rotate(8deg)}}
+/* «ШИНЭ» шошго */
+.nb{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:999px;background:#C8102E;color:#fff;font-size:10px;font-weight:800;letter-spacing:.06em;vertical-align:2px}
 .ver-foot{display:flex;align-items:center;gap:4px;margin-top:22px;padding-top:14px;border-top:1px solid var(--line);font-weight:700}
 .rk-t{font-family:var(--hfont);font-size:26px;font-weight:800;margin-top:8px;line-height:1.2}
 .rk-rw{display:flex;justify-content:center;gap:8px;margin-top:8px}
@@ -755,7 +772,7 @@ h3{font-weight:800;letter-spacing:0}
 </style>
 </head>
 <body>
-<div class="splash" id="splash" aria-hidden="true"><img class="wm-d" src="logo.png" alt="" width="600" height="129"><img class="wm-l" src="logo-light.png" alt="" width="600" height="129"></div>
+<div class="splash" id="splash" aria-hidden="true"><img class="wm-d" src="logo.png" alt="" width="600" height="129"><img class="wm-l" src="logo-light.png" alt="" width="600" height="129"><span class="sp-v"><i></i>2.0<i></i></span></div>
 <script>setTimeout(function(){var e=document.getElementById("splash");if(e){e.classList.add("hide");setTimeout(function(){e.remove()},600)}},1100);</script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <pattern id="hex" width="28" height="48.5" patternUnits="userSpaceOnUse">
@@ -768,7 +785,7 @@ h3{font-weight:800;letter-spacing:0}
     <div class="salkhi-hero" id="salkhiHero">
       <canvas role="img" aria-label="Салхи — дарж салхи үлээлгэх"></canvas>
       <div class="salkhi-hero__overlay">
-        <div class="brand"><img src="logo-light.png" alt="Салхи" width="600" height="129"><span class="tag">Англи, япон, солонгос, хятад,<br>орос, герман, уйгур хэлний үг, дүрэм, яриа</span><div class="herobtns"><button class="mnsbtn" id="mnsbtn" type="button"><span class="hb-ic" aria-hidden="true">📜</span><span>Монгол бичиг</span></button><button class="mnsbtn" id="signbtn" type="button"><span class="hb-ic" aria-hidden="true">🤟</span><span>Дохионы хэл</span></button></div></div>
+        <div class="brand"><div class="logo-w"><img src="logo-light.png" alt="Салхи" width="600" height="129"><button class="v2b" id="v2b" type="button" aria-label="Салхи 2.0 — юу шинэ вэ">2.0</button></div><span class="tag">Англи, япон, солонгос, хятад,<br>орос, герман, уйгур хэлний үг, дүрэм, яриа</span><div class="herobtns"><button class="mnsbtn" id="mnsbtn" type="button"><span class="hb-ic" aria-hidden="true">📜</span><span>Монгол бичиг</span></button><button class="mnsbtn" id="signbtn" type="button"><span class="hb-ic" aria-hidden="true">🤟</span><span>Дохионы хэл</span></button></div></div>
         <div class="tools"><button class="themebtn" id="themebtn" type="button"></button></div>
       </div>
     </div>
@@ -1781,6 +1798,7 @@ function heroMod(mod){
   renderTabs();if(fromLv)renderLevels();render();elMain.scrollIntoView({behavior:"smooth",block:"start"});
 }
 document.getElementById("mnsbtn").addEventListener("click",function(){heroMod("mns");});
+document.getElementById("v2b").addEventListener("click",function(){whatsNew();});
 /* 🤟 дохионы хэл (sign.js хойно ачаалагддаг — ачаалагдмагц lazyBoot-ийн render() харуулна) */
 document.getElementById("signbtn").addEventListener("click",function(){heroMod("sign");});
 var RATES=[[0.65,"🐢","Удаан"],[1,"🐇","Хэвийн"],[1.25,"⚡","Хурдан"]];
@@ -7055,7 +7073,7 @@ function recordsCard(){
   var rows=[["🔥","Хамгийн урт дараалал",bestStreak()+" өдөр","одоо "+streak()],["⚡","Нэг өдөрт хамгийн их XP",dx[0]?dx[0]+" XP":"—",fmtDay(dx[1])],
     ["⏱️","Хамгийн удаан суралцсан өдөр",dm[0]?fmtDur(dm[0]):"—",fmtDay(dm[1])],["📝","Шалгалтын дээд оноо",ex?ex+"%":"—",""],
     ["⌨️","Бичих хурд",tc?tc+" тэмдэгт/мин":"—",""],["🧠","Мэддэг үг",String(knownCount()),""]];
-  return h("div",{class:"note",style:"margin-top:12px"},h("b",null,"🏆 Хувийн дээд амжилт"),
+  return h("div",{class:"note",style:"margin-top:12px"},h("b",null,"🏆 Хувийн дээд амжилт ",newTag()),
     h("div",{class:"rec-grid"},rows.map(function(r){
       return h("div",null,h("span",{class:"ri","aria-hidden":"true"},r[0]),h("div",{style:"min-width:0"},h("div",{class:"muted small"},r[1]),h("b",null,r[2]),r[3]?h("span",{class:"muted small"}," · "+r[3]):null));})));
 }
@@ -7091,7 +7109,7 @@ function goSkill(k){
 }
 function skillCard(){
   var S=skillScores(),weak=S.slice().sort(function(a,b){return a[1]-b[1];})[0];
-  var box=h("div",{class:"note",style:"margin-top:12px"},h("b",null,"🕸️ Ур чадвар"),radarSvg(S));
+  var box=h("div",{class:"note",style:"margin-top:12px"},h("b",null,"🕸️ Ур чадвар ",newTag()),radarSvg(S));
   box.append(h("div",{style:"display:flex;align-items:center;gap:8px;margin-top:6px"},
     h("div",{class:"muted small",style:"flex:1"},"Хамгийн сул тал: ",h("b",null,weak[0])," — үүн дээр жаахан анхаараарай."),
     h("button",{class:"btn",style:"flex:none",onclick:function(){goSkill(weak[2]);}},weak[0]+" ›")));
@@ -7149,7 +7167,7 @@ function monthTitle(s){
 function monthCard(){
   var d=new Date();
   return h("button",{class:"lrow",type:"button",style:"margin-top:12px",onclick:function(){ui.wrap=0;ui.wrapY=false;render();window.scrollTo(0,0);}},
-    h("span",{class:"hexb ico"},"🗓️"),h("span",{style:"flex:1"},h("div",{class:"t"},"Сар, жилийн дүн"),h("div",{class:"muted small"},MN_MONTHS[d.getMonth()]+": "+periodStats(d.getFullYear(),d.getMonth()).xp+" XP · дүнгээ зураг болгон хуваалцаарай")),h("span",{"aria-hidden":"true"},"›"));
+    h("span",{class:"hexb ico"},"🗓️"),h("span",{style:"flex:1"},h("div",{class:"t"},"Сар, жилийн дүн ",newTag()),h("div",{class:"muted small"},MN_MONTHS[d.getMonth()]+": "+periodStats(d.getFullYear(),d.getMonth()).xp+" XP · дүнгээ зураг болгон хуваалцаарай")),h("span",{"aria-hidden":"true"},"›"));
 }
 function viewMonth(){
   var yr=!!ui.wrapY,off=ui.wrap|0,d=new Date();d.setDate(1);
@@ -7306,7 +7324,7 @@ function shopHomeCard(){
     :state.stars>=cheap?"Одоо авч болох бараа байна: 🧊, ⚡ 2× XP, аватар, цаасан шувуу"
     :"Цол ахиж од цуглуул · дараагийн бараа хүртэл "+(cheap-state.stars)+" ⭐";
   return h("button",{class:"gamecard shophome",type:"button",style:"margin:10px 0 0",onclick:openShop},
-    h("i",{"aria-hidden":"true"},"🛍️"),h("div",null,h("b",null,"Одны дэлгүүр ",h("span",{class:"sh-st"},"⭐ "+state.stars)),h("span",null,sub)));
+    h("i",{"aria-hidden":"true"},"🛍️"),h("div",null,h("b",null,"Одны дэлгүүр ",h("span",{class:"sh-st"},"⭐ "+state.stars),newTag()),h("span",null,sub)));
 }
 function shopCard(){
   var bl=boostLeft();
@@ -7329,16 +7347,23 @@ var WHATS_NEW=[
   ["👥","Найзууд","Найзын профайл харах, 🔳 QR кодоор найз нэмэх"],
   ["⏱️","Суралцсан цаг","Өдөр, долоо хоног, нийт хэдэн минут хичээллэснээ хар"]
 ];
+var WN_COL=["#2A5CB8","#C8102E","#D4A017","#6B4FA0","#2E7D5B","#E0663A","#1F8A9E","#8C5A2B"];
 function whatsNew(){
+  if(document.querySelector(".wnew"))return;
   var o=h("div",{class:"lvup wnew",role:"dialog","aria-modal":"true","aria-label":"Салхи "+APP_VERSION+" — юу шинэ вэ"},
     h("div",null,
-      h("div",{class:"muted small",style:"font-weight:800;letter-spacing:.08em"},"ШИНЭ ХУВИЛБАР"),
-      h("div",{class:"wn-v"},"Салхи 2.0"),
-      h("ul",{class:"wn-list"},WHATS_NEW.map(function(x){return h("li",null,h("span",{class:"wn-ic","aria-hidden":"true"},x[0]),h("span",null,h("b",null,x[1]),h("span",{class:"muted small"},x[2])));})),
-      h("button",{class:"btn primary",style:"margin-top:14px;width:100%",onclick:function(){o.remove();}},"Эхлэх")));
+      h("div",{class:"wn-head"},
+        h("div",{class:"wn-k"},"ШИНЭ ХУВИЛБАР"),
+        h("div",{class:"wn-big","aria-hidden":"true"},"2.0"),
+        h("div",{class:"wn-sub"},"Салхи шинэчлэгдлээ — илүү гоё, илүү хөгжилтэй")),
+      h("ul",{class:"wn-list"},WHATS_NEW.map(function(x,i){return h("li",{style:"--wc:"+WN_COL[i%WN_COL.length]},h("span",{class:"wn-ic","aria-hidden":"true"},x[0]),h("span",null,h("b",null,x[1]),h("span",{class:"muted small"},x[2])));})),
+      h("button",{class:"btn primary",style:"margin:14px 18px 18px;width:calc(100% - 36px)",onclick:function(){o.remove();}},"Эхлэх 🚀")));
   o.addEventListener("click",function(e){if(e.target===o)o.remove();});
-  document.body.append(o);
+  document.body.append(o);celebrate(true,true);
 }
+/* «ШИНЭ» шошго: 2.0-ийг анх нээснээс хойш 21 хоног (sget "v2at") */
+function isNew2(){var t=+sget("v2at",0);if(!t){t=Date.now();sset("v2at",t);}return Date.now()-t<21*86400000;}
+function newTag(){return isNew2()?h("span",{class:"nb"},"ШИНЭ"):null;}
 (function(){
   var seen=sget("seenVer","");
   if(seen===APP_VERSION)return;
@@ -7453,7 +7478,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-24";
+var BUILD="20261015-25";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
