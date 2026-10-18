@@ -1,5 +1,5 @@
 /* node test-push.mjs — Web Push шифрлэлт (RFC 8291) ба /push хандалтын шалгалт */
-import {encrypt,vapidAuth,b64u,unb64u,handlePush} from "./src/push.js";
+import {encrypt,vapidAuth,b64u,unb64u,handlePush,handleNudge} from "./src/push.js";
 let pass=0,fail=0;const ck=(n,c,x)=>{if(c){pass++;console.log("✅",n);}else{fail++;console.log("❌",n,x||"");}};
 const S=crypto.subtle,enc=new TextEncoder();
 async function hmac(k,d){return new Uint8Array(await S.sign("HMAC",await S.importKey("raw",k,{name:"HMAC",hash:"SHA-256"},false,["sign"]),d));}
@@ -58,5 +58,17 @@ r=await call({...base,to:["A"]});ck("cannot notify yourself",r.s===400);
 r=await call({...base,kind:"lg",tier:"0/../x",to:["B"]});ck("path injection rejected",r.s===400);
 const env2={...env};delete env2.VAPID_PRIVATE;
 r=await handlePush(new Request("https://w/push",{method:"POST",body:JSON.stringify({...base,to:["B"]})}),env2,{},json);ck("no VAPID secret → 501",r.status===501);
+
+/* /push/nudge: ⏰ найзаа сэрээх */
+DB["/friends/A/B"]=true;DB["/users/B"]={name:"Сараа",streak:5};DB["/users/A/name"]="Бат";DB["/users/C"]={name:"Номин",streak:0};DB["/friends/A/C"]=true;
+const nud=async b=>{const r=await handleNudge(new Request("https://w/push/nudge",{method:"POST",body:JSON.stringify(b)}),env,{},json);return {s:r.status,j:await r.json()};};
+pushed=[];
+r=await nud({token:tok("A"),to:"B"});ck("nudge friend with streak → sent",r.s===200&&r.j.sent===1&&pushed.length===1);
+const ng=JSON.parse(await decrypt(pushed[0].body,ua,uaPub,auth));ck("nudge text names sender and streak",/Бат чамайг сэрээж/.test(ng.b)&&/5 өдрийн/.test(ng.b),ng.b);
+r=await nud({token:tok("A"),to:"B"});ck("second nudge same day → 429",r.s===429&&pushed.length===1);
+r=await nud({token:tok("Z"),to:"B"});ck("not a friend → 403",r.s===403);
+r=await nud({token:tok("A"),to:"C"});ck("friend without streak → 409",r.s===409);
+r=await nud({token:tok("A"),to:"A"});ck("cannot nudge yourself",r.s===400);
+r=await nud({token:tok("A"),to:"../x"});ck("bad uid rejected",r.s===400);
 
 console.log("\n"+pass+" passed, "+fail+" failed");process.exit(fail?1:0);

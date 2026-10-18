@@ -1,7 +1,7 @@
 /* Салхи: багш, ангийн горим — багш анги үүсгэж 6 оронтой код өгнө, сурагчид кодоор нэгдэнэ.
    Багш даалгавар (XP, хичээл, үг, өдөр дараалан) өгч, сурагч бүрийн явцыг харна.
    Firebase: classes/{code}, members/{code}/{uid}, tasks/{code}/{tid}, cstats/{code}/{uid}, mycls/{uid}/{code},
-   live/{code}, livekey/{code}, liveans/{code}/{uid} (шууд тест) */
+   live/{code}, livekey/{code}, liveans/{code}/{uid} (шууд тест), bingo/{code}, bingowin/{code}/{uid} (бинго) */
 (function(){
   var KINDS={
     xp:["⚡","XP цуглуулах","XP"],
@@ -147,7 +147,7 @@
     });
   }
   function deleteClass(code){
-    return Promise.all(["tasks/","members/","cstats/","wlists/","board/","tlessons/","live/","livekey/","liveans/"].map(function(p){return db.ref(p+code).remove();})).then(function(){
+    return Promise.all(["tasks/","members/","cstats/","wlists/","board/","tlessons/","live/","livekey/","liveans/","bingo/","bingowin/"].map(function(p){return db.ref(p+code).remove();})).then(function(){
       return db.ref("classes/"+code).remove();
     }).then(function(){return db.ref("mycls/"+uid+"/"+code).remove();}).then(function(){var m=my();delete m[code];setMy(m);env.setLists(code,{});env.setLessons(code,{});});
   }
@@ -389,6 +389,115 @@
           var du=parseInt(dur.value,10);
           run(compCreate(code,d,items,du).then(function(cid){return liveStart(code,items,du,cid).then(function(){return cid;});}),function(cid){S.form=null;CP.loaded=false;env.toast("🏆 Тэмцээн үүслээ · код "+cid,6000);});
         }},"🏆 Ангиудын тэмцээн болгож эхлүүлэх"));
+  }
+  /* ---------- 🎲 ангийн бинго: багш монгол утгыг дуудаж, сурагчид 4×4 хүснэгтээсээ гадаад үгийг нь олж тэмдэглэнэ ----------
+     bingo/{code}: {st:"on", w (JSON [[үг,утга]…], 16–40), c (JSON дуудагдсан индексүүд), ts} — багш бичнэ, гишүүд уншина
+     bingowin/{code}/{uid}: {name, card (JSON 16 индекс), ts} — «БИНГО!» дарсан сурагч; багш мөрийг дуудагдсан үгстэй тулгаж шалгана */
+  var BG={code:null,v:null,w:[],c:[],gts:null,refs:[],wins:{},role:null,mark:{}};
+  function bgDetach(){BG.refs.forEach(function(r){r.off();});BG.refs=[];BG.code=null;BG.v=null;BG.w=[];BG.c=[];BG.gts=null;BG.wins={};BG.mark={};}
+  function bgAttach(code,role){
+    if(BG.code===code)return;
+    bgDetach();BG.code=code;BG.role=role;
+    var r=db.ref("bingo/"+code);BG.refs.push(r);
+    r.on("value",function(s){
+      var v=s.val();BG.v=v;
+      if(v){
+        if(v.ts!==BG.gts){BG.gts=v.ts;try{BG.w=JSON.parse(v.w||"[]");}catch(e){BG.w=[];}BG.mark=(env.sget("bgmark",{})||{})[code+":"+v.ts]||{};}
+        try{BG.c=JSON.parse(v.c||"[]");}catch(e){BG.c=[];}
+      }
+      paint();
+    },function(){});
+    if(role==="t"){var wr=db.ref("bingowin/"+code);BG.refs.push(wr);wr.on("value",function(s){BG.wins=s.val()||{};paint();},function(){});}
+  }
+  /* сурагчийн хүснэгт: uid+тоглоомын ts-ээс тогтмол санамсаргүй 16 үг (дахин нээхэд өөрчлөгдөхгүй) */
+  function bgCard(){
+    var seed=0,k=uid+":"+BG.gts;for(var i=0;i<k.length;i++)seed=(seed*31+k.charCodeAt(i))>>>0;
+    var rnd=function(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+    var idx=BG.w.map(function(_,i){return i;});
+    for(var j=idx.length-1;j>0;j--){var x=Math.floor(rnd()*(j+1)),t=idx[j];idx[j]=idx[x];idx[x]=t;}
+    return idx.slice(0,16);
+  }
+  var BG_LINES=(function(){var L=[],r,c;for(r=0;r<4;r++)L.push([0,1,2,3].map(function(c){return r*4+c;}));for(c=0;c<4;c++)L.push([0,1,2,3].map(function(r){return r*4+c;}));L.push([0,5,10,15],[3,6,9,12]);return L;})();
+  function bgHasLine(card,ok){return BG_LINES.some(function(l){return l.every(function(p){return ok(card[p]);});});}
+  function bgStart(code,pool){
+    var seen={},w=shuffle(pool.filter(function(p){var k=String(p[0]);if(!p[0]||!p[1]||seen[k])return false;seen[k]=1;return true;})).slice(0,30)
+      .map(function(p){return [String(p[0]).slice(0,40),String(p[1]).slice(0,60)];});
+    if(w.length<16)return Promise.reject(new Error("Бинго хийхэд дор хаяж 16 өөр үг хэрэгтэй"));
+    return db.ref("bingowin/"+code).remove().then(function(){return db.ref("bingo/"+code).set({st:"on",w:JSON.stringify(w),c:"[]",ts:TS()});});
+  }
+  function bgCall(){
+    var left=BG.w.map(function(_,i){return i;}).filter(function(i){return BG.c.indexOf(i)<0;});
+    if(!left.length){env.toast("Бүх үг дуудагдлаа");return;}
+    var n=left[Math.floor(Math.random()*left.length)],c=BG.c.concat([n]);
+    db.ref("bingo/"+BG.code+"/c").set(JSON.stringify(c)).then(function(){if(env.speak&&S.data&&S.data.c&&S.data.c.lang===env.lang())env.speak(BG.w[n][0]);}).catch(fail);
+  }
+  function bgEnd(code){return Promise.all([db.ref("bingo/"+code).remove(),db.ref("bingowin/"+code).remove()]);}
+  function bgSetup(root,d){
+    var code=S.code,lang=d.c.lang||"en",words=env.quizWords(lang);
+    var box=h("div",{class:"note",style:"margin-top:8px"},h("b",null,"🎲 Ангийн бинго"),h("div",{class:"muted small"},"Сурагч бүрт 4×4 хүснэгт гарна. Та монгол утгыг нь дуудахад сурагчид гадаад үгийг нь олж тэмдэглэнэ. Эгнээ, багана эсвэл диагональ дүүргэсэн нь «БИНГО!»"));
+    root.append(box);
+    if(!words){box.append(h("p",{class:"muted small"},"Үгсийг ачаалж байна…"));env.loadLang(lang,paint);return;}
+    var src=h("select",{class:"tin","aria-label":"Үгсийн эх"});
+    Object.keys(d.lists||{}).forEach(function(lid){src.append(h("option",{value:"L:"+lid},"📝 "+d.lists[lid].name));});
+    Object.keys(LVN).forEach(function(l){var c=words.filter(function(w){return w[2]===l;}).length;if(c>=16)src.append(h("option",{value:"V:"+l},"📚 Аппын "+LVN[l]+" түвшний үгс"));});
+    box.append(h("div",{class:"muted small",style:"margin-top:8px"},"Үгс (16–30 үг санамсаргүй сонгогдоно)"),src,
+      h("div",{class:"row"},h("button",{class:"btn",onclick:function(){S.form=null;paint();}},"Болих"),
+        h("button",{class:"btn primary",disabled:busy,onclick:function(){
+          var s=src.value,pool=s.indexOf("L:")===0?parseList(d.lists[s.slice(2)]):words.filter(function(w){return w[2]===s.slice(2);}).map(function(w){return [w[0],w[1]];});
+          run(bgStart(code,pool),function(){S.form=null;});
+        }},"🎲 Эхлүүлэх")));
+  }
+  function viewBingoTeacher(root,d){
+    var code=S.code,last=BG.c.length?BG.w[BG.c[BG.c.length-1]]:null,called={};BG.c.forEach(function(i){called[i]=1;});
+    root.append(h("h2",null,"🎲 Бинго · "+d.c.name));
+    root.append(h("div",{class:"note",style:"text-align:center;padding:18px"},
+      h("div",{class:"muted small"},BG.c.length+" / "+BG.w.length+" үг дуудагдсан · Сурагчид: Профайл → 🏫 Анги → «"+d.c.name+"»"),
+      last?h("div",{style:"font-size:40px;font-weight:800;margin:8px 0"},last[1]):h("div",{style:"font-size:22px;font-weight:700;margin:12px 0"},"Эхний үгээ дуудаарай"),
+      last?h("div",{class:"muted"},"(хариу: "+last[0]+")"):null));
+    root.append(h("button",{class:"btn primary",style:"width:100%;font-size:20px;padding:16px",disabled:BG.c.length>=BG.w.length,onclick:bgCall},"🎲 Дараагийн үг"));
+    var ids=Object.keys(BG.wins).sort(function(a,b){return (BG.wins[a].ts||0)-(BG.wins[b].ts||0);});
+    root.append(h("h3",{style:"margin:16px 0 6px"},"🙋 БИНГО гэсэн сурагчид"));
+    if(!ids.length)root.append(h("p",{class:"muted small"},"Хараахан алга."));
+    ids.forEach(function(u,i){
+      var x=BG.wins[u],card=[];try{card=JSON.parse(x.card||"[]");}catch(e){}
+      var ok=card.length===16&&bgHasLine(card,function(k){return called[k];});
+      root.append(h("div",{class:"srow"},h("span",null,(i<3&&ok?["🥇","🥈","🥉"][i]+" ":"")+x.name),h("b",{style:ok?"color:var(--ok)":"color:var(--danger)"},ok?"✅ Зөв":"❌ Дутуу")));
+    });
+    if(BG.c.length){
+      var wrap=h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin-top:14px"});
+      BG.c.slice().reverse().forEach(function(i){wrap.append(h("span",{class:"lvtag"},BG.w[i][0]+" — "+BG.w[i][1]));});
+      root.append(h("h3",{style:"margin:16px 0 6px"},"📜 Дуудагдсан үгс"),wrap);
+    }
+    root.append(h("button",{class:"btn ghost",style:"width:100%;margin-top:16px",onclick:function(){
+      if(!S.confirmBg){S.confirmBg=true;env.toast("Дахин дарвал бинго дуусна");return;}
+      S.confirmBg=false;run(bgEnd(code));
+    }},"⏹ Бинго дуусгах"));
+  }
+  function viewBingoStudent(root,d){
+    var code=S.code,card=bgCard(),called={};BG.c.forEach(function(i){called[i]=1;});
+    var last=BG.c.length?BG.w[BG.c[BG.c.length-1]]:null;
+    root.append(h("h2",null,"🎲 Бинго"));
+    root.append(h("div",{class:"note",style:"text-align:center"},h("div",{class:"muted small"},"Багшийн дуудсан үг ("+BG.c.length+")"),
+      h("div",{style:"font-size:26px;font-weight:800;margin-top:4px"},last?last[1]:"Хүлээж байна…")));
+    var grid=h("div",{style:"display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0"});
+    card.forEach(function(k){
+      var on=!!BG.mark[k];
+      grid.append(h("button",{type:"button","aria-pressed":String(on),lang:d.c.lang||"en",
+        style:"min-height:64px;padding:4px;border-radius:10px;border:2px solid "+(on?"var(--ok)":"var(--line)")+";background:"+(on?"color-mix(in srgb,var(--ok) 22%,var(--surface))":"var(--surface)")+";color:var(--ink);font-weight:700;font-size:15px;word-break:break-word;cursor:pointer",
+        onclick:function(){
+          if(on){delete BG.mark[k];}
+          else if(!called[k]){env.toast("Энэ үг хараахан дуудагдаагүй байна");return;}
+          else BG.mark[k]=1;
+          var m={};m[code+":"+BG.gts]=BG.mark;env.sset("bgmark",m);paint();
+        }},(on?"✅ ":"")+BG.w[k][0]));
+    });
+    root.append(grid);
+    var line=bgHasLine(card,function(k){return BG.mark[k]&&called[k];});
+    root.append(h("button",{class:"btn primary",style:"width:100%;font-size:22px;padding:16px",disabled:!line||busy||BG.sent===BG.gts,onclick:function(){
+      var nm=String(my()[code]&&my()[code].name||env.name()||"Сурагч").slice(0,30);
+      run(db.ref("bingowin/"+code+"/"+uid).set({name:nm,card:JSON.stringify(card),ts:TS()}),function(){BG.sent=BG.gts;if(env.addXP)env.addXP(5);if(env.celebrate)env.celebrate();env.toast("🎉 БИНГО! Багшид илгээгдлээ");});
+    }},BG.sent===BG.gts?"✅ Илгээгдсэн":"🎉 БИНГО!"));
+    root.append(h("p",{class:"muted small"},"Дуудагдсан үгийн гадаад хэлбэрийг хүснэгтээсээ олж дар. 4-ийг нэг шугамаар (хэвтээ, босоо, диагональ) дүүргэвэл БИНГО."));
   }
   /* ---------- 🏆 ангиуд хоорондын тэмцээн: ижил асуултыг анги бүр өөрийн цагтаа шууд тестээр хийж, ангийн дунджаар өрсөлдөнө ----------
      comps/{cid}: {owner,name,lang,items(JSON, зөв хариулттай),dur,n,ts,t:{uid:true},cls:{code:{name,tname,avg,best,n,ts}}} — зөвхөн оролцогч багш нар уншина */
@@ -972,6 +1081,8 @@
     root.append(h("h3",{style:"margin:20px 0 6px"},"🎯 Шууд тест"));
     if(S.form==="live")liveSetup(root,d);
     else root.append(h("button",{class:"btn primary",style:"width:100%",onclick:function(){S.form="live";paint();}},"🎯 Ангийн шууд тест эхлүүлэх"));
+    if(S.form==="bingo")bgSetup(root,d);
+    else root.append(h("button",{class:"btn",style:"width:100%;margin-top:8px",onclick:function(){S.form="bingo";paint();}},"🎲 Ангийн бинго эхлүүлэх"));
     viewComps(root,d);
     viewRural(root,d);
     root.append(h("div",{class:"row",style:"flex-wrap:wrap"},
@@ -994,7 +1105,7 @@
     var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="salkhi-"+d.c.name.replace(/\s+/g,"_")+".csv";document.body.append(a);a.click();a.remove();
   }
   function viewClass(root){
-    root.append(back(function(){if(S.stu){S.stu=null;paint();return;}err="";liveDetach();S.scr="home";S.code=null;S.data=null;S.form=null;S.confirm=false;paint();}));
+    root.append(back(function(){if(S.stu){S.stu=null;paint();return;}err="";liveDetach();bgDetach();S.scr="home";S.code=null;S.data=null;S.form=null;S.confirm=false;paint();}));
     if(!S.data){
       if(err){
         /* багш хассан эсвэл анги устгагдсан бол жагсаалтаас хасах боломж өгнө */
@@ -1009,9 +1120,11 @@
       return;
     }
     var role=(my()[S.code]||{}).role==="t"?"t":"s",lv=LV.code===S.code&&LV.v;
-    liveAttach(S.code,role);
-    if(role==="t")(lv?viewLiveTeacher:viewTeacher)(root,S.data);
+    liveAttach(S.code,role);bgAttach(S.code,role);
+    var bg=BG.code===S.code&&BG.v&&BG.w.length>=16;
+    if(role==="t")(lv?viewLiveTeacher:bg?viewBingoTeacher:viewTeacher)(root,S.data);
     else if(lv&&(lv.st!=="end"||(LV.dismiss!==lv.ts&&LV.joined)))viewLiveStudent(root,S.data);
+    else if(bg)viewBingoStudent(root,S.data);
     else viewStudent(root,S.data);
   }
   window.Classes={
@@ -1029,7 +1142,7 @@
     },
     init:function(e){env=e;h=e.h;setTimeout(syncAll,6000);},
     touch:function(){if(env)touch();},
-    detach:function(){if(LV.code)liveDetach();},
+    detach:function(){if(LV.code)liveDetach();if(BG.code)bgDetach();},
     count:function(){return env?Object.keys(my()).length:0;}
   };
 })();

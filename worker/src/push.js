@@ -96,3 +96,29 @@ export async function handlePush(req,env,cors,json){
   }
   return json({sent},200,cors);
 }
+
+/* /push/nudge — ⏰ найзаа сэрээх: body {token, to}. Дуудагчийн найзын жагсаалтад (friends/{me}/{to}) байгаа, цуваатай (streak>0)
+   найзад л тогтсон загвартай мессеж илгээнэ. KV: нэг хосод өдөрт 1, нэг хүлээн авагчид өдөрт 3. */
+export async function handleNudge(req,env,cors,json){
+  let b;try{b=await req.json();}catch(e){return json({error:"bad_json"},400,cors);}
+  if(!env.VAPID_PUBLIC||!env.VAPID_PRIVATE)return json({error:"push_not_configured"},501,cors);
+  const token=String(b&&b.token||""),to=String(b&&b.to||""),me=uidOf(token);
+  if(!token||token.length>4000||!me||!/^[A-Za-z0-9_-]{1,64}$/.test(to)||to===me)return json({error:"bad_request"},400,cors);
+  const F=env.DB_FETCH||fetch,db=env.FIREBASE_DB_URL||FIREBASE_DB,auth=".json?auth="+encodeURIComponent(token);
+  const [fr,ur,mr]=await Promise.all([F(db+"/friends/"+me+"/"+to+auth),F(db+"/users/"+to+auth),F(db+"/users/"+me+"/name"+auth)]);
+  if(fr.status===401||fr.status===403)return json({error:"forbidden"},403,cors);
+  if(!fr.ok||!ur.ok)return json({error:"db_unavailable"},503,cors);
+  if((await fr.json())!==true)return json({error:"not_friend"},403,cors);
+  const u=(await ur.json())||{},name=clean(mr.ok?await mr.json():"",20)||"Найз",st=Math.max(0,Math.floor(+u.streak||0));
+  if(!st)return json({error:"no_streak"},409,cors);
+  const day=new Date(Date.now()+8*3600000).toISOString().slice(0,10),pk="nudp:"+me+":"+to+":"+day,dk="nudd:"+to+":"+day;
+  if(env.TTS_KV){
+    if(await env.TTS_KV.get(pk))return json({error:"limited"},429,cors);
+    const n=parseInt(await env.TTS_KV.get(dk)||"0",10)||0;if(n>=3)return json({error:"limited"},429,cors);
+    await Promise.all([env.TTS_KV.put(pk,"1",{expirationTtl:172800}),env.TTS_KV.put(dk,String(n+1),{expirationTtl:172800})]);
+  }
+  const sr=await F(db+"/pushsub/"+to+auth),sub=sr.ok?await sr.json():null;
+  if(!sub)return json({sent:0,reason:"no_sub"},200,cors);
+  let s=0;try{s=await sendPush(env,sub,{t:"Салхи · ⏰ Сэрээлээ",b:"⏰ "+name+" чамайг сэрээж байна! Өнөөдрийн хичээлээ хийгээд 🔥 "+st+" өдрийн цуваагаа хадгалаарай.",u:"./#daily",tag:"salkhi-nudge"});}catch(e){s=0;}
+  return json({sent:s>=200&&s<300?1:0},200,cors);
+}

@@ -855,6 +855,9 @@ h3{font-weight:800;letter-spacing:0}
 .toolgrid .btn{color:var(--ink);font-weight:800;min-height:52px}
 .ag button[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-line);color:var(--sel-ink)}
 .ag button[aria-pressed="true"] small{color:var(--sel-ink)}
+.qt{position:fixed;z-index:210;max-width:min(320px,92vw);min-width:180px;background:var(--surface);background-clip:padding-box;color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:10px 34px 10px 12px;font-size:15px;animation:qtin .15s ease-out}
+@keyframes qtin{from{opacity:0;transform:translateY(-4px)}}
+.qt-x{position:absolute;top:4px;right:4px;border:0;background:none;color:var(--ink-2);font-size:16px;padding:6px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -1442,9 +1445,14 @@ function playCached(blobs,id,i,sp,onDone){
 function audTexts(lang,lv,withEx){
   var out=[],seen={};
   function add(t){t=speechText(t);if(t&&t.length<=300&&!seen[t]){seen[t]=1;out.push(t);}}
-  WORDS.forEach(function(w){if((w[6]||"en")!==lang||w[0]!==lv)return;add(w[1]);if(withEx&&w[3])splitSpeech([w[3]]).forEach(add);});
+  WORDS.forEach(function(w){if((w[6]||"en")!==lang||(lv!=="all"&&w[0]!==lv))return;add(w[1]);if(withEx&&w[3])splitSpeech([w[3]]).forEach(add);});
+  if(lv==="all"&&withEx){
+    LESSONS.forEach(function(l){if((l.lang||"en")!==lang)return;(l.ex||[]).forEach(function(e){if(e&&e[0])splitSpeech([e[0]]).forEach(add);});});
+    ((window.STORIES&&STORIES[lang])||[]).forEach(function(st){(st.s||[]).forEach(function(p){splitSpeech([p[0]]).forEach(add);});});
+  }
   return out;
 }
+function audLvName(l){return l==="all"?"🌐 Бүгд":l.toUpperCase();}
 function audPaint(){
   var d=audDL,el=document.getElementById("audp"),bar=document.getElementById("audb");if(!d)return;
   if(el)el.textContent=d.done+" / "+d.total+(d.fail?" · алдаа "+d.fail:"")+(d.wait?" · түр хүлээж байна…":"");
@@ -1490,22 +1498,28 @@ function audPanel(){
     h("p",{class:"muted small",style:"margin:0 0 8px"},"Түвшний үгсийн дуудлагыг урьдчилан татвал хөдөө, онгоцонд ч эх хэлтний дуугаар сонсоно (нэг үг ≈ 8 КБ)."));
   if(!ui.audLv)ui.audLv=state.level==="all"?"a1":state.level;
   var lvs=["a1","a2","b1","b2","c1","c2"].filter(function(l){return WORDS.some(function(w){return (w[6]||"en")===state.lang&&w[0]===l;});});
+  if(lvs.length)lvs.push("all");
   if(lvs.indexOf(ui.audLv)<0)ui.audLv=lvs[0];
-  wrap.append(h("div",{class:"seg"},lvs.map(function(l){return h("button",{"aria-pressed":String(ui.audLv===l),onclick:function(){ui.audLv=l;render();}},l.toUpperCase());})));
+  wrap.append(h("div",{class:"seg",style:"flex-wrap:wrap"},lvs.map(function(l){return h("button",{"aria-pressed":String(ui.audLv===l),onclick:function(){ui.audLv=l;render();}},audLvName(l));})));
   var ex=h("input",{type:"checkbox",id:"audex"});ex.checked=!!ui.audEx;ex.addEventListener("change",function(){ui.audEx=ex.checked;render();});
-  wrap.append(h("label",{for:"audex",class:"small",style:"display:flex;gap:8px;align-items:center;margin:6px 0"},ex,"Жишээ өгүүлбэрийг ч бас татах"));
+  wrap.append(h("label",{for:"audex",class:"small",style:"display:flex;gap:8px;align-items:center;margin:6px 0"},ex,ui.audLv==="all"?"Жишээ, дүрмийн хичээл, түүхийн өгүүлбэрүүдийг ч бас татах":"Жишээ өгүүлбэрийг ч бас татах"));
+  if(ui.audLv==="all")wrap.append(h("p",{class:"muted small",style:"margin:0 0 6px"},"🌐 Бүгд — тухайн хэлний бүх түвшний үгс нэг дор. Хичээл, үгс аль хэдийн апп дотор хадгалагдсан тул интернэтгүй үед аудиотой бүрэн ажиллана. Wi-Fi-аар татахыг зөвлөе."));
   var d=audDL,busy=d&&!d.end;
   if(busy){
-    wrap.append(h("div",{class:"note"},h("div",{class:"small",style:"font-weight:700"},"📥 "+LANGN[d.lang]+" "+d.lv.toUpperCase()+" татаж байна…"),
+    wrap.append(h("div",{class:"note"},h("div",{class:"small",style:"font-weight:700"},"📥 "+LANGN[d.lang]+" "+audLvName(d.lv)+" татаж байна…"),
       h("div",{class:"bar"},h("i",{id:"audb",style:"width:"+Math.round(d.done/Math.max(1,d.total)*100)+"%"})),h("div",{class:"muted small",id:"audp"},d.done+" / "+d.total),
       h("button",{class:"btn ghost",style:"margin-top:6px",onclick:function(){d.stop=true;}},"Зогсоох")));
   }else{
     var n=audTexts(state.lang,ui.audLv,ui.audEx).length;
-    wrap.append(h("button",{class:"btn primary",onclick:function(){audDownload(ui.audLv,ui.audEx);}},"📥 "+ui.audLv.toUpperCase()+" татах ("+n+" дуу, ≈"+Math.max(1,Math.round(n*8/1024))+" МБ)"));
+    wrap.append(h("button",{class:"btn primary",onclick:function(){
+      if(n>3000&&!confirm(n+" дуу (≈"+Math.round(n*8/1024)+" МБ) татна. Удаан үргэлжилж магадгүй — Wi-Fi-тай эсэхээ шалгаарай. Эхлүүлэх үү?"))return;
+      audDownload(ui.audLv,ui.audEx);}},"📥 "+audLvName(ui.audLv)+" татах ("+n+" дуу, ≈"+Math.max(1,Math.round(n*8/1024))+" МБ)"));
+    if(navigator.storage&&navigator.storage.estimate&&!ui.audEst){ui.audEst="…";navigator.storage.estimate().then(function(e){ui.audEst=e&&e.quota?Math.round((e.quota-(e.usage||0))/1048576):null;if(state.tab==="stats")render();}).catch(function(){ui.audEst=null;});}
+    if(typeof ui.audEst==="number")wrap.append(h("p",{class:"muted small",style:"margin:6px 0 0"},"Төхөөрөмжид ≈"+(ui.audEst>4096?Math.round(ui.audEst/1024)+" ГБ":ui.audEst+" МБ")+" сул зай байна."));
   }
   var pk=sget("audpk",{})||{},ks=Object.keys(pk);
   if(ks.length){
-    wrap.append(h("p",{class:"muted small",style:"margin:10px 0 4px"},"Хадгалсан: "+ks.map(function(k){var p=k.split(":");return LANGN[p[0]]+" "+p[1].toUpperCase()+" ("+pk[k].n+")";}).join(", ")));
+    wrap.append(h("p",{class:"muted small",style:"margin:10px 0 4px"},"Хадгалсан: "+ks.map(function(k){var p=k.split(":");return LANGN[p[0]]+" "+audLvName(p[1])+" ("+pk[k].n+")";}).join(", ")));
     wrap.append(h("button",{class:"btn ghost",onclick:function(){
       caches.delete(AUD_CACHE).then(function(){sset("audpk",{});toast("Хадгалсан аудиог устгалаа");render();});
     }},"🗑 Хадгалсан аудиог устгах"));
@@ -1964,6 +1978,7 @@ function viewSocial(){
     qr:function(box,url){showQR(box,url);},
     langName:function(l){return LANGN[l]||"";},
     siteUrl:SITE_URL,avBg:AV_BG,
+    nudgeURL:workerURL("/push/nudge"),
     /* 🎁 найздаа од бэлэглэх */
     stars:function(){return state.stars;},
     spendStars:function(n){if(state.stars<n)return false;state.stars-=n;sset("stars",state.stars);renderStrip();return true;},
@@ -2840,6 +2855,8 @@ function viewWords(){
   if(ui.wtool==="loan")return viewLoans();
   if(ui.wtool==="name")return viewName();
   if(ui.wtool==="lbl")return viewLabels();
+  if(ui.wtool==="trip"&&window.Journey)return Journey.view(toolEnv(function(){ui.wtool=null;render();window.scrollTo(0,0);}));
+  if(ui.wtool==="joke"&&window.Jokes)return Jokes.view(xEnv(function(){ui.wtool=null;render();window.scrollTo(0,0);}));
   if(ui.wtool==="screen"&&window.ScreenLang)return ScreenLang.view(xEnv(function(){ui.wtool=null;render();window.scrollTo(0,0);}));
   if(ui.wtool==="ws"&&window.Worksheet)return Worksheet.view(xEnv(function(){ui.wtool=null;render();window.scrollTo(0,0);}));
   if(ui.wtool==="read"&&window.Reader&&state.mode!=="kid")return Reader.view(toolEnv(function(){ui.wtool=null;render();window.scrollTo(0,0);}));
@@ -2862,7 +2879,9 @@ function viewWords(){
     h("button",{class:"btn",onclick:function(){ui.wtool="wall";render();window.scrollTo(0,0);}},"📱 Ханын зураг"),
     h("button",{class:"btn",onclick:function(){ui.wtool="loan";render();window.scrollTo(0,0);}},"🔤 Та аль хэдийн мэднэ"),
     h("button",{class:"btn",onclick:function(){ui.wtool="name";render();window.scrollTo(0,0);}},"✍️ Нэрээ гадаад бичгээр"),
-    h("button",{class:"btn",onclick:function(){ui.wtool="lbl";render();window.scrollTo(0,0);}},"🏷️ Гэрийн шошго"));
+    h("button",{class:"btn",onclick:function(){ui.wtool="lbl";render();window.scrollTo(0,0);}},"🏷️ Гэрийн шошго"),
+    window.Journey&&Journey.has(state.lang)?h("button",{class:"btn",onclick:function(){ui.wtool="trip";render();window.scrollTo(0,0);}},"🗺️ Хэлний аялал"):null,
+    window.Jokes&&Jokes.has(state.lang)&&state.mode!=="kid"?h("button",{class:"btn",onclick:function(){ui.wtool="joke";render();window.scrollTo(0,0);}},"😂 Хошин яриа"):null);
   root.append(h("details",{class:"note fold toolfold"},h("summary",null,"🧰 Хэрэгслүүд",h("span",{class:"muted small"},tg.children.length+" хэрэгсэл")),tg));
   var hs=state.mode!=="kid"&&window.MnHoliday&&MnHoliday.has(state.lang)&&MnHoliday.season();
   if(hs&&sget("holban","")!==hs+new Date().getFullYear())root.append(h("div",{class:"note",style:"display:flex;gap:10px;align-items:center;margin-bottom:12px"},
@@ -4066,17 +4085,21 @@ function viewListen(){
     h("button",{"aria-pressed":String(l.mode==="dlg"),onclick:function(){l.mode="dlg";render();}},"Яриа"),
     h("button",{"aria-pressed":String(l.mode==="syn"),onclick:function(){l.mode="syn";render();}},"≈ Ижил утга"),
     h("button",{"aria-pressed":String(l.mode==="story"),onclick:function(){l.mode="story";render();}},"📖 Түүх"),
+    window.ABook?h("button",{"aria-pressed":String(l.mode==="book"),onclick:function(){l.mode="book";render();}},"📚 Аудио ном"):null,
     h("button",{"aria-pressed":String(l.mode==="sh"),onclick:function(){l.mode="sh";render();}},"🎙 Давтах"),
     window.HandsFree?h("button",{"aria-pressed":String(l.mode==="hf"),onclick:function(){l.mode="hf";render();}},"🎧 Гар чөлөө"):null,
     window.Songs&&state.mode!=="kid"?h("button",{"aria-pressed":String(l.mode==="song"),onclick:function(){l.mode="song";render();}},"🎵 Дуу"):null,
     window.News&&state.mode!=="kid"?h("button",{"aria-pressed":String(l.mode==="news"),onclick:function(){l.mode="news";render();}},"📰 Мэдээ"):null,
     window.AiStory&&state.mode!=="kid"?h("button",{"aria-pressed":String(l.mode==="adv"),onclick:function(){l.mode="adv";render();}},"🧩 AI түүх"):null,
     window.Podcast&&state.mode!=="kid"?h("button",{"aria-pressed":String(l.mode==="pod"),onclick:function(){l.mode="pod";render();}},"🎙️ Подкаст"):null);
-  lseg.style.gridTemplateColumns="repeat("+(lseg.children.length>6?4:3)+",1fr)";
+  lseg.style.gridTemplateColumns="repeat("+(lseg.children.length>6?4:3)+",minmax(0,1fr))";
+  /* олон товчтой үед нарийн баганад бичвэр нь хоёр мөрт орно (хуудас хажуу тийш халихгүй) */
+  [].forEach.call(lseg.children,function(b){b.style.whiteSpace="normal";b.style.lineHeight="1.2";});
   root.append(lseg);
   if(l.mode!=="sh"&&l.sh&&l.sh.rec)l.sh.rec.stop();
   if(l.mode==="hf"&&window.HandsFree){var hfe=xEnv();hfe.visible=function(){return state.tab==="listen"&&ui.listen.mode==="hf";};root.append(HandsFree.view(hfe));return root;}
   if(l.mode==="song"&&window.Songs){root.append(Songs.view(xEnv()));return root;}
+  if(l.mode==="book"&&window.ABook){root.append(ABook.view(abEnv()));return root;}
   if(l.mode==="news"&&window.News){root.append(News.view(xEnv()));return root;}
   if(l.mode==="adv"&&window.AiStory){root.append(AiStory.view(xEnv()));return root;}
   if(l.mode==="pod"&&window.Podcast&&state.mode!=="kid"){root.append(Podcast.view(xEnv()));return root;}
@@ -5154,6 +5177,8 @@ function viewPlay(){
   if(P.pairs&&window.Pairs)return Pairs.view(toolEnv(function(){P.pairs=false;render();window.scrollTo(0,0);}));
   if(P.esc&&window.Escape)return Escape.view(toolEnv(function(){P.esc=false;render();window.scrollTo(0,0);}));
   if(P.typ&&window.Typing)return Typing.view(toolEnv(function(){P.typ=false;render();window.scrollTo(0,0);}));
+  if(P.cw&&window.Crossword)return Crossword.view(toolEnv(function(){P.cw=false;render();window.scrollTo(0,0);}));
+  if(P.tw&&window.Twister)return Twister.view(toolEnv(function(){P.tw=false;render();window.scrollTo(0,0);}));
   if(P.ocr&&window.Ocr)return Ocr.view(xEnv(function(){P.ocr=false;render();window.scrollTo(0,0);}));
   if(P.ex)return viewMock(root);
   root.append(h("h2",null,"Сорил"));
@@ -5198,6 +5223,10 @@ function viewPlay(){
     h("i",{"aria-hidden":"true"},"🔐"),h("div",null,h("b",null,"Хэлний оньсого өрөө"),h("span",null,"Тэмдэг уншиж, зарлал сонсож 5 минутад гараарай"))));
   if(window.Typing)gg.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.typ=true;render();window.scrollTo(0,0);}},
     h("i",{"aria-hidden":"true"},"⌨️"),h("div",null,h("b",null,"Бичих хурд"),h("span",null,"60 секундэд "+LANGN[state.lang].toLowerCase()+" гараар хэдэн үг бичих вэ?"))));
+  if(window.Crossword)gg.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.cw=true;render();window.scrollTo(0,0);}},
+    h("i",{"aria-hidden":"true"},"🧩"),h("div",null,h("b",null,"Өдрийн кроссворд"),h("span",null,"Сурч буй үгсээрээ өдөр бүр шинэ кроссворд"+(Crossword.doneToday(sget,state.lang)?" · ✅ өнөөдрийнх дууссан":"")))));
+  if(window.Twister&&Twister.has(state.lang))gg.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.tw=true;render();window.scrollTo(0,0);}},
+    h("i",{"aria-hidden":"true"},"👅"),h("div",null,h("b",null,"Хэл зүгшрүүлэх"),h("span",null,"Эх хэлтний ч хэл орооцолддог хэллэгийг хурдан, тод хэл"))));
   gg.append(gameCard());
   return root;
 }
@@ -6809,6 +6838,7 @@ function clsEnv(){
     lessonsFor:clsLessonsFor,
     quizWords:function(lang){if(!(window.WORDS_LOADED&&WORDS_LOADED[lang]))return null;return WORDS.filter(function(w){return (w[6]||"en")===lang;}).map(function(w){return [w[1],w[2],w[0]];});},
     loadLang:function(l,cb){loadLangs([l],cb);},
+    speak:function(t){speak(t);},addXP:addXP,celebrate:function(){celebrate(true,true);},
     close:function(){ui.cls=false;render();window.scrollTo(0,0);}};
 }
 /* эцэг эхийн самбар (family.js) ба багшийн сурагч бүрийн дэлгэрэнгүйд (classes.js) илгээх товч мэдээ */
@@ -6953,6 +6983,14 @@ function reelsEnv(){
   e.isSaved=function(w){return state.saved.indexOf(w[1])>=0;};
   e.toggleSave=toggleSave;
   e.speakList=function(l){speakList(l);};
+  return e;
+}
+/* 📚 аудио ном (abook.js): түүхүүд + дууны дарааллын дугаар (өөр дуу эхэлбэл ном зогсоно) */
+function abEnv(){
+  var e=xEnv();
+  e.stories=function(){return (window.STORIES&&STORIES[state.lang])||[];};
+  e.qid=function(){return audioQ.id;};
+  e.visible=function(){return state.tab==="listen"&&ui.listen.mode==="book";};
   return e;
 }
 /* reader, mnemo, goal, focus, pairs, typing, anki модулиудад */
@@ -7829,16 +7867,18 @@ function shopCard(){
 /* ⚙️ тохиргоо ба өгөгдөл — профайлаас тусад нь */
 /* 🎉 Салхи 2.0 — хувилбарын дугаар (Тохиргооны доод талд) ба «Юу шинэ вэ» цонх.
    Хуучин хэрэглэгчид шинэ хувилбар анх нээгдэхэд нэг удаа гарна (sget "seenVer"); шинэ хэрэглэгчид гарахгүй. */
-var APP_VERSION="2.0.0";
+var APP_VERSION="2.1.0";
 var WHATS_NEW=[
-  ["🎨","Шинэ загвар","Монгол хээтэй дизайн, цэгцтэй нүүр хуудас, 🌐 нэг товчоор хэл/түвшин солих"],
-  ["🏆","13 тэмцээн","Жилийн турш давтагдах тэмцээн, медаль, 🗓️ тэмцээний хуанли"],
-  ["⭐","Цолны шагнал","Түвшин, цол ахих бүрт од — өмнө ахисан цолын од ч нөхөгдөнө"],
-  ["🛍️","Одны дэлгүүр","🧊 хамгаалалт, ⚡ 2× XP, онцгой аватар, цаасан шувууны өнгө"],
-  ["👤","Шинэ профайл","Аватар, хоч нэр, статус, дээд амжилт, 🕸️ ур чадвар, сар/жилийн дүн"],
-  ["📤","Хуваалцах зураг","Профайл, сарын дүнгээ гоё зураг болгон хуваалцаарай"],
-  ["👥","Найзууд","Найзын профайл харах, 🔳 QR кодоор найз нэмэх"],
-  ["⏱️","Суралцсан цаг","Өдөр, долоо хоног, нийт хэдэн минут хичээллэснээ хар"]
+  ["🧩","Өдрийн кроссворд","Сурч буй үгсээрээ өдөр бүр шинэ кроссворд (Сорил → Тоглоом)"],
+  ["👅","Хэл зүгшрүүлэх","Алдартай tongue twister-уудыг хэлж, 🎤 нарийвчлалаа шалга"],
+  ["🗺️","Хэлний аялал","Хичээл давах бүрт тухайн орны дараагийн хот руу аялна"],
+  ["📚","Аудио ном","Түүхүүдийг тасралтгүй сонсох, монгол орчуулгатай, унтах таймертай"],
+  ["🎤","Караоке","Дуртай дуугаа хэмнэлээр нь дагаж дуул (Сонсох → Дуу)"],
+  ["😂","Хошин яриа","Хэлний хошигнол, үгийн тоглоомыг тайлбартай нь"],
+  ["⏰","Найзаа сэрээх","Цуваа нь тасрах гэж буй найздаа мэдэгдэл илгээ"],
+  ["🎲","Ангийн бинго","Багш үг дуудаж, сурагчид утсан дээрээ тэмдэглэнэ"],
+  ["🔎","Шууд орчуулга","Аппын дурын үгийг сонгоход утга нь гарч ирнэ"],
+  ["📥","Бүрэн офлайн","Нэг хэлний бүх түвшний аудиог нэг дор татах"]
 ];
 var WN_COL=["#2A5CB8","#C8102E","#D4A017","#6B4FA0","#2E7D5B","#E0663A","#1F8A9E","#8C5A2B"];
 function whatsNew(){
@@ -7847,7 +7887,7 @@ function whatsNew(){
     h("div",null,
       h("div",{class:"wn-head"},
         h("div",{class:"wn-k"},"ШИНЭ ХУВИЛБАР"),
-        h("div",{class:"wn-big","aria-hidden":"true"},"2.0"),
+        h("div",{class:"wn-big","aria-hidden":"true"},APP_VERSION.split(".").slice(0,2).join(".")),
         h("div",{class:"wn-sub"},"Салхи шинэчлэгдлээ — илүү гоё, илүү хөгжилтэй")),
       h("ul",{class:"wn-list"},WHATS_NEW.map(function(x,i){return h("li",{style:"--wc:"+WN_COL[i%WN_COL.length]},h("span",{class:"wn-ic","aria-hidden":"true"},x[0]),h("span",null,h("b",null,x[1]),h("span",{class:"muted small"},x[2])));})),
       h("button",{class:"btn primary",style:"margin:14px 18px 18px;width:calc(100% - 36px)",onclick:function(){o.remove();}},"Эхлэх 🚀")));
@@ -7987,7 +8027,7 @@ function pfProg(root){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261018-2";
+var BUILD="20261018-3";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
@@ -8133,9 +8173,63 @@ if(window.Classes&&window.SALKHI_FB)Classes.init(clsEnv());
 if(window.Events)Events.init(xEnv());
 if(window.Onboard&&!location.hash&&!sget("foreign",0))setTimeout(function(){Onboard.maybe(onbEnv());},400);
 if(repairInfo()&&sget("rpshown","")!==dkey(new Date())){sset("rpshown",dkey(new Date()));setTimeout(function(){var r=repairInfo();if(r)toast("💔 Дараалал тасарлаа. Өнөөдөр "+r.need+" XP цуглуулбал "+r.prev+" өдрийн дараалал сэргэнэ!",6000);},2500);}
+/* ---------- 🔎 шууд орчуулга: апп доторх үг (1–3 үг) сонгоход аппын толь бичгээс утгыг нь гаргана ----------
+   AI ашиглахгүй (монгол утгад найдваргүй). Олдохгүй бол Google Translate холбоос. Монгол үг сонговол эсрэг чиглэлд хайна. */
+var QT={el:null,tm:null};
+function qtScript(t,L){
+  if(L==="ja")return /[぀-ヿ㐀-鿿]/.test(t);if(L==="zh")return /[㐀-鿿]/.test(t);if(L==="ko")return /[가-힣]/.test(t);
+  if(cyrLang(L))return /[Ѐ-ӿ]/.test(t)&&!looksMn(t,L);
+  return /[A-Za-zÀ-ÿ]/.test(t);
+}
+function qtLookup(t){
+  var L=state.lang,low=String(t).toLowerCase().replace(/[.,!?;:"«»“”()。、？！]/g,"").replace(/\s+/g," ").trim();
+  if(!low)return null;
+  var ws=WORDS.filter(function(w){return (w[6]||"en")===L;});
+  var strip=function(x){return String(x).toLowerCase().replace(/\s*\([^)]*\)/g,"").replace(/^(to|the|a|an|der|die|das|sich)\s+/,"").trim();};
+  var hit=ws.filter(function(w){return w[1].toLowerCase()===low;})[0]||ws.filter(function(w){return strip(w[1])===low;})[0]||ws.filter(function(w){return w[7]&&String(w[7]).toLowerCase()===low;})[0];
+  if(hit)return {w:hit};
+  if(looksMn(t,L)&&!qtScript(t,L)){
+    var r=ws.filter(function(w){return String(w[2]).toLowerCase().split(/[,;\/]\s*/).some(function(x){return x.replace(/\s*\([^)]*\)/g,"").trim()===low;});}).slice(0,3);
+    return r.length?{list:r}:null;
+  }
+  return qtScript(t,L)?{none:t}:null;
+}
+function qtHide(){if(QT.el){QT.el.remove();QT.el=null;}}
+function qtShow(){
+  var sel=window.getSelection&&window.getSelection();
+  if(!sel||sel.isCollapsed||!sel.rangeCount){qtHide();return;}
+  var t=String(sel.toString()).trim(),n=sel.anchorNode,el=n&&(n.nodeType===1?n:n.parentElement),main=document.getElementById("main");
+  if(!t||t.length>40||t.split(/\s+/).length>3||!el||!main||!main.contains(el)||el.closest("input,textarea,[contenteditable],.qt")){qtHide();return;}
+  var r=qtLookup(t);if(!r){qtHide();return;}
+  var box=sel.getRangeAt(0).getBoundingClientRect();
+  qtHide();
+  var L=state.lang,body;
+  if(r.w){
+    var w=r.w,sv=state.saved.indexOf(w[1])>=0;
+    body=h("div",null,h("div",{style:"display:flex;gap:6px;align-items:baseline;flex-wrap:wrap"},h("b",{lang:L,style:"font-size:18px"},w[1]),w[7]?h("span",{class:"muted small"},w[7]):null),
+      h("div",{style:"margin-top:2px"},w[2]),
+      h("div",{class:"row",style:"margin-top:6px;gap:6px"},
+        h("button",{class:"btn ghost",style:"padding:4px 10px","aria-label":"Сонсох",onclick:function(){speak(w[1]);}},"🔊"),
+        h("button",{class:"btn ghost",style:"padding:4px 10px","aria-pressed":String(sv),onclick:function(){toggleSave(w);toast(sv?"Хадгалснаас хаслаа":"🔖 Хадгаллаа");qtHide();}},sv?"🔖 Хадгалсан":"🔖 Хадгалах")));
+  }else if(r.list){
+    body=h("div",null,h("div",{class:"muted small"},"«"+t+"» "+LANGN[L].toLowerCase()+" хэлээр:"),r.list.map(function(w){
+      return h("div",{style:"display:flex;gap:6px;align-items:center;margin-top:4px"},h("b",{lang:L,style:"flex:1"},w[1]+(w[7]?" ("+w[7]+")":"")),h("button",{class:"btn ghost",style:"padding:2px 8px","aria-label":"Сонсох",onclick:function(){speak(w[1]);}},"🔊"));
+    }));
+  }else{
+    body=h("div",null,h("b",{lang:L},t),h("div",{class:"muted small",style:"margin:2px 0 6px"},"Аппын толь бичигт олдсонгүй."),
+      h("a",{class:"btn ghost",style:"padding:4px 10px;display:inline-block",target:"_blank",rel:"noopener",href:"https://translate.google.com/?sl="+(L==="ug"?"ug":GTTS[L]||L)+"&tl=mn&text="+encodeURIComponent(t)},"🌐 Google Translate"));
+  }
+  var p=h("div",{class:"qt",role:"dialog","aria-label":"Шууд орчуулга"},h("button",{class:"qt-x","aria-label":"Хаах",onclick:qtHide},"✕"),body);
+  document.body.append(p);QT.el=p;
+  var W=window.innerWidth,H=window.innerHeight,pw=p.offsetWidth,ph=p.offsetHeight;
+  var top=box.bottom+10;if(top+ph>H-70)top=Math.max(8,box.top-ph-10);
+  p.style.top=top+"px";p.style.left=Math.max(8,Math.min(W-pw-8,box.left+box.width/2-pw/2))+"px";
+}
+document.addEventListener("selectionchange",function(){clearTimeout(QT.tm);QT.tm=setTimeout(qtShow,450);});
+window.addEventListener("scroll",function(){if(QT.el)qtHide();},{passive:true});
 /* ---------- хойшлуулсан ачаалал: эхний дэлгэц гарсны дараа дүрмийн багц ба нэмэлт модулиуд ----------
    Эдгээр модулийг үргэлж window.X-ээр шалгаж ашигладаг тул ачаалагдтал товч нь харагдахгүй, ачаалагдмагц render() */
-var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js","reels.js","podcast.js","reader.js","mnemo.js","goal.js","focus.js","pairs.js","typing.js","anki.js","gesture.js","escape.js","debate.js","sign.js"];
+var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js","reels.js","podcast.js","reader.js","mnemo.js","goal.js","focus.js","pairs.js","typing.js","anki.js","gesture.js","escape.js","debate.js","sign.js","crossword.js","twister.js","journey.js","jokes.js","abook.js"];
 function lazyBoot(){
   if(window.League){League.init(lgEnv());if(window.SALKHI_FB&&League.fromHash(lgEnv())){state.tab="stats";ui.lg=true;renderTabs();}
     /* наадмын push мэдэгдэл дээр дарж ирсэн (./#lg) */

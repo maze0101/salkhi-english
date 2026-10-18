@@ -177,6 +177,22 @@
       return db.ref("friends/"+uid+"/"+fid).set(true).then(function(){env.toast("Найз нэмэгдлээ ✅");loadFriends();});
     }).catch(function(){env.toast("Алдаа гарлаа");});
   }
+  /* ⏰ найзаа сэрээх (worker /push/nudge): найз апп хаалттай ч мэдэгдэл авна. Нэг найзад өдөрт 1 удаа. */
+  var NUDGE_KEY="nudged";
+  function nudgeDay(){return new Date().toDateString();}
+  function nudged(fid){var m=ls(NUDGE_KEY,{})||{};return m.d===nudgeDay()&&!!m[fid];}
+  function nudge(r){
+    var u=firebase.auth().currentUser;if(!u)return;
+    var m=ls(NUDGE_KEY,{})||{};if(m.d!==nudgeDay())m={d:nudgeDay()};m[r.uid]=1;lset(NUDGE_KEY,m);paint();
+    u.getIdToken().then(function(t){
+      return fetch(env.nudgeURL,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({token:t,to:r.uid})});
+    }).then(function(res){return res.json().catch(function(){return {};}).then(function(j){return {s:res.status,j:j};});}).then(function(x){
+      if(x.s===200&&x.j.sent)env.toast("⏰ "+r.name+"-г сэрээлээ!");
+      else if(x.s===200)env.toast(r.name+" мэдэгдэл асаагаагүй тул хүрсэнгүй. Чатаар бичээрэй 💬",5000);
+      else if(x.s===429)env.toast("Өнөөдөр аль хэдийн сэрээсэн байна");
+      else env.toast("Сэрээж чадсангүй");
+    }).catch(function(){env.toast("Сэрээж чадсангүй");});
+  }
   function removeFriend(fid){
     if(!confirm("Найзын жагсаалтаас хасах уу?"))return;
     db.ref("friends/"+uid+"/"+fid).remove().then(loadFriends);
@@ -222,6 +238,7 @@
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Шууд тулаан","aria-label":"Шууд тулаанд урих",onclick:function(){sendDuel(r);}},"⚔️"),
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Үгийн сорилт","aria-label":"Сорилт илгээх",onclick:function(){sendChallenge(r);}},"🎯"),
           env.pact?h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Хэлний гэрээ","aria-label":"Хэлний гэрээ санал болгох",onclick:function(){env.pact(r);}},"🤝"):null,
+          env.nudgeURL&&r.streak>0?h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Сэрээх","aria-label":r.name+"-г сэрээх",disabled:nudged(r.uid),onclick:function(){nudge(r);}},"⏰"):null,
           h("button",{class:"btn ghost",style:"padding:6px 10px",title:"Хасах","aria-label":"Хасах",onclick:function(){removeFriend(r.uid);}},"✖"));
       }
       board.append(line);

@@ -434,7 +434,7 @@ async function handleSMS(req,env,cors){
   return json({sent:sent,failed:failed,left:limit-n-1},200,cors);
 }
 
-import {handlePush} from "./push.js";
+import {handlePush,handleNudge} from "./push.js";
 import {runWeekly} from "./weekly.js";
 import {handleTelegram,handleTgSetup,runTgDaily,tgConfigured} from "./telegram.js";
 const TG_CRON="*/10 1-2 * * *";
@@ -469,7 +469,7 @@ export default {
     if(url.pathname==="/"&&req.method==="GET")return new Response("Salkhi AI is running.",{status:200,headers:cors});
     if(url.pathname==="/sms/status"&&req.method==="GET")return json({configured:smsConfigured(env)},200,cors);
     if(url.pathname==="/push/key"&&req.method==="GET")return json({key:env.VAPID_PUBLIC||null},200,Object.assign({"cache-control":"max-age=3600"},cors));
-    if(req.method!=="POST"||(url.pathname!=="/chat"&&url.pathname!=="/vision"&&url.pathname!=="/ocr"&&url.pathname!=="/sms"&&url.pathname!=="/push"))return json({error:"not_found"},404,cors);
+    if(req.method!=="POST"||(url.pathname!=="/chat"&&url.pathname!=="/vision"&&url.pathname!=="/ocr"&&url.pathname!=="/sms"&&url.pathname!=="/push"&&url.pathname!=="/push/nudge"))return json({error:"not_found"},404,cors);
     if(!okOrigin)return json({error:"forbidden"},403,cors);
 
     if(env.LIMITER){
@@ -481,6 +481,7 @@ export default {
     if(url.pathname==="/ocr")return handleOCR(req,env,cors);
     if(url.pathname==="/sms")return handleSMS(req,env,cors);
     if(url.pathname==="/push")return handlePush(req,env,cors,json);
+    if(url.pathname==="/push/nudge")return handleNudge(req,env,cors,json);
 
     let body;try{body=await req.json();}catch(e){return json({error:"bad_json"},400,cors);}
     const msgs=sanitizeMessages(body&&body.messages);

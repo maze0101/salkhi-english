@@ -168,6 +168,25 @@
         ".validate": "newData.hasChildren(['st','n','dur','qs']) && newData.child('st').isString() && newData.child('st').val().length <= 5 && newData.child('qs').isString() && newData.child('qs').val().length <= 40000 && newData.child('n').isNumber() && newData.child('n').val() <= 50 && newData.child('dur').isNumber() && newData.child('dur').val() >= 5 && newData.child('dur').val() <= 120 && (!newData.child('top').exists() || (newData.child('top').isString() && newData.child('top').val().length <= 10000))"
       }
     },
+    "bingo": {
+      "$code": {
+        ".read": "auth != null && (root.child('classes/'+$code+'/teacher').val() === auth.uid || root.child('members/'+$code+'/'+auth.uid).exists())",
+        ".write": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        ".validate": "newData.hasChildren(['st','w','c']) && newData.child('st').isString() && newData.child('st').val().length <= 4 && newData.child('w').isString() && newData.child('w').val().length <= 6000 && newData.child('c').isString() && newData.child('c').val().length <= 400",
+        "c": {".validate": "newData.isString() && newData.val().length <= 400"}
+      }
+    },
+    "bingowin": {
+      "$code": {
+        ".read": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        ".write": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && root.child('members/'+$code+'/'+auth.uid).exists() && root.child('bingo/'+$code).exists()",
+          ".validate": "newData.hasChildren(['name','card','ts']) && newData.child('name').isString() && newData.child('name').val().length <= 30 && newData.child('card').isString() && newData.child('card').val().length <= 120 && newData.child('ts').val() === now"
+        }
+      }
+    },
     "livekey": {
       "$code": {
         ".read": "auth != null && root.child('classes/'+$code+'/teacher').val() === auth.uid",
