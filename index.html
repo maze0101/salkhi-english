@@ -3062,7 +3062,7 @@ ru:[
 };
 Object.keys(window.PLACE_MORE||{}).forEach(function(l){PLACE_BANK[l]=(PLACE_BANK[l]||[]).concat(window.PLACE_MORE[l]);});
 /* Дүрмийн хичээлийн цол: тухайн хэлээр дуусгасан хичээлийн тоогоор ахина */
-var LS_RANKS=[[1,"🥚 Шавь"],[5,"📗 Сурагч"],[15,"✏️ Хичээнгүй"],[30,"📚 Мэдлэгтэн"],[50,"🎯 Мэргэн"],[80,"🧑‍🏫 Багш"],[120,"🏆 Их мэргэн"]];
+var LS_RANKS=[[1,"🥚 Шавь"],[5,"📗 Сурагч"],[15,"✏️ Хичээнгүй"],[30,"📚 Мэдлэгтэн"],[50,"🎯 Мэргэн"],[80,"🧑‍🏫 Багш"],[120,"🏆 Их мэргэн"],[200,"🌟 Цэцэн"]];
 function lsDoneN(){return LESSONS.filter(function(x){return (x.lang||"en")===state.lang&&state.lessons[x.id]!=null;}).length;}
 function lsRank(n){var cur=null,next=null;LS_RANKS.forEach(function(r){if(n>=r[0])cur=r;else if(!next)next=r;});return {cur:cur,next:next};}
 function lsRankCard(){
@@ -7932,7 +7932,7 @@ function viewStats(){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261015-30";
+var BUILD="20261018-1";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){

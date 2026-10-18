@@ -62,7 +62,7 @@ export async function handlePush(req,env,cors,json){
   const me=uidOf(token);
   if(!token||token.length>4000||!me||!/^\d{4}-\d{2}-\d{2}$/.test(wk)||!to.length||to.some(u=>!/^[A-Za-z0-9_-]{1,64}$/.test(u)||u===me))return json({error:"bad_request"},400,cors);
   let path,label;
-  if(kind==="lg"&&/^([0-9]|10)$/.test(String(b.tier))&&/^\d{1,6}$/.test(String(b.g))){path="/lg/"+wk+"/"+b.tier+"/"+b.g;label="Долоо хоногийн наадам";}
+  if(kind==="lg"&&/^([0-9]|1[01])$/.test(String(b.tier))&&/^\d{1,6}$/.test(String(b.g))){path="/lg/"+wk+"/"+b.tier+"/"+b.g;label="Долоо хоногийн наадам";}
   else if(kind==="plg"&&/^[A-HJ-NP-Z2-9]{6}$/.test(String(b.code))){path="/plgx/"+b.code+"/"+wk;label=null;}
   else return json({error:"bad_request"},400,cors);
   const F=env.DB_FETCH||fetch,db=env.FIREBASE_DB_URL||FIREBASE_DB,auth=".json?auth="+encodeURIComponent(token);
