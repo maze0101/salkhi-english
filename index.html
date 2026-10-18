@@ -3524,7 +3524,7 @@ function viewAlpha(){
   var a=ui.alpha,root=h("div"),secs=ALPHA[state.lang]||[];
   var cjk=["zh","ja","ko"].indexOf(state.lang)>=0&&!!window.HanziCompare;
   if(a.sec==="hz"&&!cjk)a.sec="abc";
-  var STL={phr:"Хэллэг",hz:"Ханз",qz:"Үсгийн тест",mp:"Авиа ялгах",num:"Тоо",wr:"Бичих",ph:"Авиа зүй"};
+  var STL={phr:"Хэллэг",hz:"Ханз",qz:"Үсгийн тест",mp:"Авиа ялгах",num:"Тоо",wr:"Бичих",ph:"Авиа зүй",plus:"Дасгал"};
   var wrOk=!!(window.StrokeWrite&&StrokeWrite.has(state.lang));
   if(a.sec==="wr"&&!wrOk)a.sec="abc";
   root.append(h("h2",null,(STL[a.sec]||"Үсэг")+" · "+LANGN[state.lang]));
@@ -3535,7 +3535,9 @@ function viewAlpha(){
   if(phOk)seg.insertBefore(sb("ph","🔊 Авиа зүй"),seg.children[1]);
   if(wrOk)seg.append(sb("wr","✍️ Бичих"));
   if(cjk)seg.append(sb("hz","Ханз"));
+  if(window.AlphaPlus)seg.append(sb("plus","✨ Дасгал"));
   root.append(seg);
+  if(a.sec==="plus"&&window.AlphaPlus){root.append(AlphaPlus.view(apEnv()));return root;}
   if(a.sec==="wr"){root.append(StrokeWrite.view({h:h,lang:function(){return state.lang;},render:render,speak:function(t){speak(t);},addXP:addXP,
     celebrate:function(){celebrate(true,true);},sget:sget,sset:sset}));return root;}
   if(a.sec==="phr"){root.append(viewPhrases());return root;}
@@ -3599,6 +3601,15 @@ function viewAlpha(){
   }
   return root;
 }
+/* ✨ Үсэг табын нэмэлт дасгалууд (alphaplus.js) */
+function apEnv(){
+  return {h:h,lang:function(){return state.lang;},kid:function(){return state.mode==="kid";},render:render,toast:toast,sget:sget,sset:sset,
+    addXP:addXP,celebrate:function(){celebrate(true,true);},speak:function(t,cb){speak(t,cb);},speakList:function(l,cb){speakList(l,cb);},stop:stopVoice,
+    alpha:function(){return ALPHA[state.lang]||[];},words:function(){return WORDS.filter(function(w){return (w[6]||"en")===state.lang;});},
+    /* сул үсгүүдийг «алдсан» жагсаалтад хийж үсгийн тестийг давтах горимд нээнэ */
+    drill:function(list){sset("amiss:"+state.lang,list);var a=ui.alpha;a.sec="qz";var q=a.qz||(a.qz={mode:"see",cur:null,opts:[],picked:null,rev:false,ok:0,n:0,lang:null});
+      q.lang=state.lang;q.rev=true;newAQ();render();window.scrollTo(0,0);}};
+}
 /* Үсгийн тест: үсгийг хараад уншлагыг нь, эсвэл сонсоод үсгийг нь сонгоно. Алдсан үсгийг amiss:<хэл>-д хадгалж давтуулна. */
 function aqLat(){return ["en","ru","de","ug"].indexOf(state.lang)>=0;}
 function aqAns(it){return aqLat()?it[3]:it[2];}
@@ -3637,7 +3648,7 @@ function viewAQuiz(){
     if(q.picked){if(o===q.cur)cls+=" ok";else if(o===q.picked)cls+=" bad";}
     root.append(h("button",{class:cls,style:q.mode==="hear"?"font-size:26px;text-align:center":null,disabled:!!q.picked,onclick:function(){
       var m=sget("amiss:"+state.lang,[]),g=it[0],ok=o===q.cur,i=m.indexOf(g);
-      q.picked=o;q.n++;
+      q.picked=o;q.n++;if(window.AlphaPlus)AlphaPlus.record(apEnv(),g,ok);
       if(ok){q.ok++;addXP(2);if(q.rev&&i>=0)m.splice(i,1);}else if(i<0)m.push(g);
       sset("amiss:"+state.lang,m);
       if(q.mode==="see")speak(it[1]);
@@ -7869,6 +7880,7 @@ function shopCard(){
    Хуучин хэрэглэгчид шинэ хувилбар анх нээгдэхэд нэг удаа гарна (sget "seenVer"); шинэ хэрэглэгчид гарахгүй. */
 var APP_VERSION="2.1.0";
 var WHATS_NEW=[
+  ["🔤","Үсгийн дасгалууд","Үсэг → ✨ Дасгал: эзэмшилт, хуурамч найз үсэг, гар бичмэл, үе бүтээгч, хурдан таних, дуу, гарын байрлал"],
   ["🧩","Өдрийн кроссворд","Сурч буй үгсээрээ өдөр бүр шинэ кроссворд (Сорил → Тоглоом)"],
   ["👅","Хэл зүгшрүүлэх","Алдартай tongue twister-уудыг хэлж, 🎤 нарийвчлалаа шалга"],
   ["🗺️","Хэлний аялал","Хичээл давах бүрт тухайн орны дараагийн хот руу аялна"],
@@ -8027,7 +8039,7 @@ function pfProg(root){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261018-3";
+var BUILD="20261018-4";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
@@ -8229,7 +8241,7 @@ document.addEventListener("selectionchange",function(){clearTimeout(QT.tm);QT.tm
 window.addEventListener("scroll",function(){if(QT.el)qtHide();},{passive:true});
 /* ---------- хойшлуулсан ачаалал: эхний дэлгэц гарсны дараа дүрмийн багц ба нэмэлт модулиуд ----------
    Эдгээр модулийг үргэлж window.X-ээр шалгаж ашигладаг тул ачаалагдтал товч нь харагдахгүй, ачаалагдмагц render() */
-var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js","reels.js","podcast.js","reader.js","mnemo.js","goal.js","focus.js","pairs.js","typing.js","anki.js","gesture.js","escape.js","debate.js","sign.js","crossword.js","twister.js","journey.js","jokes.js","abook.js"];
+var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js","reels.js","podcast.js","reader.js","mnemo.js","goal.js","focus.js","pairs.js","typing.js","anki.js","gesture.js","escape.js","debate.js","sign.js","crossword.js","twister.js","journey.js","jokes.js","abook.js","alphaplus.js"];
 function lazyBoot(){
   if(window.League){League.init(lgEnv());if(window.SALKHI_FB&&League.fromHash(lgEnv())){state.tab="stats";ui.lg=true;renderTabs();}
     /* наадмын push мэдэгдэл дээр дарж ирсэн (./#lg) */
