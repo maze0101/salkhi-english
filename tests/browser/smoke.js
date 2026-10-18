@@ -28,6 +28,7 @@ function check(name,ok,info){console.log((ok?"✓ ":"✗ ")+name+(info!=null?" �
     check("тэмцээний товч солигдоно",await t.ev("document.querySelector('#heroev b').textContent")!==r0);
 
     await t.ev("__t.state.tab='stats';__t.renderTabs();__t.render();1");await sleep(400);await t.shot("02-profile");
+    await t.ev("__t.ui.pfTab='prog';__t.render();1");await sleep(300);
     check("профайл карт",await t.ev("!!document.querySelector('.pf-card')"));
     check("ур чадварын диаграм",await t.ev("!!document.querySelector('.note svg[role=img]')"));
 

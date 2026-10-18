@@ -211,6 +211,27 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 .pass-top{display:flex;justify-content:space-between;align-items:baseline;margin:6px 0 8px}
 /* 🎯 долоо хоногийн даалгавар */
 .wq{margin:0 0 12px}
+/* эвхэгддэг хэсэг (нүүр: 7 хоногийн даалгавар, хэрэгслүүд) */
+.fold>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-weight:700}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary::after{content:"▾";margin-left:auto;opacity:.6;transition:transform .2s}
+.fold[open]>summary::after{transform:rotate(180deg)}
+.fold>summary .muted{font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fold .wq{border:0;padding:0;margin:8px 0 0;background:none;box-shadow:none}
+.daytask .fold{margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.daytask>.fold:first-child{margin-top:0;padding-top:0;border-top:0}
+.toolfold{margin:12px 0;padding:12px 14px}
+.toolfold .toolgrid{margin:10px 0 0}
+/* нүүр: Богино хичээл + Одны дэлгүүр зэрэгцээ жижиг хавтан */
+.hgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 12px}
+.hgrid .gamecard{margin:0!important;flex-direction:column;align-items:flex-start;gap:8px;padding:12px}
+.hgrid .gamecard::after{display:none}
+.hgrid .gamecard i{width:40px;height:40px;font-size:20px}
+.hgrid .gamecard b{font-size:14.5px}
+.ggrid{margin-top:10px}
+.ggrid .gamecard{min-height:132px}
+.ggrid .gamecard>div>span{-webkit-line-clamp:3!important}
+.hgrid .gamecard>div>span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px}
 .wq-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
 .wq-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
 .wq-ic{flex:none;width:34px;height:34px;border-radius:10px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:17px}
@@ -297,7 +318,8 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 .strip .tools .themebtn:hover{background:var(--soft)}
 .strip #ratebtn .lbl,.strip #forbtn .lbl{display:none}
 @media (max-width:559px){
-  .tools-out .strip{row-gap:8px}
+  .tools-out .strip{row-gap:6px}
+  .tools-out .strip>.stat{padding-top:4px;padding-bottom:4px}
   .tools-out .strip>.stat.pick{order:1}
   .tools-out .strip>.tools{order:2}
   .tools-out .strip::before{content:"";order:3;flex-basis:100%;height:0}
@@ -489,6 +511,10 @@ p+p{margin-top:10px}
 
 /* статистик */
 .big{font:700 40px/1 var(--font);letter-spacing:-.04em}
+/* профайл > Явц: тоон үзүүлэлтүүд 2 баганатай хавтан */
+.statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.stile{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.stile b{font-size:20px;font-weight:800;line-height:1.2;overflow-wrap:anywhere}
 .srow{display:flex;justify-content:space-between;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)}
 .days{display:flex;gap:8px;align-items:flex-end;height:110px;margin-top:10px}
 .days div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:12px;color:var(--ink-2)}
@@ -1265,7 +1291,7 @@ function h(tag,props){
   var el=document.createElement(tag);
   if(props){for(var k in props){var v=props[k];
     if(k==="class")el.className=v;
-    else if(k.indexOf("on")===0)el.addEventListener(k.slice(2),v);
+    else if(k.indexOf("on")===0&&typeof v==="function")el.addEventListener(k.slice(2),v);
     else if(v===true)el.setAttribute(k,"");
     else if(v!==false&&v!=null)el.setAttribute(k,v);}}
   for(var i=2;i<arguments.length;i++){append(el,arguments[i]);}
@@ -2103,14 +2129,26 @@ function taskInc(k){
   else sset("tasks",t);
 }
 function taskPanel(){
-  if(state.mode==="senior")return h("div");
+  if(state.mode==="senior")return h("div",{class:"note daytask",style:"margin-bottom:14px"},weeklyFold());
   var t=taskState(),n=TASKS.filter(function(x){return t[x[0]]>=x[1];}).length;
-  var el=h("div",{class:"note",style:"margin-bottom:14px"},h("div",{style:"font-weight:700;margin-bottom:4px"},"Өнөөдрийн даалгавар "+n+"/"+TASKS.length));
+  var el=h("div",{class:"note daytask",style:"margin-bottom:14px"},h("div",{style:"font-weight:700;margin-bottom:4px"},"Өнөөдрийн даалгавар "+n+"/"+TASKS.length));
   TASKS.forEach(function(x){
     var d=t[x[0]]>=x[1];
     el.append(h("button",{class:"back",style:"display:block;width:100%;text-align:left;padding:5px 0;margin:0;"+(d?"color:var(--ok)":""),onclick:function(){state.tab=x[3];renderTabs();render();window.scrollTo(0,0);}},(d?"✅ ":"⬜ ")+x[2]+" ("+Math.min(t[x[0]]||0,x[1])+"/"+x[1]+")"));
   });
+  if(state.mode!=="kid")el.append(weeklyFold());
   return el;
+}
+/* нүүрэнд 7 хоногийн даалгавар эвхэгдсэн; авах шагнал байвал нээлттэй */
+function weeklyFold(){
+  var wk=weekKey(),L=wqList(),done=0,ready=false,left=7-((new Date().getDay()+6)%7);
+  L.forEach(function(q){if(wqProgress(q)>=q[1]){done++;if(!wqGot("wq:"+wk+":"+q[0]))ready=true;}});
+  if(done===L.length&&!wqGot("wq:"+wk+":all"))ready=true;
+  var d=h("details",{class:"fold"},
+    h("summary",null,"🎯 7 хоногийн даалгавар "+done+"/"+L.length,h("span",{class:"muted small"},"· "+left+" өдөр"+(ready?" · ⭐ шагнал авах":""))),
+    weeklyCard(true));
+  d.open=ready;
+  return d;
 }
 /* pronunciation */
 function lev(a,b){
@@ -2810,23 +2848,22 @@ function viewWords(){
   if(!v.cur||p.indexOf(v.cur)<0){v.cur=pickWord();v.flipped=false;v.quiz=null;}
   var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
   if(window.Daily5)root.append(Daily5.card(d5Env(),startDaily5));
-  if(window.Reels)root.append(Reels.card(reelsEnv()));
-  root.append(shopHomeCard());
+  root.append(taskPanel());
+  root.append(h("div",{class:"hgrid"},window.Reels?Reels.card(reelsEnv()):null,shopHomeCard()));
   if(window.Onboard){var fy=Onboard.forYou(onbEnv());if(fy)root.append(fy);}
   if(window.Events){var evc=Events.card(xEnv());if(evc)root.append(evc);}
-  root.append(taskPanel());
-  if(state.mode!=="kid")root.append(weeklyCard());
   var bdc=bedCard();if(bdc)root.append(bdc);
   var rc=reviewCard();if(rc)root.append(rc);
   var wxc=wxWordsCard();if(wxc)root.append(wxc);
-  root.append(h("div",{class:"toolgrid"},
+  var tg=h("div",{class:"toolgrid"},
     state.mode!=="kid"&&window.ScreenLang?h("button",{class:"btn",onclick:function(){ui.wtool="screen";render();window.scrollTo(0,0);}},"📺 Дэлгэцийн хэл"):null,
     window.Worksheet?h("button",{class:"btn",onclick:function(){ui.wtool="ws";render();window.scrollTo(0,0);}},"🖨️ Ажлын хуудас"):null,
     state.mode!=="kid"&&window.Reader?h("button",{class:"btn",onclick:function(){ui.wtool="read";render();window.scrollTo(0,0);}},"📄 Өөрийн бичвэр"):null,
     h("button",{class:"btn",onclick:function(){ui.wtool="wall";render();window.scrollTo(0,0);}},"📱 Ханын зураг"),
     h("button",{class:"btn",onclick:function(){ui.wtool="loan";render();window.scrollTo(0,0);}},"🔤 Та аль хэдийн мэднэ"),
     h("button",{class:"btn",onclick:function(){ui.wtool="name";render();window.scrollTo(0,0);}},"✍️ Нэрээ гадаад бичгээр"),
-    h("button",{class:"btn",onclick:function(){ui.wtool="lbl";render();window.scrollTo(0,0);}},"🏷️ Гэрийн шошго")));
+    h("button",{class:"btn",onclick:function(){ui.wtool="lbl";render();window.scrollTo(0,0);}},"🏷️ Гэрийн шошго"));
+  root.append(h("details",{class:"note fold toolfold"},h("summary",null,"🧰 Хэрэгслүүд",h("span",{class:"muted small"},tg.children.length+" хэрэгсэл")),tg));
   var hs=state.mode!=="kid"&&window.MnHoliday&&MnHoliday.has(state.lang)&&MnHoliday.season();
   if(hs&&sget("holban","")!==hs+new Date().getFullYear())root.append(h("div",{class:"note",style:"display:flex;gap:10px;align-items:center;margin-bottom:12px"},
     h("div",{style:"flex:1"},h("b",null,"🎉 "+MnHoliday.title(hs)+" болж байна!"),h("div",{class:"muted small"},"Гадаад найздаа "+LANGN[state.lang].toLowerCase()+" хэлээр тайлбарлаж сур.")),
@@ -5141,25 +5178,27 @@ function viewPlay(){
   if(gck&&CLS_LISTS[gck])root.append(h("div",{class:"note",style:"display:flex;gap:8px;align-items:center"},h("span",{style:"flex:1"},"📝 «"+CLS_LISTS[gck].name+"» жагсаалтын үгсээр тоглож байна"),
     h("button",{class:"btn ghost",style:"flex:none;padding:6px 10px",onclick:function(){state.cat="all";render();}},"✕")));
   else root.append(h("p",{class:"muted"},LANGN[state.lang]+" үгсээр тоглоно. Түвшнээ дээд хэсгээс сонгоорой."));
+  /* тоглоомууд 2 баганатай хавтангаар — урт жагсаалтыг богиносгоно */
+  var gg=h("div",{class:"hgrid ggrid"});root.append(gg);
   GAMES.forEach(function(g){
     if((g[0]==="hang"||g[0]==="chain")&&!ALPH[state.lang])return;
     if(g[0]==="order"&&state.mode==="kid")return;
     var best=state.games[state.lang+":"+g[0]];
-    root.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){startGame(g[0]);}},
+    gg.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){startGame(g[0]);}},
       h("i",{"aria-hidden":"true"},g[1]),
       h("div",null,h("b",null,g[2]),h("span",null,g[3]+(best!=null?" · Шилдэг: "+(g[0]==="match"?fmtSec(best):g[0]==="dict"?best+"%":best):"")))));
   });
-  if(window.Ocr&&workerURL("/ocr")&&state.mode!=="kid")root.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.ocr=true;render();window.scrollTo(0,0);}},
+  if(window.Ocr&&workerURL("/ocr")&&state.mode!=="kid")gg.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.ocr=true;render();window.scrollTo(0,0);}},
     h("i",{"aria-hidden":"true"},"📸"),h("div",null,h("b",null,"Камераар орчуулах"),h("span",null,"Цэс, тэмдэг, шошгоны бичвэрийг уншиж тайлбарлана"))));
-  if(camURL())root.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.cam={};render();window.scrollTo(0,0);}},
+  if(camURL())gg.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.cam={};render();window.scrollTo(0,0);}},
     h("i",{"aria-hidden":"true"},"📷"),h("div",null,h("b",null,"Камераар сур"),h("span",null,"Эд зүйлийн зургийг ав, AI нэрийг нь хэлнэ"))));
-  if(window.Pairs&&Pairs.has(state.lang))root.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.pairs=true;render();window.scrollTo(0,0);}},
+  if(window.Pairs&&Pairs.has(state.lang))gg.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.pairs=true;render();window.scrollTo(0,0);}},
     h("i",{"aria-hidden":"true"},"👂"),h("div",null,h("b",null,"Ойролцоо дуудлага"),h("span",null,"ship / sheep гэх мэт хэцүү хосуудыг сонсож ялга"))));
-  if(window.Escape)root.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.esc=true;render();window.scrollTo(0,0);}},
+  if(window.Escape)gg.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.esc=true;render();window.scrollTo(0,0);}},
     h("i",{"aria-hidden":"true"},"🔐"),h("div",null,h("b",null,"Хэлний оньсого өрөө"),h("span",null,"Тэмдэг уншиж, зарлал сонсож 5 минутад гараарай"))));
-  if(window.Typing)root.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.typ=true;render();window.scrollTo(0,0);}},
+  if(window.Typing)gg.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.typ=true;render();window.scrollTo(0,0);}},
     h("i",{"aria-hidden":"true"},"⌨️"),h("div",null,h("b",null,"Бичих хурд"),h("span",null,"60 секундэд "+LANGN[state.lang].toLowerCase()+" гараар хэдэн үг бичих вэ?"))));
-  root.append(h("div",{style:"margin-top:10px"},gameCard()));
+  gg.append(gameCard());
   return root;
 }
 function startGame(kind){
@@ -7668,10 +7707,10 @@ function wqProgress(q){
 }
 function wqGot(key){var g=sget("rkgot",{});return !!(g&&g[key]);}
 function wqClaim(key,n,label){var rw=rankReward(key,n,false);if(rw){sfx("lv");celebrate(true,false);toast("⭐ +"+rw.stars+" — "+label);}render();}
-function weeklyCard(){
+function weeklyCard(noHead){
   var wk=weekKey(),L=wqList(),done=0,box=h("div",{class:"note wq"});
   var d=new Date(),left=7-((d.getDay()+6)%7);
-  box.append(h("div",{class:"wq-h"},h("b",null,"🎯 Долоо хоногийн даалгавар"),h("span",{class:"muted small"},left+" өдөр үлдлээ")));
+  if(!noHead)box.append(h("div",{class:"wq-h"},h("b",null,"🎯 Долоо хоногийн даалгавар"),h("span",{class:"muted small"},left+" өдөр үлдлээ")));
   L.forEach(function(q,i){
     var v=Math.min(q[1],wqProgress(q)),ok=v>=q[1],key="wq:"+wk+":"+q[0],got=wqGot(key);if(ok)done++;
     box.append(h("div",{class:"wq-row"+(ok?" ok":"")},
@@ -7865,10 +7904,7 @@ function viewStats(){
   if(ui.goal&&window.Goal&&state.mode!=="kid")return Goal.view(toolEnv(function(){ui.goal=false;render();window.scrollTo(0,0);}));
   if(ui.pact&&window.Pact)return Pact.view(pactEnv());
   if(ui.hub)return viewHub();
-  var root=h("div"),p=WORDS;
-  var known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length;
-  var done=Object.keys(state.lessons).length;
-  var lvl=xpLevel(state.xp),lvLo=25*(lvl-1)*lvl,lvHi=25*lvl*(lvl+1),lvPct=Math.round((state.xp-lvLo)/(lvHi-lvLo)*100);
+  var root=h("div"),lvl=xpLevel(state.xp);
   root.append(h("h2",null,"Профайл"));
   var pfx=h("div",{class:"row",style:"flex-wrap:wrap;margin-top:12px"},
     h("button",{class:"btn",onclick:function(){ui.pfEdit=!ui.pfEdit;render();}},"✏️ Аватар, нэр"),
@@ -7876,19 +7912,30 @@ function viewStats(){
   var pst={lvl:lvl,xp:state.xp,streak:streak(),av:myAvatar(),nick:myNick(),title:pfTitle(),status:myStatus(),extra:pfx,edit:function(){ui.pfEdit=true;render();}};
   if(window.SalkhiSync)root.append(SalkhiSync.profileCard(h,render,toast,pst,true));
   if(ui.pfEdit)root.append(pfEditor());
+  /* профайлыг 3 хэсэгт хуваана: Тойм (шагнал, дээд амжилт) · Явц (статистик, график) · Бусад (анги, гэр бүл, хэрэгсэл) */
+  var pt=ui.pfTab||"main";
+  root.append(h("div",{class:"seg segrid pfseg",role:"group","aria-label":"Профайлын хэсэг",style:"grid-template-columns:repeat(3,1fr);margin-top:14px"},
+    [["main","🏅 Тойм"],["prog","📈 Явц"],["more","🧩 Бусад"]].map(function(x){
+      return h("button",{"aria-pressed":String(pt===x[0]),onclick:function(){ui.pfTab=x[0];render();}},x[1]);
+    })));
+  if(pt==="main")pfMain(root);else if(pt==="prog")pfProg(root);else pfMore(root);
+  root.append(h("button",{class:"lrow",type:"button",style:"margin-top:22px",onclick:function(){ui.set=true;render();window.scrollTo(0,0);}},
+    h("span",{class:"hexb ico"},"⚙️"),h("span",{style:"flex:1"},h("div",{class:"t"},"Тохиргоо"),h("div",{class:"muted small"},"Үсгийн хэмжээ, дуу хоолой, сануулга, нөөцлөх, хуваалцах")),h("span",{"aria-hidden":"true"},"›")));
+  return root;
+}
+function pfMain(root){
   var rpn=repairNote();if(rpn)root.append(rpn);
   root.append(hubCard());
   root.append(studyCard());
   root.append(recordsCard());
-  root.append(skillCard());
-  var pcd=state.mode!=="kid"&&purposeCard();if(pcd)root.append(pcd);
-  root.append(monthCard());
   root.append(shopCard());
   if(parentReportDue())root.append(h("div",{class:"note",style:"margin-top:12px;display:flex;gap:10px;align-items:center"},
     h("span",{style:"font-size:28px","aria-hidden":"true"},"📬"),
     h("div",{style:"flex:1"},h("b",null,"7 хоногийн тайлан бэлэн боллоо"),h("div",{class:"muted small"},"Ээж аавдаа явцаа илгээгээрэй")),
     h("button",{class:"btn primary",style:"flex:none",onclick:sendParentReport},"Илгээх")));
   else if(state.mode==="kid")root.append(h("button",{class:"btn",style:"width:100%;margin-top:12px",onclick:sendParentReport},"📧 Тайланг эцэг эхэд илгээх"));
+}
+function pfMore(root){
   if(window.Classes&&window.SALKHI_FB){
     var nc=Classes.count();
     root.append(h("button",{class:"lrow",type:"button",style:"margin-top:12px",onclick:function(){ui.cls=true;render();window.scrollTo(0,0);}},
@@ -7898,6 +7945,13 @@ function viewStats(){
   if(window.Goal&&state.mode!=="kid")root.append(Goal.card(toolEnv(),function(){ui.goal=true;render();window.scrollTo(0,0);}));
   if(window.Focus)root.append(Focus.card(toolEnv()));
   if(window.VoiceDiary&&window.indexedDB)root.append(VoiceDiary.card(vdEnv(),function(){ui.vd=true;render();window.scrollTo(0,0);}));
+}
+function pfProg(root){
+  var p=WORDS,known=p.filter(function(w){return (state.box[w[1]]||0)>=2;}).length,done=Object.keys(state.lessons).length;
+  var lvl=xpLevel(state.xp),lvLo=25*(lvl-1)*lvl,lvHi=25*lvl*(lvl+1),lvPct=Math.round((state.xp-lvLo)/(lvHi-lvLo)*100);
+  root.append(skillCard());
+  var pcd=state.mode!=="kid"&&purposeCard();if(pcd)root.append(pcd);
+  root.append(monthCard());
   root.append(h("h3",{style:"margin:22px 0 10px"},"Миний явц"));
   root.append(weekReport());
   var nMB=mbCount();
@@ -7906,14 +7960,18 @@ function viewStats(){
   root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Түвшин"),h("span",{class:"big"},"Lv "+lvl)));
   root.append(h("div",{style:"height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin:2px 0 4px",role:"progressbar","aria-label":"Дараагийн түвшин хүртэлх явц","aria-valuemin":"0","aria-valuemax":"100","aria-valuenow":String(lvPct)},h("i",{style:"display:block;height:100%;width:"+lvPct+"%;background:var(--neon)"})));
   root.append(h("p",{class:"muted small",style:"margin:0 0 6px"},"Lv "+(lvl+1)+" хүртэл "+(lvHi-state.xp)+" XP"));
-  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Цуглуулсан од"),h("span",{class:"big"},"⭐ "+state.stars)));
-  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Нийт XP"),h("span",{class:"big"},String(state.xp))));
-  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Дараалсан өдөр"),h("span",{class:"big"},String(streak()))));
-  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Мэддэг үг"),h("span",{class:"big"},known+"/"+p.length)));
-  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Дуусгасан дүрмийн хичээл"),h("span",{class:"big"},done+"/"+LESSONS.length)));
-  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Ярианд илгээсэн мессеж"),h("span",{class:"big"},String(state.chatCount))));
-  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Дуудлагын дундаж оноо"),h("span",{class:"big"},state.speech.n?(Math.round(state.speech.sum/state.speech.n)+"% ("+state.speech.n+")"):"—")));
-  root.append(h("div",{class:"srow"},h("span",{class:"muted"},"Уншсан түүх"),h("span",{class:"big"},String(Object.keys(state.stories).length))));
+  var sg=h("div",{class:"statgrid"});
+  [
+    ["Цуглуулсан од","⭐ "+state.stars],
+    ["Нийт XP",String(state.xp)],
+    ["Дараалсан өдөр",String(streak())],
+    ["Мэддэг үг",known+"/"+p.length],
+    ["Дуусгасан дүрмийн хичээл",done+"/"+LESSONS.length],
+    ["Ярианд илгээсэн мессеж",String(state.chatCount)],
+    ["Дуудлагын дундаж оноо",state.speech.n?(Math.round(state.speech.sum/state.speech.n)+"% ("+state.speech.n+")"):"—"],
+    ["Уншсан түүх",String(Object.keys(state.stories).length)]
+  ].forEach(function(x){sg.append(h("div",{class:"stile"},h("b",null,x[1]),h("span",{class:"muted small"},x[0])));});
+  root.append(sg);
   root.append(certPanel());
   root.append(mnCard());
   var names=["Ням","Дав","Мяг","Лха","Пүр","Баа","Бям"],days=[],max=1,i,d;
@@ -7924,15 +7982,12 @@ function viewStats(){
   root.append(wrap);
   root.append(heatmap());
   root.append(langProgress());
-  root.append(h("button",{class:"lrow",type:"button",style:"margin-top:22px",onclick:function(){ui.set=true;render();window.scrollTo(0,0);}},
-    h("span",{class:"hexb ico"},"⚙️"),h("span",{style:"flex:1"},h("div",{class:"t"},"Тохиргоо"),h("div",{class:"muted small"},"Үсгийн хэмжээ, дуу хоолой, сануулга, нөөцлөх, хуваалцах")),h("span",{"aria-hidden":"true"},"›")));
-  return root;
 }
 
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261018-1";
+var BUILD="20261018-2";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
