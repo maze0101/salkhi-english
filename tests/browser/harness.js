@@ -7,7 +7,7 @@ const http=require("http"),fs=require("fs"),path=require("path"),os=require("os"
 const ROOT=path.resolve(__dirname,"..","..");
 const MIME={".html":"text/html",".js":"text/javascript",".css":"text/css",".png":"image/png",".svg":"image/svg+xml",".json":"application/json",".webmanifest":"application/manifest+json",".mp4":"video/mp4",".jpg":"image/jpeg"};
 const HOOK="window.__t={state:state,ui:ui,render:render,renderTabs:renderTabs,startGame:startGame,lvUp:lvUp,rankUp:rankUp,addXP:addXP,"+
-  "pfShareImg:pfShareImg,nmLatin:nmLatin,nmHangul:nmHangul,nmKata:nmKata,bedOpen:bedOpen,homeLabels:homeLabels};\n";
+  "pfShareImg:pfShareImg,nmLatin:nmLatin,nmHangul:nmHangul,nmKata:nmKata,bedOpen:bedOpen,homeLabels:homeLabels,WORDS:WORDS,sset:sset};\n";
 const BROWSERS=[process.env.BROWSER,"C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe","C:/Program Files/Google/Chrome/Application/chrome.exe",
   "/usr/bin/google-chrome","/usr/bin/chromium","/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"].filter(Boolean);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));

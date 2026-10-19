@@ -86,6 +86,13 @@
     pointer:'<path d="M5 12h14M13 6l6 6-6 6"/>',
     web:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/><circle cx="12" cy="12" r="4.5"/>',
     rocket:'<path d="M4.5 16.5c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.2 2.2 0 0 0-2.9-.1z"/><path d="m12 15-3-3a22 22 0 0 1 2-4A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22.4 22.4 0 0 1-4 2z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>',
+    sheep:'<path d="M7 10a3 3 0 0 1 5-2 3 3 0 0 1 5 1 3 3 0 0 1 1 5.5 3 3 0 0 1-4 2.5 3 3 0 0 1-5-.5A3 3 0 0 1 6 12a3 3 0 0 1 1-2z"/><path d="M8 17v3M15 17v3"/><circle cx="5" cy="9" r="2" '+W+'/>',
+    city:'<path d="M3 21h18M5 21V8l6-3v16M11 21V10h8v11"/><path d="M8 10h.01M8 13h.01M8 16h.01M14 13h2M14 16h2"/>',
+    mail:'<rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="m3 7 9 6 9-6"/><path d="M12 13.5c-1-.9-2.4-.6-2.4.6 0 1 2.4 2.4 2.4 2.4s2.4-1.4 2.4-2.4c0-1.2-1.4-1.5-2.4-.6z" '+W+'/>',
+    bus:'<rect x="4" y="3" width="16" height="15" rx="3"/><path d="M4 11h16M8 21v-3M16 21v-3M8 14.5h.01M16 14.5h.01M9 6.5h6"/>',
+    lips:'<path d="M2 12c3-4 6-5 8-3.5L12 9l2-.5c2-1.5 5-.5 8 3.5-3 4-6.5 6-10 6s-7-2-10-6z"/><path d="M2 12h20"/>',
+    ghost:'<path d="M5 20V11a7 7 0 0 1 14 0v9l-2.3-1.5L14.3 20 12 18.5 9.7 20l-2.4-1.5z"/><path d="M9.5 11h.01M14.5 11h.01"/>',
+    cloudsun:'<path d="M12 2v2M4.9 4.9l1.4 1.4M2 12h2M19.1 4.9l-1.4 1.4"/><path d="M15.5 9.6A4 4 0 0 0 8 10"/><path d="M17.5 21H9a5 5 0 1 1 4.6-7h1.9a3.5 3.5 0 0 1 2 7z"/>',
     brain:'<path d="M12 5a3 3 0 1 0-6 .1 4 4 0 0 0-2.5 5.8A4 4 0 0 0 6 18a4 4 0 0 0 6 1.5zM12 5a3 3 0 1 1 6 .1 4 4 0 0 1 2.5 5.8A4 4 0 0 1 18 18a4 4 0 0 1-6 1.5zM12 5v14.5"/>'
   };
   var M={ // эможи → [дүрс, өнгө]
@@ -105,7 +112,8 @@
     "🎁":["gift","pink"],"🔔":["bell","amber"],"⚙":["gear","slate"],"🎨":["palette","grape"],"💬":["chat","blue"],"🏠":["home","green"],
     "✈":["plane","blue"],"✅":["check","green"],"💡":["bulb","amber"],"❤":["heart","red"],"🃏":["cards","violet"],"🗂":["cards","blue"],
     "🔍":["search","blue"],"🔎":["search","blue"],"🌤":["sun","amber"],"☀":["sun","amber"],"🧭":["compass","teal"],"🏁":["flag","slate"],
-    "👉":["pointer","blue"],"🕸":["web","violet"],"🚀":["rocket","indigo"],"🧠":["brain","pink"],"👥":["users","blue"],"🎲":["cards","red"],"🇲🇳":["flag","red"]
+    "👉":["pointer","blue"],"🕸":["web","violet"],"🚀":["rocket","indigo"],"🧠":["brain","pink"],"👥":["users","blue"],"🎲":["cards","red"],"🐑":["sheep","green"],"🏙":["city","indigo"],"💌":["mail","pink"],"🚌":["bus","amber"],
+    "👄":["lips","red"],"👻":["ghost","violet"],"⛅":["cloudsun","cyan"],"🌾":["sheep","orange"],"🏠":["home","green"],"🇲🇳":["flag","red"]
   };
   var miss=window.__icMiss={};
   var RE=/^\s*([\u{1F1E6}-\u{1F1FF}]{2}|\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic}|[\u{1F3FB}-\u{1F3FF}])*️?)\s*/u;

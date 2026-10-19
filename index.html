@@ -2888,6 +2888,15 @@ function viewWords(){
   if(ui.wtool==="screen"&&window.ScreenLang)return ScreenLang.view(xEnv(function(){ui.wtool=null;render();window.scrollTo(0,0);}));
   if(ui.wtool==="ws"&&window.Worksheet)return Worksheet.view(xEnv(function(){ui.wtool=null;render();window.scrollTo(0,0);}));
   if(ui.wtool==="read"&&window.Reader&&state.mode!=="kid")return Reader.view(toolEnv(function(){ui.wtool=null;render();window.scrollTo(0,0);}));
+  if(ui.wtool==="herd"&&window.Herd)return Herd.view(nuEnv(closeTool));
+  if(ui.wtool==="hunt"&&window.Hunt)return Hunt.view(nuEnv(closeTool));
+  if(ui.wtool==="wxl"&&window.WxLesson)return WxLesson.view(nuEnv(closeTool));
+  if(ui.wtool==="letter"&&window.Letter)return Letter.view(nuEnv(closeTool));
+  if(ui.wtool==="song"&&window.MySong)return MySong.view(nuEnv(closeTool));
+  if(ui.wtool==="dream"&&window.Dream)return Dream.view(nuEnv(closeTool));
+  if(ui.wtool==="mnn"&&window.MnNews)return MnNews.view(nuEnv(closeTool));
+  if(ui.wtool==="lips"&&window.Lips)return Lips.view(nuEnv(closeTool));
+  if(ui.wtool==="bus"&&window.Commute){var cmA=ui.wauto;ui.wauto=false;return Commute.view(nuEnv(closeTool),cmA);}
   var v=ui.vocab,p=pool(),root=h("div");
   if(!p.length){root.append(catChips(),emptyNote(),addPanel());return root;}
   if(!v.cur||p.indexOf(v.cur)<0){v.cur=pickWord();v.flipped=false;v.quiz=null;}
@@ -2898,6 +2907,7 @@ function viewWords(){
   if(window.Onboard){var fy=Onboard.forYou(onbEnv());if(fy)root.append(fy);}
   if(window.Events){var evc=Events.card(xEnv());if(evc)root.append(evc);}
   var bdc=bedCard();if(bdc)root.append(bdc);
+  if(window.Dream&&state.mode!=="kid"){var drc=Dream.card(nuEnv(),function(){openWTool("dream");});if(drc)root.append(drc);}
   var rc=reviewCard();if(rc)root.append(rc);
   var wxc=wxWordsCard();if(wxc)root.append(wxc);
   var tg=h("div",{class:"toolgrid"},
@@ -2909,7 +2919,15 @@ function viewWords(){
     h("button",{class:"btn",onclick:function(){ui.wtool="name";render();window.scrollTo(0,0);}},"✍️ Нэрээ гадаад бичгээр"),
     h("button",{class:"btn",onclick:function(){ui.wtool="lbl";render();window.scrollTo(0,0);}},"🏷️ Гэрийн шошго"),
     window.Journey&&Journey.has(state.lang)?h("button",{class:"btn",onclick:function(){ui.wtool="trip";render();window.scrollTo(0,0);}},"🗺️ Хэлний аялал"):null,
-    window.Jokes&&Jokes.has(state.lang)&&state.mode!=="kid"?h("button",{class:"btn",onclick:function(){ui.wtool="joke";render();window.scrollTo(0,0);}},"😂 Хошин яриа"):null);
+    window.Jokes&&Jokes.has(state.lang)&&state.mode!=="kid"?h("button",{class:"btn",onclick:function(){ui.wtool="joke";render();window.scrollTo(0,0);}},"😂 Хошин яриа"):null,
+    window.Herd?h("button",{class:"btn",onclick:function(){openWTool("herd");}},"🐑 Үгийн сүрэг"+(function(){var n=Herd.strays(nuEnv());return n?" ("+n+" төөрсөн)":"";})()):null,
+    window.Hunt&&workerURL("/ocr")&&state.mode!=="kid"?h("button",{class:"btn",onclick:function(){openWTool("hunt");}},"🏙️ Хотын ан"):null,
+    window.Letter?h("button",{class:"btn",onclick:function(){openWTool("letter");}},"💌 Нууц захидал"):null,
+    window.MySong&&state.mode!=="kid"?h("button",{class:"btn",onclick:function(){openWTool("song");}},"🎵 Миний үгсийн дуу"):null,
+    window.Dream&&state.mode!=="kid"?h("button",{class:"btn",onclick:function(){openWTool("dream");}},"🌙 Зүүдний тэмдэглэл"):null,
+    window.MnNews&&workerURL("/news")&&state.mode!=="kid"?h("button",{class:"btn",onclick:function(){openWTool("mnn");}},"📰 Монгол мэдээг орчуул"):null,
+    window.Commute?h("button",{class:"btn",onclick:function(){openWTool("bus");}},"🚌 Автобусны горим"):null,
+    window.Lips?h("button",{class:"btn",onclick:function(){openWTool("lips");}},"👄 Уруулын толь"):null);
   root.append(h("details",{class:"note fold toolfold"},h("summary",null,"🧰 Хэрэгслүүд",h("span",{class:"muted small"},tg.children.length+" хэрэгсэл")),tg));
   var hs=state.mode!=="kid"&&window.MnHoliday&&MnHoliday.has(state.lang)&&MnHoliday.season();
   if(hs&&sget("holban","")!==hs+new Date().getFullYear())root.append(h("div",{class:"note",style:"display:flex;gap:10px;align-items:center;margin-bottom:12px"},
@@ -5219,6 +5237,7 @@ function viewPlay(){
   if(P.cw&&window.Crossword)return Crossword.view(toolEnv(function(){P.cw=false;render();window.scrollTo(0,0);}));
   if(P.tw&&window.Twister)return Twister.view(toolEnv(function(){P.tw=false;render();window.scrollTo(0,0);}));
   if(P.ocr&&window.Ocr)return Ocr.view(xEnv(function(){P.ocr=false;render();window.scrollTo(0,0);}));
+  if(P.ghost&&window.Ghost)return Ghost.view(nuEnv(function(){P.ghost=false;render();window.scrollTo(0,0);}));
   if(P.ex)return viewMock(root);
   root.append(h("h2",null,"Сорил"));
   var nMB=mbCount();
@@ -5266,6 +5285,8 @@ function viewPlay(){
     h("i",{"aria-hidden":"true"},"🧩"),h("div",null,h("b",null,"Өдрийн кроссворд"),h("span",null,"Сурч буй үгсээрээ өдөр бүр шинэ кроссворд"+(Crossword.doneToday(sget,state.lang)?" · ✅ өнөөдрийнх дууссан":"")))));
   if(window.Twister&&Twister.has(state.lang))gg.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.tw=true;render();window.scrollTo(0,0);}},
     h("i",{"aria-hidden":"true"},"👅"),h("div",null,h("b",null,"Хэл зүгшрүүлэх"),h("span",null,"Эх хэлтний ч хэл орооцолддог хэллэгийг хурдан, тод хэл"))));
+  if(window.Ghost)gg.append(h("button",{class:"gamecard",type:"button",style:"margin:10px 0 0",onclick:function(){P.ghost=true;render();window.scrollTo(0,0);}},
+    h("i",{"aria-hidden":"true"},"👻"),h("div",null,h("b",null,"Сүүдэртэй уралдах"),h("span",null,"7 хоногийн өмнөх өөртэйгөө хурдаар уралд"))));
   gg.append(gameCard());
   return root;
 }
@@ -7033,6 +7054,18 @@ function abEnv(){
   return e;
 }
 /* reader, mnemo, goal, focus, pairs, typing, anki модулиудад */
+/* 2026-10-19 модулиуд (🐑 🏙️ ⛅ 👻 💌 🎵 🌙 📰 🚌 👄): toolEnv + SRS хугацаа, давталт, цаг агаар */
+function nuEnv(close){
+  var e=toolEnv(close);
+  e.due=function(w){return state.due[w[1]]||0;};
+  e.review=startReview;
+  e.wx=wxWords;e.wxText=wxText;e.wxCity=function(){return (WX_CITIES[sget("wxCity",0)|0]||WX_CITIES[0])[0];};
+  e.kid=function(){return state.mode==="kid";};
+  return e;
+}
+function closeTool(){ui.wtool=null;render();window.scrollTo(0,0);}
+/* модулиас Үг табын хэрэгслийг нээх (жишээ нь #lt= захидлын холбоос, автобусны санал) */
+window.openWTool=function(name,auto){ui.wtool=name;ui.wauto=!!auto;state.tab="words";renderTabs();render();window.scrollTo(0,0);};
 function toolEnv(close){
   var e=xEnv(close);
   e.all=function(){return WORDS.filter(function(w){return (w[6]||"en")===state.lang;});};
@@ -8067,7 +8100,7 @@ function pfProg(root){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261019-7";
+var BUILD="20261019-8";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
@@ -8169,6 +8202,7 @@ function wxWordsCard(){
   return h("div",{class:"note",style:"margin-bottom:12px"},
     h("div",{style:"display:flex;align-items:center;gap:8px"},
       h("div",{style:"flex:1"},h("b",null,wxIcon(x.d.c,x.d.day)+" Өнөөдрийн үгс"),h("div",{class:"muted small"},city+": "+(t<0?"−"+(-t):t)+"°, "+wxText(x.d.c).toLowerCase()+(x.d.w>=8?", салхитай":"")+" — өнөөдөр хэрэг болох үгс")),
+      window.WxLesson?h("button",{class:"btn primary",style:"flex:none;padding:8px 12px",onclick:function(){openWTool("wxl");}},WxLesson.doneToday(sget,state.lang)?"✓ Хичээл":"▶ Хичээл"):null,
       h("button",{class:"btn ghost",style:"flex:none;padding:6px 10px","aria-label":"Өнөөдөр нуух",onclick:function(){sset("wxwhide",dkey(new Date()));render();}},"✕")),
     h("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"},x.w.map(function(w){
       return h("button",{class:"chip",title:w[2],onclick:function(){speak(w[1]);ui.vocab.cur=w;ui.vocab.mode="card";ui.vocab.flipped=true;render();}},h("b",null,w[1]),h("span",{class:"muted"}," "+w[2]));
@@ -8269,13 +8303,15 @@ document.addEventListener("selectionchange",function(){clearTimeout(QT.tm);QT.tm
 window.addEventListener("scroll",function(){if(QT.el)qtHide();},{passive:true});
 /* ---------- хойшлуулсан ачаалал: эхний дэлгэц гарсны дараа дүрмийн багц ба нэмэлт модулиуд ----------
    Эдгээр модулийг үргэлж window.X-ээр шалгаж ашигладаг тул ачаалагдтал товч нь харагдахгүй, ачаалагдмагц render() */
-var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js","reels.js","podcast.js","reader.js","mnemo.js","goal.js","focus.js","pairs.js","typing.js","anki.js","gesture.js","escape.js","debate.js","sign.js","crossword.js","twister.js","journey.js","jokes.js","abook.js","alphaplus.js"];
+var LAZY_JS=["eesh.js","jobprep.js","family.js","league.js","voicecall.js","teach.js","capsule.js","fatigue.js","pact.js","screenlang.js","travel.js","handsfree.js","story.js","news.js","ocr.js","worksheet.js","songs.js","reels.js","podcast.js","reader.js","mnemo.js","goal.js","focus.js","pairs.js","typing.js","anki.js","gesture.js","escape.js","debate.js","sign.js","crossword.js","twister.js","journey.js","jokes.js","abook.js","alphaplus.js","herd.js","hunt.js","wxlesson.js","ghost.js","letter.js","mysong.js","dream.js","mnnews.js","commute.js","lips.js"];
 function lazyBoot(){
   if(window.League){League.init(lgEnv());if(window.SALKHI_FB&&League.fromHash(lgEnv())){state.tab="stats";ui.lg=true;renderTabs();}
     /* наадмын push мэдэгдэл дээр дарж ирсэн (./#lg) */
     else if(location.hash==="#lg"){try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}state.tab="stats";ui.lg=true;renderTabs();}}
   if(window.Pact&&window.SALKHI_FB)Pact.init(pactEnv());
   if(window.Focus)Focus.init(toolEnv());
+  if(window.Commute)Commute.watch(nuEnv(),function(){openWTool("bus",true);});
+  if(window.Letter&&Letter.pending())openWTool("letter");
   if(window.Fatigue)Fatigue.init({h:h,toast:toast,kid:function(){return state.mode==="kid";},
     enabled:function(){return !ui.play.ex&&!ui.play.kx&&!(window.VoiceCall&&VoiceCall.active())&&!(window.Focus&&Focus.working());},
     lightGame:function(){state.tab="play";ui.play.sec="games";ui.play.ex=null;renderTabs();startGame("match");}});

@@ -330,6 +330,8 @@ const NEWS_FEEDS={
   ko:[["BBC","https://feeds.bbci.co.uk/korean/rss.xml"]],zh:[["BBC","https://feeds.bbci.co.uk/zhongwen/simp/rss.xml"]],
   ru:[["BBC","https://feeds.bbci.co.uk/russian/rss.xml"]],de:[["DW","https://rss.dw.com/xml/rss-de-top"]]
 };
+/* ?lang=mn: монгол хэл дээрх гарчиг (апп-ын «Монгол мэдээг орчуул» дасгал) */
+const NEWS_MNSRC=["iKon","https://ikon.mn/rss"];
 const NEWS_MN=["Google News","https://news.google.com/rss/search?q=Mongolia&hl=en-US&gl=US&ceid=US:en"];
 function xmlText(s){
   return String(s||"").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g,"$1").replace(/<[^>]+>/g," ")
@@ -358,6 +360,9 @@ async function feed(f,max,ctx){
 }
 async function handleNews(url,env,ctx){
   const ah={"access-control-allow-origin":"*","cache-control":"max-age=900"};
+  if(url.searchParams.get("lang")==="mn"){
+    try{return json({items:await feed(NEWS_MNSRC,12,ctx)},200,ah);}catch(e){return json({error:"news_unavailable"},503,ah);}
+  }
   const lang=NEWS_FEEDS[url.searchParams.get("lang")]?url.searchParams.get("lang"):"en";
   try{
     const lists=await Promise.all(NEWS_FEEDS[lang].map(function(f){return feed(f,8,ctx).catch(function(){return [];});}).concat([feed(NEWS_MN,3,ctx).then(function(a){return a.map(function(x){x.mn=true;return x;});}).catch(function(){return [];})]));
