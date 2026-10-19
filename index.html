@@ -30,7 +30,7 @@ document.addEventListener("touchmove",function(e){if(e.touches.length>1||(e.scal
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@600;700;800;900&family=Unbounded:wght@700&display=swap&subset=cyrillic,cyrillic-ext" rel="stylesheet">
 <style>
-/* Салхи — үндсэн загвар (доор «2026-10-14 шинэ загвар: Монгол хээтэй» блок өнгө, карт, товчийг дарж бичнэ). */
+/* Салхи — үндсэн загвар (доор «2026-10-19 шинэ загвар: минимал, цэвэр» блок өнгө, карт, товчийг дарж бичнэ). */
 :root{
   --bg:#F7F7F8; --surface:#FFFFFF; --ink:#111113; --ink-2:#6B6B74; --line:#E6E6EA;
   --sky:#2F5BEA; --dune:#D6E0FC; --dune-2:#EBF0FE; --dune-3:#2F5BEA;
@@ -717,142 +717,130 @@ p+p{margin-top:10px}
 .toolgrid .btn{display:flex;align-items:center;justify-content:flex-start;gap:8px;text-align:left;padding:10px 12px;font-size:14px;line-height:1.25;min-height:46px;border-radius:12px}
 .toolgrid .btn:not(:disabled):hover{border-color:color-mix(in srgb,var(--sky) 45%,var(--line));background:var(--soft)}
 
-/* ==== 2026-10-14 шинэ загвар: Монгол хээтэй ====
-   Хөх тэнгэр, алтан шар, улаан өнгө; дулаан цайвар (бүрээсийн цаас шиг) дэвсгэр, шөнийн хөх харанхуй горим.
-   Алхан хээ (--hee, SVG): доод цэс, нүүрний доод ирмэг, гарчгийн доор. Хичээлийн дугаар — ромбо (хээний элемент).
-   Карт, товч: хүрээ + доод ирмэг, дарахад сууна. Үндсэн товч — хөх, алтан ирмэгтэй. Өнгөний тодрол WCAG AA (4.5:1). */
+/* ==== 2026-10-19 шинэ загвар: минимал, цэвэр ====
+   (Өмнөх «Монгол хээтэй» блок: git d92da8b.) Нэг тодотгол өнгө (хөх), нимгэн 1px шугам, сүүдэргүй карт,
+   хээ/алтан ирмэг/3D товчгүй, Inter фонт. Алт зөвхөн од, шагналд. Өнгөний тодрол WCAG AA (4.5:1). */
 :root{
-  --bg:#FBF7EE; --surface:#FFFFFF; --ink:#1E2A3A; --ink-2:#5A6372; --line:#E8DFCB; --edge:#D9CCAE;
-  --sky:#1D4FA0; --dune:#E8EEFA; --dune-2:#F3F6FC; --dune-3:#1D4FA0;
-  --neon:#1D4FA0; --focus:#2A5CB8; --ok:#1E6B33; --danger:#A3141F;
-  --gold:#C9A227; --gold-soft:#FFF3D1; --gold-ink:#6B4E00;
-  --cta:#1D4FA0; --cta-edge:#C9A227; --cta-ink:#FFFFFF;
-  --sel-bg:#E8EEFA; --sel-line:#2A5CB8; --sel-ink:#1A4590;
-  --ok-bg:#E6F4EA; --ok-line:#2E8B57; --bad-bg:#FCE4E4; --bad-line:#C8102E;
-  --rc:14px; --soft:#F3F6FC;
-  --font:"Nunito","Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --hfont:"Unbounded","Nunito",system-ui,sans-serif;
-  --hee:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath d='M0 9H11V1H4V6H8V3.5M11 9H16' fill='none' stroke='%23C9A227' stroke-width='1.5'/%3E%3C/svg%3E");
+  --bg:#FAFAFA; --surface:#FFFFFF; --ink:#18181B; --ink-2:#5F5F6A; --line:#EAEAEE; --edge:#EAEAEE;
+  --sky:#2F5BEA; --dune:#E9EEFD; --dune-2:#F3F6FE; --dune-3:#2F5BEA;
+  --neon:#2F5BEA; --focus:#2F5BEA; --ok:#15803D; --danger:#C81E1E;
+  --gold:#C99A1E; --gold-soft:#FBF6E8; --gold-ink:#7A5600;
+  --cta:#2F5BEA; --cta-edge:#2F5BEA; --cta-ink:#FFFFFF;
+  --sel-bg:#EEF2FE; --sel-line:#2F5BEA; --sel-ink:#2149C9;
+  --ok-bg:#ECF7EF; --ok-line:#22A050; --bad-bg:#FDEEEE; --bad-line:#DC3B3B;
+  --rc:16px; --soft:#F4F6FE;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --hfont:"Inter",system-ui,sans-serif;
+  --hee:none;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#0E1A2B; --surface:#16243A; --ink:#F3EEDF; --ink-2:#A9B4C6; --line:#2A3A55; --edge:#22314A;
-    --sky:#7FB2FF; --dune:#1F3352; --dune-2:#192B45; --dune-3:#7FB2FF; --neon:#7FB2FF; --focus:#9CC4FF;
-    --ok:#86D69B; --danger:#FF8A8A; --gold:#F2C14E; --gold-soft:#2E2A1A; --gold-ink:#F2C14E;
-    --cta:#F2C14E; --cta-edge:#B88A1B; --cta-ink:#1A1300;
-    --sel-bg:#1F3352; --sel-line:#4F7FC8; --sel-ink:#9CC4FF;
-    --ok-bg:#16351F; --ok-line:#3FA76A; --bad-bg:#3A1A20; --bad-line:#E0454F; --soft:#192B45;
-    --hee:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath d='M0 9H11V1H4V6H8V3.5M11 9H16' fill='none' stroke='%23F2C14E' stroke-width='1.5'/%3E%3C/svg%3E");
+    --bg:#0E0E11; --surface:#17171B; --ink:#EDEDF0; --ink-2:#A0A0AA; --line:#27272D; --edge:#27272D;
+    --sky:#8AA2FF; --dune:#1E2547; --dune-2:#181D36; --dune-3:#8AA2FF; --neon:#8AA2FF; --focus:#8AA2FF;
+    --ok:#4ADE80; --danger:#F87171; --gold:#E8B931; --gold-soft:#2A2414; --gold-ink:#F2C94C;
+    --cta:#3B5CF0; --cta-edge:#3B5CF0; --cta-ink:#FFFFFF;
+    --sel-bg:#1E2547; --sel-line:#5B78F5; --sel-ink:#B4C3FF;
+    --ok-bg:#12291A; --ok-line:#2F9E5A; --bad-bg:#331719; --bad-line:#D9474F; --soft:#1A1D2B;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0E1A2B; --surface:#16243A; --ink:#F3EEDF; --ink-2:#A9B4C6; --line:#2A3A55; --edge:#22314A;
-  --sky:#7FB2FF; --dune:#1F3352; --dune-2:#192B45; --dune-3:#7FB2FF; --neon:#7FB2FF; --focus:#9CC4FF;
-  --ok:#86D69B; --danger:#FF8A8A; --gold:#F2C14E; --gold-soft:#2E2A1A; --gold-ink:#F2C14E;
-  --cta:#F2C14E; --cta-edge:#B88A1B; --cta-ink:#1A1300;
-  --sel-bg:#1F3352; --sel-line:#4F7FC8; --sel-ink:#9CC4FF;
-  --ok-bg:#16351F; --ok-line:#3FA76A; --bad-bg:#3A1A20; --bad-line:#E0454F; --soft:#192B45;
-  --hee:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath d='M0 9H11V1H4V6H8V3.5M11 9H16' fill='none' stroke='%23F2C14E' stroke-width='1.5'/%3E%3C/svg%3E");
+  --bg:#0E0E11; --surface:#17171B; --ink:#EDEDF0; --ink-2:#A0A0AA; --line:#27272D; --edge:#27272D;
+  --sky:#8AA2FF; --dune:#1E2547; --dune-2:#181D36; --dune-3:#8AA2FF; --neon:#8AA2FF; --focus:#8AA2FF;
+  --ok:#4ADE80; --danger:#F87171; --gold:#E8B931; --gold-soft:#2A2414; --gold-ink:#F2C94C;
+  --cta:#3B5CF0; --cta-edge:#3B5CF0; --cta-ink:#FFFFFF;
+  --sel-bg:#1E2547; --sel-line:#5B78F5; --sel-ink:#B4C3FF;
+  --ok-bg:#12291A; --ok-line:#2F9E5A; --bad-bg:#331719; --bad-line:#D9474F; --soft:#1A1D2B;
 }
-body{font-weight:600;letter-spacing:0}
-h2{font:700 22px/1.25 var(--hfont);letter-spacing:-.01em;padding:0 8px 12px 0;background:var(--hee) left bottom/16px 10px repeat-x;max-width:max-content}
-h3{font-weight:800;letter-spacing:0}
-.muted{font-weight:600}
-.back{color:var(--sky);font-weight:800;font-size:15px}
+body{font-weight:400;letter-spacing:-.006em}
+h2{font:700 24px/1.25 var(--hfont);letter-spacing:-.02em}
+h3{font-weight:650;letter-spacing:-.01em}
+.back{color:var(--sky);font-weight:600;font-size:15px}
 
-/* карт: хүрээ + доод ирмэг */
+/* карт: 1px шугам, сүүдэргүй */
 .opt,.lrow,.scn,.gamecard,.note,.fc,.pf-card,.goalbox,.kxmedal,.tr,.onbopt,.onbbox,.hz>div,.ag button,.kxstop button{
-  border:1.5px solid var(--line);border-bottom:3px solid var(--edge);border-radius:var(--rc)}
-.note .note{border-bottom-width:1.5px}
+  border:1px solid var(--line);border-radius:var(--rc);box-shadow:none}
 .lrow,.gamecard,.scn{padding:14px 16px;gap:14px}
-.lrow .t,.lrow b,.gamecard b,.scn{font-weight:800}
-@media (hover:hover){.opt:not(:disabled):hover,.lrow:hover,.scn:not(:disabled):hover,.gamecard:hover{background:var(--soft);border-color:var(--sel-line)}}
-.opt:not(:disabled):active,.lrow:active,.scn:not(:disabled):active,.gamecard:active,.ag button:active{transform:translateY(2px);border-bottom-width:1.5px;margin-bottom:1.5px}
-.gamecard i{border-radius:12px;width:48px;height:48px;background:var(--gold-soft)}
-.gamecard:nth-of-type(4n+1) i{background:color-mix(in srgb,#2A5CB8 16%,var(--surface))}
-.gamecard:nth-of-type(4n+2) i{background:color-mix(in srgb,#C8102E 14%,var(--surface))}
-.gamecard:nth-of-type(4n+3) i{background:color-mix(in srgb,#E0A800 22%,var(--surface))}
-.gamecard:nth-of-type(4n) i{background:color-mix(in srgb,#13807A 18%,var(--surface))}
+.lrow .t,.lrow b,.gamecard b,.scn{font-weight:600}
+@media (hover:hover){.opt:not(:disabled):hover,.lrow:hover,.scn:not(:disabled):hover,.gamecard:hover{border-color:color-mix(in srgb,var(--sky) 40%,var(--line))}}
+.opt:not(:disabled):active,.lrow:active,.scn:not(:disabled):active,.gamecard:active,.ag button:active{transform:scale(.985)}
+.opt,.lrow,.scn,.gamecard,.btn,.chip{transition:border-color .15s,background-color .15s,transform .1s}
+.gamecard i{border-radius:12px;width:44px;height:44px;background:var(--soft)}
 
 /* товч */
-.btn{border:1.5px solid var(--line);border-bottom:3px solid var(--edge);border-radius:14px;font-weight:800;padding:12px 18px;background:var(--surface);color:var(--sky)}
-.btn:hover{border-color:var(--sel-line);background:var(--soft)}
-.btn:not(:disabled):active{transform:translateY(2px);border-bottom-width:1.5px;margin-bottom:1.5px}
-.btn.primary{background:var(--cta);border-color:var(--cta);border-bottom-color:var(--cta-edge);color:var(--cta-ink)}
-.btn.primary:hover{background:color-mix(in srgb,var(--cta) 88%,#000);border-color:var(--cta);border-bottom-color:var(--cta-edge)}
-.btn.dark{background:var(--ink);border-color:var(--ink);border-bottom-color:var(--gold);color:var(--bg)}
-.btn.ghost{background:none}
-.btn:disabled{opacity:.5}
-.auth-main{background:var(--cta);color:var(--cta-ink);border-radius:14px;border-bottom:3px solid var(--cta-edge);font-weight:800}
-.auth-g,.auth-f,.auth-x{border-width:1.5px;border-radius:14px}
-.rec{background:#C8102E;border-color:#C8102E;color:#fff}
+.btn{border:1px solid var(--line);border-radius:12px;font-weight:600;padding:12px 18px;background:var(--surface);color:var(--ink)}
+.btn:hover{border-color:color-mix(in srgb,var(--sky) 40%,var(--line))}
+.btn:not(:disabled):active{transform:scale(.98)}
+.btn.primary{background:var(--cta);border-color:var(--cta);color:var(--cta-ink)}
+.btn.primary:hover{background:color-mix(in srgb,var(--cta) 90%,#000);border-color:var(--cta)}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn.ghost{background:none;border-color:transparent;color:var(--sky)}
+.btn:disabled{opacity:.45}
+.auth-main{background:var(--cta);color:var(--cta-ink);border-radius:12px;font-weight:600}
+.auth-g,.auth-f,.auth-x{border-width:1px;border-radius:12px}
+.rec{background:var(--danger);border-color:var(--danger);color:#fff}
 
 /* чип, сонголт */
-.chip{border:1.5px solid var(--line);border-bottom:2.5px solid var(--edge);border-radius:12px;font-weight:800}
+.chip{border:1px solid var(--line);border-radius:999px;font-weight:500}
 .chip[aria-pressed="true"],.chip[aria-selected="true"]{background:var(--sel-bg)!important;border-color:var(--sel-line)!important;color:var(--sel-ink)}
-.opt{font-weight:700}
+.opt{font-weight:500}
 .opt.ok{border-color:var(--ok-line);background:var(--ok-bg);color:var(--ok)}
 .opt.bad{border-color:var(--bad-line);background:var(--bad-bg);color:var(--danger)}
-.q{font-weight:800;font-size:20px}
+.q{font-weight:650;font-size:20px;letter-spacing:-.01em}
 
-/* сегмент, горим, түвшин */
-.seg,.modes,.auth-seg{background:none;padding:0;gap:6px}
-.seg button,.modes button,.auth-seg button{border:1.5px solid var(--line);border-bottom:3px solid var(--edge);border-radius:12px;background:var(--surface);color:var(--ink-2);font-weight:800}
-.seg button[aria-pressed="true"],.modes button[aria-pressed="true"],.auth-seg button[aria-selected=true]{background:var(--sky);border-color:var(--sky);border-bottom-color:var(--gold);color:var(--bg);box-shadow:none}
-.seg.segrid{gap:6px}
-.lv{border:1.5px solid var(--line);border-radius:999px;font-weight:800;color:var(--ink-2)}
+/* сегмент, горим: саарал зам дээр цагаан сонголт */
+.seg,.modes,.auth-seg{background:color-mix(in srgb,var(--ink) 5%,var(--bg));padding:4px;gap:4px;border-radius:14px}
+.seg button,.modes button,.auth-seg button{border:0;border-radius:10px;background:none;color:var(--ink-2);font-weight:500}
+.seg button[aria-pressed="true"],.modes button[aria-pressed="true"],.auth-seg button[aria-selected=true]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.seg.segrid{gap:4px}
+.lv{border:1px solid var(--line);border-radius:999px;font-weight:500;color:var(--ink-2)}
 .lv[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-line);color:var(--sel-ink)}
-.stat{border:1.5px solid var(--line);border-radius:999px;font-weight:800}
+.stat{border:1px solid var(--line);border-radius:999px;font-weight:600}
 
 /* оролт */
-.tin,.composer textarea,.auth-f{border:1.5px solid var(--line);border-radius:14px;background:var(--surface);font-weight:600}
-.tin:focus,.composer textarea:focus,.auth-f:focus{border-color:var(--sel-line);box-shadow:0 0 0 3px color-mix(in srgb,var(--sel-line) 18%,transparent)}
+.tin,.composer textarea,.auth-f{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.tin:focus,.composer textarea:focus,.auth-f:focus{border-color:var(--sel-line);box-shadow:0 0 0 3px color-mix(in srgb,var(--sel-line) 16%,transparent)}
 
-/* явцын шугам: хөх, алтан гялбаатай */
-.bar{height:10px;border-radius:999px;background:var(--line)}
-.bar i{background:linear-gradient(90deg,var(--sky),color-mix(in srgb,var(--sky) 70%,var(--gold)));border-radius:999px}
-.days i{background:var(--sky);border-radius:6px 6px 2px 2px}
+/* явцын шугам */
+.bar{height:6px;border-radius:999px;background:color-mix(in srgb,var(--ink) 8%,var(--bg))}
+.bar i{background:var(--sky);border-radius:999px}
+.days i{background:var(--sky);border-radius:4px 4px 2px 2px}
 
-/* хичээлийн дугаар — ромбо (хээний элемент) */
-.hexb{width:48px;height:48px;border:0;border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:#2A5CB8;color:#fff;font:900 14px/1 var(--font);display:grid;place-items:center}
+/* хичээлийн дугаар — нэг өнгийн дугуй дөрвөлжин */
+.hexb{width:44px;height:44px;border:0;border-radius:12px;background:var(--soft);color:var(--sky);font:650 13px/1 var(--font)}
 .hexb.ico{font-size:20px}
-.lrow:nth-of-type(6n+1) .hexb{background:#2A5CB8;color:#fff}
-.lrow:nth-of-type(6n+2) .hexb{background:#C8102E;color:#fff}
-.lrow:nth-of-type(6n+3) .hexb{background:#E0A800;color:#2A1E00}
-.lrow:nth-of-type(6n+4) .hexb{background:#13807A;color:#fff}
-.lrow:nth-of-type(6n+5) .hexb{background:#8B2E3C;color:#fff}
-.lrow:nth-of-type(6n) .hexb{background:#3D8FD6;color:#0B1C33}
-.hexb.done{background:var(--gold)!important;color:#2A1E00!important}
-.lvtag{background:var(--gold-soft);color:var(--gold-ink);border-radius:6px;font-weight:900}
-.rule{border:1.5px solid var(--gold);border-left:5px solid var(--gold);background:var(--gold-soft);border-radius:var(--rc);font-weight:700;color:var(--ink)}
+.hexb.done{background:var(--ok-bg)!important;color:var(--ok)!important}
+.lvtag{background:var(--soft);color:var(--sel-ink);border-radius:6px;font-weight:600}
+.rule{border:0;border-left:3px solid var(--sky);background:var(--soft);border-radius:4px 12px 12px 4px;font-weight:400;color:var(--ink)}
 
 /* яриа */
-.b{border-radius:18px;font-weight:600}
-.b.ai{border:1.5px solid var(--line)}
-.b.me{background:var(--sky);color:var(--bg)}
+.b{border-radius:18px}
+.b.ai{border:1px solid var(--line)}
+.b.me{background:var(--cta);color:var(--cta-ink)}
 
-/* доод цэс: дээд талд алхан хээ, идэвхтэй таб — хөх */
-.tabs{background:var(--surface);border-top:0;-webkit-backdrop-filter:none;backdrop-filter:none}
-.tabs::before{content:"";position:absolute;left:0;right:0;top:-10px;height:10px;background:var(--hee);background-size:16px 10px;background-repeat:repeat-x;pointer-events:none}
-.tab{font-weight:800;font-size:10.5px;border-radius:12px}
-.tab .ti svg{stroke-width:2.1}
-.tab[aria-current="page"]{color:var(--sky);font-weight:900}
-.tab[aria-current="page"] .ti{background:var(--sel-bg);border-radius:10px;width:44px;height:28px;padding:2px 10px;box-shadow:inset 0 -2px 0 var(--gold)}
+/* доод цэс */
+.tabs{background:color-mix(in srgb,var(--surface) 90%,transparent);border-top:1px solid var(--line)}
+.tab{font-weight:500;font-size:10.5px;border-radius:12px;color:var(--ink-2)}
+.tab .ti svg{stroke-width:1.8}
+.tab[aria-current="page"]{color:var(--sky);font-weight:650}
+.tab[aria-current="page"] .ti{background:var(--sel-bg);border-radius:999px;width:46px;height:28px;padding:2px 11px}
 
-/* нүүр: доод ирмэгт алтан хээ */
-.salkhi-hero{border-radius:0 0 24px 24px}
-.salkhi-hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:10px;background:var(--hee) rgba(0,0,0,.25);background-size:16px 10px;background-repeat:repeat-x;pointer-events:none;z-index:2}
-.mnsbtn,.themebtn,.tools .wxbtn{border-radius:12px;font-weight:800}
+/* нүүр */
+.salkhi-hero{border-radius:0 0 20px 20px}
+.mnsbtn,.themebtn,.tools .wxbtn{border-radius:12px;font-weight:600}
+.v2b{border:0;background:rgba(255,255,255,.92);color:#18181B;font:700 11px/1.1 var(--font);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.sp-v{color:var(--ink-2);font:600 15px/1 var(--font);letter-spacing:.08em}
+.sp-v i{height:1px;background:var(--line)}
+.wn-head::after{display:none}
 
 /* бусад */
-.toast{border-radius:14px;font-weight:800;border-bottom:3px solid var(--gold)}
-.pf-av{background:#2A5CB8;box-shadow:0 0 0 3px var(--gold)}
-.pf-chips span{border:1.5px solid var(--line);font-weight:800}
-.kxstop.cur button{border-color:var(--gold);box-shadow:0 0 0 5px color-mix(in srgb,var(--gold) 25%,transparent)}
-.onbopt.rec{border-color:var(--gold)}
-.lvup>div{border:1.5px solid var(--gold);border-bottom-width:4px;border-radius:22px}
-.skinpanel{border-width:1.5px;border-radius:22px 22px 0 0}
-.toolgrid .btn{color:var(--ink);font-weight:800;min-height:52px}
+.toast{border-radius:12px;font-weight:600}
+.pf-av{background:var(--sky);box-shadow:0 0 0 3px var(--surface),0 0 0 4px var(--line)}
+.pf-chips span{border:1px solid var(--line);font-weight:500}
+.kxstop.cur button{border-color:var(--sky);box-shadow:0 0 0 4px color-mix(in srgb,var(--sky) 18%,transparent)}
+.onbopt.rec{border-color:var(--sky)}
+.lvup>div{border:1px solid var(--line);border-radius:20px}
+.skinpanel{border-width:1px;border-radius:20px 20px 0 0}
+.toolgrid .btn{color:var(--ink);font-weight:500;min-height:50px}
 .ag button[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-line);color:var(--sel-ink)}
 .ag button[aria-pressed="true"] small{color:var(--sel-ink)}
 .qt{position:fixed;z-index:210;max-width:min(320px,92vw);min-width:180px;background:var(--surface);background-clip:padding-box;color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:10px 34px 10px 12px;font-size:15px;animation:qtin .15s ease-out}
@@ -8039,7 +8027,7 @@ function pfProg(root){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261019-1";
+var BUILD="20261019-2";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
