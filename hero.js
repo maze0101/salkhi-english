@@ -68,9 +68,11 @@ function initSalkhiHero(root) {
     // Хүүхэд логоны баруун талаас салхин тээрэм хүртэлх зайд алхана
     // логоны баруун талын 📜🤟 товчнуудыг (.brand) ч тойрно
     const brandEl = root.querySelector('.brand'), bR = brandEl ? brandEl.getBoundingClientRect().right - cr.left : 0;
-    const x0 = Math.max(lr ? lr : 24 + Math.min(300, W * 0.62), bR) + 18, x1 = Math.max(W * 0.74, x0);
+    // баруун доод булангийн 📜 товч (.herobr) хүртэл л алхана
+    const brEl = root.querySelector('.herobr'), brL = brEl && brEl.offsetWidth ? brEl.getBoundingClientRect().left - cr.left - 18 : W;
+    const x0 = Math.max(lr ? lr : 24 + Math.min(300, W * 0.62), bR) + 18, x1 = Math.max(Math.min(W * 0.74, brL), x0);
     // цаасан шувуу товчнуудын дээгүүр нисэх ёстой (их биеийн доод үзүүр ~18px)
-    kiteMaxY = brandEl ? brandEl.getBoundingClientRect().top - cr.top - 26 : 1e9;
+    kiteMaxY = Math.min(brandEl ? brandEl.getBoundingClientRect().top - cr.top - 26 : 1e9, brEl && brEl.offsetWidth ? brEl.getBoundingClientRect().top - cr.top - 26 : 1e9);
     kid.mid = (x0 + x1) / 2;
     kid.amp = Math.max(0, Math.min(120, (x1 - x0) / 2));
 

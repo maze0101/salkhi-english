@@ -877,6 +877,7 @@ h3{font-weight:650;letter-spacing:-.01em}
   .herobtns .hb-ic.ict{width:26px;height:26px}
 }
 .brand img{filter:drop-shadow(0 2px 8px rgba(8,20,40,.35))}
+.herobr{position:absolute;right:16px;bottom:16px}
 .v2b{top:-10px;right:-8px;padding:2px 7px;color:var(--cta);font-weight:800}
 .qt{position:fixed;z-index:210;max-width:min(320px,92vw);min-width:180px;background:var(--surface);background-clip:padding-box;color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:10px 34px 10px 12px;font-size:15px;animation:qtin .15s ease-out}
 @keyframes qtin{from{opacity:0;transform:translateY(-4px)}}
@@ -897,7 +898,7 @@ h3{font-weight:650;letter-spacing:-.01em}
     <div class="salkhi-hero" id="salkhiHero">
       <canvas role="img" aria-label="Салхи — дарж салхи үлээлгэх"></canvas>
       <div class="salkhi-hero__overlay">
-        <div class="brand"><div class="logo-w"><img src="logo-light.png" alt="Салхи" width="600" height="129"><button class="v2b" id="v2b" type="button" aria-label="Салхи 2.1 — юу шинэ вэ">2.1</button></div><span class="tag">Англи, япон, солонгос, хятад,<br>орос, герман, уйгур хэлний үг, дүрэм, яриа</span><div class="herobtns"><button class="mnsbtn" id="mnsbtn" type="button"><span class="hb-ic" aria-hidden="true">📜</span><span>Монгол бичиг</span></button><button class="mnsbtn" id="signbtn" type="button"><span class="hb-ic" aria-hidden="true">🤟</span><span>Дохионы хэл</span></button></div></div>
+        <div class="brand"><div class="logo-w"><img src="logo-light.png" alt="Салхи" width="600" height="129"><button class="v2b" id="v2b" type="button" aria-label="Салхи 2.1 — юу шинэ вэ">2.1</button></div><span class="tag">Англи, япон, солонгос, хятад,<br>орос, герман, уйгур хэлний үг, дүрэм, яриа</span></div><div class="herobtns herobr"><button class="mnsbtn" id="signbtn" type="button"><span class="hb-ic" aria-hidden="true">🤟</span><span>Дохионы хэл</span></button><button class="mnsbtn" id="mnsbtn" type="button"><span class="hb-ic" aria-hidden="true">📜</span><span>Монгол бичиг</span></button></div>
         <div class="tools"><button class="themebtn" id="themebtn" type="button"></button></div>
       </div>
     </div>
@@ -8063,7 +8064,7 @@ function pfProg(root){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261019-5";
+var BUILD="20261019-6";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
