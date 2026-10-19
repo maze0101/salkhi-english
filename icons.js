@@ -139,6 +139,7 @@
   function scan(){
     var r=document.querySelector(".app")||document.body;
     r.querySelectorAll(".gamecard>i:not(.ict)").forEach(card);
+    document.querySelectorAll(".herobtns .hb-ic:not(.ict)").forEach(card);
     r.querySelectorAll(".toolgrid .btn").forEach(function(b){lead(b,"s");});
     r.querySelectorAll("h3,.note>b:first-child,.note>div:first-child>b:first-child").forEach(function(b){lead(b,"s");});
     r.querySelectorAll(".seg button,.modes button").forEach(function(b){lead(b,"xs");});
