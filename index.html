@@ -20,10 +20,10 @@ document.addEventListener("gesturestart",function(e){e.preventDefault();},{passi
 document.addEventListener("touchmove",function(e){if(e.touches.length>1||(e.scale&&e.scale!==1))e.preventDefault();},{passive:false});
 </script>
 
-<link rel="manifest" href="manifest.webmanifest?v=3">
-<link rel="icon" href="favicon-48.png?v=3" type="image/png" sizes="48x48">
-<link rel="icon" href="icon-192.png?v=3" type="image/png" sizes="192x192">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=3">
+<link rel="manifest" href="manifest.webmanifest?v=4">
+<link rel="icon" href="favicon-48.png?v=4" type="image/png" sizes="48x48">
+<link rel="icon" href="icon-192.png?v=4" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=4">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#132226">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -843,6 +843,15 @@ h3{font-weight:650;letter-spacing:-.01em}
 .toolgrid .btn{color:var(--ink);font-weight:500;min-height:50px}
 .ag button[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-line);color:var(--sel-ink)}
 .ag button[aria-pressed="true"] small{color:var(--sel-ink)}
+/* өнгөлөг дүүрсэн icon (icons.js): градиент хавтан + цагаан шугаман дүрс */
+.ict{display:inline-grid;place-items:center;flex:none;font-style:normal;border-radius:12px;background:linear-gradient(150deg,var(--ia),var(--ib));box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 1px 2px color-mix(in srgb,var(--ib) 35%,transparent);vertical-align:middle}
+.ict svg{width:56%;height:56%;fill:none;stroke:#fff;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.gamecard>i.ict{width:44px;height:44px;border-radius:12px;background:linear-gradient(150deg,var(--ia),var(--ib))}
+.ict.s{width:28px;height:28px;border-radius:8px;margin-right:.5em}
+.ict.s svg{width:60%;height:60%;stroke-width:2.3}
+.ict.xs{width:22px;height:22px;border-radius:7px;margin-right:6px}
+.ict.xs svg{width:62%;height:62%;stroke-width:2.5}
+.toolgrid .ict.s{margin-right:0}
 .qt{position:fixed;z-index:210;max-width:min(320px,92vw);min-width:180px;background:var(--surface);background-clip:padding-box;color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:10px 34px 10px 12px;font-size:15px;animation:qtin .15s ease-out}
 @keyframes qtin{from{opacity:0;transform:translateY(-4px)}}
 .qt-x{position:absolute;top:4px;right:4px;border:0;background:none;color:var(--ink-2);font-size:16px;padding:6px;cursor:pointer}
@@ -901,6 +910,7 @@ h3{font-weight:650;letter-spacing:-.01em}
     </div>
   </header>
 <script src="hero.js"></script>
+<script src="icons.js"></script>
 <script>
 window.salkhiHero=initSalkhiHero(document.getElementById("salkhiHero"));
 </script>
@@ -8027,7 +8037,7 @@ function pfProg(root){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261019-2";
+var BUILD="20261019-3";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){

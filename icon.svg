@@ -1,24 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Салхи апп-ын icon (2026-10-19): хөх градиент дэвсгэр, цагаан «С» тойрог, дундуур нь хоёр салхин долгион.
+       Бүх зураас төвөөс 190px дотор — maskable (80% аюулгүй бүс) хэлбэрт ч таслагдахгүй. -->
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A7A73"/><stop offset="1" stop-color="#123F3C"/></linearGradient>
-    <clipPath id="c"><rect width="512" height="512" rx="112"/></clipPath>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4C7DFF"/><stop offset=".55" stop-color="#2F5BEA"/><stop offset="1" stop-color="#1A3BB0"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".3" cy=".22" r=".75">
+      <stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="w2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#BFD4FF" stop-opacity=".55"/><stop offset="1" stop-color="#BFD4FF"/>
+    </linearGradient>
+    <!-- долгион тойргийг огтолж, хооронд нь 9px завсар үлдээнэ -->
+    <mask id="gap" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <rect width="512" height="512" fill="#fff"/>
+      <g fill="#000" stroke="#000" stroke-width="18" stroke-linejoin="round">
+        <path d="M56 252C128 204 200 210 262 234C322 257 382 250 456 200C424 262 362 288 290 274C220 260 148 240 56 252Z"/>
+        <path d="M96 322C168 288 230 292 292 308C350 323 398 314 444 284C414 332 360 350 298 340C230 329 168 314 96 322Z"/>
+      </g>
+    </mask>
+    <clipPath id="r"><rect width="512" height="512" rx="114"/></clipPath>
   </defs>
-  <g clip-path="url(#c)">
-  <rect width="512" height="512" fill="url(#sky)"/>
-  <!-- салхи -->
-  <g fill="none" stroke="#fff" stroke-linecap="round" opacity=".35" stroke-width="14">
-    <path d="M40 330c70-30 130 10 200-14"/>
-    <path d="M70 390c80-26 150 14 230-12"/>
-  </g>
-  <!-- утас ба сүүлний туузууд -->
-  <path d="M300 236C250 300 190 330 120 440" fill="none" stroke="#F3E3B5" stroke-width="7" stroke-linecap="round"/>
-  <g fill="#F2845C"><path d="M232 318l26 4-12 22z"/><path d="M176 378l26 2-10 24z"/></g>
-  <!-- цаасан шувуу -->
-  <g transform="translate(330 170) rotate(18)">
-    <path d="M0-120L82 0 0 70-82 0Z" fill="#E9C46A"/>
-    <path d="M0-120L82 0H0Z" fill="#F4D987"/>
-    <path d="M0 70L-82 0H0Z" fill="#D4A93E"/>
-    <path d="M0-120V70M-82 0H82" stroke="#9C7A24" stroke-width="7"/>
-  </g>
+  <g clip-path="url(#r)">
+    <rect width="512" height="512" fill="url(#bg)"/>
+    <rect width="512" height="512" fill="url(#glow)"/>
+    <path d="M341 171A120 120 0 1 0 341 341" fill="none" stroke="#fff" stroke-width="44" stroke-linecap="round" mask="url(#gap)"/>
+    <g>
+      <path d="M56 252C128 204 200 210 262 234C322 257 382 250 456 200C424 262 362 288 290 274C220 260 148 240 56 252Z" fill="#DCEAFF"/>
+      <path d="M96 322C168 288 230 292 292 308C350 323 398 314 444 284C414 332 360 350 298 340C230 329 168 314 96 322Z" fill="url(#w2)"/>
+    </g>
   </g>
 </svg>
