@@ -852,25 +852,32 @@ h3{font-weight:650;letter-spacing:-.01em}
 .ict.xs{width:22px;height:22px;border-radius:7px;margin-right:6px}
 .ict.xs svg{width:62%;height:62%;stroke-width:2.5}
 .toolgrid .ict.s{margin-right:0}
-/* нүүрний дээд хэсэг: шилэн (frosted) товч, цагаан хавтан товч, доод талд зөөлөн сүүдэр */
-.salkhi-hero::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(8,20,40,.38),rgba(8,20,40,0) 46%),linear-gradient(to bottom,rgba(8,20,40,.18),rgba(8,20,40,0) 28%)}
+/* нүүрний дээд хэсэг (2026-10-19): бүх товч нэг загвар — 38px шилэн (frosted) дугуй товч, зүүн талд дугуй өнгөт icon.
+   Дөрвөн булан 16px зайтай: дээд мөр (сорил | цаг агаар), доод мөр (лого | дээш доош 2 товч). */
+.salkhi-hero::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(8,20,40,.4),rgba(8,20,40,0) 50%),linear-gradient(to bottom,rgba(8,20,40,.18),rgba(8,20,40,0) 30%)}
 .salkhi-hero__overlay{z-index:2}
-.heroev,.herotop .wxbtn,.tools .wxbtn{height:38px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(12,24,48,.26);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);box-shadow:0 4px 14px rgba(8,20,40,.14);font-weight:600}
+.herotop{top:calc(16px + env(safe-area-inset-top,0px));left:16px;right:16px;gap:8px}
+.heroev,.herotop .wxbtn,.tools .wxbtn,.herobtns .mnsbtn{height:38px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(12,24,48,.28);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5);box-shadow:0 4px 14px rgba(8,20,40,.14);color:#fff;font-weight:600}
+.heroev:hover,.herotop .wxbtn:hover,.herobtns .mnsbtn:hover{background:rgba(12,24,48,.4)}
 .heroev{padding:0 14px 0 5px}
-.heroev:hover{background:rgba(12,24,48,.38)}
-.herotop .wxbtn{padding:0 14px}
+.herotop .wxbtn{padding:0 14px 0 12px}
 .he-ic{width:28px;height:28px;border:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
 .heroev b{font-weight:600}
 .he-cd{font-weight:700}
 .he-dots{bottom:4px}
-.herobtns .mnsbtn{min-width:76px;padding:6px 10px 5px;gap:3px;border:0;border-radius:14px;background:rgba(255,255,255,.92);color:#18181B;font-weight:600;box-shadow:0 6px 18px rgba(8,20,40,.22);-webkit-backdrop-filter:none;backdrop-filter:none;transition:transform .12s}
-.herobtns .mnsbtn:hover{background:#fff}
-.herobtns .mnsbtn:active{transform:scale(.96)}
-.herobtns .hb-ic.ict{width:24px;height:24px;border-radius:7px}
-.herobtns .hb-ic.ict svg{width:60%;height:60%;stroke-width:2.3}
-@media (max-width:440px){.herobtns .mnsbtn{min-width:0;padding:5px 8px 4px}.herobtns .hb-ic.ict{width:22px;height:22px;border-radius:6px}}
+.brand{left:16px;bottom:16px;gap:14px;align-items:center}
+.herobtns{flex-direction:column;align-items:stretch;gap:6px}
+.herobtns .mnsbtn{min-width:0;margin:0;padding:0 14px 0 5px;flex-direction:row;justify-content:flex-start;gap:8px;font-size:12.5px;line-height:1;white-space:nowrap;transition:transform .12s,background-color .15s}
+.herobtns .mnsbtn:active{transform:scale(.97)}
+.herobtns .hb-ic.ict{width:28px;height:28px;border-radius:50%}
+.herobtns .hb-ic.ict svg{width:56%;height:56%;stroke-width:2.3}
+@media (max-width:440px){
+  .brand{gap:12px}
+  .herobtns .mnsbtn{height:34px;padding:0 12px 0 4px;gap:7px;font-size:12px}
+  .herobtns .hb-ic.ict{width:26px;height:26px}
+}
 .brand img{filter:drop-shadow(0 2px 8px rgba(8,20,40,.35))}
-.v2b{top:-12px;right:-4px;padding:2px 7px;color:var(--cta);font-weight:800}
+.v2b{top:-10px;right:-8px;padding:2px 7px;color:var(--cta);font-weight:800}
 .qt{position:fixed;z-index:210;max-width:min(320px,92vw);min-width:180px;background:var(--surface);background-clip:padding-box;color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:10px 34px 10px 12px;font-size:15px;animation:qtin .15s ease-out}
 @keyframes qtin{from{opacity:0;transform:translateY(-4px)}}
 .qt-x{position:absolute;top:4px;right:4px;border:0;background:none;color:var(--ink-2);font-size:16px;padding:6px;cursor:pointer}
@@ -8056,7 +8063,7 @@ function pfProg(root){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261019-4";
+var BUILD="20261019-5";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
