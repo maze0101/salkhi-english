@@ -97,20 +97,20 @@
     if(!env.spendStars)return null;
     if(gift.to!==r.uid)return h("button",{class:"btn",style:"width:100%;margin-top:10px",onclick:function(){gift.to=r.uid;gift.n=5;gift.m=0;paint();}},"🎁 Од бэлэглэх");
     var box=h("div",{class:"note",style:"margin:10px 0 0;background:var(--bg)"},
-      h("div",{class:"muted small",style:"margin-bottom:6px"},"Танд ⭐ "+env.stars()+" од байна"),
-      h("div",{class:"seg",style:"margin:0 0 8px"},[5,10,20].map(function(n){return h("button",{"aria-pressed":String(gift.n===n),onclick:function(){gift.n=n;paint();}},"⭐ "+n);})),
+      h("div",{class:"muted small",style:"margin-bottom:6px"},"Танд 🪙 "+env.stars()+" зоос байна"),
+      h("div",{class:"seg",style:"margin:0 0 8px"},[5,10,20].map(function(n){return h("button",{"aria-pressed":String(gift.n===n),onclick:function(){gift.n=n;paint();}},"🪙 "+n);})),
       h("div",{style:"display:flex;flex-wrap:wrap;gap:6px"},GIFT_MSG.map(function(m,i){return h("button",{class:"chip","aria-pressed":String(gift.m===i),onclick:function(){gift.m=i;paint();}},m);})),
       h("div",{class:"row",style:"margin-top:10px"},
-        h("button",{class:"btn primary",disabled:env.stars()<gift.n,onclick:function(e){sendGift(r,gift.n,GIFT_MSG[gift.m],e.currentTarget);}},"Илгээх ⭐ "+gift.n),
+        h("button",{class:"btn primary",disabled:env.stars()<gift.n,onclick:function(e){sendGift(r,gift.n,GIFT_MSG[gift.m],e.currentTarget);}},"Илгээх 🪙 "+gift.n),
         h("button",{class:"btn ghost",onclick:function(){gift.to=null;paint();}},"Болих")));
     return box;
   }
   function sendGift(r,n,msg,btn){
     if(!db||!uid||!prof)return;
-    if(env.stars()<n){env.toast("⭐ од хүрэлцэхгүй байна");return;}
+    if(env.stars()<n){env.toast("🪙 зоос хүрэлцэхгүй байна");return;}
     btn.disabled=true;
     db.ref("gifts/"+r.uid).push({from:uid,name:prof.name,n:n,msg:msg,ts:firebase.database.ServerValue.TIMESTAMP}).then(function(){
-      env.spendStars(n);gift.to=null;env.toast("🎁 "+r.name+"-д ⭐ "+n+" илгээлээ");paint();
+      env.spendStars(n);gift.to=null;env.toast("🎁 "+r.name+"-д 🪙 "+n+" зоос илгээлээ");paint();
     },function(){btn.disabled=false;env.toast("Илгээж чадсангүй — дахин оролдоорой");});
   }
   /* надад ирсэн бэлэг: нэг бүрчлэн авч устгана (устгаж чадсаны дараа л од нэмнэ — давхар авахгүй) */
@@ -121,7 +121,7 @@
       Object.keys(all).forEach(function(k){
         var g=all[k]||{},n=Math.max(0,Math.min(20,+g.n||0));if(!n)return;
         db.ref("gifts/"+uid+"/"+k).remove().then(function(){
-          env.addStars(n);env.toast("🎁 "+(g.name||"Найз")+" танд ⭐ "+n+" бэлэглэлээ"+(g.msg?": «"+g.msg+"»":""),6000);
+          env.addStars(n);env.toast("🎁 "+(g.name||"Найз")+" танд 🪙 "+n+" зоос бэлэглэлээ"+(g.msg?": «"+g.msg+"»":""),6000);
         },function(){});
       });
     }).catch(function(){});

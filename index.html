@@ -920,6 +920,14 @@ h3{font-weight:650;letter-spacing:-.01em}
 .si-ttl{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--gold-soft);color:var(--gold-ink);font-weight:700;font-size:12.5px;margin:9px 0;white-space:nowrap}
 .box-pop{font-size:64px;line-height:1.1;animation:boxPop .6s cubic-bezier(.3,1.6,.5,1)}
 @keyframes boxPop{from{transform:scale(.2) rotate(-25deg)}}
+/* 🪙 зоос: CSS-ээр зурсан алтан зоос (дотор нь «₮» маягийн тэмдэг) */
+.coin{display:inline-block;width:1.05em;height:1.05em;border-radius:50%;vertical-align:-.17em;margin-right:4px;background:radial-gradient(circle at 35% 30%,#FFF3B0 0 14%,#FFD54A 15% 52%,#E0A400 53% 66%,#B57B00 67%);box-shadow:inset 0 0 0 1.5px rgba(150,95,0,.55),0 1px 2px rgba(120,80,0,.35);position:relative;flex:none}
+.coin::after{content:"";position:absolute;inset:27%;border-radius:50%;border:1.5px solid rgba(150,95,0,.45)}
+.coin.big{width:38px;height:38px;margin:0}
+.coinfly{position:fixed;z-index:400;width:22px;height:22px;margin:-11px 0 0 -11px;pointer-events:none;transition:transform .55s cubic-bezier(.5,-.3,.7,1),opacity .55s ease-in}
+.starchip.coinhit{animation:coinHit .35s ease-out}
+@keyframes coinHit{40%{transform:scale(1.18)}}
+@media (prefers-reduced-motion:reduce){.starchip.coinhit{animation:none}}
 .qt{position:fixed;z-index:210;max-width:min(320px,92vw);min-width:180px;background:var(--surface);background-clip:padding-box;color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:10px 34px 10px 12px;font-size:15px;animation:qtin .15s ease-out}
 @keyframes qtin{from{opacity:0;transform:translateY(-4px)}}
 .qt-x{position:absolute;top:4px;right:4px;border:0;background:none;color:var(--ink-2);font-size:16px;padding:6px;cursor:pointer}
@@ -1684,10 +1692,10 @@ function combo(ok){
   var n=fxCombo,bonus=n===5?2:n%10===0?5:0;
   if(n===3||n%5===0){
     var old=document.querySelector(".combo");if(old)old.remove();
-    var e=h("div",{class:"combo",role:"status"},"🔥 "+n+" дараалан зөв!",bonus?h("small",null,"Бонус +"+bonus+" XP"):null);
+    var e=h("div",{class:"combo",role:"status"},"🔥 "+n+" дараалан зөв!",bonus?h("small",null,"Бонус +"+bonus+" XP · 🪙 +"+bonus):null);
     document.body.append(e);setTimeout(function(){e.remove();},1550);
     setTimeout(function(){sfx("combo");},120);
-    if(bonus)setTimeout(function(){addXP(bonus);},300);
+    if(bonus)setTimeout(function(){addXP(bonus);addStar(bonus);},300);
   }
 }
 /* XP-ийн түвшин: 1→2 50 XP, 2→3 100 XP, … (25·n·(n+1) хуримтлагдана) */
@@ -1705,7 +1713,7 @@ function rankReward(key,stars,frz){
   return {stars:stars,fz:fz};
 }
 function rwChips(rw){
-  return h("div",{class:"rk-rw"},h("span",null,"⭐ +"+rw.stars),rw.fz?h("span",null,"🧊 +1"):null);
+  return h("div",{class:"rk-rw"},h("span",null,"🪙 +"+rw.stars),rw.fz?h("span",null,"🧊 +1"):null);
 }
 /* дараалсан цонхнууд (түвшин + цол зэрэг ахих үед) нэг нэгээр гарна */
 var lvQ=[];
@@ -1733,7 +1741,19 @@ function lvUp(n){
       h("div",{class:"muted small",style:"margin-top:6px"},"Дараагийн түвшин хүртэл "+(25*n*(n+1)-state.xp)+" XP"+(n%5!==4?"":" · дараагийнх нь 🧊 бэлэгтэй")),
       h("button",{class:"btn primary",style:"margin-top:14px"},"Үргэлжлүүлэх"))));
 }
-function addStar(){state.stars++;sset("stars",state.stars);renderStrip();}
+/* 🪙 зоос (хуучин ⭐ од — хадгалалтын түлхүүр "stars" хэвээр, хуучин од 1:1 зоос болсон).
+   Зоос авах бүрт дарсан цэгээс дээд мөрийн зоосны чип рүү 🪙 нисэнэ. */
+function addStar(n){n=n||1;state.stars+=n;sset("stars",state.stars);coinFly(n);renderStrip();}
+function coinFly(n){
+  if(reduce)return;
+  var chip=document.querySelector(".starchip");if(!chip||!chip.offsetWidth)return;
+  var b=chip.getBoundingClientRect(),p=fxPt&&Date.now()-fxPt.t<4000?fxPt:{x:innerWidth/2,y:innerHeight*.5};
+  for(var i=0;i<Math.min(n,6);i++)(function(i){
+    var c=h("span",{class:"coin coinfly","aria-hidden":"true",style:"left:"+p.x+"px;top:"+p.y+"px"});document.body.append(c);
+    requestAnimationFrame(function(){setTimeout(function(){c.style.transform="translate("+(b.left+12-p.x)+"px,"+(b.top+b.height/2-p.y)+"px) scale(.7)";c.style.opacity=".2";},i*70);});
+    setTimeout(function(){c.remove();chip.classList.remove("coinhit");void chip.offsetWidth;chip.classList.add("coinhit");},650+i*70);
+  })(i);
+}
 function todayXP(){return state.daily[dkey(new Date())]||0;}
 function ringEl(pct,size,sw){
   var r=(size-sw)/2,c=2*Math.PI*r,d=c*Math.min(1,pct),m=size/2,e=h("span",{class:"mini"});
@@ -1880,7 +1900,7 @@ function renderStrip(){
   s.append(h("div",{class:"stat",title:state.freeze?"🧊 Streak хамгаалалт: "+state.freeze:streak()+" өдөр дараалан","aria-label":streak()+" өдөр дараалан"},h("b",null,String(streak())),"🔥"+(state.freeze?" 🧊"+(state.freeze>1?state.freeze:""):"")));
   s.append(h("div",{class:"stat","aria-label":"Өдрийн зорилго "+todayXP()+" / "+state.goal+" XP"},ringEl(todayXP()/state.goal,20,4),todayXP()+"/"+state.goal));
   /* ⭐ одны чип → Одны дэлгүүр (утсанд 2-р мөрийн баруун талд; өргөн дэлгэцэд багтахгүй тул зөвхөн хүүхдийн горимд) */
-  s.append(h("button",{class:"stat starchip"+(state.mode==="kid"?" kidstar":""),type:"button",title:"Одны дэлгүүр","aria-label":"Одны дэлгүүр: "+state.stars+" од",onclick:openShop},"⭐ "+state.stars));
+  s.append(h("button",{class:"stat starchip"+(state.mode==="kid"?" kidstar":""),type:"button",title:"Зоосны дэлгүүр","aria-label":"Зоосны дэлгүүр: "+state.stars+" зоос",onclick:openShop},h("span",{class:"coin","aria-hidden":"true"}),state.stars));
   var bl=boostLeft();if(bl)s.append(h("div",{class:"stat boost",title:"2× XP идэвхтэй","aria-label":"2 дахин XP, "+Math.ceil(bl/60000)+" минут үлдлээ"},"⚡2× "+Math.ceil(bl/60000)+"м"));
   sMain.insertBefore(s,TOOLS.parentNode===sMain?TOOLS:null);
 }
@@ -2229,7 +2249,7 @@ function weeklyFold(){
   L.forEach(function(q){if(wqProgress(q)>=q[1]){done++;if(!wqGot("wq:"+wk+":"+q[0]))ready=true;}});
   if(done===L.length&&!wqGot("wq:"+wk+":all"))ready=true;
   var d=h("details",{class:"fold"},
-    h("summary",null,"🎯 7 хоногийн даалгавар "+done+"/"+L.length,h("span",{class:"muted small"},"· "+left+" өдөр"+(ready?" · ⭐ шагнал авах":""))),
+    h("summary",null,"🎯 7 хоногийн даалгавар "+done+"/"+L.length,h("span",{class:"muted small"},"· "+left+" өдөр"+(ready?" · 🪙 шагнал авах":""))),
     weeklyCard(true));
   d.open=ready;
   return d;
@@ -7284,7 +7304,7 @@ function pfEditor(){
   var inp=h("input",{class:"tin",maxlength:"24",value:myNick(),placeholder:"Хоч нэр (заавал биш)","aria-label":"Хоч нэр",autocomplete:"off",style:"margin:0 0 8px"});
   var sti=h("input",{class:"tin",maxlength:"60",value:myStatus(),placeholder:"Статус: ж нь «IELTS-д бэлдэж байна»","aria-label":"Статус",autocomplete:"off",style:"margin:0 0 10px"});
   var box=h("div",{class:"note",style:"margin-top:12px"},h("b",{style:"display:block;margin-bottom:10px"},"✏️ Аватар, нэр, статус"),prev,inp,sti,grid,cols,
-    frameOpen()?null:h("p",{class:"muted small",style:"margin:8px 0 0"},"✨ Алтан хүрээ: 30 өдөр дараалан, Lv 15 эсвэл 🛍️ Одны дэлгүүрээс."),
+    frameOpen()?null:h("p",{class:"muted small",style:"margin:8px 0 0"},"✨ Алтан хүрээ: 30 өдөр дараалан, Lv 15 эсвэл 🛍️ Зоосны дэлгүүрээс."),
     h("p",{class:"muted small",style:"margin:8px 0 0"},"Статус найзуудад тань харагдана. Утас, хаяг, холбоос бүү бич."),
     h("div",{class:"row",style:"flex-wrap:wrap;margin-top:12px"},
       h("button",{class:"btn primary",onclick:function(){
@@ -7858,7 +7878,7 @@ function wqProgress(q){
   return v;
 }
 function wqGot(key){var g=sget("rkgot",{});return !!(g&&g[key]);}
-function wqClaim(key,n,label){var rw=rankReward(key,n,false);if(rw){sfx("lv");celebrate(true,false);toast("⭐ +"+rw.stars+" — "+label);}render();}
+function wqClaim(key,n,label){var rw=rankReward(key,n,false);if(rw){sfx("lv");celebrate(true,false);toast("🪙 +"+rw.stars+" зоос — "+label);}render();}
 function weeklyCard(noHead){
   var wk=weekKey(),L=wqList(),done=0,box=h("div",{class:"note wq"});
   var d=new Date(),left=7-((d.getDay()+6)%7);
@@ -7870,12 +7890,12 @@ function weeklyCard(noHead){
       h("div",{style:"flex:1;min-width:0"},h("div",{class:"wq-t"},q[3]),
         h("span",{class:"wq-bar",role:"progressbar","aria-label":q[3],"aria-valuemin":"0","aria-valuemax":String(q[1]),"aria-valuenow":String(v)},h("i",{style:"width:"+Math.round(v/q[1]*100)+"%"})),
         h("span",{class:"muted small"},v+" / "+q[1])),
-      got?h("span",{class:"wq-got"},"✓ ⭐"+WQ_STAR)
-        :h("button",{class:"btn"+(ok?" primary":""),disabled:!ok,style:"flex:none;padding:6px 10px",onclick:function(){wqClaim(key,WQ_STAR,q[3]);}},"⭐ "+WQ_STAR)));
+      got?h("span",{class:"wq-got"},"✓ 🪙"+WQ_STAR)
+        :h("button",{class:"btn"+(ok?" primary":""),disabled:!ok,style:"flex:none;padding:6px 10px",onclick:function(){wqClaim(key,WQ_STAR,q[3]);}},"🪙 "+WQ_STAR)));
   });
   var bkey="wq:"+wk+":all",bgot=wqGot(bkey);
   box.append(h("div",{class:"wq-bonus"},h("span",{class:"muted small"},"Гурвууланг нь биелүүлбэл нэмэлт шагнал"),
-    bgot?h("span",{class:"wq-got"},"✓ ⭐"+WQ_BONUS):h("button",{class:"btn"+(done===3?" primary":""),disabled:done<3,style:"padding:6px 10px",onclick:function(){wqClaim(bkey,WQ_BONUS,"Долоо хоногийн бүх даалгавар");}},"🎁 ⭐ "+WQ_BONUS)));
+    bgot?h("span",{class:"wq-got"},"✓ 🪙"+WQ_BONUS):h("button",{class:"btn"+(done===3?" primary":""),disabled:done<3,style:"padding:6px 10px",onclick:function(){wqClaim(bkey,WQ_BONUS,"Долоо хоногийн бүх даалгавар");}},"🎁 🪙 "+WQ_BONUS)));
   return box;
 }
 
@@ -7885,13 +7905,13 @@ function applySkin(){
   if(it&&it.sk&&owns(id))r.setAttribute("data-skin",it.sk);else r.removeAttribute("data-skin");
 }
 
-/* ---------- 🛍️ Одны дэлгүүр: цол ахиж цуглуулсан ⭐ одоор юм авна ----------
+/* ---------- 🛍️ Зоосны дэлгүүр (хуучнаар Одны): цуглуулсан 🪙 зоосоор (state.stars) юм авна ----------
    sget "shop" = {own:{id:ts}, kite:id, card:id, boost:дуусах ms}. Хэрэглэдэг зүйл (🧊, ⚡) own-д бичигдэхгүй. */
 var SHOP=[
   {id:"frz",cat:"use",ic:"🧊",t:"Streak хамгаалалт",d:"Нэг өдөр алгасахад дараалал тасрахгүй (2 хүртэл)",p:30},
   {id:"boost",cat:"use",ic:"⚡",t:"2× XP · 15 минут",d:"15 минутын турш авах бүх XP хоёр дахин",p:40},
   {id:"boost60",cat:"use",ic:"🚀",t:"2× XP · 1 цаг",d:"Нэг цагийн турш авах бүх XP хоёр дахин",p:120},
-  {id:"box",cat:"use",ic:"🎁",t:"Нууц хайрцаг",d:"Од, хамгаалалт, 2× XP эсвэл санамсаргүй загвар — юу гарахыг хэн ч мэдэхгүй!",p:35},
+  {id:"box",cat:"use",ic:"🎁",t:"Нууц хайрцаг",d:"Зоос, хамгаалалт, 2× XP эсвэл санамсаргүй загвар — юу гарахыг хэн ч мэдэхгүй!",p:35},
   {id:"av:🐿️",cat:"av",ic:"🐿️",t:"Зурам",p:40},{id:"av:🦔",cat:"av",ic:"🦔",t:"Зараа",p:40},
   {id:"av:🐲",cat:"av",ic:"🐲",t:"Луу (алтан)",p:90},{id:"av:🦚",cat:"av",ic:"🦚",t:"Тогос",p:60},
   {id:"av:🦄",cat:"av",ic:"🦄",t:"Ганц эвэрт",p:40},{id:"av:🐼",cat:"av",ic:"🐼",t:"Панда",p:40},
@@ -7950,7 +7970,7 @@ function kiteColors(){var id=shopSt().kite,it=SHOP.filter(function(x){return x.i
 function cardGrad(){var id=shopSt().card,it=SHOP.filter(function(x){return x.id===id;})[0];return it&&owns(id)?it.g:["#13306B","#2A5CB8"];}
 function applyKite(){if(window.salkhiHero&&salkhiHero.setKite)salkhiHero.setKite(kiteColors());}
 function shopBuy(it){
-  if(state.stars<it.p){toast("⭐ од хүрэлцэхгүй байна — цол ахиж од цуглуулаарай");return;}
+  if(state.stars<it.p){toast("🪙 зоос хүрэлцэхгүй байна — зөв хариулж зоос цуглуулаарай");return;}
   var s=shopSt();
   if(it.id==="frz"){if(state.freeze>=2){toast("🧊 Хамгаалалт аль хэдийн 2/2 байна");return;}state.freeze++;sset("freeze",state.freeze);}
   else if(it.id==="boost"||it.id==="boost60"){s.boost=Math.max(Date.now(),+s.boost||0)+(it.id==="boost60"?60:15)*60000;}
@@ -7964,11 +7984,11 @@ function shopBuy(it){
 }
 function shopPick(it){var s=shopSt();if(SHOP_DEF[it.cat])s[it.cat]=it.id;sset("shop",s);applyShop(it.cat);if(it.cat==="fx")celebrate(true,true);if(it.cat==="snd")sfx("lv");render();}
 function applyShop(cat){if(cat==="kite")applyKite();if(cat==="skin")applySkin();if(cat==="sky")applySky();}
-/* 🎁 нууц хайрцаг: 40% од (15–70), 20% 🧊, 20% 2× XP, 20% санамсаргүй загвар (≤90⭐, байхгүй бол 60 од) */
+/* 🎁 нууц хайрцаг: 40% зоос (15–70), 20% 🧊, 20% 2× XP, 20% санамсаргүй загвар (≤90🪙, байхгүй бол 60 зоос) */
 function openBox(){
   var s=shopSt(),r=Math.random(),msg;
   var pool=SHOP.filter(function(x){return x.p>0&&x.p<=90&&x.cat!=="use"&&!owns(x.id);});
-  if(r<.4||(r>=.8&&!pool.length)){var n=r<.4?15+Math.floor(Math.random()*56):60;state.stars+=n;sset("stars",state.stars);msg="⭐ "+n+" од";}
+  if(r<.4||(r>=.8&&!pool.length)){var n=r<.4?15+Math.floor(Math.random()*56):60;state.stars+=n;sset("stars",state.stars);msg="🪙 "+n+" зоос";}
   else if(r<.6&&state.freeze<2){state.freeze++;sset("freeze",state.freeze);msg="🧊 Streak хамгаалалт";}
   else if(r<.8){s.boost=Math.max(Date.now(),+s.boost||0)+15*60000;sset("shop",s);msg="⚡ 2× XP · 15 минут";}
   else{var it=pool[Math.floor(Math.random()*pool.length)];s.own[it.id]=Date.now();if(SHOP_DEF[it.cat])s[it.cat]=it.id;sset("shop",s);applyShop(it.cat);msg=it.ic+" "+it.t;}
@@ -7991,9 +8011,9 @@ function applySky(){
 function viewShop(){
   var root=h("div"),s=shopSt(),bl=boostLeft();
   root.append(h("button",{class:"back",onclick:function(){ui.shop=false;ui.shopArm=null;if(ui.shopFrom&&ui.shopFrom!=="stats"){state.tab=ui.shopFrom;renderTabs();}ui.shopFrom=null;render();window.scrollTo(0,0);}},"‹ Буцах"));
-  root.append(h("h2",null,"🛍️ Одны дэлгүүр"));
-  root.append(h("div",{class:"note shop-bal"},h("span",{class:"sb-ic","aria-hidden":"true"},"⭐"),
-    h("div",{style:"flex:1"},h("b",null,state.stars+" од"),h("div",{class:"muted small"},"Түвшин, цол ахих бүрт од авна")),
+  root.append(h("h2",null,"🛍️ Зоосны дэлгүүр"));
+  root.append(h("div",{class:"note shop-bal"},h("span",{class:"sb-ic coin big","aria-hidden":"true"}),
+    h("div",{style:"flex:1"},h("b",null,state.stars+" зоос"),h("div",{class:"muted small"},"Зөв хариулт бүрт 🪙 +1 · цол, даалгавар, combo-гоор нэмэлт зоос")),
     bl?h("span",{class:"sb-boost"},"⚡ 2× · "+Math.ceil(bl/60000)+" мин"):null));
   SHOP_CAT.forEach(function(c){
     var items=SHOP.filter(function(it){return it.cat===c[0]&&!(it.id==="frame"&&frameOpen()&&!s.own.frame);});
@@ -8014,14 +8034,14 @@ function viewShop(){
       else if(SHOP_DEF[it.cat]&&own)btn=sel?h("span",{class:"si-own"},"✓ Сонгосон"):h("button",{class:"btn",onclick:function(){shopPick(it);}},"Сонгох");
       else{
         var poor=state.stars<it.p,full=it.id==="frz"&&state.freeze>=2;
-        btn=h("button",{class:"btn"+(arm?" primary":""),disabled:poor||full,"aria-label":it.t+" — "+it.p+" од",onclick:function(){if(!arm){ui.shopArm=it.id;render();return;}shopBuy(it);}},
-          full?"2/2 дүүрэн":arm?"Авах уу? ✓":"⭐ "+it.p);
+        btn=h("button",{class:"btn"+(arm?" primary":""),disabled:poor||full,"aria-label":it.t+" — "+it.p+" зоос",onclick:function(){if(!arm){ui.shopArm=it.id;render();return;}shopBuy(it);}},
+          full?"2/2 дүүрэн":arm?"Авах уу? ✓":"🪙 "+it.p);
       }
       grid.append(h("div",{class:"shop-it"+(sel?" sel":"")},prev,h("b",null,it.t),it.d?h("span",{class:"muted small"},it.d):null,btn));
     });
     root.append(grid);
   });
-  root.append(h("p",{class:"muted small",style:"margin-top:16px"},"Үнийг дарахад «Авах уу?» гэж асууна — дахин дарвал авна."));
+  root.append(h("p",{class:"muted small",style:"margin-top:16px"},"Үнийг дарахад «Авах уу?» гэж асууна — дахин дарвал авна. Өмнө цуглуулсан од бүр 1 зоос болж шилжсэн."));
   return root;
 }
 /* 🛍️ нүүр (Үгс таб) дээрх дэлгүүрийн карт — «Богино хичээл»-тэй ижил загвар */
@@ -8030,14 +8050,14 @@ function shopHomeCard(){
   var bl=boostLeft(),cheap=SHOP.filter(function(it){return it.p>0&&!owns(it.id)&&!(it.id==="frz"&&state.freeze>=2);}).reduce(function(m,it){return Math.min(m,it.p);},1e9);
   var sub=bl?"⚡ 2× XP идэвхтэй · "+Math.ceil(bl/60000)+" мин үлдлээ"
     :state.stars>=cheap?"Одоо авч болох бараа байна: 🧊, ⚡ 2× XP, аватар, цаасан шувуу"
-    :"Цол ахиж од цуглуул · дараагийн бараа хүртэл "+(cheap-state.stars)+" ⭐";
+    :"Зөв хариулж зоос цуглуул · дараагийн бараа хүртэл "+(cheap-state.stars)+" 🪙";
   return h("button",{class:"gamecard shophome",type:"button",style:"margin:10px 0 0",onclick:openShop},
-    h("i",{"aria-hidden":"true"},"🛍️"),h("div",null,h("b",null,"Одны дэлгүүр ",h("span",{class:"sh-st"},"⭐ "+state.stars),newTag()),h("span",null,sub)));
+    h("i",{"aria-hidden":"true"},"🛍️"),h("div",null,h("b",null,"Зоосны дэлгүүр ",h("span",{class:"sh-st"},"🪙 "+state.stars),newTag()),h("span",null,sub)));
 }
 function shopCard(){
   var bl=boostLeft();
   return h("button",{class:"lrow",type:"button",style:"margin-top:12px",onclick:openShop},
-    h("span",{class:"hexb ico"},"🛍️"),h("span",{style:"flex:1"},h("div",{class:"t"},"Одны дэлгүүр · ⭐ "+state.stars),
+    h("span",{class:"hexb ico"},"🛍️"),h("span",{style:"flex:1"},h("div",{class:"t"},"Зоосны дэлгүүр · 🪙 "+state.stars),
       h("div",{class:"muted small"},bl?"⚡ 2× XP идэвхтэй · "+Math.ceil(bl/60000)+" мин үлдлээ":"🧊 хамгаалалт, ⚡ 2× XP, аватар, цаасан шувууны өнгө")),h("span",{"aria-hidden":"true"},"›"));
 }
 
@@ -8180,7 +8200,7 @@ function pfProg(root){
   root.append(h("p",{class:"muted small",style:"margin:0 0 6px"},"Lv "+(lvl+1)+" хүртэл "+(lvHi-state.xp)+" XP"));
   var sg=h("div",{class:"statgrid"});
   [
-    ["Цуглуулсан од","⭐ "+state.stars],
+    ["Цуглуулсан зоос","🪙 "+state.stars],
     ["Нийт XP",String(state.xp)],
     ["Дараалсан өдөр",String(streak())],
     ["Мэддэг үг",known+"/"+p.length],
@@ -8205,7 +8225,7 @@ function pfProg(root){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261019-9";
+var BUILD="20261019-10";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
@@ -8242,7 +8262,7 @@ applyFreeze();renderStrip();applyKite();applySkin();applySky();sayShow();
   sset("rkback",1);
   if(!add)return;
   sset("rkgot",got);state.stars+=add;sset("stars",state.stars);renderStrip();
-  setTimeout(function(){toast("🎁 Өмнө ахисан түвшин, цолын шагнал: ⭐ +"+add+" — Одны дэлгүүрт зарцуулаарай",6000);},1500);
+  setTimeout(function(){toast("🎁 Өмнө ахисан түвшин, цолын шагнал: 🪙 +"+add+" — Зоосны дэлгүүрт зарцуулаарай",6000);},1500);
 })();
 /* ⚡ 2× XP дуусахад самбар шинэчлэгдэнэ */
 setInterval(function(){if(document.visibilityState==="visible"&&(boostLeft()||document.querySelector(".stat.boost")))renderStrip();},30000);
