@@ -878,6 +878,9 @@ h3{font-weight:650;letter-spacing:-.01em}
 }
 .brand img{filter:drop-shadow(0 2px 8px rgba(8,20,40,.35))}
 .herobr{position:absolute;right:16px;bottom:16px}
+/* лого ганцаараа зүүн доод буланд — томруулна (утсан дээр хүүхдэд алхах зай үлдэнэ) */
+.brand img{width:min(320px,50vw)}
+@media (max-width:440px){.brand img{width:44vw}}
 .v2b{top:-10px;right:-8px;padding:2px 7px;color:var(--cta);font-weight:800}
 .qt{position:fixed;z-index:210;max-width:min(320px,92vw);min-width:180px;background:var(--surface);background-clip:padding-box;color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:10px 34px 10px 12px;font-size:15px;animation:qtin .15s ease-out}
 @keyframes qtin{from{opacity:0;transform:translateY(-4px)}}
@@ -8064,7 +8067,7 @@ function pfProg(root){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261019-6";
+var BUILD="20261019-7";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){
