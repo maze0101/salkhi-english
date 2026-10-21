@@ -79,14 +79,14 @@
       var out=[];s.forEach(function(x){var v=x.val()||{};v.uid=x.key;out.push(v);});
       r.list=out;r.busy=false;r.at=Date.now();
       if(!env.visible||env.visible())env.render();
-    }).catch(function(){r.busy=false;r.err=true;});
+    }).catch(function(){r.busy=false;r.err=true;if(!env.visible||env.visible())env.render();});
   }
   function people(c){
     if(!fbOn())return null;
     var h=env.h,r=roster[fbKey(c)];load(c);
     /* шинэчлэлтээс өмнө явцтай байсан хүн ч XP авахыг хүлээлгүй жагсаалтад орно */
     if(!lastPush)push(c);
-    if(!r||!r.list)return h("div",{class:"muted small",style:"margin-top:10px"},"👥 Оролцогчдыг ачаалж байна…");
+    if(!r||!r.list)return r&&r.err?null:h("div",{class:"muted small",style:"margin-top:10px"},"👥 Оролцогчдыг ачаалж байна…");
     /* өөрийн сүүлд бичсэн мөрийг (сервер хариулахаас өмнө ч) жагсаалтад оруулна */
     var my=mine[fbKey(c)],L=r.list.filter(function(x){return !my||x.uid!==my.uid;}).concat(my?[my]:[]);
     if(my)r.me=my.uid;
