@@ -897,6 +897,17 @@ h3{font-weight:650;letter-spacing:-.01em}
   --hee:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath d='M0 9H11V1H4V6H8V3.5M11 9H16' fill='none' stroke='%23F2C14E' stroke-width='1.5'/%3E%3C/svg%3E")}
 :root[data-skin="tsagaan"][data-theme="dark"]{--bg:#1C0A0D;--surface:#281115;--line:#43222A;--edge:#43222A;--sky:#FF8A8A;--neon:#FF8A8A;--focus:#FFB3B3;--cta:#D7263D;--cta-edge:#D7263D;--dune:#3A161D;--dune-2:#2F1218;--dune-3:#FF8A8A;--sel-bg:#3A161D;--sel-line:#E0454F;--sel-ink:#FFB3B3;--soft:#2F1218}
 :root[data-skin="sakura"][data-theme="dark"]{--bg:#1C0D14;--surface:#28141E;--line:#432433;--edge:#432433;--sky:#F48FB1;--neon:#F48FB1;--focus:#F8BBD0;--cta:#D81B60;--cta-edge:#D81B60;--dune:#3A1A29;--dune-2:#2F1521;--dune-3:#F48FB1;--sel-bg:#3A1A29;--sel-line:#EC407A;--sel-ink:#F8BBD0;--soft:#2F1521}
+/* 🕳️ «Хар нүх»: цайвар/харанхуй горимоос үл хамааран хар цагаан сансар (html:root — бусад :root дүрмээс давна).
+   Зөв/буруу (ногоон/улаан), зоос (алт) өнгөө хадгална — утга нь өнгөөр илэрдэг */
+html:root[data-skin="blackhole"]{--bg:#000000;--surface:#0E0E10;--ink:#F2F2F4;--ink-2:#9A9AA2;--line:#26262A;--edge:#26262A;
+  --sky:#E4E4E8;--neon:#E4E4E8;--neon-ink:#000;--focus:#FFFFFF;--cta:#F2F2F4;--cta-edge:#F2F2F4;--cta-ink:#000000;
+  --dune:#1C1C20;--dune-2:#141417;--dune-3:#E4E4E8;--sel-bg:#1C1C20;--sel-line:#BDBDC4;--sel-ink:#FFFFFF;--soft:#141417;
+  --ok:#4ADE80;--danger:#F87171;--ok-bg:#12291A;--ok-line:#2F9E5A;--bad-bg:#331719;--bad-line:#D9474F;
+  --gold:#E8B931;--gold-soft:#2A2414;--gold-ink:#F2C94C;--gold-bg:rgba(232,185,49,.16);--gold-line:rgba(232,185,49,.75);color-scheme:dark}
+html:root[data-skin="blackhole"] .wm-d{display:none}html:root[data-skin="blackhole"] .wm-l{display:inline}
+html:root[data-skin="blackhole"] .salkhi-hero{background:#000}
+html:root[data-skin="blackhole"] .salkhi-hero::after{background:linear-gradient(to top,rgba(0,0,0,.45),rgba(0,0,0,0) 45%)}
+html:root[data-skin="blackhole"] .btn.primary{box-shadow:0 0 18px rgba(255,255,255,.18)}
 /* «Монгол хээ»: гарчгийн доор, доод цэсний дээр алтан алхан хээ, алтан ирмэгтэй товч */
 :root[data-skin="hee"] h2{padding:0 8px 12px 0;background:var(--hee) left bottom/16px 10px repeat-x;max-width:max-content}
 :root[data-skin="hee"] .tabs::before{content:"";position:absolute;left:0;right:0;top:-10px;height:10px;background:var(--hee) 0 0/16px 10px repeat-x;pointer-events:none}
@@ -7903,6 +7914,9 @@ function weeklyCard(noHead){
 function applySkin(){
   var id=shopSt().skin,it=SHOP.filter(function(x){return x.id===id;})[0],r=document.documentElement;
   if(it&&it.sk&&owns(id))r.setAttribute("data-skin",it.sk);else r.removeAttribute("data-skin");
+  var bh=r.getAttribute("data-skin")==="blackhole",m=document.querySelector('meta[name="theme-color"]');
+  if(window.salkhiHero&&salkhiHero.setSpace)salkhiHero.setSpace(bh);
+  if(m)m.setAttribute("content",bh?"#000000":"#132226");
 }
 
 /* ---------- 🛍️ Зоосны дэлгүүр (хуучнаар Одны): цуглуулсан 🪙 зоосоор (state.stars) юм авна ----------
@@ -7933,6 +7947,7 @@ var SHOP=[
   {id:"skin:gobi",cat:"skin",ic:"🏜️",t:"Говь",p:80,sk:"gobi",sw:["#B5541C","#E9B872"]},
   {id:"skin:khuvsgul",cat:"skin",ic:"🏞️",t:"Хөвсгөл",p:80,sk:"khuvsgul",sw:["#0F6E78","#7CC9C4"]},
   {id:"skin:night",cat:"skin",ic:"🌌",t:"Шөнийн тэнгэр",p:80,sk:"night",sw:["#4B3A9E","#B3A4FF"]},
+  {id:"skin:blackhole",cat:"skin",ic:"🕳️",t:"Хар нүх",d:"Хар цагаан сансар — нүүрэнд эргэлдэх дисктэй хар нүх",p:150,sk:"blackhole",sw:["#000000","#E4E4E8"]},
   {id:"card:blue",cat:"card",ic:"🖼️",t:"Хөх (анхны)",p:0,g:["#13306B","#2A5CB8"]},
   {id:"card:night",cat:"card",ic:"🖼️",t:"Шөнийн од",p:50,g:["#0B1026","#3A2B6B"]},
   {id:"card:sunset",cat:"card",ic:"🖼️",t:"Нар жаргах",p:50,g:["#6E1A3A","#E8803A"]},
@@ -8225,7 +8240,7 @@ function pfProg(root){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261019-10";
+var BUILD="20261021-1";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){

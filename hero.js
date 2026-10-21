@@ -22,6 +22,8 @@ function initSalkhiHero(root) {
   const KC0 = { a: '#D85A30', b: '#F0997B', f: '#4A1B0C', x: '#FAC775', y: '#5DCAA5' };
   let KC = KC0;
   const kid = { mid: 0, amp: 0, x: 0, hx: 0, hy: 0, w: 0 };
+  // 🕳️ «Хар нүх» скин (setSpace): тэнгэр, тал, хүүхдийн оронд хар цагаан сансар, эргэлдэх дисктэй хар нүх
+  let space = false, bh = null, toolsY = 0;
   const logoEl = root.querySelector('.brand img');
   const logoImg = new Image();
   let LP = [], LPC = [];
@@ -61,7 +63,7 @@ function initSalkhiHero(root) {
     const lb = logoEl ? logoEl.getBoundingClientRect() : null;
     const lt = lb && lb.height ? lb.top - cr.top : capY + 50;
     const gap = Math.max(24, lt - top);
-    sunY = top + gap / 2;
+    sunY = top + gap / 2; toolsY = top;
     sunR = Math.max(9, Math.min(18, gap / 2 - 10));
     glowR = Math.max(sunR + 4, Math.min(sunR + 16, gap / 2 - 2));
 
@@ -77,6 +79,117 @@ function initSalkhiHero(root) {
     kid.amp = Math.max(0, Math.min(120, (x1 - x0) / 2));
 
     kite.init = false;
+    if (space) buildSpace();
+  }
+
+  /* Хар нүх: логоны (зүүн доод) ба баруун доод товчны дээгүүр, голоос баруун тийш.
+     Мананцар, одыг нэг удаа offscreen canvas-д зурна; дискний ширхгүүд л хөдөлнө. */
+  function buildSpace() {
+    if (!W || !H) return;
+    const R = Math.max(16, Math.min(H * 0.15, W * 0.075));
+    // дээд товчны мөрөөс доош (утсан дээр товчны ард нуугдахгүй), гэхдээ hero-гийн доод ирмэгээс гарахгүй
+    const cx = W * 0.6, cy = Math.min(H - R * 1.6, Math.max(R * 2.2, H * 0.4, toolsY + R * 1.3));
+    const bg = document.createElement('canvas');
+    bg.width = W * dpr; bg.height = H * dpr;
+    const b = bg.getContext('2d');
+    b.setTransform(dpr, 0, 0, dpr, 0, 0);
+    b.fillStyle = '#000'; b.fillRect(0, 0, W, H);
+    // мананцар: дискний тэнхлэгийн дагуу тархсан бүдэг саарал үүлс
+    b.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 70; i++) {
+      const u = (Math.random() - 0.5) * 2, d = Math.abs(u);
+      const x = cx + u * W * 0.75, y = cy - u * W * 0.75 * 0.12 + (Math.random() - 0.5) * (H * 0.25 + R * 3 * (1 - d));
+      const r = R * (0.8 + Math.random() * 2.6) * (1 - d * 0.4);
+      const gr = b.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, `rgba(200,200,205,${0.035 + Math.random() * 0.05})`); gr.addColorStop(1, 'rgba(200,200,205,0)');
+      b.fillStyle = gr; b.beginPath(); b.arc(x, y, r, 0, 6.28); b.fill();
+    }
+    // хар нүхний эргэн тойрны туяа
+    const halo = b.createRadialGradient(cx, cy, R, cx, cy, R * 4.5);
+    halo.addColorStop(0, 'rgba(255,255,255,0.22)'); halo.addColorStop(0.35, 'rgba(220,220,225,0.07)'); halo.addColorStop(1, 'rgba(0,0,0,0)');
+    b.fillStyle = halo; b.beginPath(); b.arc(cx, cy, R * 4.5, 0, 6.28); b.fill();
+    b.globalCompositeOperation = 'source-over';
+    // хөдөлгөөнгүй жижиг од
+    for (let i = 0; i < Math.round(W * H / 900); i++) {
+      b.fillStyle = `rgba(255,255,255,${0.15 + Math.random() * 0.55})`;
+      b.fillRect(Math.random() * W, Math.random() * H, Math.random() < 0.1 ? 1.6 : 0.9, Math.random() < 0.1 ? 1.6 : 0.9);
+    }
+    // дискний ширхэг: θ өнцөг, r радиус (R-ийн нэгжээр); ойрхон нь хурдан, гэрэлтэй
+    const parts = [];
+    for (let i = 0; i < 520; i++) {
+      const r = 1.35 + Math.pow(Math.random(), 1.6) * 5.2;
+      parts.push({ a: Math.random() * 6.283, r, l: 0.05 + Math.random() * 0.22, w: 0.6 + Math.random() * 1.1, o: Math.min(1, 1.6 / r) * (0.35 + Math.random() * 0.65) });
+    }
+    const tw = [];
+    for (let i = 0; i < 26; i++) tw.push({ x: Math.random() * W, y: Math.random() * H, r: 0.7 + Math.random() * 1.1, p: Math.random() * 6 });
+    bh = { R, cx, cy, bg, parts, tw, tilt: -0.13, flat: 0.2, spin: 0 };
+  }
+
+  function drawSpace(dt) {
+    if (!bh) buildSpace();
+    if (!bh) return;
+    const { R, cx, cy, parts, tilt, flat } = bh;
+    ctx.drawImage(bh.bg, 0, 0, W, H);
+    for (const s of bh.tw) {
+      ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.4 * Math.sin(t * 1.7 + s.p)})`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.28); ctx.fill();
+    }
+    bh.spin = (1 + g * 4) * dt * 2.2;
+    const ct = Math.cos(tilt), st = Math.sin(tilt);
+    const P = (a, r) => { const x = Math.cos(a) * r * R, y = Math.sin(a) * r * R * flat; return [cx + x * ct - y * st, cy + x * st + y * ct]; };
+    ctx.lineCap = 'round';
+    ctx.globalCompositeOperation = 'lighter';
+    // half: 0 — арын хагас (sin<0, нүхний ард), 1 — урд хагас
+    const disk = (half) => {
+      // тасралтгүй гэрэлтэх тууз: олон эллипс нумаар, гадагшаа бүдэгрэнэ
+      for (let r = 1.4; r < 10; r += r < 3 ? 0.12 : 0.3) {
+        const a = (half ? 0.2 : 0.09) * Math.pow(1.4 / r, 1.25) * (1 + g * 0.6);
+        ctx.strokeStyle = `rgba(240,240,245,${a})`; ctx.lineWidth = r < 3 ? 2.2 : 3.4;
+        ctx.beginPath(); ctx.ellipse(cx, cy, r * R, r * R * flat, tilt, half ? 0 : Math.PI, half ? Math.PI : 2 * Math.PI); ctx.stroke();
+      }
+      for (const p of parts) {
+        if ((Math.sin(p.a) >= 0) !== !!half) continue;
+        const [x0, y0] = P(p.a, p.r), [x1, y1] = P(p.a + p.l / p.r, p.r);
+        ctx.strokeStyle = `rgba(235,235,240,${p.o * (half ? 0.5 : 0.35)})`; ctx.lineWidth = p.w;
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      }
+    };
+    for (const p of parts) p.a += bh.spin / Math.pow(p.r, 1.5);
+    disk(0);
+    // гэрлийн хазайлт: арын дискний дүрс нүхний дээгүүр нугарч гэрэлтэх титэм + нимгэн цагиргууд болно
+    ctx.save();
+    ctx.translate(cx, cy); ctx.rotate(tilt);
+    ctx.beginPath(); ctx.rect(-R * 3, -R * 3, R * 6, R * 3 + R * flat * 0.5); ctx.clip();
+    ctx.rotate(-tilt); ctx.translate(-cx, -cy);
+    const crown = ctx.createRadialGradient(cx, cy, R * 1.02, cx, cy, R * 2.3);
+    crown.addColorStop(0, 'rgba(255,255,255,0.55)'); crown.addColorStop(0.3, 'rgba(235,235,240,0.22)'); crown.addColorStop(1, 'rgba(220,220,225,0)');
+    ctx.fillStyle = crown; ctx.beginPath(); ctx.arc(cx, cy, R * 2.3, 0, 6.28); ctx.fill();
+    ctx.restore();
+    for (let i = 0; i < 7; i++) {
+      const rr = R * (1.14 + i * 0.13);
+      ctx.strokeStyle = `rgba(250,250,255,${0.3 - i * 0.038})`; ctx.lineWidth = 1.1;
+      ctx.beginPath(); ctx.arc(cx, cy, rr, Math.PI + tilt - 0.3 + i * 0.04, tilt + 0.3 - i * 0.04); ctx.stroke();
+    }
+    // доод талын нимгэн цагираг
+    ctx.strokeStyle = 'rgba(250,250,255,0.55)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy, R * 1.1, tilt + 0.35, Math.PI + tilt - 0.35); ctx.stroke();
+    // фотон цагираг
+    ctx.shadowColor = 'rgba(255,255,255,0.9)'; ctx.shadowBlur = 14;
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(cx, cy, R * 1.04, 0, 6.28); ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.globalCompositeOperation = 'source-over';
+    // үйл явдлын хүрээ
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.28); ctx.fill();
+    // урд хагас: нүхийг хөндлөн огтолж гарна
+    ctx.globalCompositeOperation = 'lighter';
+    const band = ctx.createLinearGradient(cx - R * 6, 0, cx + R * 6, 0);
+    band.addColorStop(0, 'rgba(255,255,255,0)'); band.addColorStop(0.5, 'rgba(255,255,255,0.3)'); band.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(tilt);
+    ctx.fillStyle = band; ctx.beginPath(); ctx.ellipse(0, R * flat * 0.6, R * 6, R * flat * 1.6, 0, 0, Math.PI); ctx.fill();
+    ctx.restore();
+    disk(1);
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   /* Лого: .brand img-ийн яг байрлалд зургийн пикселээс цэгүүд үүсгэнэ (хуучин цэгэн гарчиг шиг салхинд тарна).
@@ -223,6 +336,8 @@ function initSalkhiHero(root) {
     ang2 += dt * (1.5 * wf + g * 6);
     if (sweep > -100) { sweep += 6 + g * 4; if (sweep > W + 100) sweep = -200; }
 
+    let kind = 0;
+    if (space) drawSpace(dt); else {
     // Тэнгэр: өдөр/шөнө, бүрхэг үед бүдэг
     const sky = day ? (overcast ? ['#6F8794', '#8FA5B0'] : ['#4F93C4', '#86BEDD']) : (overcast ? ['#1A2629', '#22333A'] : ['#132226', '#18303A']);
     ctx.fillStyle = sky[0]; ctx.fillRect(0, 0, W, H);
@@ -284,7 +399,7 @@ function initSalkhiHero(root) {
     hill(H * 0.90, 5, 45, 1.1, '#6E9294');
 
     // Бороо / цас: салхины чиглэлд хазайж унана
-    const kind = !wx ? 0 : (cl >= 71 && cl <= 77) || cl === 85 || cl === 86 ? 2 : (cl >= 51 && cl <= 67) || (cl >= 80 && cl <= 82) || cl >= 95 ? 1 : 0;
+    kind = !wx ? 0 : (cl >= 71 && cl <= 77) || cl === 85 || cl === 86 ? 2 : (cl >= 51 && cl <= 67) || (cl >= 80 && cl <= 82) || cl >= 95 ? 1 : 0;
     if (kind) {
       const n = cl === 51 || cl === 71 || cl === 80 || cl === 85 ? 40 : drops.length;
       ctx.lineWidth = 1.2;
@@ -306,6 +421,7 @@ function initSalkhiHero(root) {
 
     // Манан
     if (cl >= 45 && cl <= 48) { ctx.fillStyle = day ? 'rgba(230,235,238,0.35)' : 'rgba(120,135,140,0.3)'; ctx.fillRect(0, H * 0.45, W, H); }
+    }
 
     // Цэгэн лого: салхины давалгаа (sweep) хүрэхэд тарж, буцаж нийлнэ; бодит салхи хүчтэй бол илүү ширүүн
     let lk = -1;
@@ -354,6 +470,7 @@ function initSalkhiHero(root) {
     // d: {t, c (WMO weather_code), day, w (м/с)} эсвэл null
     setWeather(d) { wx = d && typeof d.c === 'number' ? d : null; },
     setKite(c) { KC = c && c.a ? c : KC0; },
+    setSpace(on) { on = !!on; if (on !== space) { space = on; bh = null; if (on) buildSpace(); } },
     destroy() {
       running = false;
       cancelAnimationFrame(raf);
