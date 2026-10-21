@@ -46,8 +46,66 @@
     var c=current();if(!c)return;
     var m=medals();if(m[c.w.key])return;
     var p=progress(c);
-    if(p.xp>=gx(c.e)&&p.days>=gd(c.e)){m[c.w.key]={ic:c.e.ic,t:c.e.m,ev:c.e.t,d:dk(new Date()),x:gx(c.e),n:gd(c.e)};env.sset(KEY,m);env.toast(c.e.ic+" "+c.e.m+" авлаа! Гэрчилгээ нээгдлээ 🎓",6000);env.celebrate();}
+    if(p.xp>=gx(c.e)&&p.days>=gd(c.e)){m[c.w.key]={ic:c.e.ic,t:c.e.m,ev:c.e.t,d:dk(new Date()),x:gx(c.e),n:gd(c.e)};env.sset(KEY,m);env.toast(c.e.ic+" "+c.e.m+" авлаа! Гэрчилгээ нээгдлээ 🎓",6000);env.celebrate();lastPush=0;}
+    push(c);
   }
+
+  /* 👥 оролцогчид: Firebase ev/{id_он}/{uid} = {name, xp, days, done, av?, ts}. Минутад нэг л удаа бичнэ, жагсаалтыг 60 сек кэшлэнэ.
+     Firebase тохируулаагүй (SALKHI_FB байхгүй) бол юу ч хийхгүй — карт өмнөх шигээ ажиллана. */
+  var lastPush=0,pushT=0,roster={},mine={};
+  function fbOn(){return !!(window.SALKHI_FB&&window.SalkhiFB&&window.firebase);}
+  function fbKey(c){return c.w.key.replace(":","_");}
+  function myName(){return String(env.name&&env.name()||"").trim().split(/\s+/)[0].slice(0,20)||"Суралцагч";}
+  function push(c){
+    if(!fbOn())return;
+    var p=progress(c);if(!p.xp)return;
+    if(Date.now()-lastPush<60000){clearTimeout(pushT);pushT=setTimeout(function(){push(c);},60000);return;}
+    lastPush=Date.now();
+    var v={name:myName(),xp:Math.min(p.xp,50000),days:Math.min(p.days,31),done:!!medals()[c.w.key],ts:firebase.database.ServerValue.TIMESTAMP};
+    var av=env.avatar&&env.avatar();if(av&&av.e)v.av=String(av.e).slice(0,16);
+    var k=fbKey(c);
+    window.SalkhiFB.user().then(function(u){
+      return firebase.database().ref("ev/"+k+"/"+u.uid).set(v).then(function(){var first=!mine[k];mine[k]=Object.assign({},v,{uid:u.uid});if(roster[k]){roster[k].me=u.uid;if(first&&(!env.visible||env.visible()))env.render();}});
+    }).catch(function(){});
+  }
+  function load(c){
+    var k=fbKey(c),r=roster[k];
+    if(!fbOn()||(r&&(r.busy||Date.now()-r.at<60000)))return;
+    roster[k]=r={busy:true,at:Date.now(),list:r&&r.list,me:r&&r.me};
+    window.SalkhiFB.user().then(function(u){
+      r.me=u.uid;
+      return firebase.database().ref("ev/"+k).orderByChild("xp").limitToLast(200).once("value");
+    }).then(function(s){
+      var out=[];s.forEach(function(x){var v=x.val()||{};v.uid=x.key;out.push(v);});
+      r.list=out;r.busy=false;r.at=Date.now();
+      if(!env.visible||env.visible())env.render();
+    }).catch(function(){r.busy=false;r.err=true;});
+  }
+  function people(c){
+    if(!fbOn())return null;
+    var h=env.h,r=roster[fbKey(c)];load(c);
+    /* шинэчлэлтээс өмнө явцтай байсан хүн ч XP авахыг хүлээлгүй жагсаалтад орно */
+    if(!lastPush)push(c);
+    if(!r||!r.list)return h("div",{class:"muted small",style:"margin-top:10px"},"👥 Оролцогчдыг ачаалж байна…");
+    /* өөрийн сүүлд бичсэн мөрийг (сервер хариулахаас өмнө ч) жагсаалтад оруулна */
+    var my=mine[fbKey(c)],L=r.list.filter(function(x){return !my||x.uid!==my.uid;}).concat(my?[my]:[]);
+    if(my)r.me=my.uid;
+    L=L.sort(function(a,b){return (b.done?1:0)-(a.done?1:0)||(b.xp||0)-(a.xp||0);}),done=L.filter(function(x){return x.done;}).length;
+    if(!L.length)return h("div",{class:"muted small",style:"margin-top:10px"},"👥 Одоохондоо хэн ч оролцоогүй — эхнийх нь болоорой!");
+    var ul=h("ol",{class:"evp"});
+    L.slice(0,ui.all?L.length:8).forEach(function(x,i){
+      ul.append(h("li",{class:x.uid===r.me?"me":null},
+        h("span",{class:"evp-n"},String(i+1)),
+        h("span",{class:"evp-av","aria-hidden":"true"},x.av||"🙂"),
+        h("span",{class:"evp-nm"},String(x.name||"Суралцагч").slice(0,20)+(x.uid===r.me?" (та)":"")),
+        h("span",{class:"evp-st"},x.done?"🏅 Медаль":(x.xp|0)+" XP · "+(x.days|0)+" өдөр")));
+    });
+    var box=h("div",{style:"margin-top:12px"},
+      h("div",{class:"small",style:"font-weight:700;margin-bottom:6px"},"👥 Оролцогчид: "+L.length+" хүн"+(done?" · 🏅 "+done+" нь медаль авсан":"")),ul);
+    if(L.length>8)box.append(h("button",{class:"back",type:"button",style:"margin-top:6px;font-size:14px",onclick:function(){ui.all=!ui.all;env.render();}},ui.all?"Хураах":"Бүгдийг харах ("+L.length+")"));
+    return box;
+  }
+  var ui={all:false};
   function bar(v,max){var pct=Math.min(100,Math.round(v/max*100));return env.h("div",{style:"height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin:4px 0 8px"},env.h("i",{style:"display:block;height:100%;width:"+pct+"%;background:"+(pct>=100?"var(--ok)":"var(--neon)")}));}
   /* дараагийн тэмцээн хүртэл (идэвхтэй тэмцээн байхгүй үед hub-д харуулна) */
   function upcoming(){
@@ -92,6 +150,7 @@
       box.append(h("div",{class:"small",style:"margin-top:8px"},"⚡ "+Math.min(p.xp,gx(c.e))+" / "+gx(c.e)+" XP"),bar(p.xp,gx(c.e)));
       box.append(h("div",{class:"small"},"📅 "+Math.min(p.days,gd(c.e))+" / "+gd(c.e)+" өдөр хичээллэсэн"),bar(p.days,gd(c.e)));
     }else box.append(h("div",{class:"small",style:"margin-top:6px"},"Профайл → 🎓 Гэрчилгээ хэсгээс тусгай гэрчилгээгээ татаарай."));
+    var pp=people(c);if(pp)box.append(pp);
     return box;
   }
   window.Events={

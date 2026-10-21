@@ -340,6 +340,14 @@ button.pf-av{border:0;padding:0;cursor:pointer;font-family:inherit}
 .he-cd{flex:none;font-size:12px;font-weight:800;color:#FFE08A;white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.heroev,.he-anim{animation:none}}
 /* 🗓️ тэмцээний хуанли (events.js) */
+/* 👥 тэмцээний оролцогчид (events.js people) */
+.evp{list-style:none;padding:0;margin:0;display:grid;gap:4px}
+.evp li{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:var(--soft);font-size:14px;min-width:0}
+.evp li.me{outline:1.5px solid var(--sky)}
+.evp-n{width:18px;text-align:right;color:var(--ink-2);font-size:12px;flex:none}
+.evp-av{font-size:18px;flex:none}
+.evp-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.evp-st{flex:none;color:var(--ink-2);font-size:12.5px}
 .evcal-box summary{cursor:pointer;list-style:none}
 .evcal-box summary::-webkit-details-marker{display:none}
 .evcal-box summary::after{content:"▾";float:right;opacity:.6;transition:transform .2s}
@@ -7066,6 +7074,7 @@ function xEnv(close){
     SR:function(){return SR;},srLang:function(){return LANG_TTS[state.lang]||"en-US";},askMic:askMic,micHint:micSettingsHint,
     addXP:addXP,logAct:logAct,celebrate:function(){celebrate(true,true);},grade:grade,
     hasWord:hasMyWord,addWord:addMyWord,daily:function(){return state.daily;},
+    name:function(){var a=window.SalkhiSync&&SalkhiSync.account();return state.certName||(a&&a.name)||"";},avatar:myAvatar,
     dictMn:function(t){t=String(t||"").toLowerCase().trim();var f=WORDS.filter(function(w){if((w[6]||"en")!==state.lang)return false;var k=w[1].toLowerCase();return k===t||k.replace(/^(to|the|a|an|der|die|das)\s+/,"")===t;})[0];return f?f[2]:null;},
     newsURL:function(){return workerURL("/news");},ocrURL:function(){return workerURL("/ocr");},
     visible:function(){return true;},
@@ -8240,7 +8249,7 @@ function pfProg(root){
 applyTheme();renderLangs();renderModes();renderStrip();renderLevels();renderTabs();render();
 /* ⚠️ Хувилбар бүрт BUILD-ийг ахиулна: нээлттэй апп checkUpdate()-ээр шинэ index.html-ийн BUILD-ийг харж өөрийгөө дахин ачаална,
    хойш ачаалагдах модулиуд ?v=BUILD-тэй тул хөтчийн кэш хуучин файл өгөхгүй. Хуучин клиентүүд доорх мөрийн хэлбэрийг (var, BUILD, давхар хашилт) regex-ээр хайдаг — хэлбэрийг бүү өөрчил. */
-var BUILD="20261021-1";
+var BUILD="20261021-2";
 window.SALKHI_BUILD=BUILD;
 function vq(f){return f+(f.indexOf("?")<0?"?v=":"&v=")+BUILD;}
 function checkUpdate(atStart){

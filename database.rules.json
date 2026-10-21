@@ -449,6 +449,16 @@
           ".validate": "$wk.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && newData.hasChildren(['a','name','wxp','ts']) && newData.child('a').isString() && newData.child('a').val().matches(/^(ub|arh|bol|bh|bul|ga|gs|du|dg|dor|dun|zav|orh|oh|og|sb|sel|tov|uvs|hovd|hov|hen|abr)$/) && newData.child('name').isString() && newData.child('name').val().length >= 1 && newData.child('name').val().length <= 20 && newData.child('wxp').isNumber() && newData.child('wxp').val() >= 0 && newData.child('wxp').val() <= 50000 && newData.child('ts').val() === now"
         }
       }
+    },
+    "ev": {
+      "$ev": {
+        ".read": "auth != null",
+        ".indexOn": ["xp"],
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "$ev.matches(/^[a-z]{2,12}_[0-9]{4}$/) && newData.hasChildren(['name','xp','days','done','ts']) && newData.child('name').isString() && newData.child('name').val().length >= 1 && newData.child('name').val().length <= 20 && newData.child('xp').isNumber() && newData.child('xp').val() >= 0 && newData.child('xp').val() <= 50000 && newData.child('days').isNumber() && newData.child('days').val() >= 0 && newData.child('days').val() <= 31 && newData.child('done').isBoolean() && (!newData.child('av').exists() || (newData.child('av').isString() && newData.child('av').val().length <= 16)) && newData.child('ts').val() === now"
+        }
+      }
     }
   }
 }
